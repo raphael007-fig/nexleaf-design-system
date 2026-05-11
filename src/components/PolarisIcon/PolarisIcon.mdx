@@ -1,0 +1,132 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as PolarisIconStories from './PolarisIcon.stories.jsx';
+
+<Meta title="Foundation/PolarisIcon/Docs" />
+
+# PolarisIcon
+
+Inline SVG icon system derived from Shopify's Polaris icon set. All icons are embedded as inline SVG data — no external requests, no icon font, no package dependency.
+
+<Canvas of={PolarisIconStories.AllIcons} />
+
+---
+
+## Interaction states — sizes & colors
+
+<Canvas of={PolarisIconStories.Sizes} />
+<Canvas of={PolarisIconStories.Colors} />
+
+---
+
+## When to use
+
+- Use icons to reinforce meaning, never to replace a text label
+- Action buttons may be icon-only when space is constrained — always add `aria-label`
+- Status indicators, form prefixes/suffixes, navigation items
+
+---
+
+## Available icons (32)
+
+All icons are 20×20px native. Click any icon in the grid to copy its name.
+
+<Canvas of={PolarisIconStories.AllIcons} />
+
+---
+
+## Sizes
+
+The `size` prop scales the SVG uniformly. Common values: 12, 16, 20, 24.
+
+<Canvas of={PolarisIconStories.Sizes} />
+
+---
+
+## Colors
+
+Pass any CSS color value. Always use a token value — never hardcode.
+
+<Canvas of={PolarisIconStories.Colors} />
+
+---
+
+## CSS implementation
+
+Icons in non-React stacks should use inline SVG directly. Copy the SVG path from `PolarisIcon.jsx` and embed it.
+
+```html
+<!-- Inline SVG (copy path from PolarisIcon.jsx → POLARIS_ICON_DATA) -->
+<svg width="20" height="20" viewBox="0 0 20 20" fill="#616161" aria-hidden="true">
+  <path fill-rule="evenodd" d="M12.323 13.383a5.5 5.5 0 1 1 1.06-1.06l2.897 2.897a.75.75 0 1 1-1.06 1.06l-2.897-2.897Zm.677-4.383a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"/>
+</svg>
+
+<!-- Icon-only button — must have aria-label -->
+<button aria-label="Search" class="nx-btn nx-btn--secondary">
+  <svg width="20" height="20" ...>...</svg>
+</button>
+```
+
+---
+
+## Color tokens for icons
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--nx-text-default` | `#303030` | Primary action icons |
+| `--nx-text-subdued` | `#616161` | Secondary / input adornment icons |
+| `--nx-text-placeholder` | `#9e9e9e` | Chevron icons, tertiary |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled state icons |
+| `--nx-color-primary` | `#005bd3` | Interactive / link icons |
+| `--nx-color-critical` | `#d92d20` | Error / destructive icons |
+| `--nx-color-success` | `#12b76a` | Success indicator icons |
+| `--nx-color-morning` | `#f59e0b` | Morning session icons |
+| `--nx-color-evening` | `#6366f1` | Evening session icons |
+| `--nx-text-on-primary` | `#ffffff` | Icons on colored backgrounds |
+
+---
+
+## React component
+
+```jsx
+import { PolarisIconImg } from 'components/PolarisIcon/PolarisIcon.jsx';
+
+// Basic usage
+<PolarisIconImg name="SearchIcon" size={20} color="#616161" />
+
+// Using token value
+<PolarisIconImg name="DeleteIcon" size={20} color="var(--nx-color-critical)" />
+
+// In a button
+<Btn variant="secondary" icon={<PolarisIconImg name="PlusIcon" size={16} color="currentColor" />}>
+  Add item
+</Btn>
+
+// Icon only (add aria-label on the parent button)
+<IconBtn icon={<PolarisIconImg name="EditIcon" size={20} color="#303030" />} aria-label="Edit" />
+```
+
+---
+
+## Adding new icons
+
+To add an icon to the system:
+
+1. Find the SVG path at `node_modules/@shopify/polaris-icons` or the Figma file **Nexleaf Icons V2**
+2. Add an entry to `POLARIS_ICON_DATA` in `PolarisIcon.jsx`:
+
+```js
+NewIcon: {
+  viewBox: '0 0 20 20',
+  body: '<path d="..." />'
+},
+```
+
+3. The icon becomes available immediately across all instances of `PolarisIconImg`.
+
+---
+
+## Accessibility
+
+- Decorative icons (beside a text label): add `aria-hidden="true"` on the `<svg>`
+- Meaningful icons with no visible text label: add `aria-label` on the parent `<button>` or add a visually hidden `<span>` describing the action
+- Never rely on icon shape alone to communicate status — pair with a text label or badge

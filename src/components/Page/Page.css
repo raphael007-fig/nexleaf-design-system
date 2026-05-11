@@ -1,0 +1,105 @@
+/*
+ * Nexleaf Design System — Page
+ * Requires tokens.css.
+ *
+ * .nx-page                  — outer wrapper (white bg, full width)
+ * .nx-page__header          — top bar (back + title + actions)
+ * .nx-page__back-btn        — ghost icon button for back navigation
+ * .nx-page__title-col       — left side: title + subtitle + badges
+ * .nx-page__title-row       — title text + metadata badges inline
+ * .nx-page__title           — heading text
+ * .nx-page__subtitle        — secondary caption below title
+ * .nx-page__actions         — right side: action buttons + pagination
+ * .nx-page__content         — body slot below header
+ */
+
+.nx-page {
+  background: var(--nx-bg-surface);             /* #ffffff */
+  width: 100%;
+  font-family: var(--nx-font-family);
+}
+
+.nx-page__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: var(--nx-space-6);               /* 24px */
+  padding-bottom: var(--nx-space-6);
+}
+
+/* ─── Left side ─────────────────────────────────────────────────── */
+.nx-page__left {
+  display: flex;
+  gap: var(--nx-space-1);                       /* 4px */
+  align-items: flex-start;
+  flex: 1 0 0;
+  min-width: 0;
+}
+
+.nx-page__back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--nx-radius-sm);           /* 8px */
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 4px;
+  transition: background 0.12s;
+  outline: none;
+}
+
+.nx-page__back-btn:hover {
+  background: var(--nx-bg-disabled);            /* rgba(0,0,0,0.06) */
+}
+
+.nx-page__back-btn:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+.nx-page__title-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.nx-page__title-row {
+  display: flex;
+  gap: var(--nx-space-2);                       /* 8px */
+  align-items: center;
+  padding: 2px 0;
+}
+
+.nx-page__title {
+  font-size: 20px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+  line-height: 24px;
+  color: var(--nx-text-default);
+  white-space: nowrap;
+}
+
+.nx-page__subtitle {
+  font-size: var(--nx-font-size-caption);       /* 12px */
+  font-weight: 450;
+  color: var(--nx-text-subdued);
+  line-height: var(--nx-line-height-tight);     /* 16px */
+}
+
+.nx-page__badges {
+  display: flex;
+  gap: var(--nx-space-1);                       /* 4px */
+  align-items: center;
+}
+
+/* ─── Right side ────────────────────────────────────────────────── */
+.nx-page__actions {
+  display: flex;
+  gap: var(--nx-space-2);                       /* 8px */
+  align-items: center;
+  flex-shrink: 0;
+}

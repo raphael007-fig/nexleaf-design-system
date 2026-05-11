@@ -1,0 +1,188 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as CardStories from './Card.stories.jsx';
+
+<Meta title="Components/Card/Docs" />
+
+# Card
+
+Structured content containers for displaying equipment details, location context, contact information, and associated component lists. Cards use the shadow-100 border treatment and a `12px` border radius throughout.
+
+<Canvas of={CardStories.AllLayouts} />
+
+---
+
+## When to use
+
+- Equipment or asset detail pages where data is grouped into sections
+- Dashboard sidebars showing location, contact, or status context
+- Anywhere tabular sub-data needs to be collapsible (Layout Type 2)
+
+---
+
+## Interaction states
+
+<Canvas of={CardStories.InteractionStates} />
+
+---
+
+## Layout Type 1 — Main Detail Card
+
+<Canvas of={CardStories.LayoutType1} />
+
+Equipment detail card with three sections:
+1. **Photos** — horizontal image row with `CheckCircleIcon` section title
+2. **Fields** — 2-column key/value grid, minimum row height `44px`
+3. **Notes** — free-text block with `CheckCircleIcon` section title
+
+---
+
+## Layout Type 2 — Accordion Table
+
+<Canvas of={CardStories.LayoutType2} />
+
+Collapsible card revealing a tabbed component table. The accordion header shows a title + optional description. The body contains:
+- **Tabs** + a sort icon button
+- A compact data table with 4 columns and a View link per row
+- Optional table `Pagination` at the bottom
+
+---
+
+## Layout Type 3 — Location Card
+
+<Canvas of={CardStories.LayoutType3} />
+
+Shows region and current facility (facility renders as a link). A map preview image fills the bottom of the card; a styled placeholder is shown when no `mapSrc` is provided.
+
+---
+
+## Layout Type 4 — Contact Card
+
+<Canvas of={CardStories.LayoutType4} />
+
+Two-row contact block: added-by person and contact phone number, each with a leading icon.
+
+---
+
+## Primitives
+
+<Canvas of={CardStories.Primitives} />
+
+---
+
+## Anatomy
+
+### Card container
+| Property | Value |
+|----------|-------|
+| Background | `#ffffff` |
+| Border radius | `12px` |
+| Padding | `12px` |
+| Gap (children) | `12px` |
+| Shadow | shadow-100 (see below) |
+
+### Shadow (shadow-100)
+```
+0 1px 0 rgba(26,26,26,0.07),
+inset 1px 0 0 rgba(0,0,0,0.13),
+inset -1px 0 0 rgba(0,0,0,0.13),
+inset 0 -1px 0 rgba(0,0,0,0.17),
+inset 0 1px 0 rgba(204,204,204,0.5)
+```
+
+### CardField
+| Part | Size | Weight | Color |
+|------|------|--------|-------|
+| Label | 13px | 650 | `#303030` |
+| Value (no icon) | 13px | 450 | `#303030` |
+| Value (with icon) | 13px | 450 | `#616161` |
+| Value (link) | 13px | 450 | `#005bd3`, underlined |
+| Icon | 20×20px | — | `#616161` |
+| Min row height | 44px | — | — |
+
+### CardImages
+| Property | Value |
+|----------|-------|
+| Thumbnail size | 120×120px |
+| Border radius | `8px` |
+| Gap | `16px` |
+
+---
+
+## Icons used
+
+| Usage | Icon |
+|-------|------|
+| Section title (photos, notes) | `CheckCircleIcon` — `#12B76A` |
+| Region field | `LocationIcon` — `#616161` |
+| Current Facility field | `CompassIcon` — `#616161` |
+| Added by field | `PersonIcon` — `#616161` |
+| Contact number field | `PhoneIcon` — `#616161` |
+| Accordion toggle | `ChevronDownIcon` |
+| Table sort | `SortIcon` |
+
+---
+
+## React components
+
+```jsx
+import {
+  Card,
+  CardField,
+  CardDivider,
+  CardImages,
+  CardNotes,
+  CardSectionTitle,
+  CardLayoutType1,
+  CardLayoutType2,
+  CardLayoutType3,
+  CardLayoutType4,
+} from 'components/Card/Card.jsx';
+
+// Layout Type 1 — Detail card
+<CardLayoutType1
+  images={[src1, src2, src3]}
+  fields={[
+    { label: 'Serial Number', value: 'SN-00482-KE' },
+    { label: 'Status',        value: 'Active' },
+  ]}
+  notes="Optional notes text here."
+/>
+
+// Layout Type 2 — Accordion table
+<CardLayoutType2
+  title="Associated Components"
+  description="Primary components and accessories"
+  tabs={[{ label: 'Primary Components' }, { label: 'Accessories' }]}
+  activeTab={tab}
+  onTabChange={setTab}
+  tableRows={[
+    { id: '1', type: 'Data Logger', manufacturer: 'Nexleaf', model: 'ColdTrace G3', equipmentId: 'EQ-10021' },
+  ]}
+  footer={<Pagination hasPrevious={false} hasNext label="1–3 of 3" type="table" />}
+  defaultOpen
+/>
+
+// Layout Type 3 — Location card
+<CardLayoutType3
+  region="North Kenya"
+  facilityName="Lodwar County Hospital"
+  facilityHref="/facilities/lodwar"
+/>
+
+// Layout Type 4 — Contact card
+<CardLayoutType4
+  addedBy="Grace Mwangi"
+  contactNumber="+254 712 345 678"
+/>
+
+// Custom card from primitives
+<Card>
+  <CardSectionTitle title="Equipment Details" />
+  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+    <CardField label="Model" value="ColdTrace G3" />
+    <CardField label="Status" value="Active" />
+  </div>
+  <CardDivider />
+  <CardImages images={[src1, src2]} />
+</Card>
+```

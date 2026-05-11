@@ -1,0 +1,193 @@
+/*
+ * Nexleaf Design System — Badge
+ * Requires tokens.css.
+ *
+ * .nx-badge               — base pill shape
+ * .nx-badge--default      — grey (default)
+ * .nx-badge--info         — blue
+ * .nx-badge--success      — green
+ * .nx-badge--attention    — yellow
+ * .nx-badge--warning      — orange
+ * .nx-badge--critical     — red
+ * .nx-badge--enabled      — same as default
+ * .nx-badge--read-only    — transparent bg
+ * .nx-badge--new          — same as default
+ * .nx-badge--lg           — large size modifier
+ * .nx-badge__dot          — progress dot (incomplete / partial / complete)
+ */
+
+.nx-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 2px 8px;
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  flex-shrink: 0;
+
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption);        /* 12px */
+  font-weight: var(--nx-font-weight-semibold);   /* 550 */
+  line-height: var(--nx-line-height-tight);      /* 16px */
+  white-space: nowrap;
+}
+
+/* Tone variants */
+.nx-badge--default,
+.nx-badge--enabled,
+.nx-badge--new {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--nx-text-subdued);                 /* #616161 */
+}
+
+.nx-badge--info {
+  background: #e0f0ff;
+  color: #00527c;
+}
+
+.nx-badge--success {
+  background: var(--nx-bg-success);              /* #cdfee1 */
+  color: var(--nx-text-success);                 /* #0c5132 */
+}
+
+.nx-badge--attention {
+  background: #ffef9d;
+  color: #4f4700;
+}
+
+.nx-badge--warning {
+  background: #ffd6a4;
+  color: #5e4200;
+}
+
+.nx-badge--critical {
+  background: #fedad9;
+  color: var(--nx-text-critical);                /* #8e1f0b */
+}
+
+.nx-badge--read-only {
+  background: transparent;
+  color: var(--nx-text-subdued);
+}
+
+/* Large modifier */
+.nx-badge--lg {
+  height: auto;
+  padding: 4px 8px;
+}
+
+/* Progress dot (with-dot variant) */
+.nx-badge--with-dot {
+  padding-left: 0;
+}
+
+.nx-badge__dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.nx-badge__dot-inner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.25px solid var(--nx-text-subdued);   /* #616161 */
+}
+
+/* incomplete = hollow circle */
+.nx-badge__dot--incomplete .nx-badge__dot-inner {
+  background: transparent;
+  border-radius: 50%;
+}
+
+/* partial = rounded square, semi-filled */
+.nx-badge__dot--partial .nx-badge__dot-inner {
+  border-radius: 2px;
+  background: rgba(97, 97, 97, 0.4);
+}
+
+/* complete = filled rounded square */
+.nx-badge__dot--complete .nx-badge__dot-inner {
+  border-radius: 2px;
+  background: var(--nx-text-subdued);
+}
+
+/* ─── Strong tone variants ─────────────────────────────────────────────────── */
+/*
+ * Strong tones — exact values from Figma (node 108227:921)
+ *
+ * .nx-badge--info-strong       — light blue bg (#91d0ff),  dark text (#00527c)
+ * .nx-badge--success-strong    — deep green bg (#29845a),  near-white text (#f8fffb)
+ * .nx-badge--attention-strong  — bright yellow bg (#ffe600), very dark text (#332e00)
+ * .nx-badge--warning-strong    — amber bg (#ffb800),        dark text (#5e4200)
+ * .nx-badge--critical-strong   — bright red bg (#e51c00),   near-white text (#fffbfb)
+ */
+
+.nx-badge--info-strong {
+  background: #91d0ff;
+  color: #00527c;
+}
+
+.nx-badge--success-strong {
+  background: #29845a;
+  color: #f8fffb;
+}
+
+.nx-badge--attention-strong {
+  background: #ffe600;
+  color: #332e00;
+}
+
+.nx-badge--warning-strong {
+  background: #ffb800;
+  color: #5e4200;
+}
+
+.nx-badge--critical-strong {
+  background: #e51c00;
+  color: #fffbfb;
+}
+
+/* Dismiss button inside badge */
+.nx-badge__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0 0 0 2px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+  opacity: 0.8;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.nx-badge__dismiss:hover {
+  opacity: 1;
+}
+
+/* Icon slot — 20×20 container holding a 14px SVG */
+.nx-badge__icon-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* With leading icon or progress indicator — remove left padding */
+.nx-badge--with-leading {
+  padding-left: 0;
+}
+
+/* With dismiss — reduce right padding */
+.nx-badge--with-dismiss {
+  padding-right: 4px;
+}

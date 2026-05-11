@@ -1,0 +1,161 @@
+/*
+ * Nexleaf Design System — CSS Custom Properties
+ * Source of truth for all token values.
+ * Import this file once at the root of any project:
+ *   @import 'tokens.css';   (or link in <head>)
+ *
+ * These tokens map 1:1 to the JS constants in tokens/index.js
+ * and to the Figma variables in "Nexleaf Styles – Polaris Focused".
+ */
+
+:root {
+
+  /* ─────────────────────────────────────────────
+   * SURFACE & BACKGROUND
+   * ───────────────────────────────────────────── */
+  --nx-bg-page:        #f1f1f1;   /* App/page background */
+  --nx-bg-surface:     #ffffff;   /* Cards, modals, panels */
+  --nx-bg-input:       #fdfdfd;   /* Text inputs, selects, textareas at rest */
+  --nx-bg-input-hover: #fafafa;   /* Input background on hover or focus */
+  --nx-bg-disabled:    rgba(0, 0, 0, 0.06); /* Disabled field background */
+  --nx-bg-selected:    #f0f7ff;   /* Selected row / checked option highlight */
+  --nx-bg-open:        #f7f9fc;   /* Accordion open / tab panel background */
+
+  /* ─────────────────────────────────────────────
+   * PRIMARY (INTERACTIVE)
+   * ───────────────────────────────────────────── */
+  --nx-color-primary:          #005bd3;
+  --nx-color-primary-disabled: rgba(0, 0, 0, 0.17);
+  --nx-color-primary-hover-shadow: rgba(0, 91, 211, 0.12);
+
+  /* ─────────────────────────────────────────────
+   * TEXT
+   * ───────────────────────────────────────────── */
+  --nx-text-default:      #303030;  /* Body, labels, headings */
+  --nx-text-subdued:      #616161;  /* Secondary, icon strokes */
+  --nx-text-placeholder:  #9e9e9e;  /* Input placeholders, tertiary */
+  --nx-text-disabled:     #b5b5b5;  /* Disabled text and icons */
+  --nx-text-on-primary:   #ffffff;  /* Text/icons on primary blue */
+
+  /* ─────────────────────────────────────────────
+   * BORDERS
+   * ───────────────────────────────────────────── */
+  --nx-border-default:       #e0e0e0;  /* Cards, accordion, dividers */
+  --nx-border-input:         #8a8a8a;  /* Active input/select border */
+  --nx-border-input-error:   #8e1f0b;  /* Input error state border */
+  --nx-border-light:         #ebebeb;  /* Subtle dividers, list separators */
+  --nx-border-lighter:       #f0f0f0;  /* Intra-list separators */
+  --nx-border-secondary-btn: #c9c9c9;  /* Secondary button border */
+
+  /* ─────────────────────────────────────────────
+   * SEMANTIC — STATUS STATES
+   * ───────────────────────────────────────────── */
+  --nx-color-critical:  #d92d20;
+  --nx-color-success:   #12b76a;
+
+  --nx-bg-success:      #cdfee1;
+  --nx-text-success:    #0c5132;
+  --nx-border-success:  #7be8b4;
+
+  --nx-bg-warning:      #fff3cd;
+  --nx-text-warning:    #856404;
+  --nx-border-warning:  #ffd966;
+
+  --nx-bg-info:         #eaf4ff;
+  --nx-text-info:       #00527c;
+  --nx-border-info:     #b3d9f7;
+
+  --nx-bg-critical:     #fee9e8;
+  --nx-text-critical:   #8e1f0b;
+  --nx-border-critical: #f5b8b5;
+
+  /* ─────────────────────────────────────────────
+   * CONTEXTUAL / DOMAIN-SPECIFIC
+   * ───────────────────────────────────────────── */
+  --nx-color-morning: #f59e0b;  /* Morning/day session indicators */
+  --nx-color-evening: #6366f1;  /* Evening/night session indicators */
+
+  /* ─────────────────────────────────────────────
+   * TYPOGRAPHY
+   * ───────────────────────────────────────────── */
+  --nx-font-family: 'Inter', sans-serif;
+
+  --nx-font-size-caption:    12px;
+  --nx-font-size-label:      13px;
+  --nx-font-size-body:       14px;
+  --nx-font-size-heading-sm: 16px;
+  --nx-font-size-heading-md: 20px;
+  --nx-font-size-heading-lg: 24px;
+
+  --nx-font-weight-regular: 400;
+  --nx-font-weight-medium:  500;
+  --nx-font-weight-semibold:550;
+  --nx-font-weight-bold:    600;
+  --nx-font-weight-extrabold:700;
+
+  --nx-line-height-tight:  16px;
+  --nx-line-height-normal: 20px;
+  --nx-line-height-relaxed:24px;
+
+  /* ─────────────────────────────────────────────
+   * SPACING (multiples of 4px)
+   * ───────────────────────────────────────────── */
+  --nx-space-1:  4px;
+  --nx-space-2:  8px;
+  --nx-space-3: 12px;
+  --nx-space-4: 16px;
+  --nx-space-5: 20px;
+  --nx-space-6: 24px;
+  --nx-space-8: 32px;
+  --nx-space-10:40px;
+
+  /* ─────────────────────────────────────────────
+   * BORDER RADIUS
+   * ───────────────────────────────────────────── */
+  --nx-radius-sm:     8px;   /* Buttons, inputs, banners, list containers */
+  --nx-radius-md:    10px;   /* Accordions */
+  --nx-radius-lg:    12px;   /* Option-card, checkbox containers */
+  --nx-radius-xl:    16px;   /* Proto/navigation cards */
+  --nx-radius-pill: 100px;   /* Badges, pills */
+  --nx-radius-circle:50%;    /* Status dots */
+
+  /* ─────────────────────────────────────────────
+   * SHADOWS
+   *
+   * The Nexleaf button system uses box-shadow instead of border.
+   * Reason: inset shadows create button borders without causing layout
+   * shift on state change. Outset shadows add the focus ring on top,
+   * so both can coexist without conflicting border declarations.
+   * ───────────────────────────────────────────── */
+
+  /* Default (secondary) button */
+  --nx-shadow-btn-rest:   inset 0 -1px 0 #b5b5b5,
+                          inset -1px 0 0 #e3e3e3,
+                          inset  1px 0 0 #e3e3e3,
+                          inset  0  1px 0 #e3e3e3;
+
+  --nx-shadow-btn-hover:  inset 0 -1px 0 #ccc,
+                          inset -1px 0 0 #ebebeb,
+                          inset  1px 0 0 #ebebeb,
+                          inset  0  1px 0 #ebebeb;
+
+  --nx-shadow-btn-active: inset 0  2px 1px rgba(26, 26, 26, 0.20),
+                          inset  1px 0  1px rgba(26, 26, 26, 0.12),
+                          inset -1px 0  1px rgba(26, 26, 26, 0.12);
+
+  /* Primary button */
+  --nx-shadow-btn-primary: inset  0  2px 0 rgba(255, 255, 255, 0.20),
+                            inset  2px 0  0 rgba(255, 255, 255, 0.20),
+                            inset -2px 0  0 rgba(255, 255, 255, 0.20),
+                            inset  0 -1px 0 1px #000,
+                            inset  0  1px 0 #000;
+
+  /* Critical/destructive button */
+  --nx-shadow-btn-critical: inset 0  1px 0 rgba(255, 255, 255, 0.48),
+                             inset -1px 0 0 rgba(255, 255, 255, 0.20),
+                             inset  1px 0 0 rgba(255, 255, 255, 0.20),
+                             inset  0 -1.5px 0 rgba(0, 0, 0, 0.25);
+
+  /* Focus ring — applied as an additional box-shadow layer */
+  --nx-focus-ring: 0 0 0 2px #005bd3;
+}

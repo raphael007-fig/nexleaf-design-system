@@ -1,0 +1,96 @@
+/*
+ * Nexleaf Design System — Pagination
+ * Requires tokens.css.
+ *
+ * Two types:
+ *   page  — standalone prev/label/next row
+ *   table — full-width footer bar (bg-open)
+ *
+ * .nx-pagination            — page-type wrapper
+ * .nx-pagination--table     — table-type wrapper
+ * .nx-pagination__btn       — prev/next button
+ * .nx-pagination__btn--prev — left-rounded corners
+ * .nx-pagination__btn--next — right-rounded corners
+ * .nx-pagination__label     — center label text
+ */
+
+/* ─── Page pagination ───────────────────────────────────────────── */
+.nx-pagination {
+  display: flex;
+  align-items: center;
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Table pagination ──────────────────────────────────────────── */
+.nx-pagination--table {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: var(--nx-bg-open);                 /* #f7f9fc */
+  padding: 6px 8px 6px 12px;
+  font-family: var(--nx-font-family);
+}
+
+.nx-pagination--table .nx-pagination__label {
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);
+  white-space: nowrap;
+}
+
+.nx-pagination--table .nx-pagination__nav {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* ─── Button ────────────────────────────────────────────────────── */
+.nx-pagination__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.08);
+  transition: background 0.1s;
+}
+
+/* Page type — rounded buttons */
+.nx-pagination .nx-pagination__btn--prev {
+  border-radius: 8px 0 0 8px;
+}
+.nx-pagination .nx-pagination__btn--next {
+  border-radius: 0 8px 8px 0;
+}
+
+/* Table type — no bg at rest */
+.nx-pagination--table .nx-pagination__btn {
+  background: transparent;
+}
+
+.nx-pagination__btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.13);
+}
+
+.nx-pagination__btn:active:not(:disabled) {
+  background: rgba(0, 0, 0, 0.17);
+}
+
+.nx-pagination__btn:disabled {
+  background: rgba(0, 0, 0, 0.04);
+  cursor: not-allowed;
+}
+
+/* ─── Label (page type) ─────────────────────────────────────────── */
+.nx-pagination__label {
+  padding: 4px 12px;
+  font-size: var(--nx-font-size-label);
+  font-weight: 450;
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);
+  white-space: nowrap;
+}

@@ -1,0 +1,156 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as PageStories from './Page.stories.jsx';
+
+<Meta title="Components/Page/Docs" />
+
+# Page
+
+Top-level layout wrapper. Provides the page header: title, subtitle, back navigation, metadata badges, and primary/secondary action buttons. Does not constrain the content area — that is the responsibility of the route layout.
+
+<Canvas of={PageStories.WithAllFeatures} />
+
+---
+
+## When to use
+
+Wrap every screen-level view with `Page`. It is the single source of truth for:
+- Page title and subtitle
+- Back button (when in a detail view)
+- Metadata badges (status, category labels)
+- Primary CTA and secondary actions
+- Optional pagination controls in the header
+
+---
+
+## Interaction states — all variants
+
+<Canvas of={PageStories.WithAllFeatures} />
+<Canvas of={PageStories.WithBackAction} />
+<Canvas of={PageStories.WithPagination} />
+
+---
+
+## Anatomy
+
+```
+┌──────────────────────────────────────────────────────┐
+│ ← [back]  Page Title  [badge] [badge]  [Sec] [Primary]│
+│            Subtitle text                              │
+├──────────────────────────────────────────────────────┤
+│  {children}                                          │
+└──────────────────────────────────────────────────────┘
+```
+
+- **Back button** — 28×28px ghost icon button, only shown when `backAction` is provided
+- **Title** — 20px, weight 650, `#303030`
+- **Subtitle** — 12px, `#616161`, below title
+- **Metadata badges** — inline `Badge` components beside the title
+- **Secondary actions** — secondary buttons, left of primary
+- **Primary action** — single primary button, rightmost
+- **Pagination** — optional `Pagination` component in the actions area
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Page/Page.css';
+```
+
+```html
+<div class="nx-page">
+  <div class="nx-page__header">
+
+    <!-- Left: back + title -->
+    <div class="nx-page__left">
+      <!-- Back button (optional) -->
+      <button class="nx-page__back-btn" aria-label="Back">
+        <!-- ArrowLeft icon -->
+      </button>
+
+      <div class="nx-page__title-col">
+        <div class="nx-page__title-row">
+          <span class="nx-page__title">Temperature Records</span>
+          <!-- Badges (optional) -->
+          <div class="nx-page__badges">
+            <span class="nx-badge nx-badge--success">Active</span>
+          </div>
+        </div>
+        <span class="nx-page__subtitle">Last synced 2 hours ago</span>
+      </div>
+    </div>
+
+    <!-- Right: actions -->
+    <div class="nx-page__actions">
+      <button class="nx-btn nx-btn--secondary">Export</button>
+      <button class="nx-btn nx-btn--primary">Record reading</button>
+    </div>
+
+  </div>
+
+  <!-- Page content -->
+  <div class="nx-page__content">
+    <!-- IndexTable, form, etc. -->
+  </div>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-surface` | `#ffffff` | Page background |
+| `--nx-space-6` | `24px` | Header top/bottom padding |
+| `--nx-space-2` | `8px` | Gap between action buttons |
+| `--nx-space-1` | `4px` | Gap between back button and title |
+| `--nx-text-default` | `#303030` | Title color |
+| `--nx-text-subdued` | `#616161` | Subtitle color |
+| `--nx-font-size-caption` | `12px` | Subtitle size |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.06)` | Back button hover background |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Back button focus ring |
+
+---
+
+## Accessibility
+
+- Back button must have `aria-label="Back"` — it is icon-only
+- Page `<h1>` should be inside `.nx-page__title` for correct heading hierarchy
+- When using metadata badges, ensure status is also announced in the page title or a visually hidden `<span>` for screen readers that don't read badge content inline
+
+---
+
+## React component
+
+```jsx
+import { Page } from 'components/Page/Page.jsx';
+
+// Basic
+<Page title="Temperature Records">
+  {/* content */}
+</Page>
+
+// With back action, subtitle, metadata, and actions
+<Page
+  title="Fridge A — Zone 1"
+  subtitle="Last synced 2 hours ago"
+  backAction={{ onAction: () => navigate(-1) }}
+  metadata={[
+    { label: 'Active', tone: 'success' },
+    { label: 'Morning', tone: 'default' },
+  ]}
+  primaryAction={{ content: 'Record reading', onAction: openForm }}
+  secondaryActions={[
+    { content: 'Export', onAction: exportData },
+    { content: 'More actions', disclosure: true, onAction: openMenu },
+  ]}
+>
+  {/* IndexTable, form, etc. */}
+</Page>
+```
+
+---
+
+<Canvas of={PageStories.Full} />

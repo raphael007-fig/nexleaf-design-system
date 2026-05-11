@@ -1,0 +1,117 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as AccordionStories from './Accordion.stories.jsx';
+
+<Meta title="Components/Accordion/Docs" />
+
+# Accordion
+
+A collapsible section that hides or reveals content on demand. Used to reduce visual complexity in long forms and detail views.
+
+<Canvas of={AccordionStories.AllStates} />
+
+---
+
+## When to use
+
+- Form sections that are optional or secondary (Morning / Evening readings)
+- Details panels where most users only need to see one section at a time
+- Settings or configuration grouped by topic
+
+Do **not** use Accordion when all sections need to be visible simultaneously — use a flat form layout instead.
+
+---
+
+## Interaction states
+
+<Canvas of={AccordionStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Accordion/Accordion.css';
+```
+
+```html
+<!-- Closed -->
+<div class="nx-accordion">
+  <button class="nx-accordion__trigger" aria-expanded="false">
+    <span class="nx-accordion__title">Morning Reading</span>
+    <svg class="nx-accordion__chevron"><!-- chevron path --></svg>
+  </button>
+</div>
+
+<!-- Open -->
+<div class="nx-accordion">
+  <button class="nx-accordion__trigger nx-accordion__trigger--open" aria-expanded="true">
+    <span class="nx-accordion__title">Morning Reading</span>
+    <svg class="nx-accordion__chevron"><!-- chevron path --></svg>
+  </button>
+  <div class="nx-accordion__body">
+    <!-- form fields -->
+  </div>
+</div>
+
+<!-- Required + has content (closed) -->
+<div class="nx-accordion">
+  <button class="nx-accordion__trigger" aria-expanded="false">
+    <span class="nx-accordion__title nx-accordion__title--required">
+      Morning Reading
+      <span class="nx-accordion__dot"></span>
+    </span>
+    <svg class="nx-accordion__chevron"><!-- chevron path --></svg>
+  </button>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-border-default` | `#e0e0e0` | Container border + open-state divider |
+| `--nx-radius-md` | `10px` | Container corner radius |
+| `--nx-bg-surface` | `#ffffff` | Closed trigger background |
+| `--nx-bg-open` | `#f7f9fc` | Open trigger background |
+| `--nx-font-size-body` | `14px` | Title font size |
+| `--nx-font-weight-bold` | `600` | Title font weight |
+| `--nx-color-critical` | `#d92d20` | Required asterisk |
+| `--nx-color-success` | `#12b76a` | Has-content indicator dot |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Trigger focus ring |
+| `--nx-space-5` | `20px` | Gap between body children |
+
+---
+
+## Accessibility
+
+- Trigger is a `<button type="button">` — keyboard navigable, announced by screen readers
+- Use `aria-expanded="true/false"` on the trigger to communicate open state
+- The body content must be hidden from assistive tech when closed — either use `hidden` attribute, `display: none`, or control `visibility`
+- `aria-controls` on the trigger pointing to the body `id` is recommended for robust AT support
+
+---
+
+## React component
+
+```jsx
+import { Accordion } from 'components/Accordion/Accordion.jsx';
+
+const [open, setOpen] = useState(false);
+
+<Accordion
+  title="Morning Reading"
+  required
+  open={open}
+  onToggle={() => setOpen(o => !o)}
+  hasContent={!!morningValue}
+>
+  <TextInput label="Temperature" suffix="°C" value={morningValue} onChange={fn} />
+</Accordion>
+```
+
+---
+
+<Canvas of={AccordionStories.Interactive} />

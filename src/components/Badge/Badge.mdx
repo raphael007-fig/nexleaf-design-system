@@ -1,0 +1,206 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as BadgeStories from './Badge.stories.jsx';
+
+<Meta title="Components/Badge/Docs" />
+
+# Badge
+
+Compact status label. Communicates category, state, or count at a glance. Never interactive — badges are purely decorative/informational.
+
+<Canvas of={BadgeStories.AllStates} />
+
+---
+
+## Interaction states
+
+<Canvas of={BadgeStories.AllTones} />
+<Canvas of={BadgeStories.WithProgress} />
+<Canvas of={BadgeStories.StrongTones} />
+<Canvas of={BadgeStories.StrongLarge} />
+
+---
+
+## When to use
+
+- Status labels on list rows (Pending, Completed, Locked)
+- Metadata tags on page headers
+- Count indicators on tabs or list items
+- Progress indicators (incomplete / partial / complete)
+
+Do **not** use a badge for an action — use a `Btn` instead.
+
+---
+
+## Tone palette
+
+### Regular (tinted)
+
+| Tone | Background | Text | Use for |
+|------|-----------|------|---------|
+| `default` | `rgba(0,0,0,0.06)` | `#616161` | Neutral state, enabled, new |
+| `info` | `#e0f0ff` | `#00527c` | Informational metadata |
+| `success` | `#cdfee1` | `#0c5132` | Completed, active, healthy |
+| `attention` | `#ffef9d` | `#4f4700` | Pending, needs review |
+| `warning` | `#ffd6a4` | `#5e4200` | At risk, expiring soon |
+| `critical` | `#fedad9` | `#8e1f0b` | Error, failed, overdue |
+| `read-only` | transparent | `#616161` | Read-only annotations |
+
+<Canvas of={BadgeStories.AllTones} />
+
+### Strong (filled)
+
+Use Strong badges when higher visual contrast is required — e.g., on busy backgrounds, dashboards, or next to other strong-tone badges.
+
+| Tone | Background | Text | Use for |
+|------|-----------|------|---------|
+| `info-strong` | `#91d0ff` | `#00527c` | Highlighted informational metadata |
+| `success-strong` | `#29845a` | `#f8fffb` | Confirmed active / healthy |
+| `attention-strong` | `#ffe600` | `#332e00` | Urgent pending action |
+| `warning-strong` | `#ffb800` | `#5e4200` | At-risk, expiring soon |
+| `critical-strong` | `#e51c00` | `#fffbfb` | Error, failed, critical alert |
+
+<Canvas of={BadgeStories.StrongTones} />
+<Canvas of={BadgeStories.StrongLarge} />
+
+---
+
+## Icons & dismiss
+
+Badges accept three optional slots around the label:
+
+| Prop | Type | Renders |
+|------|------|---------|
+| `progressIndicator` | boolean | Filled 8×8px rounded-square dot in the tone's dot color (left of label) |
+| `icon` | boolean | Info-circle SVG icon (left of label) |
+| `onDismiss` | function | × dismiss button (right of label) |
+
+<Canvas of={BadgeStories.AllStates} />
+
+---
+
+## Progress dots
+
+Three progress variants are shown as a small shape to the left of the label:
+
+| `progress` value | Shape | Fill |
+|-----------------|-------|------|
+| `incomplete` | Hollow circle | none |
+| `partial` | Rounded square | semi-filled (40% opacity) |
+| `complete` | Rounded square | solid `#616161` |
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Badge/Badge.css';
+```
+
+```html
+<!-- Regular tone -->
+<span class="nx-badge nx-badge--success">Completed</span>
+<span class="nx-badge nx-badge--attention">Pending</span>
+<span class="nx-badge nx-badge--critical">Failed</span>
+
+<!-- Strong tone -->
+<span class="nx-badge nx-badge--info-strong">Info</span>
+<span class="nx-badge nx-badge--success-strong">Active</span>
+<span class="nx-badge nx-badge--attention-strong">Attention</span>
+<span class="nx-badge nx-badge--warning-strong">Warning</span>
+<span class="nx-badge nx-badge--critical-strong">Failed</span>
+
+<!-- Large -->
+<span class="nx-badge nx-badge--success-strong nx-badge--lg">Active</span>
+
+<!-- With progress indicator dot -->
+<span class="nx-badge nx-badge--info-strong nx-badge--with-leading">
+  <span class="nx-badge__icon-slot">
+    <!-- 8×8 rounded square with border and fill: #002133 -->
+  </span>
+  Label
+</span>
+
+<!-- With info icon -->
+<span class="nx-badge nx-badge--info-strong nx-badge--with-leading">
+  <span class="nx-badge__icon-slot">
+    <!-- 14px info-circle SVG fill: #00527c -->
+  </span>
+  Label
+</span>
+
+<!-- With dismiss button -->
+<span class="nx-badge nx-badge--info-strong nx-badge--with-dismiss">
+  Label
+  <button class="nx-badge__dismiss" aria-label="Dismiss">
+    <!-- 10px × SVG fill: #00527c -->
+  </button>
+</span>
+
+<!-- With progress dot -->
+<span class="nx-badge nx-badge--default nx-badge--with-dot">
+  <span class="nx-badge__dot">
+    <span class="nx-badge__dot-inner nx-badge__dot--partial"></span>
+  </span>
+  Partial
+</span>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Corner radius |
+| `--nx-font-size-caption` | `12px` | Label text size |
+| `--nx-font-weight-semibold` | `550` | Label weight |
+| `--nx-line-height-tight` | `16px` | Label line height |
+| `--nx-bg-success` | `#cdfee1` | Success badge background |
+| `--nx-text-success` | `#0c5132` | Success badge text |
+| `--nx-text-critical` | `#8e1f0b` | Critical badge text |
+| `--nx-text-subdued` | `#616161` | Default/read-only badge text |
+
+---
+
+## Accessibility
+
+- Badges are `<span>` elements — purely presentational
+- When a badge communicates status critical to a decision, supplement with visible text or an `aria-label` on the containing row
+- Never use color alone to convey meaning — the text label must be present
+- Dismiss buttons must have `aria-label="Dismiss"` on the `<button>` element
+
+---
+
+## React component
+
+```jsx
+import { Badge, StatusBadge, IconInfoCircle } from 'components/Badge/Badge.jsx';
+
+// Regular tones
+<Badge tone="success">Completed</Badge>
+<Badge tone="attention">Pending</Badge>
+<Badge tone="critical" size="large">Overdue</Badge>
+<Badge tone="default" progress="partial">In progress</Badge>
+
+// Strong tones
+<Badge tone="info-strong">Info</Badge>
+<Badge tone="success-strong">Active</Badge>
+<Badge tone="warning-strong">Warning</Badge>
+<Badge tone="attention-strong">Attention</Badge>
+<Badge tone="critical-strong" size="large">Failed</Badge>
+
+// With progress indicator dot, icon, or dismiss
+<Badge tone="info-strong" progressIndicator>Label</Badge>
+<Badge tone="info-strong" icon>Label</Badge>
+<Badge tone="info-strong" onDismiss={() => handleDismiss()}>Label</Badge>
+
+// StatusBadge — maps semantic status strings to tones automatically
+<StatusBadge status="pending" />    // → attention tone
+<StatusBadge status="completed" />  // → success tone
+<StatusBadge status="locked" />     // → default tone
+```
+
+---
+
+<Canvas of={BadgeStories.AllStates} />

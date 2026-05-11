@@ -1,0 +1,151 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as CheckboxStories from './Checkbox.stories.jsx';
+
+<Meta title="Components/Checkbox/Docs" />
+
+# Checkbox & RadioButton
+
+Selection controls for binary (checkbox) and mutually exclusive (radio) choices. Both share the same visual language and state behavior.
+
+<Canvas of={CheckboxStories.AllStates} />
+
+---
+
+## When to use
+
+| Component | Use when |
+|-----------|----------|
+| `Checkbox` | Independent binary choice — can select any number |
+| `Checkbox` (indeterminate) | "Select all" that is partially selected |
+| `RadioButton` | Mutually exclusive — selecting one deselects others |
+| `ChoiceList` | Multiple radio or checkbox options as a group with a shared label |
+
+---
+
+## Interaction states
+
+<Canvas of={CheckboxStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Checkbox/Checkbox.css';
+```
+
+```html
+<!-- Checkbox unchecked -->
+<div class="nx-checkbox">
+  <div class="nx-checkbox__row">
+    <div role="checkbox" aria-checked="false" tabindex="0"
+         class="nx-checkbox__control"></div>
+    <span class="nx-checkbox__label">Enable morning session</span>
+  </div>
+</div>
+
+<!-- Checked -->
+<div class="nx-checkbox">
+  <div class="nx-checkbox__row">
+    <div role="checkbox" aria-checked="true" tabindex="0"
+         class="nx-checkbox__control nx-checkbox__control--checked">
+      <!-- check icon svg -->
+    </div>
+    <span class="nx-checkbox__label">Enable morning session</span>
+  </div>
+</div>
+
+<!-- With error -->
+<div class="nx-checkbox">
+  <div class="nx-checkbox__row">
+    <div role="checkbox" aria-checked="false" tabindex="0"
+         class="nx-checkbox__control nx-checkbox__control--error"
+         aria-describedby="cb-error"></div>
+    <span class="nx-checkbox__label">I agree to the terms</span>
+  </div>
+  <div class="nx-checkbox__error" id="cb-error">
+    <!-- alert icon --> You must accept the terms to continue.
+  </div>
+</div>
+
+<!-- Disabled -->
+<div class="nx-checkbox">
+  <div class="nx-checkbox__row">
+    <div role="checkbox" aria-checked="false" aria-disabled="true" tabindex="-1"
+         class="nx-checkbox__control nx-checkbox__control--disabled"></div>
+    <span class="nx-checkbox__label nx-checkbox__label--disabled">Unavailable option</span>
+  </div>
+</div>
+
+<!-- Radio button -->
+<div class="nx-radio">
+  <div class="nx-radio__row">
+    <div role="radio" aria-checked="true" tabindex="0"
+         class="nx-radio__control nx-radio__control--checked"></div>
+    <span class="nx-radio__label">Morning</span>
+  </div>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-input` | `#fdfdfd` | Rest background |
+| `--nx-bg-input-hover` | `#fafafa` | Hover background |
+| `--nx-border-input` | `#8a8a8a` | Rest border |
+| `--nx-border-input-error` | `#8e1f0b` | Error border |
+| `--nx-bg-critical` | `#fee9e8` | Error unchecked background |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.08)` | Disabled background |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus ring |
+| `--nx-text-default` | `#303030` | Checked fill / label text |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled label |
+| `--nx-text-critical` | `#8e1f0b` | Error message text |
+
+---
+
+## Accessibility
+
+- Controls use `role="checkbox"` or `role="radio"` with `aria-checked` — not native `<input>` — so `tabindex` and keyboard handlers must be implemented explicitly (see React component)
+- Indeterminate state: `aria-checked="mixed"`
+- Error message must be connected via `aria-describedby`
+- Clicking the label must toggle the control
+- Disabled controls use `tabindex="-1"` and `aria-disabled="true"`
+
+---
+
+## React component
+
+```jsx
+import { Checkbox, RadioButton, ChoiceList } from 'components/Checkbox/Checkbox.jsx';
+
+// Checkbox
+const [checked, setChecked] = useState(false);
+<Checkbox label="Enable morning session" checked={checked} onChange={setChecked} />
+<Checkbox label="Required field" required checked={checked} onChange={setChecked} helpText="Check this to include." />
+<Checkbox label="With error" checked={false} error="This field is required." />
+<Checkbox label="Disabled" checked={false} disabled />
+
+// RadioButton
+<RadioButton label="Morning" checked={val === 'morning'} onChange={() => setVal('morning')} />
+<RadioButton label="Evening" checked={val === 'evening'} onChange={() => setVal('evening')} />
+
+// ChoiceList
+<ChoiceList
+  title="Session type"
+  selected={val}
+  onChange={setVal}
+  choices={[
+    { label: 'Morning', value: 'morning' },
+    { label: 'Evening', value: 'evening' },
+    { label: 'Both',    value: 'both', disabled: true },
+  ]}
+/>
+```
+
+---
+
+<Canvas of={CheckboxStories.RadioButtons} />

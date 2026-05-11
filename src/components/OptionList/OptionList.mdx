@@ -1,0 +1,143 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as OptionListStories from './OptionList.stories.jsx';
+
+<Meta title="Components/OptionList/Docs" />
+
+# OptionList
+
+A rich list of selectable options. Supports single and multi-select, sections, badges, descriptions, and media thumbnails. Typically rendered inside a popover or panel.
+
+<Canvas of={OptionListStories.AllStates} />
+
+---
+
+## When to use
+
+- **OptionList** — when options need more than just a label (descriptions, badges, icons, sections)
+- **SelectInput** — simple bounded list with just labels, no extra metadata
+- **Checkbox / ChoiceList** — always-visible options (not inside a dropdown/popover)
+
+---
+
+## Interaction states
+
+<Canvas of={OptionListStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/OptionList/OptionList.css';
+```
+
+```html
+<!-- Single-select list -->
+<div class="nx-option-list" role="listbox" aria-label="Status">
+
+  <!-- Section heading (optional) -->
+  <div class="nx-option-list__section-title">Active</div>
+
+  <!-- Unselected option -->
+  <div role="option" aria-selected="false" tabindex="0" class="nx-option">
+    <div class="nx-option__content">
+      <div class="nx-option__label-row">
+        <span class="nx-option__label">Morning session</span>
+        <span class="nx-option__badge">Today</span>
+      </div>
+      <span class="nx-option__description">Recorded at 07:30</span>
+    </div>
+  </div>
+
+  <!-- Selected option -->
+  <div role="option" aria-selected="true" tabindex="0" class="nx-option nx-option--selected">
+    <div class="nx-option__content">
+      <div class="nx-option__label-row">
+        <span class="nx-option__label">Evening session</span>
+      </div>
+    </div>
+    <!-- check icon svg -->
+  </div>
+
+  <!-- Disabled option -->
+  <div role="option" aria-selected="false" aria-disabled="true" tabindex="-1"
+       class="nx-option nx-option--disabled">
+    <div class="nx-option__content">
+      <div class="nx-option__label-row">
+        <span class="nx-option__label">Locked record</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-surface` | `#ffffff` | List background |
+| `--nx-border-default` | `#e0e0e0` | List border |
+| `--nx-radius-sm` | `8px` | Container + item corner radius |
+| `--nx-text-default` | `#303030` | Option label |
+| `--nx-text-subdued` | `#616161` | Description, badge text |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled option text |
+| `--nx-color-primary` | `#005bd3` | Focus ring |
+| `--nx-color-critical` | `#d92d20` | Error message icon/text |
+| `--nx-font-size-label` | `13px` | Option label size |
+| `--nx-font-size-caption` | `12px` | Badge text + description size |
+
+---
+
+## Accessibility
+
+- Container: `role="listbox"` with `aria-label` or `aria-labelledby`
+- Each item: `role="option"` with `aria-selected`
+- Multi-select listbox: `aria-multiselectable="true"` on the container
+- Disabled options: `aria-disabled="true"` and `tabindex="-1"`
+- Keyboard: Arrow keys navigate, Enter/Space selects
+
+---
+
+## React component
+
+```jsx
+import { OptionList } from 'components/OptionList/OptionList.jsx';
+
+// Single select
+const [selected, setSelected] = useState('morning');
+<OptionList
+  options={[
+    { label: 'Morning', value: 'morning', description: '07:30 – 12:00' },
+    { label: 'Evening', value: 'evening', description: '18:00 – 22:00' },
+    { label: 'Night',   value: 'night',   disabled: true },
+  ]}
+  selected={selected}
+  onChange={setSelected}
+/>
+
+// Multi-select
+<OptionList
+  allowMultiple
+  options={options}
+  selected={selectedArr}
+  onChange={setSelectedArr}
+/>
+
+// With sections
+<OptionList
+  sections={[
+    { title: 'Recent', options: recentOptions },
+    { title: 'All',    options: allOptions },
+  ]}
+  selected={selected}
+  onChange={setSelected}
+/>
+```
+
+---
+
+<Canvas of={OptionListStories.WithSections} />

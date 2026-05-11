@@ -1,0 +1,149 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as BannerStories from './Banner.stories.jsx';
+
+<Meta title="Components/Banner/Docs" />
+
+# Banner
+
+Full-width contextual message. Communicates feedback, warnings, or important information about a page or action. Not used for toast/snackbar notifications.
+
+<Canvas of={BannerStories.AllStates} />
+
+---
+
+## When to use
+
+- **Info** — neutral guidance, reminders, or non-critical notices
+- **Success** — confirmation that an action completed (form saved, record created)
+- **Warning** — something needs attention but isn't blocking
+- **Critical** — an error occurred or a required action is blocked
+
+Use the **titled form** (with a header bar) for longer messages that need a title and body copy, or when actions are included. Use the **simple form** for short one-liners.
+
+---
+
+## Three visual forms
+
+### Simple
+White card with a colored icon pill (28×28, tone color, 8px radius), message text, optional actions row, and optional × dismiss button.
+
+### Titled
+Two-part card: full-width colored header bar (tone color + icon + title, optional dismiss) + white body with message and action buttons.
+
+### In-card (compact)
+Tinted background using the tone's light color, inline icon, message, and optional actions. Used inside cards and panels where space is constrained.
+
+---
+
+## Interaction states
+
+<Canvas of={BannerStories.InteractionStates} />
+
+---
+
+## Tone reference
+
+| Tone | Header / icon pill bg | Header text | In-card bg | In-card text | Usage |
+|------|-----------------------|-------------|-----------|--------------|-------|
+| `info` | `#91d0ff` | `#002133` | `#eaf4ff` | `#00527c` | General notices |
+| `success` | `#29845a` | `#f8fffb` | `#cdfee1` | `#0c5132` | Saved, confirmed |
+| `warning` | `#ffb800` | `#332e00` | `#fff1e3` | `#5e4200` | At risk, review needed |
+| `critical` | `#e51c00` | `#fffbfb` | `#fee9e8` | `#8e1f0b` | Error, blocked |
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Banner/Banner.css';
+```
+
+```html
+<!-- Simple info -->
+<div class="nx-banner nx-banner--info" role="status">
+  <!-- info icon svg -->
+  <span class="nx-banner__text">Your session expires in 10 minutes.</span>
+</div>
+
+<!-- Simple with dismiss -->
+<div class="nx-banner nx-banner--warning" role="alert">
+  <!-- warning icon -->
+  <span class="nx-banner__text">This reading is outside the expected range.</span>
+  <button class="nx-banner__dismiss" aria-label="Dismiss"><!-- × icon --></button>
+</div>
+
+<!-- Titled critical -->
+<div class="nx-banner--titled" role="alert">
+  <div class="nx-banner__header nx-banner__header--critical">
+    <!-- critical icon -->
+    <span>Unable to save reading</span>
+    <button class="nx-banner__dismiss" aria-label="Dismiss"><!-- × icon --></button>
+  </div>
+  <div class="nx-banner__body">
+    <p>The temperature value is required. Please enter a valid reading before submitting.</p>
+    <div class="nx-banner__actions">
+      <button class="nx-btn nx-btn--secondary">Review fields</button>
+    </div>
+  </div>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Corner radius |
+| `--nx-bg-surface` | `#ffffff` | Titled banner body background |
+| `--nx-bg-critical` | `#fee9e8` | Critical simple background |
+| `--nx-font-size-label` | `13px` | Banner text size |
+| `--nx-font-weight-bold` | `600` | Titled banner header title |
+| `--nx-text-default` | `#303030` | Titled banner body text |
+| `--nx-space-3` | `12px` | Margin above action buttons |
+
+---
+
+## Accessibility
+
+- Simple banners that appear in response to user action: use `role="status"` (polite) or `role="alert"` (assertive/error)
+- Titled critical banners: always `role="alert"` so screen readers announce immediately
+- Dismiss button must have an accessible name: `aria-label="Dismiss"` or visually hidden text
+- Do not auto-dismiss error banners — the user must acknowledge them
+
+---
+
+## React component
+
+```jsx
+import { Banner } from 'components/Banner/Banner.jsx';
+
+// Simple
+<Banner tone="info">Your session expires in 10 minutes.</Banner>
+<Banner tone="success">Reading saved successfully.</Banner>
+<Banner tone="warning" dismissable>Value is outside expected range.</Banner>
+
+// Titled (colored header + white body)
+<Banner
+  tone="critical"
+  title="Unable to save"
+  dismissable
+  actions={[{ label: 'Review', onClick: fn }]}
+>
+  Please correct the highlighted fields and try again.
+</Banner>
+
+// In-card (compact tinted variant — use inside cards/panels)
+<Banner tone="info" inCard>Your session expires in 10 minutes.</Banner>
+<Banner tone="warning" inCard dismissable>Value is outside the expected range.</Banner>
+<Banner tone="critical" inCard actions={[{ label: 'Fix now', onClick: fn }]}>
+  Temperature reading is missing.
+</Banner>
+```
+
+---
+
+<Canvas of={BannerStories.WithTitle} />
+<Canvas of={BannerStories.WithActions} />
+<Canvas of={BannerStories.InCard} />

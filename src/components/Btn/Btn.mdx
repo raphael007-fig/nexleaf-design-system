@@ -1,0 +1,152 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as BtnStories from './Btn.stories.jsx';
+
+<Meta title="Components/Btn/Docs" />
+
+# Button
+
+Triggers an action. Buttons are the primary interactive control in the system — they submit forms, navigate between screens, and execute commands.
+
+<Canvas of={BtnStories.AllStates} />
+
+---
+
+## When to use
+
+| Variant | Use when |
+|---------|----------|
+| **Primary** | The single most important action on a screen (Save, Continue, Confirm) |
+| **Secondary** | Supplementary actions alongside a primary (Cancel, Back, View) |
+| **Destructive** | Irreversible, high-risk actions (Delete, Remove, Discard) |
+| **Ghost** | Inline contextual actions; tertiary links that open drawers or modals |
+| **Plain** | Low-emphasis; navigation-style links within a page |
+
+**Do not** place two primary buttons side by side. One primary per view.
+
+---
+
+## Interaction states
+
+<Canvas of={BtnStories.AllStates} />
+
+---
+
+## CSS selector structure
+
+```css
+/* Import this before using any classes */
+@import 'tokens/tokens.css';
+@import 'components/Btn/Btn.css';
+```
+
+```html
+<!-- Primary -->
+<button class="nx-btn nx-btn--primary">Save</button>
+
+<!-- Secondary (default border style) -->
+<button class="nx-btn nx-btn--secondary">Cancel</button>
+
+<!-- Destructive -->
+<button class="nx-btn nx-btn--destructive">Delete record</button>
+
+<!-- Ghost / plain link -->
+<button class="nx-btn nx-btn--ghost">Learn more</button>
+
+<!-- Size modifiers -->
+<button class="nx-btn nx-btn--primary nx-btn--sm">Micro</button>
+<button class="nx-btn nx-btn--primary nx-btn--lg">Large</button>
+
+<!-- Full width -->
+<button class="nx-btn nx-btn--primary nx-btn--full">Submit</button>
+
+<!-- Disabled -->
+<button class="nx-btn nx-btn--primary" disabled>Save</button>
+
+<!-- Button group -->
+<div class="nx-btn-group">
+  <button class="nx-btn nx-btn--primary">Save</button>
+  <button class="nx-btn nx-btn--secondary">Cancel</button>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Border radius (all variants) |
+| `--nx-font-family` | `'Inter', sans-serif` | Font |
+| `--nx-font-size-caption` | `12px` | Default button text size |
+| `--nx-font-weight-bold` | `600` | Primary / destructive weight |
+| `--nx-font-weight-semibold` | `550` | Secondary weight |
+| `--nx-line-height-tight` | `16px` | Button text line height |
+| `--nx-shadow-btn-rest` | *(inset shadow)* | Secondary at rest border |
+| `--nx-shadow-btn-hover` | *(inset shadow)* | Secondary on hover |
+| `--nx-shadow-btn-active` | *(inset shadow)* | All buttons pressed state |
+| `--nx-shadow-btn-primary` | *(inset shadow)* | Primary at rest |
+| `--nx-shadow-btn-critical` | *(inset shadow)* | Destructive at rest |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus outline (all variants) |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.06)` | Disabled background |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled text |
+| `--nx-text-on-primary` | `#ffffff` | Text on filled buttons |
+
+---
+
+## Why box-shadow borders?
+
+Standard CSS `border` occupies layout space — toggling it on state change shifts content around it.
+Inset `box-shadow` is painted *inside* the element's bounds, so state transitions are layout-shift-free.
+The outset focus ring then layers on top without conflicting with the inset border.
+
+---
+
+## Accessibility
+
+- Always use a `<button>` element (not `<div>` or `<a>` for actions)
+- Disabled buttons should use the `disabled` attribute (not just visual styling)
+- Icon-only buttons (`IconBtn`) must have an `aria-label`
+- Never remove `outline: none` without replacing it with `--nx-focus-ring` on `:focus-visible`
+- Destructive actions should be confirmed in a dialog before executing
+
+---
+
+## React component
+
+```jsx
+import { Btn, ButtonGroup, BtnGroupSegmented, IconBtn } from 'components/Btn/Btn.jsx';
+
+// Basic variants
+<Btn variant="primary" onClick={fn}>Save</Btn>
+<Btn variant="secondary" onClick={fn}>Cancel</Btn>
+<Btn variant="destructive" onClick={fn}>Delete</Btn>
+<Btn variant="ghost" onClick={fn}>Learn more</Btn>
+
+// Modifiers
+<Btn variant="primary" small>Compact</Btn>
+<Btn variant="primary" fullWidth>Full width</Btn>
+<Btn variant="secondary" disclosure>More actions</Btn>
+<Btn variant="primary" disabled>Unavailable</Btn>
+
+// With icon (inline SVG)
+<Btn variant="primary" icon={<IconPlus size={16} color="currentColor" />}>Add item</Btn>
+
+// Groups
+<ButtonGroup>
+  <Btn variant="primary">Save</Btn>
+  <Btn variant="secondary">Cancel</Btn>
+</ButtonGroup>
+
+<BtnGroupSegmented buttons={[
+  { label: 'All',      onClick: fn },
+  { label: 'Active',   onClick: fn },
+  { label: 'Archived', onClick: fn, disabled: true },
+]} />
+```
+
+---
+
+## Groups & segmented
+
+<Canvas of={BtnStories.Group} />
+<Canvas of={BtnStories.Segmented} />

@@ -1,0 +1,120 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TabsStories from './Tabs.stories.jsx';
+
+<Meta title="Components/Tabs/Docs" />
+
+# Tabs
+
+Horizontal navigation for switching between related views within the same page context. Does not cause full page navigation — it filters or switches the content below.
+
+<Canvas of={TabsStories.AllStates} />
+
+---
+
+## When to use
+
+- Filtering a list by status (All / Active / Archived)
+- Switching between related data views (Overview / Details / History)
+- Mobile: larger 14px tabs for touch targets
+
+Do **not** use Tabs for top-level page navigation — use the sidebar/nav instead.
+
+---
+
+## Interaction states
+
+<Canvas of={TabsStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Tabs/Tabs.css';
+```
+
+```html
+<!-- Basic tabs -->
+<div role="tablist" class="nx-tabs">
+  <button role="tab" aria-selected="true"  class="nx-tab nx-tab--active">All</button>
+  <button role="tab" aria-selected="false" class="nx-tab">Active</button>
+  <button role="tab" aria-selected="false" class="nx-tab nx-tab--disabled" disabled>Archived</button>
+</div>
+
+<!-- With badge counts -->
+<div role="tablist" class="nx-tabs">
+  <button role="tab" aria-selected="true" class="nx-tab nx-tab--active">
+    All
+    <span class="nx-tab__badge">24</span>
+  </button>
+  <button role="tab" aria-selected="false" class="nx-tab">
+    Active
+    <span class="nx-tab__badge">12</span>
+  </button>
+</div>
+
+<!-- Fitted (equal-width tabs) -->
+<div role="tablist" class="nx-tabs nx-tabs--fitted">
+  <button role="tab" class="nx-tab nx-tab--active">Morning</button>
+  <button role="tab" class="nx-tab">Evening</button>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Tab corner radius |
+| `--nx-font-size-caption` | `12px` | Tab label size (desktop) |
+| `--nx-font-weight-semibold` | `550` | Tab label weight |
+| `--nx-line-height-tight` | `16px` | Tab label line height |
+| `--nx-color-primary` | `#005bd3` | Focus ring border |
+| `--nx-text-default` | `#303030` | Tab label color |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled tab text |
+| `--nx-text-subdued` | `#616161` | Badge count color |
+| `--nx-space-1` | `4px` | Gap between tabs |
+
+---
+
+## Accessibility
+
+- Wrap in `<div role="tablist">` 
+- Each tab: `role="tab"`, `aria-selected="true/false"`
+- The content panel: `role="tabpanel"` with `aria-labelledby` pointing to the active tab's `id`
+- Keyboard: Arrow keys move focus between tabs; Enter/Space selects
+- Disabled tabs: add `disabled` attribute and `aria-disabled="true"`
+
+---
+
+## React component
+
+```jsx
+import { Tabs } from 'components/Tabs/Tabs.jsx';
+
+const [active, setActive] = useState(0);
+
+<Tabs
+  activeIndex={active}
+  onChange={setActive}
+  tabs={[
+    { label: 'All', badge: 24 },
+    { label: 'Active', badge: 12 },
+    { label: 'Archived', disabled: true },
+  ]}
+/>
+
+// Fitted (equal width)
+<Tabs fitted activeIndex={active} onChange={setActive}
+  tabs={[{ label: 'Morning' }, { label: 'Evening' }]} />
+
+// With "More views" and "Add new" controls
+<Tabs moreViews canAddNew activeIndex={active} onChange={setActive}
+  tabs={[{ label: 'All' }, { label: 'Active' }]} />
+```
+
+---
+
+<Canvas of={TabsStories.WithBadges} />

@@ -1,0 +1,79 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TooltipStories from './Tooltip.stories.jsx';
+
+<Meta title="Components/Tooltip/Docs" />
+
+# Tooltip
+
+Floating label that briefly explains the function of a UI element. Triggered on hover or focus. Use when an icon or control needs a short text description that would clutter the interface if shown inline.
+
+<Canvas of={TooltipStories.AllStates} />
+
+---
+
+## When to use
+
+- Icon-only buttons that need a label (e.g. filter, export, settings)
+- Truncated text that should show the full value on hover
+- Form fields with supplementary hints that don't fit as `helpText`
+
+Do **not** use tooltips for critical information — use a `Banner` or inline `helpText` instead. Tooltips are invisible until hovered and must never contain interactive content.
+
+---
+
+## Interaction states
+
+<Canvas of={TooltipStories.InteractionStates} />
+
+---
+
+## Two positions
+
+| `position` | Tooltip placement | Arrow direction |
+|------------|------------------|-----------------|
+| `above` *(default)* | Above the trigger | Points down ↓ |
+| `below` | Below the trigger | Points up ↑ |
+
+---
+
+## Design tokens used
+
+| Property | Value | Token |
+|----------|-------|-------|
+| Background | `#ffffff` | `bg-surface` |
+| Text color | `#303030` | `text-default` |
+| Font size | `13px` | label |
+| Font weight | `450` | — |
+| Border radius | `8px` | — |
+| Padding | `4px 8px` | — |
+| Drop shadow | `0px 4px 6px -2px rgba(26,26,26,0.2)` | shadow-300 |
+| Inset top | `inset 0 1px 0 rgba(204,204,204,0.5)` | shadow-300 |
+| Inset bottom | `inset 0 -1px 0 rgba(0,0,0,0.17)` | shadow-300 |
+| Inset sides | `inset ±1px 0 0 rgba(0,0,0,0.13)` | shadow-300 |
+
+---
+
+## Accessibility
+
+- The floating tooltip div uses `role="tooltip"`
+- Trigger must have `aria-describedby` pointing to the tooltip in production use
+- Tooltip appears on both `:hover` and `:focus` so keyboard users can trigger it
+- Never put interactive elements (links, buttons) inside a tooltip
+
+---
+
+## React component
+
+```jsx
+import { Tooltip } from 'components/Tooltip/Tooltip.jsx';
+
+// Default (above)
+<Tooltip content="Create new view">
+  <button>Add view</button>
+</Tooltip>
+
+// Below
+<Tooltip content="Filter records" position="below">
+  <Btn variant="secondary" icon={<FilterIcon />}>Filter</Btn>
+</Tooltip>
+```

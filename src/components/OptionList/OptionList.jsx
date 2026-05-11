@@ -1,0 +1,137 @@
+import { useState } from 'react';
+import { Checkbox } from '../Checkbox/Checkbox.jsx';
+
+const IcoCheckTick = ({ color = '#303030', size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, display: 'block' }}>
+    <path d="M4.5 10.5 8 14 15.5 6" stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const IcoMediaPlaceholder = ({ color = '#616161', size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, display: 'block' }}>
+    <rect x="2.5" y="4" width="15" height="12" rx="2" stroke={color} strokeWidth="1.3" />
+    <circle cx="7" cy="8.5" r="1.5" fill={color} />
+    <path d="M2.5 13.5 6.5 10l3 3 2.5-2 5 4" stroke={color} strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error }) {
+  const [hovKey, setHovKey] = useState(null);
+  const [focKey, setFocKey] = useState(null);
+
+  const resolvedSections = sections.length > 0 ? sections : [{ title, options }];
+
+  function isSelected(val) {
+    if (allowMultiple) return Array.isArray(selected) && selected.includes(val);
+    return selected === val;
+  }
+
+  function handleSelect(val, disabled) {
+    if (disabled || !onChange) return;
+    if (allowMultiple) {
+      const curr = Array.isArray(selected) ? selected : [];
+      onChange(curr.includes(val) ? curr.filter(v => v !== val) : [...curr, val]);
+    } else {
+      onChange(val);
+    }
+  }
+
+  function itemBg(val, disabled, key) {
+    if (disabled) return 'transparent';
+    if (isSelected(val)) return '#ebebeb';
+    if (hovKey === key) return '#f1f1f1';
+    return 'transparent';
+  }
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8,
+      padding: 4, fontFamily: 'Inter,sans-serif',
+      display: 'inline-flex', flexDirection: 'column', minWidth: 160 }}>
+      {resolvedSections.map((section, si) => (
+        <div key={si} style={si > 0 ? { borderTop: '1px solid #ebebeb', marginTop: 4, paddingTop: 4 } : {}}>
+          {section.title && (
+            <div style={{ padding: '2px 6px 4px', userSelect: 'none' }}>
+              <span style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
+            </div>
+          )}
+          {(section.options || []).map((opt) => {
+            const key = `${si}-${opt.value}`;
+            const sel = isSelected(opt.value);
+            const foc = focKey === key;
+            return (
+              <div key={opt.value}
+                tabIndex={opt.disabled ? -1 : 0}
+                role="option" aria-selected={sel}
+                onClick={() => handleSelect(opt.value, opt.disabled)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(opt.value, opt.disabled); } }}
+                onMouseEnter={() => !opt.disabled && setHovKey(key)}
+                onMouseLeave={() => setHovKey(null)}
+                onFocus={() => setFocKey(key)}
+                onBlur={() => setFocKey(null)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8,
+                  padding: 6, borderRadius: 8,
+                  background: itemBg(opt.value, opt.disabled, key),
+                  cursor: opt.disabled ? 'not-allowed' : 'pointer',
+                  position: 'relative', outline: 'none',
+                  transition: 'background 0.1s', userSelect: 'none' }}>
+                {foc && !opt.disabled && (
+                  <div style={{ position: 'absolute', inset: -1, borderRadius: 9,
+                    border: '2px solid #005bd3', pointerEvents: 'none', zIndex: 1 }} />
+                )}
+                {allowMultiple && (
+                  <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                    <Checkbox checked={sel} disabled={opt.disabled}
+                      onChange={() => handleSelect(opt.value, opt.disabled)} />
+                  </div>
+                )}
+                {opt.media && (
+                  <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+                    {opt.media === true
+                      ? <IcoMediaPlaceholder color={opt.disabled ? '#b5b5b5' : '#616161'} />
+                      : opt.media}
+                  </div>
+                )}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 13,
+                      fontWeight: (!allowMultiple && sel) ? 650 : 450,
+                      lineHeight: '20px',
+                      color: opt.disabled ? '#b5b5b5' : '#303030',
+                      whiteSpace: 'nowrap' }}>
+                      {opt.label}
+                    </span>
+                    {opt.badge && (
+                      <div style={{ display: 'inline-flex', alignItems: 'center',
+                        background: 'rgba(0,0,0,0.06)', borderRadius: 8, height: 20, padding: '2px 8px' }}>
+                        <span style={{ fontSize: 12, fontWeight: 550, lineHeight: '16px',
+                          color: opt.disabled ? '#b5b5b5' : '#616161', whiteSpace: 'nowrap' }}>
+                          {typeof opt.badge === 'string' ? opt.badge : 'Label'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {opt.description && (
+                    <span style={{ fontSize: 11, fontWeight: 450, lineHeight: '16px',
+                      color: opt.disabled ? '#b5b5b5' : '#616161', whiteSpace: 'nowrap' }}>
+                      {opt.description}
+                    </span>
+                  )}
+                </div>
+                {!allowMultiple && sel && <IcoCheckTick color="#303030" size={20} />}
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {error && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px 2px' }}>
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="#d92d20" style={{ flexShrink: 0 }}>
+            <path d="M10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Z" />
+            <path d="M11 13a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z" />
+            <path fillRule="evenodd" d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-1.5 0a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0Z" />
+          </svg>
+          <span style={{ fontSize: 13, color: '#d92d20', fontFamily: 'Inter,sans-serif', lineHeight: '20px' }}>{error}</span>
+        </div>
+      )}
+    </div>
+  );
+}

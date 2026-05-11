@@ -1,0 +1,111 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as PaginationStories from './Pagination.stories.jsx';
+
+<Meta title="Components/Pagination/Docs" />
+
+# Pagination
+
+Previous/Next navigation control for paged content. Two types: standalone page navigation and an inline table footer bar.
+
+<Canvas of={PaginationStories.AllTypes} />
+
+---
+
+## Two types
+
+| `type` | Usage | Background |
+|--------|-------|-----------|
+| `page` | Standalone between-page nav (e.g. detail records) | none |
+| `table` | Footer row inside an IndexTable | `#f7f9fc` (bg-open) |
+
+---
+
+## Interaction states
+
+<Canvas of={PaginationStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Pagination/Pagination.css';
+```
+
+```html
+<!-- Page type -->
+<nav class="nx-pagination" aria-label="Pagination">
+  <button class="nx-pagination__btn nx-pagination__btn--prev" aria-label="Previous" disabled>
+    <!-- ChevronLeft icon -->
+  </button>
+  <span class="nx-pagination__label">Record 3 of 12</span>
+  <button class="nx-pagination__btn nx-pagination__btn--next" aria-label="Next">
+    <!-- ChevronRight icon -->
+  </button>
+</nav>
+
+<!-- Table type (inside table footer row) -->
+<div class="nx-pagination nx-pagination--table">
+  <span class="nx-pagination__label">Showing 1–20 of 134</span>
+  <div class="nx-pagination__nav">
+    <button class="nx-pagination__btn nx-pagination__btn--prev" aria-label="Previous" disabled>
+      <!-- ChevronLeft icon -->
+    </button>
+    <button class="nx-pagination__btn nx-pagination__btn--next" aria-label="Next">
+      <!-- ChevronRight icon -->
+    </button>
+  </div>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-open` | `#f7f9fc` | Table pagination background |
+| `--nx-text-default` | `#303030` | Label text + active icon |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled icon color |
+| `--nx-font-size-label` | `13px` | Label font size |
+
+---
+
+## Accessibility
+
+- Wrap in `<nav aria-label="Pagination">` for landmark navigation
+- Prev/Next buttons need `aria-label="Previous page"` / `aria-label="Next page"`
+- Disabled buttons use the `disabled` attribute — no click handler needed
+- Label text ("1–20 of 134") should be a live region if it updates dynamically: `aria-live="polite"`
+
+---
+
+## React component
+
+```jsx
+import { Pagination } from 'components/Pagination/Pagination.jsx';
+
+// Page nav
+<Pagination
+  hasPrevious={currentPage > 1}
+  hasNext={currentPage < totalPages}
+  onPrevious={() => setPage(p => p - 1)}
+  onNext={() => setPage(p => p + 1)}
+  label={`Record ${current} of ${total}`}
+/>
+
+// Table footer
+<Pagination
+  type="table"
+  hasPrevious={offset > 0}
+  hasNext={offset + pageSize < total}
+  onPrevious={onPrev}
+  onNext={onNext}
+  label={`Showing ${offset + 1}–${Math.min(offset + pageSize, total)} of ${total}`}
+/>
+```
+
+---
+
+<Canvas of={PaginationStories.AllStates} />

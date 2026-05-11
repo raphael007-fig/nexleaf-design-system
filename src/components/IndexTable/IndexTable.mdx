@@ -1,0 +1,196 @@
+import { Meta, Canvas, Controls } from '@storybook/addon-docs/blocks';
+import * as IndexTableStories from './IndexTable.stories.jsx';
+
+<Meta title="Components/IndexTable/Docs" />
+
+# IndexTable
+
+Displays a list of structured records in a sortable, selectable table. Use IndexTable when users need to scan, filter, and act on multiple rows of data at once — such as temperature records, facility lists, or submission histories.
+
+<Canvas of={IndexTableStories.AllStates} />
+
+---
+
+## When to use
+
+| Use case | Recommendation |
+|----------|---------------|
+| Displaying a list of records with multiple attributes | **IndexTable** |
+| Single-column or card-based list | Use a simple list component instead |
+| Inline editing of rows | Combine with modal or drawer pattern |
+| Selecting and acting on multiple records | Use `bulkActions` prop |
+
+**Do not** use IndexTable for navigation menus or single-action lists.
+
+---
+
+## Interaction states
+
+Checkboxes, sort headers, hover states, bulk action bar, and pagination all work together interactively.
+
+<Canvas of={IndexTableStories.InteractionStates} />
+
+---
+
+## With bulk actions pre-selected
+
+<Canvas of={IndexTableStories.WithBulkActions} />
+
+---
+
+## Empty state
+
+Shown when `rows` is an empty array and `loading` is false. Pass `emptyState={{ heading, description }}` to customise the message.
+
+<Canvas of={IndexTableStories.Empty} />
+
+---
+
+## Loading skeleton
+
+When `loading={true}`, five placeholder rows with pulsing gray bars are rendered in place of data. No real data is required — pass `rows={[]}` alongside `loading={true}`.
+
+<Canvas of={IndexTableStories.Loading} />
+
+---
+
+## CSS structure
+
+IndexTable is a fully inline-styled React component — no external CSS file is needed.
+
+```jsx
+// Card container shadow
+boxShadow: [
+  'inset 1px 0 0 rgba(0,0,0,0.13)',
+  'inset -1px 0 0 rgba(0,0,0,0.13)',
+  'inset 0 -1px 0 rgba(0,0,0,0.17)',
+  'inset 0 1px 0 rgba(204,204,204,0.5)',
+  '0 3px 1px -1px rgba(26,26,26,0.07)',
+].join(', ')
+```
+
+The `@keyframes indexTablePulse` animation for skeleton rows is injected via an inline `<style>` tag inside the component.
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `bg-surface` | `#ffffff` | Card and row background |
+| `bg-selected` | `#f0f7ff` | Selected row background; bulk bar background |
+| `#f7f7f7` | — | Header row background |
+| `#fafafa` | — | Row hover background |
+| `border-light` | `#ebebeb` | Row dividers |
+| `#e3e3e3` | — | Header bottom border |
+| `text-default` | `#303030` | Row cell text; active sort icon |
+| `text-subdued` | `#616161` | Header label text |
+| `text-placeholder` | `#9e9e9e` | Unsorted / inactive sort icon |
+| `color-primary` | `#005bd3` | Checkbox accent; "Deselect all" link |
+| `border-secondary-btn` | `#c9c9c9` | Bulk action button border |
+| `text-disabled` | `#b5b5b5` | Disabled checkbox / icon stroke |
+
+---
+
+## React component
+
+```jsx
+import { IndexTable } from 'components/IndexTable/IndexTable.jsx';
+import { Pagination } from 'components/Pagination/Pagination.jsx';
+import { Badge } from 'components/Badge/Badge.jsx';
+
+const COLUMNS = [
+  { key: 'date',     label: 'Date',       sortable: true },
+  { key: 'facility', label: 'Facility',   sortable: true },
+  { key: 'region',   label: 'Region' },
+  { key: 'morning',  label: 'Morning °C', sortable: true, align: 'right' },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (row) => <Badge tone={row.statusTone}>{row.status}</Badge>,
+  },
+];
+
+function MyPage() {
+  const [selected, setSelected] = useState(new Set());
+  const [sortKey, setSortKey] = useState('date');
+  const [sortDir, setSortDir] = useState('desc');
+
+  function handleSort(key) {
+    if (sortKey === key) {
+      setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  }
+
+  return (
+    <IndexTable
+      columns={COLUMNS}
+      rows={rows}
+      selectedRows={selected}
+      onSelectionChange={setSelected}
+      sortKey={sortKey}
+      sortDir={sortDir}
+      onSort={handleSort}
+      bulkActions={[
+        { label: 'Export', onAction: () => exportRecords(selected) },
+      ]}
+      emptyState={{
+        heading: 'No records found',
+        description: 'Adjust your filters or add a new record.',
+      }}
+      footer={
+        <Pagination
+          type="table"
+          hasPrevious={page > 0}
+          hasNext={hasMore}
+          onPrevious={() => setPage(p => p - 1)}
+          onNext={() => setPage(p => p + 1)}
+          label={`Showing ${start}–${end} of ${total}`}
+        />
+      }
+    />
+  );
+}
+```
+
+---
+
+## Props reference
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columns` | `Column[]` | `[]` | Column definitions (see below) |
+| `rows` | `object[]` | `[]` | Data rows — each must have a unique `id` field |
+| `selectedRows` | `Set<id>` | `new Set()` | Set of currently selected row IDs |
+| `onSelectionChange` | `(Set) => void` | — | Called with updated selection Set |
+| `sortKey` | `string` | — | Key of the currently sorted column |
+| `sortDir` | `'asc' \| 'desc'` | `'asc'` | Current sort direction |
+| `onSort` | `(key) => void` | — | Called when a sortable column header is clicked |
+| `emptyState` | `{ heading, description }` | — | Content shown when rows is empty |
+| `bulkActions` | `{ label, onAction }[]` | — | Actions shown in the bulk bar |
+| `loading` | `boolean` | `false` | Shows 5 skeleton rows when true |
+| `footer` | `ReactNode` | — | Rendered below the table (use `<Pagination type="table" />`) |
+
+### Column definition
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `key` | `string` | Maps to `row[key]` for default rendering |
+| `label` | `string` | Header cell text |
+| `sortable` | `boolean` | Enables sort icon and click handler |
+| `align` | `'left' \| 'right' \| 'center'` | Cell text alignment (default: `'left'`) |
+| `width` | `string \| number` | Optional column width |
+| `render` | `(row) => ReactNode` | Custom cell renderer — overrides default `row[key]` |
+| `noWrap` | `boolean` | Sets `white-space: nowrap` on data cells |
+
+---
+
+## Accessibility
+
+- Select-all checkbox uses a native `indeterminate` state via `ref` when some (not all) rows are selected
+- All `<th>` headers that are sortable respond to keyboard `click` events — wrap in `<button>` if stricter keyboard navigation is required
+- Bulk action buttons are native `<button>` elements with visible focus states
+- Empty state and skeleton rows use `colSpan={999}` to span all columns correctly

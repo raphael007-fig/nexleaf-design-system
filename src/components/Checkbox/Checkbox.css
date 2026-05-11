@@ -1,0 +1,172 @@
+/*
+ * Nexleaf Design System — Checkbox & RadioButton
+ * Requires tokens.css.
+ *
+ * .nx-checkbox                — wrapper (checkbox + label + help/error)
+ * .nx-checkbox__control       — the 16×16 visual box / circle
+ * .nx-checkbox__control--checked    — checked state
+ * .nx-checkbox__control--indeterminate — mixed state
+ * .nx-checkbox__control--error      — error unchecked state
+ * .nx-checkbox__control--disabled   — disabled state
+ * .nx-checkbox__label         — label text
+ * .nx-checkbox__help          — help text
+ * .nx-checkbox__error         — error message row
+ *
+ * .nx-radio                   — radio button variant (same structure)
+ * .nx-radio__control          — 16×16 circle
+ */
+
+/* ─── Shared wrapper ────────────────────────────────────────────── */
+.nx-checkbox,
+.nx-radio {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-family: var(--nx-font-family);
+}
+
+.nx-checkbox__row,
+.nx-radio__row {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                        /* 8px */
+}
+
+/* ─── Checkbox control ──────────────────────────────────────────── */
+.nx-checkbox__control {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  outline: none;
+  border: 0.66px solid var(--nx-border-input);   /* #8a8a8a */
+  background: var(--nx-bg-input);                /* #fdfdfd */
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.nx-checkbox__control:hover {
+  background: var(--nx-bg-input-hover);          /* #fafafa */
+  border-color: #616161;
+}
+
+.nx-checkbox__control:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+  border-radius: 4px;
+}
+
+/* Checked */
+.nx-checkbox__control--checked,
+.nx-checkbox__control--indeterminate {
+  background: #303030;
+  border: none;
+}
+
+/* Error unchecked */
+.nx-checkbox__control--error {
+  background: var(--nx-bg-critical);             /* #fee9e8 */
+  border-color: var(--nx-border-input-error);    /* #8e1f0b */
+}
+
+/* Error checked */
+.nx-checkbox__control--error-checked {
+  background: #8e1f0b;
+  border: none;
+}
+
+/* Disabled */
+.nx-checkbox__control--disabled {
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: not-allowed;
+}
+
+/* ─── Radio control ─────────────────────────────────────────────── */
+.nx-radio__control {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--nx-radius-circle);        /* 50% */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  outline: none;
+  border: 0.66px solid var(--nx-border-input);
+  background: var(--nx-bg-input);
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.nx-radio__control:hover {
+  background: var(--nx-bg-input-hover);
+  border-color: #616161;
+}
+
+.nx-radio__control:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+  border-radius: 50%;
+}
+
+.nx-radio__control--checked {
+  background: #303030;
+  border: none;
+}
+
+.nx-radio__control--checked::after {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.nx-radio__control--disabled {
+  background: rgba(0, 0, 0, 0.08);
+  border: none;
+  cursor: not-allowed;
+}
+
+/* ─── Labels ────────────────────────────────────────────────────── */
+.nx-checkbox__label,
+.nx-radio__label {
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);
+  user-select: none;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.nx-checkbox__label--disabled,
+.nx-radio__label--disabled {
+  color: var(--nx-text-disabled);               /* #b5b5b5 */
+  cursor: not-allowed;
+}
+
+/* ─── Help text ─────────────────────────────────────────────────── */
+.nx-checkbox__help,
+.nx-radio__help {
+  padding-left: 24px;
+  font-size: var(--nx-font-size-label);
+  font-weight: 450;
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-subdued);
+}
+
+/* ─── Error ─────────────────────────────────────────────────────── */
+.nx-checkbox__error {
+  padding-left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--nx-font-size-label);
+  font-weight: 450;
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-critical);               /* #8e1f0b */
+}

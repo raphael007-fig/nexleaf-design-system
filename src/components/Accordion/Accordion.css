@@ -1,0 +1,87 @@
+/*
+ * Nexleaf Design System — Accordion
+ * Requires tokens.css.
+ *
+ * .nx-accordion              — outer container
+ * .nx-accordion__trigger     — clickable header button
+ * .nx-accordion__trigger--open — open state modifier
+ * .nx-accordion__title       — title text row
+ * .nx-accordion__dot         — green "has content" indicator
+ * .nx-accordion__chevron     — animated chevron
+ * .nx-accordion__body        — collapsible content area
+ */
+
+.nx-accordion {
+  border: 1.5px solid var(--nx-border-default);  /* #e0e0e0 */
+  border-radius: var(--nx-radius-md);             /* 10px */
+  overflow: hidden;
+  width: 100%;
+}
+
+.nx-accordion__trigger {
+  width: 100%;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--nx-bg-surface);              /* #ffffff (closed) */
+  border: none;
+  border-bottom: none;
+  cursor: pointer;
+  font-family: var(--nx-font-family);
+  outline: none;
+  transition: background 0.12s;
+}
+
+.nx-accordion__trigger--open {
+  background: var(--nx-bg-open);                 /* #f7f9fc */
+  border-bottom: 1px solid var(--nx-border-default);
+}
+
+.nx-accordion__trigger:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+.nx-accordion__title {
+  font-size: var(--nx-font-size-body);           /* 14px */
+  font-weight: var(--nx-font-weight-bold);       /* 600 */
+  color: var(--nx-text-default);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Required asterisk */
+.nx-accordion__title--required::after {
+  content: ' *';
+  color: var(--nx-color-critical);
+}
+
+/* Green dot — visible when has content but accordion is closed */
+.nx-accordion__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--nx-radius-circle);        /* 50% */
+  background: var(--nx-color-success);           /* #12b76a */
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+/* Chevron — rotates 180° when open */
+.nx-accordion__chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+  color: var(--nx-text-subdued);                 /* #616161 */
+}
+
+.nx-accordion__trigger--open .nx-accordion__chevron {
+  transform: rotate(180deg);
+}
+
+/* Body */
+.nx-accordion__body {
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-5);                        /* 20px */
+}

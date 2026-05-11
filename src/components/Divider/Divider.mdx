@@ -1,0 +1,72 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as DividerStories from './Divider.stories.jsx';
+
+<Meta title="Components/Divider/Docs" />
+
+# Divider
+
+Horizontal rule for separating content sections. Three visual weights to match different contexts.
+
+<Canvas of={DividerStories.AllVariants} />
+
+---
+
+## Interaction states — all variants
+
+<Canvas of={DividerStories.AllVariants} />
+
+---
+
+## Variants
+
+| Variant | Height | Color | Margin | Use for |
+|---------|--------|-------|--------|---------|
+| `default` | 1px | `#ebebeb` | `4px 0` | Standard section separation |
+| `strong` | 1.5px | `#e0e0e0` | `8px 0` | Major section breaks, card edges |
+| `subtle` | 1px | `#f0f0f0` | `0` | Intra-list rows, tight separators |
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Divider/Divider.css';
+```
+
+```html
+<div class="nx-divider"></div>
+<div class="nx-divider nx-divider--strong"></div>
+<div class="nx-divider nx-divider--subtle"></div>
+
+<!-- or using <hr> -->
+<hr class="nx-divider" />
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-border-light` | `#ebebeb` | Default divider color |
+| `--nx-border-default` | `#e0e0e0` | Strong divider color |
+| `--nx-border-lighter` | `#f0f0f0` | Subtle divider color |
+| `--nx-space-1` | `4px` | Default vertical margin |
+| `--nx-space-2` | `8px` | Strong vertical margin |
+
+---
+
+## React component
+
+```jsx
+import { Divider } from 'components/Divider/Divider.jsx';
+
+<Divider />                       // default
+<Divider variant="strong" />      // 1.5px, #e0e0e0
+<Divider variant="subtle" />      // 1px, #f0f0f0, no margin
+```
+
+---
+
+<Canvas of={DividerStories.Default} />

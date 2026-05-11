@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;700;800&display=swap');
+@import './tokens/tokens.css';
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);
+  background: var(--nx-bg-page);
+  color: var(--nx-text-default);
+}

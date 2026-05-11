@@ -1,0 +1,134 @@
+/*
+ * Nexleaf Design System — Banner
+ * Requires tokens.css.
+ *
+ * Two visual forms:
+ *   Simple  — single row with icon + text + optional dismiss
+ *   Titled  — header bar (colored) + white body area
+ *
+ * .nx-banner                        — simple form base
+ * .nx-banner--info/success/warning/critical — tone modifiers
+ * .nx-banner--titled                — titled form wrapper
+ * .nx-banner__header                — colored header bar
+ * .nx-banner__header--info/etc      — header tone bg
+ * .nx-banner__body                  — white body area (titled only)
+ * .nx-banner__dismiss               — dismiss × button
+ * .nx-banner__actions               — action button row
+ */
+
+/* ─── Simple banner ────────────────────────────────────────────── */
+.nx-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  padding: 12px 14px 12px 16px;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+}
+
+.nx-banner--info {
+  background: #dbeafe;
+  color: #003d6b;
+}
+
+.nx-banner--success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.nx-banner--warning {
+  background: #fff1e3;
+  color: #78350f;
+}
+
+.nx-banner--critical {
+  background: var(--nx-bg-critical);             /* #fee9e8 */
+  color: #991b1b;
+}
+
+.nx-banner__text {
+  flex: 1;
+}
+
+.nx-banner__dismiss {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 4px;
+  padding: 0;
+}
+
+.nx-banner__actions {
+  display: flex;
+  gap: var(--nx-space-2);                        /* 8px */
+  margin-left: var(--nx-space-2);
+}
+
+/* ─── Titled banner ────────────────────────────────────────────── */
+.nx-banner--titled {
+  border-radius: var(--nx-radius-sm);
+  overflow: hidden;
+  box-shadow:
+    0 3px 1px -1px rgba(26,26,26,0.07),
+    inset 1px 0 0 rgba(0,0,0,0.13),
+    inset -1px 0 0 rgba(0,0,0,0.13),
+    inset 0 -1px 0 rgba(0,0,0,0.17),
+    inset 0 1px 0 rgba(204,204,204,0.5);
+}
+
+.nx-banner__header {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: var(--nx-font-weight-bold);       /* 600 */
+  line-height: var(--nx-line-height-normal);
+}
+
+.nx-banner__header--info {
+  background: #91d0ff;
+  color: #002133;
+}
+
+.nx-banner__header--success {
+  background: #29845a;
+  color: #f8fffb;
+}
+
+.nx-banner__header--warning {
+  background: #ffb800;
+  color: #251a00;
+}
+
+.nx-banner__header--critical {
+  background: #e51c00;
+  color: #fffbfb;
+}
+
+.nx-banner__body {
+  background: var(--nx-bg-surface);             /* #ffffff */
+  padding: 12px 16px 16px;
+}
+
+.nx-banner__body p {
+  margin: 0;
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);
+  font-family: var(--nx-font-family);
+}
+
+.nx-banner__body .nx-banner__actions {
+  margin-left: 0;
+  margin-top: var(--nx-space-3);                 /* 12px */
+}

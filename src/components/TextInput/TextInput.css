@@ -1,0 +1,178 @@
+/*
+ * Nexleaf Design System — TextInput
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Selector structure:
+ *   .nx-field                  — wrapper (label + input + help text)
+ *   .nx-field__label           — field label text
+ *   .nx-field__label--required — adds red asterisk via ::after
+ *   .nx-field__label-action    — optional right-aligned label button
+ *   .nx-input-wrap             — flex container holding prefix/input/suffix/clear
+ *   .nx-input-wrap--hover      — hover state (JS-toggled or :hover)
+ *   .nx-input-wrap--focused    — focus state (JS-toggled or :focus-within)
+ *   .nx-input-wrap--error      — error border + red bg
+ *   .nx-input-wrap--disabled   — disabled/read-only state
+ *   .nx-input-wrap--borderless — no border, tinted on focus
+ *   .nx-input-wrap--magic      — AI / magic tone (purple)
+ *   .nx-input                  — the <input> element itself
+ *   .nx-field__error           — error message row (icon + text)
+ *   .nx-field__help            — help text below input
+ */
+
+/* ─── Field wrapper ────────────────────────────────────────────── */
+.nx-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);            /* 4px */
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Label ────────────────────────────────────────────────────── */
+.nx-field__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nx-field__label > span {
+  font-size: var(--nx-font-size-label);    /* 13px */
+  font-weight: var(--nx-font-weight-medium); /* 500 */
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);
+}
+
+.nx-field__label--required > span::after {
+  content: ' *';
+  color: var(--nx-color-critical);        /* #d92d20 */
+}
+
+.nx-field__label-action {
+  font-size: var(--nx-font-size-label);
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Input wrapper ────────────────────────────────────────────── */
+.nx-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--nx-radius-sm);      /* 8px */
+  border: 0.66px solid var(--nx-border-input);  /* #8a8a8a */
+  background: var(--nx-bg-input);          /* #fdfdfd */
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+/* Rest → Hover */
+.nx-input-wrap:hover:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
+  border-color: var(--nx-border-input);
+  background: var(--nx-bg-input-hover);    /* #fafafa */
+}
+
+/* Rest → Focus (via :focus-within for pure CSS) */
+.nx-input-wrap:focus-within:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
+  border-color: var(--nx-border-input);    /* #8a8a8a (stays same) */
+  background: var(--nx-bg-input-hover);
+  box-shadow: var(--nx-focus-ring);        /* 0 0 0 2px #005bd3 */
+}
+
+/* Error state */
+.nx-input-wrap--error {
+  border-color: var(--nx-border-input-error); /* #8e1f0b */
+  background: var(--nx-bg-critical);          /* #fee9e8 */
+}
+
+/* Disabled / read-only */
+.nx-input-wrap--disabled {
+  border: none;
+  background: rgba(0, 0, 0, 0.08);
+  cursor: not-allowed;
+}
+
+/* Borderless */
+.nx-input-wrap--borderless {
+  border-color: transparent;
+  background: transparent;
+  border-radius: 6px;
+}
+
+.nx-input-wrap--borderless:hover,
+.nx-input-wrap--borderless:focus-within {
+  background: var(--nx-bg-disabled);
+  box-shadow: none;
+}
+
+/* Magic / AI tone */
+.nx-input-wrap--magic {
+  border-color: #9474ff;
+  background: #f8f7ff;
+}
+
+.nx-input-wrap--magic:hover,
+.nx-input-wrap--magic:focus-within {
+  border-color: #8051ff;
+  background: #f3f1ff;
+  box-shadow: 0 0 0 2px #8051ff;
+}
+
+/* ─── Input element ────────────────────────────────────────────── */
+.nx-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);    /* 13px */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);
+}
+
+.nx-input::placeholder {
+  color: var(--nx-text-placeholder);      /* #9e9e9e */
+}
+
+.nx-input:disabled {
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Slim size modifier */
+.nx-input-wrap--slim {
+  padding: 4px 10px;
+}
+
+/* ─── Prefix / suffix ──────────────────────────────────────────── */
+.nx-input__prefix,
+.nx-input__suffix {
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-text-subdued);          /* #616161 */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* ─── Error message ────────────────────────────────────────────── */
+.nx-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  color: var(--nx-color-critical);        /* #d92d20 */
+  line-height: var(--nx-line-height-normal);
+}
+
+/* ─── Help text ────────────────────────────────────────────────── */
+.nx-field__help {
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-text-subdued);
+  line-height: var(--nx-line-height-normal);
+}

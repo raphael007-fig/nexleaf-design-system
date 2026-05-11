@@ -1,0 +1,27 @@
+/*
+ * Nexleaf Design System — Divider
+ * Requires tokens.css.
+ *
+ * .nx-divider             — default (1px #ebebeb, 4px margin)
+ * .nx-divider--strong     — 1.5px #e0e0e0, 8px margin
+ * .nx-divider--subtle     — 1px #f0f0f0, no margin
+ */
+
+.nx-divider {
+  height: 1px;
+  background: var(--nx-border-light);            /* #ebebeb */
+  margin: var(--nx-space-1) 0;                   /* 4px 0 */
+  border: none;
+}
+
+.nx-divider--strong {
+  height: 1.5px;
+  background: var(--nx-border-default);          /* #e0e0e0 */
+  margin: var(--nx-space-2) 0;                   /* 8px 0 */
+}
+
+.nx-divider--subtle {
+  height: 1px;
+  background: var(--nx-border-lighter);          /* #f0f0f0 */
+  margin: 0;
+}

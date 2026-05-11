@@ -1,0 +1,151 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as MetricCardStories from './MetricCard.stories.jsx';
+
+<Meta title="Components/MetricCard/Docs" />
+
+# MetricCard
+
+Displays a high-level operational KPI in a compact, scannable card. Can function as a static informational display or an interactive dashboard filter that narrows visible content when selected.
+
+<Canvas of={MetricCardStories.AllStates} />
+
+---
+
+## When to use
+
+- Monitoring dashboards with key operational metrics
+- Equipment management — offline count, alert totals, installation status
+- Dashboard filter bars where each card narrows data when clicked
+- Analytics overviews that need to be scannable at a glance
+
+**Avoid** when content is text-heavy, requires detailed interpretation, or when a table would provide better clarity.
+
+---
+
+## Interaction states
+
+<Canvas of={MetricCardStories.InteractionStates} />
+
+---
+
+## Badge tones
+
+<Canvas of={MetricCardStories.BadgeTones} />
+
+---
+
+## Loading skeleton
+
+<Canvas of={MetricCardStories.Loading} />
+
+---
+
+## States
+
+| State | Trigger | Background |
+|-------|---------|------------|
+| Rest | Default | `#ffffff` |
+| Hover | `onMouseEnter` (clickable only) | `#f7f7f7` |
+| Active / Pressed | `onMouseDown` | `#f3f3f3` + inset shadow |
+| Selected | `selected={true}` | `rgba(0,0,0,0.08)` |
+| Focus | Keyboard focus (clickable only) | `#ffffff` + `2px #005bd3` ring |
+| Disabled | `disabled={true}` | `rgba(0,0,0,0.05)` + muted text |
+| Loading | `loading={true}` | Skeleton bars, `#e3e3e3` |
+
+---
+
+## Badge tones reference
+
+Uses the existing `Badge` component — tone values map directly to `Badge` tone keys.
+
+| Tone | Background | Text |
+|------|-----------|------|
+| `info` | `#e0f0ff` | `#00527c` |
+| `success` | `#cdfee1` | `#0c5132` |
+| `attention` | `#ffef9d` | `#4f4700` |
+| `warning` | `#ffd6a4` | `#5e4200` |
+| `critical` | `#fedad9` | `#8e1f0b` |
+| `default` | `rgba(0,0,0,0.06)` | `#616161` |
+
+---
+
+## Anatomy
+
+1. **Container** — `border-radius: 12px`, `padding: 16px`, `gap: 12px`
+2. **Metric label** — 13px / 650 weight / `#616161`
+3. **Info icon** — 14px ⓘ icon, optional click handler
+4. **Metric value** — 30px / 700 weight / `#303030` / `letter-spacing: -0.3px`
+5. **Badge** — optional, 20px height, tone-colored pill
+
+---
+
+## Design tokens used
+
+| Property | Value | Token |
+|----------|-------|-------|
+| Background (rest) | `#ffffff` | `bg-surface` |
+| Background (hover) | `#f7f7f7` | — |
+| Background (active) | `#f3f3f3` | — |
+| Background (disabled) | `rgba(0,0,0,0.05)` | `bg-disabled` |
+| Label text | `#616161` | `text-subdued` |
+| Metric text | `#303030` | `text-default` |
+| Disabled text | `#b5b5b5` | `text-disabled` |
+| Focus ring | `#005bd3` | `color-primary` |
+| Border radius | `12px` | — |
+| Drop shadow | `0 1px 0 rgba(26,26,26,0.07)` | shadow-100 |
+| Inset border | `inset ±1px …` | shadow-100 |
+| Pressed inset | `inset 0 2px 1px rgba(26,26,26,0.2)` | shadow-inset-200 |
+| Skeleton fill | `#e3e3e3` | — |
+
+---
+
+## Accessibility
+
+- When `onClick` is provided, the card renders as `role="button"` with `tabIndex={0}`
+- Keyboard: Enter and Space activate the card
+- Selected state is communicated via `aria-pressed` (recommended in consuming pages)
+- Info icon has `aria-label="More information"`
+- Disabled cards are non-interactive — do not use `disabled` HTML attribute on the wrapper (it would break keyboard navigation for screen readers)
+
+---
+
+## React component
+
+```jsx
+import { MetricCard } from 'components/MetricCard/MetricCard.jsx';
+
+// Static display
+<MetricCard
+  title="Total Installations"
+  metric="247"
+  badge={{ label: '3 Critical', tone: 'critical' }}
+/>
+
+// Interactive filter card
+<MetricCard
+  title="Devices Offline"
+  metric="12"
+  badge={{ label: '12 Offline', tone: 'warning' }}
+  selected={activeFilter === 'offline'}
+  onClick={() => setActiveFilter(prev => prev === 'offline' ? null : 'offline')}
+/>
+
+// With info icon tooltip
+<MetricCard
+  title="Active Alerts"
+  metric="5"
+  badge={{ label: '2 High Priority', tone: 'critical' }}
+  onInfoClick={() => setTooltipOpen(true)}
+/>
+
+// Loading
+<MetricCard loading />
+
+// Disabled
+<MetricCard
+  title="Unknown Devices"
+  metric="—"
+  badge={{ label: 'No data', tone: 'neutral' }}
+  disabled
+/>
+```

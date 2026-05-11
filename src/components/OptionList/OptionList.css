@@ -1,0 +1,145 @@
+/*
+ * Nexleaf Design System — OptionList
+ * Requires tokens.css.
+ *
+ * .nx-option-list           — container (card)
+ * .nx-option-list__section-title — section header text
+ * .nx-option                — individual option row
+ * .nx-option--selected      — selected state
+ * .nx-option--disabled      — disabled state
+ * .nx-option__label         — primary text
+ * .nx-option__description   — secondary caption text
+ * .nx-option__badge         — inline badge
+ * .nx-option__check         — check tick (single-select selected)
+ * .nx-option-list__error    — error message
+ */
+
+.nx-option-list {
+  background: var(--nx-bg-surface);             /* #ffffff */
+  border: 1px solid var(--nx-border-default);   /* #e0e0e0 */
+  border-radius: var(--nx-radius-sm);           /* 8px */
+  padding: 4px;
+  font-family: var(--nx-font-family);
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 160px;
+}
+
+.nx-option-list__section-title {
+  padding: 2px 6px 4px;
+  font-size: var(--nx-font-size-label);         /* 13px */
+  font-weight: 650;
+  line-height: var(--nx-line-height-normal);    /* 20px */
+  color: var(--nx-text-default);
+  user-select: none;
+}
+
+/* ─── Option row ────────────────────────────────────────────────── */
+.nx-option {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                       /* 8px */
+  padding: 6px;
+  border-radius: var(--nx-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  outline: none;
+  transition: background 0.1s;
+  user-select: none;
+}
+
+.nx-option:hover:not(.nx-option--disabled) {
+  background: #f1f1f1;
+}
+
+.nx-option--selected {
+  background: #ebebeb;
+}
+
+.nx-option--disabled {
+  cursor: not-allowed;
+}
+
+/* Focus ring */
+.nx-option:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 9px;
+  border: 2px solid var(--nx-color-primary);
+  pointer-events: none;
+}
+
+/* ─── Text content ──────────────────────────────────────────────── */
+.nx-option__content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-option__label-row {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);
+}
+
+.nx-option__label {
+  font-size: var(--nx-font-size-label);         /* 13px */
+  font-weight: 450;
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-default);
+  white-space: nowrap;
+}
+
+.nx-option--selected .nx-option__label {
+  font-weight: 650;
+}
+
+.nx-option--disabled .nx-option__label {
+  color: var(--nx-text-disabled);
+}
+
+.nx-option__description {
+  font-size: 11px;
+  font-weight: 450;
+  line-height: var(--nx-line-height-tight);     /* 16px */
+  color: var(--nx-text-subdued);
+  white-space: nowrap;
+}
+
+.nx-option--disabled .nx-option__description {
+  color: var(--nx-text-disabled);
+}
+
+/* ─── Badge ─────────────────────────────────────────────────────── */
+.nx-option__badge {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--nx-radius-sm);
+  height: 20px;
+  padding: 2px 8px;
+  font-size: var(--nx-font-size-caption);       /* 12px */
+  font-weight: var(--nx-font-weight-semibold);  /* 550 */
+  line-height: var(--nx-line-height-tight);
+  color: var(--nx-text-subdued);
+  white-space: nowrap;
+}
+
+.nx-option--disabled .nx-option__badge {
+  color: var(--nx-text-disabled);
+}
+
+/* ─── Error ─────────────────────────────────────────────────────── */
+.nx-option-list__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 2px;
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-color-critical);              /* #d92d20 */
+  line-height: var(--nx-line-height-normal);
+}

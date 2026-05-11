@@ -1,0 +1,152 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SelectInputStories from './SelectInput.stories.jsx';
+
+<Meta title="Components/SelectInput/Docs" />
+
+# SelectInput
+
+Dropdown that lets the user choose one option from a predefined list. Part of the Forms family alongside TextInput, TextareaInput, and NumberInput.
+
+<Canvas of={SelectInputStories.AllStates} />
+
+---
+
+## When to use
+
+- **SelectInput** — user must pick from a known, bounded set of options (status, country, session type)
+- **RadioGroup** — when there are ≤ 4 options and you want them all visible at once
+- **OptionList** — when options are rich (icons, descriptions, sections, multi-select)
+
+Do not use SelectInput for open-ended input — use TextInput instead.
+
+---
+
+## Interaction states
+
+<Canvas of={SelectInputStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+SelectInput's styling is primarily applied to the native `<select>` element to keep it accessible and avoid custom dropdown implementations.
+
+```css
+@import 'tokens/tokens.css';
+```
+
+```html
+<!-- Basic -->
+<div style="width: 100%;">
+  <label style="font-size: 13px; font-weight: 500; color: #303030; display: block; margin-bottom: 6px;">
+    Country
+  </label>
+  <select class="nx-select">
+    <option value="" disabled selected>Select a country</option>
+    <option value="us">United States</option>
+    <option value="ca">Canada</option>
+  </select>
+</div>
+```
+
+```css
+.nx-select {
+  width: 100%;
+  padding: 10px 40px 10px 14px;
+  border-radius: var(--nx-radius-sm);        /* 8px */
+  border: 1.5px solid var(--nx-border-input); /* #8a8a8a */
+  background: var(--nx-bg-input);             /* #fdfdfd */
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);        /* 14px */
+  color: var(--nx-text-default);
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Chevron via inline SVG data URI */
+  background-image: url("data:image/svg+xml,...");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.nx-select:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+.nx-select:disabled {
+  border: none;
+  background: var(--nx-bg-disabled);
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+
+/* Placeholder option styling */
+.nx-select option[value=""] {
+  color: var(--nx-text-placeholder);
+}
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Corner radius |
+| `--nx-border-input` | `#8a8a8a` | Rest/hover/focus border |
+| `--nx-bg-input` | `#fdfdfd` | Rest background |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.06)` | Disabled background |
+| `--nx-text-default` | `#303030` | Selected value text |
+| `--nx-text-placeholder` | `#9e9e9e` | Placeholder option text |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled text |
+| `--nx-text-subdued` | `#616161` | Chevron icon color |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus outline |
+| `--nx-color-critical` | `#d92d20` | Required asterisk |
+
+---
+
+## Accessibility
+
+- Wrap in a `<label>` or use `aria-labelledby` — never use placeholder as the sole label
+- The placeholder `<option>` should have `disabled` and `value=""` so it cannot be re-selected
+- Required fields use the native `required` attribute on `<select>`
+- Custom chevron is decorative — `aria-hidden="true"` if implemented as a separate element
+- Native `<select>` has full keyboard and screen-reader support out of the box — do not replace it with a `<div>` dropdown unless OptionList's richer feature set is needed
+
+---
+
+## React component
+
+```jsx
+import { SelectInput } from 'components/SelectInput/SelectInput.jsx';
+
+const OPTIONS = ['Morning', 'Evening', 'Both'];
+
+// Basic
+<SelectInput
+  label="Session type"
+  placeholder="Select type"
+  options={OPTIONS}
+  value={val}
+  onChange={e => setVal(e.target.value)}
+/>
+
+// Required
+<SelectInput
+  label="Status"
+  required
+  placeholder="Choose status"
+  options={['Active', 'Inactive', 'Pending']}
+  value={val}
+  onChange={fn}
+/>
+
+// Disabled
+<SelectInput label="Region" options={['North']} disabled />
+```
+
+---
+
+## Playground
+
+<Canvas of={SelectInputStories.Default} />

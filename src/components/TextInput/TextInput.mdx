@@ -1,0 +1,159 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TextInputStories from './TextInput.stories.jsx';
+
+<Meta title="Components/TextInput/Docs" />
+
+# TextInput
+
+Single-line text entry field. Used for short free-form values: names, temperatures, IDs, search queries.
+
+<Canvas of={TextInputStories.AllStates} />
+
+---
+
+## When to use
+
+- **TextInput** — short free-form string, number, email, password, search
+- **TextareaInput** — multi-line text (comments, notes, long descriptions)
+- **SelectInput** — when the user must choose from a fixed list
+- **NumberInput** — when you need numeric step controls
+
+---
+
+## Interaction states
+
+<Canvas of={TextInputStories.InteractionStates} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/TextInput/TextInput.css';
+```
+
+```html
+<!-- Basic -->
+<div class="nx-field">
+  <div class="nx-field__label">
+    <span>Store name</span>
+  </div>
+  <div class="nx-input-wrap">
+    <input class="nx-input" type="text" placeholder="e.g. My Store" />
+  </div>
+</div>
+
+<!-- Required -->
+<div class="nx-field">
+  <div class="nx-field__label nx-field__label--required">
+    <span>Email address</span>
+  </div>
+  <div class="nx-input-wrap">
+    <input class="nx-input" type="email" placeholder="user@example.com" required />
+  </div>
+</div>
+
+<!-- With prefix and suffix -->
+<div class="nx-field">
+  <div class="nx-field__label"><span>Temperature</span></div>
+  <div class="nx-input-wrap">
+    <span class="nx-input__prefix">~</span>
+    <input class="nx-input" type="number" placeholder="4.5" />
+    <span class="nx-input__suffix">°C</span>
+  </div>
+</div>
+
+<!-- Error state -->
+<div class="nx-field">
+  <div class="nx-field__label"><span>Email</span></div>
+  <div class="nx-input-wrap nx-input-wrap--error">
+    <input class="nx-input" type="email" value="not-valid" />
+  </div>
+  <div class="nx-field__error">
+    <!-- error icon SVG here -->
+    Enter a valid email address.
+  </div>
+</div>
+
+<!-- Disabled -->
+<div class="nx-field">
+  <div class="nx-field__label"><span>Record ID</span></div>
+  <div class="nx-input-wrap nx-input-wrap--disabled">
+    <input class="nx-input" type="text" value="REC-0042" disabled />
+  </div>
+</div>
+
+<!-- With help text -->
+<div class="nx-field">
+  <div class="nx-field__label"><span>Password</span></div>
+  <div class="nx-input-wrap">
+    <input class="nx-input" type="password" />
+  </div>
+  <span class="nx-field__help">Must be at least 8 characters.</span>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-border-input` | `#8a8a8a` | Rest/hover/focus border |
+| `--nx-border-input-error` | `#8e1f0b` | Error state border |
+| `--nx-bg-input` | `#fdfdfd` | Rest background |
+| `--nx-bg-input-hover` | `#fafafa` | Hover + focus background |
+| `--nx-bg-critical` | `#fee9e8` | Error background |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus ring |
+| `--nx-text-default` | `#303030` | Input value text |
+| `--nx-text-placeholder` | `#9e9e9e` | Placeholder text |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled text |
+| `--nx-color-critical` | `#d92d20` | Error icon and message |
+| `--nx-font-size-label` | `13px` | Input value and label size |
+| `--nx-radius-sm` | `8px` | Input corner radius |
+
+---
+
+## Accessibility
+
+- Always pair inputs with a visible `<label>` — never use `placeholder` as the only label
+- Required fields use the `required` attribute (not just the visual asterisk)
+- Error messages must be connected via `aria-describedby` pointing to the error element
+- Disabled inputs use the native `disabled` attribute — assistive technology announces state
+- `readonly` inputs behave like disabled visually but remain in the tab order and are announced differently
+
+---
+
+## React component
+
+```jsx
+import { TextInput } from 'components/TextInput/TextInput.jsx';
+
+// Basic
+<TextInput label="Store name" placeholder="e.g. My Store" value={v} onChange={fn} />
+
+// Required with suffix
+<TextInput label="Temperature" required suffix="°C" type="number" value={v} onChange={fn} />
+
+// Error state
+<TextInput label="Email" value={v} onChange={fn} error="Enter a valid email address." />
+
+// Disabled
+<TextInput label="Record ID" value="REC-0042" disabled />
+
+// With help text
+<TextInput label="Password" type="password" helpText="Must be at least 8 characters." value={v} onChange={fn} />
+
+// Clear button (appears when field has value)
+<TextInput label="Search" clearButton value={v} onChange={fn} />
+
+// Magic / AI tone
+<TextInput label="AI prompt" tone="magic" placeholder="Describe your product..." value={v} onChange={fn} />
+```
+
+---
+
+## Playground
+
+<Canvas of={TextInputStories.Playground} />

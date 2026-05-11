@@ -1,0 +1,97 @@
+/*
+ * Nexleaf Design System — Tabs
+ * Requires tokens.css.
+ *
+ * .nx-tabs                — the tablist container
+ * .nx-tabs--fitted        — tabs share equal width
+ * .nx-tab                 — individual tab item
+ * .nx-tab--active         — selected state
+ * .nx-tab--disabled       — disabled state
+ * .nx-tab__badge          — numeric badge within a tab
+ */
+
+.nx-tabs {
+  display: flex;
+  gap: var(--nx-space-1);                        /* 4px */
+  padding: 0 4px;
+  align-items: center;
+  font-family: var(--nx-font-family);
+}
+
+.nx-tabs--fitted .nx-tab {
+  flex: 1 0 0;
+  min-width: 1px;
+}
+
+/* ─── Tab item ──────────────────────────────────────────────────── */
+.nx-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 6px 12px;
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  outline: none;
+  transition: background 0.1s;
+  user-select: none;
+  box-sizing: border-box;
+  font-size: var(--nx-font-size-caption);        /* 12px */
+  font-weight: var(--nx-font-weight-semibold);   /* 550 */
+  line-height: var(--nx-line-height-tight);      /* 16px */
+  color: var(--nx-text-default);
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.nx-tab:hover:not(.nx-tab--disabled):not(.nx-tab--active) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.nx-tab--active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.nx-tab--disabled {
+  color: var(--nx-text-disabled);               /* #b5b5b5 */
+  cursor: default;
+}
+
+/* Focus ring via inset border (preserves border-radius cleanly) */
+.nx-tab:focus-visible::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: var(--nx-radius-sm);
+  border: 2px solid var(--nx-color-primary);    /* #005bd3 */
+  pointer-events: none;
+}
+
+/* ─── Badge ─────────────────────────────────────────────────────── */
+.nx-tab__badge {
+  margin-left: var(--nx-space-2);               /* 8px */
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: var(--nx-radius-sm);
+  height: 20px;
+  padding: 2px 8px;
+  display: flex;
+  align-items: center;
+  font-size: var(--nx-font-size-caption);
+  font-weight: var(--nx-font-weight-semibold);
+  color: var(--nx-text-subdued);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.nx-tab--disabled .nx-tab__badge {
+  color: var(--nx-text-disabled);
+}
+
+/* ─── More views / Add new ──────────────────────────────────────── */
+.nx-tab--more {
+  gap: 2px;
+}
