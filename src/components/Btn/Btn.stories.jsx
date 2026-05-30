@@ -17,7 +17,7 @@ export default {
   component: Btn,
   parameters: { layout: 'padded', backgrounds: { default: 'light' } },
   argTypes: {
-    variant:   { control: 'select', options: ['primary', 'secondary', 'ghost', 'tertiary', 'plain', 'destructive'] },
+    variant:   { control: 'select', options: ['primary', 'strong', 'secondary', 'ghost', 'tertiary', 'plain', 'destructive'] },
     tone:      { control: 'select', options: ['default', 'critical', 'success'] },
     size:      { control: 'select', options: ['micro', 'medium', 'large'] },
     disabled:  { control: 'boolean' },
@@ -65,6 +65,12 @@ export const AllStates = {
           <Btn variant="primary" disclosure>Disclosure</Btn>
           <Btn variant="primary" icon={<IcoPlus size={16} color="currentColor" />}>With icon</Btn>
         </Row>
+        <Row label="Strong">
+          <Btn variant="strong">Rest</Btn>
+          <Btn variant="strong" disabled>Disabled</Btn>
+          <Btn variant="strong" disclosure>Disclosure</Btn>
+          <Btn variant="strong" icon={<IcoPlus size={16} color="currentColor" />}>With icon</Btn>
+        </Row>
         <Row label="Secondary">
           <Btn variant="secondary">Rest</Btn>
           <Btn variant="secondary" disabled>Disabled</Btn>
@@ -101,6 +107,7 @@ export const AllStates = {
 
 // ─── Individual variant stories ──────────────────────────────────
 export const Primary = { args: { children: 'Save', variant: 'primary' } };
+export const Strong = { args: { children: 'Confirm', variant: 'strong' } };
 export const Secondary = { args: { children: 'Cancel', variant: 'secondary' } };
 export const Destructive = { args: { children: 'Delete record', variant: 'destructive' } };
 export const Ghost = { args: { children: 'Learn more', variant: 'ghost' } };

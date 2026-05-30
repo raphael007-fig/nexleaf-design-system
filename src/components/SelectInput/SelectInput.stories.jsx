@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { SelectInput } from './SelectInput.jsx';
+import { Btn } from '../Btn/Btn.jsx';
 
 export default {
-  title: 'Components/SelectInput',
+  title: 'Components/Forms/SelectInput',
   component: SelectInput,
   parameters: { layout: 'centered' },
   argTypes: { disabled: { control: 'boolean' }, required: { control: 'boolean' } },
@@ -74,16 +75,9 @@ export const InteractionStates = {
           options={['North', 'South']}
           disabled
         />
-        <button
-          onClick={() => setAttempted(true)}
-          style={{
-            padding: '10px 20px', background: '#005bd3', color: '#fff',
-            border: 'none', borderRadius: 8, fontFamily: 'Inter, sans-serif',
-            fontSize: 13, fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start',
-          }}
-        >
-          Save
-        </button>
+        <div style={{ alignSelf: 'flex-start' }}>
+          <Btn variant="primary" small onClick={() => setAttempted(true)}>Save</Btn>
+        </div>
         {attempted && session && (
           <div style={{ fontSize: 12, color: '#0c5132', background: '#cdfee1', borderRadius: 8, padding: '8px 12px' }}>
             Session type set to: {session}

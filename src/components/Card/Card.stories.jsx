@@ -10,6 +10,7 @@ import {
   CardLayoutType2,
   CardLayoutType3,
   CardLayoutType4,
+  CardLayoutType5,
 } from './Card.jsx';
 import { Pagination } from '../Pagination/Pagination.jsx';
 
@@ -83,6 +84,16 @@ export const AllLayouts = {
         <CardLayoutType4
           addedBy="Grace Mwangi"
           contactNumber="+254 712 345 678"
+        />
+      </div>
+
+      <div>
+        <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+          Layout Type 5 — QR Code Card
+        </p>
+        <CardLayoutType5
+          title="QR Code"
+          onAssign={() => {}}
         />
       </div>
 
@@ -272,6 +283,80 @@ export const LayoutType4 = {
       />
     </div>
   ),
+};
+
+export const LayoutType5 = {
+  name: 'Layout Type 5 — QR Code Card',
+  parameters: { layout: 'padded' },
+  render: () => {
+    // 160px sample QR (inline SVG data URI). Replace with a real scannable QR
+    // in production — this is purely visual.
+    const SAMPLE_QR =
+      'data:image/svg+xml;utf8,' +
+      encodeURIComponent(`
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 21 21' shape-rendering='crispEdges'>
+          <rect width='21' height='21' fill='#ffffff'/>
+          <g fill='#303030'>
+            <rect x='1' y='1' width='7' height='7'/>
+            <rect x='2' y='2' width='5' height='5' fill='#ffffff'/>
+            <rect x='3' y='3' width='3' height='3'/>
+            <rect x='13' y='1' width='7' height='7'/>
+            <rect x='14' y='2' width='5' height='5' fill='#ffffff'/>
+            <rect x='15' y='3' width='3' height='3'/>
+            <rect x='1' y='13' width='7' height='7'/>
+            <rect x='2' y='14' width='5' height='5' fill='#ffffff'/>
+            <rect x='3' y='15' width='3' height='3'/>
+            <rect x='9' y='1' width='1' height='1'/>
+            <rect x='11' y='1' width='1' height='1'/>
+            <rect x='10' y='2' width='1' height='1'/>
+            <rect x='9' y='4' width='1' height='1'/>
+            <rect x='11' y='3' width='1' height='1'/>
+            <rect x='1' y='9' width='1' height='1'/>
+            <rect x='3' y='10' width='1' height='1'/>
+            <rect x='5' y='9' width='1' height='1'/>
+            <rect x='7' y='10' width='1' height='1'/>
+            <rect x='9' y='9' width='2' height='1'/>
+            <rect x='12' y='9' width='1' height='2'/>
+            <rect x='14' y='9' width='1' height='1'/>
+            <rect x='16' y='10' width='1' height='1'/>
+            <rect x='18' y='9' width='1' height='2'/>
+            <rect x='9' y='11' width='1' height='1'/>
+            <rect x='11' y='12' width='1' height='1'/>
+            <rect x='13' y='11' width='2' height='2'/>
+            <rect x='17' y='12' width='2' height='1'/>
+            <rect x='9' y='13' width='2' height='1'/>
+            <rect x='12' y='13' width='1' height='1'/>
+            <rect x='14' y='14' width='1' height='1'/>
+            <rect x='16' y='13' width='1' height='2'/>
+            <rect x='19' y='13' width='1' height='2'/>
+            <rect x='10' y='15' width='1' height='1'/>
+            <rect x='13' y='16' width='2' height='1'/>
+            <rect x='17' y='16' width='1' height='2'/>
+            <rect x='19' y='17' width='1' height='1'/>
+            <rect x='9' y='17' width='1' height='2'/>
+            <rect x='11' y='18' width='2' height='1'/>
+            <rect x='14' y='18' width='1' height='1'/>
+            <rect x='15' y='19' width='2' height='1'/>
+            <rect x='18' y='19' width='2' height='1'/>
+          </g>
+        </svg>
+      `);
+
+    return (
+      <div style={{ maxWidth: 420, fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <CardLayoutType5
+          title="QR Code"
+          onAssign={() => {}}
+        />
+        <CardLayoutType5
+          title="QR Code"
+          qrCodeSrc={SAMPLE_QR}
+          onView={() => {}}
+        />
+        <CardLayoutType5 title="QR Code" loading />
+      </div>
+    );
+  },
 };
 
 // ─── Primitives ───────────────────────────────────────────────────────────────

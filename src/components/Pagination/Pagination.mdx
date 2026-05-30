@@ -1,7 +1,7 @@
 import { Meta, Canvas } from '@storybook/addon-docs/blocks';
 import * as PaginationStories from './Pagination.stories.jsx';
 
-<Meta title="Components/Pagination/Docs" />
+<Meta title="Components/Navigation/Pagination/Docs" />
 
 # Pagination
 
@@ -23,6 +23,21 @@ Previous/Next navigation control for paged content. Two types: standalone page n
 ## Interaction states
 
 <Canvas of={PaginationStories.InteractionStates} />
+
+---
+
+## Loading state
+
+Pass `loading` to render skeleton placeholders in place of the label and arrow buttons. Layout dimensions are preserved so toggling `loading` does not shift surrounding content.
+
+```jsx
+<Pagination loading label="Record 3 of 12" />
+<Pagination type="table" loading label="Showing 1–20 of 134" />
+```
+
+The arrow buttons are not interactive while `loading` is true. Skeletons match the system pulse (`Skeleton` / `Skeleton.Line` from `components/Skeleton`).
+
+<Canvas of={PaginationStories.Loading} />
 
 ---
 
@@ -78,6 +93,33 @@ Previous/Next navigation control for paged content. Two types: standalone page n
 - Prev/Next buttons need `aria-label="Previous page"` / `aria-label="Next page"`
 - Disabled buttons use the `disabled` attribute — no click handler needed
 - Label text ("1–20 of 134") should be a live region if it updates dynamically: `aria-live="polite"`
+
+---
+
+## Angular component
+
+```ts
+import { NxPaginationModule } from 'components/Pagination/pagination.module';
+
+// Page nav
+<nx-pagination
+  [hasPrevious]="currentPage > 1"
+  [hasNext]="currentPage < totalPages"
+  (previous)="page = page - 1"
+  (next)="page = page + 1"
+  [label]="'Record ' + current + ' of ' + total"
+/>
+
+// Table footer
+<nx-pagination
+  type="table"
+  [hasPrevious]="offset > 0"
+  [hasNext]="offset + pageSize < total"
+  (previous)="onPrev()"
+  (next)="onNext()"
+  [label]="'Showing ' + (offset + 1) + '–' + end + ' of ' + total"
+/>
+```
 
 ---
 

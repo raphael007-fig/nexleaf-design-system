@@ -62,6 +62,24 @@ Do **not** use tooltips for critical information — use a `Banner` or inline `h
 
 ---
 
+## Angular component
+
+```ts
+import { NxTooltipModule } from 'components/Tooltip/tooltip.module';
+
+// Default (above)
+<nx-tooltip content="Create new view">
+  <button>Add view</button>
+</nx-tooltip>
+
+// Below
+<nx-tooltip content="Filter records" position="below">
+  <nx-btn variant="secondary">Filter</nx-btn>
+</nx-tooltip>
+```
+
+---
+
 ## React component
 
 ```jsx

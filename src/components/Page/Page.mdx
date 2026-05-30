@@ -1,13 +1,99 @@
 import { Meta, Canvas } from '@storybook/addon-docs/blocks';
 import * as PageStories from './Page.stories.jsx';
 
-<Meta title="Components/Page/Docs" />
+<Meta title="Components/Navigation/Header Page/Docs" />
 
-# Page
+# Header Page
 
-Top-level layout wrapper. Provides the page header: title, subtitle, back navigation, metadata badges, and primary/secondary action buttons. Does not constrain the content area — that is the responsibility of the route layout.
+Top-level layout wrapper. Provides the page header: title, subtitle, back navigation, metadata badges, an optional equipment thumbnail (with click-to-zoom modal), and primary/secondary action buttons. Does not constrain the content area — that is the responsibility of the route layout.
 
 <Canvas of={PageStories.WithAllFeatures} />
+
+---
+
+## With Title Disclosure (sibling-page switcher)
+
+A chevron-down button can sit next to the title. Clicking it opens an `OptionList` of sibling pages — typically the children of the same primary group in the Side Navigation. Use it as a fast jump between pages that share a parent, so the user doesn't have to round-trip through the side rail.
+
+**Only render the disclosure when the current page actually has secondary groups under it.** If `titleDisclosure.items` is empty or the prop is omitted, the chevron doesn't appear and the title behaves exactly as before.
+
+```jsx
+<Page
+  title="ColdChain Equipment"
+  titleDisclosure={{
+    items: [
+      { id: 'coldchain', label: 'ColdChain Equipment' },
+      { id: 'rtmds',     label: 'RTMDs' },
+      { id: 'solar',     label: 'Solar Equipment' },
+      // …rest of the Inventory group's children
+    ],
+    activeItemId: 'coldchain',
+    onSelect: (id) => navigate(`/inventory/${id}`),
+  }}
+/>
+```
+
+### Prop shape
+
+| Field | Type | Notes |
+|---|---|---|
+| `items` | `[{ id, label, disabled?, onClick? }]` | Sibling pages. Wire these from the same array you pass to the Side Navigation's selected primary group's `children`. |
+| `activeItemId` | `string` | Highlights the current page in the option list. |
+| `onSelect` | `(id) => void` | Fires when a sibling is chosen. The popover closes automatically. |
+| `sectionTitle` | `string` | Optional heading inside the popover (e.g. `'Inventory'`). |
+| `ariaLabel` | `string` | Accessible name for the chevron button. Defaults to `Switch to a sibling of {title}`. |
+
+The popover is portal-rendered (escapes the page header's overflow), closes on backdrop click + `Esc`, and animates the chevron 180° while open.
+
+### Deriving siblings from the Side Navigation
+
+Don't hand-maintain the `items` array — derive it from the same data driving the side rail. The `siblingsFor` helper exported from `SideNavigation` walks the nav tree, finds the group whose children contain the current page id, and returns the disclosure shape directly (or `null` when there's nothing to switch to).
+
+```jsx
+import { Page } from '…/Page/Page.jsx';
+import { SideNavigation, siblingsFor } from '…/SideNavigation/SideNavigation.jsx';
+
+const [pageId, setPageId] = useState('coldchain');
+const disclosure = siblingsFor(NAV_ITEMS, pageId);
+if (disclosure) disclosure.onSelect = setPageId;   // wire navigation
+
+<Page title={titleFor(pageId)} titleDisclosure={disclosure} />
+```
+
+`siblingsFor` automatically returns `null` when:
+- the current page id isn't a child of any group, **or**
+- the matching group has fewer than 2 children (default — overridable via the `minSiblings` option).
+
+Passing `null` straight to `titleDisclosure` hides the chevron without any guard in the consumer.
+
+<Canvas of={PageStories.WithTitleDisclosure} />
+
+---
+
+## With image thumbnail
+
+Equipment, asset, or product pages can supply an `image` prop. It renders a 40×40 rounded thumbnail between the back arrow and the title; clicking it opens a modal with the full-resolution image (Esc, backdrop click, or the × button closes it).
+
+`image` accepts either a plain URL string or an object:
+
+```jsx
+// Same source used for both thumbnail and modal
+<Page title="Hairer-HBC-80" image="/equipment/hairer-hbc-80.jpg" />
+
+// Separate optimised thumbnail vs. full-res modal source
+<Page
+  title="Hairer-HBC-80 (IOM)"
+  image={{
+    src: '/equipment/hairer-hbc-80.thumb.jpg',
+    full: '/equipment/hairer-hbc-80.full.jpg',
+    alt: 'Hairer HBC-80 cold-chain refrigerator',
+  }}
+/>
+```
+
+The modal reuses the shared `Overlay` primitive — backdrop click and `Esc` close it for free.
+
+<Canvas of={PageStories.WithImage} />
 
 ---
 
@@ -33,16 +119,18 @@ Wrap every screen-level view with `Page`. It is the single source of truth for:
 ## Anatomy
 
 ```
-┌──────────────────────────────────────────────────────┐
-│ ← [back]  Page Title  [badge] [badge]  [Sec] [Primary]│
-│            Subtitle text                              │
-├──────────────────────────────────────────────────────┤
-│  {children}                                          │
-└──────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ ← [back] ▣  Page Title ⌄  [badge] [badge]  [Sec] [Primary]      │
+│              Subtitle text                                      │
+├─────────────────────────────────────────────────────────────────┤
+│  {children}                                                     │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 - **Back button** — 28×28px ghost icon button, only shown when `backAction` is provided
+- **Image thumbnail** — 40×40 rounded thumbnail, only shown when `image` is provided. Clicking it opens a modal with the full-resolution image.
 - **Title** — 20px, weight 650, `#303030`
+- **Title disclosure (⌄)** — 24×24 ghost chevron, only shown when `titleDisclosure.items` is non-empty. Opens a portal `OptionList` of sibling pages directly under the title.
 - **Subtitle** — 12px, `#616161`, below title
 - **Metadata badges** — inline `Badge` components beside the title
 - **Secondary actions** — secondary buttons, left of primary
@@ -122,7 +210,51 @@ Wrap every screen-level view with `Page`. It is the single source of truth for:
 
 ---
 
+## Angular component
+
+```ts
+import { NxPageModule } from 'components/Page/page.module';
+
+// Basic
+<nx-page title="Temperature Records">
+  <!-- content -->
+</nx-page>
+
+// Full
+<nx-page
+  title="Fridge A — Zone 1"
+  subtitle="Last synced 2 hours ago"
+  [backAction]="{ onAction: navigateBack }"
+  [metadata]="[{ label: 'Active', tone: 'success' }]"
+  [primaryAction]="{ content: 'Record reading', onAction: openForm }"
+  [secondaryActions]="[{ content: 'Export', onAction: exportData }]"
+>
+  <!-- IndexTable, form, etc. -->
+</nx-page>
+```
+
+---
+
 ## React component
+
+### Action callback API
+
+`backAction`, `primaryAction`, and each entry in `secondaryActions` accept either `onClick` (preferred — matches every other component in this library) or `onAction` (legacy Page API). Both fire if both are provided, so existing call sites keep working while new code uses `onClick`.
+
+```jsx
+// Preferred
+<Page
+  backAction={{ onClick: () => navigate(-1) }}
+  primaryAction={{ content: 'Save', onClick: save }}
+  secondaryActions={[{ content: 'Export', onClick: exportData }]}
+/>
+
+// Legacy — still supported
+<Page
+  backAction={{ onAction: () => navigate(-1) }}
+  primaryAction={{ content: 'Save', onAction: save }}
+/>
+```
 
 ```jsx
 import { Page } from 'components/Page/Page.jsx';

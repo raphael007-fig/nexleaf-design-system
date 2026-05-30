@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Tabs } from './Tabs.jsx';
 
 export default {
-  title: 'Components/Tabs',
+  title: 'Components/Navigation/Tabs',
   component: Tabs,
   parameters: { layout: 'centered' },
 };

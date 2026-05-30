@@ -38,6 +38,58 @@ Checkboxes, sort headers, hover states, bulk action bar, and pagination all work
 
 ---
 
+## Link column (LinkCell)
+
+Use `LinkCell` inside a column's `render` to display one or more navigable text links in a cell. When the list overflows `visible`, a "+N Others" link appears that opens a scrollable dropdown on hover, focus, or click.
+
+<Canvas of={IndexTableStories.WithLinkCell} />
+
+```jsx
+import { IndexTable, LinkCell } from 'components/IndexTable/IndexTable.jsx';
+
+const columns = [
+  { key: 'monitor',  label: 'Monitor' },
+  { key: 'facility', label: 'Facility' },
+  {
+    key: 'equipment',
+    label: 'Monitored equipment',
+    render: (row) => (
+      <LinkCell items={row.equipment} visible={1} othersLabel="Others" />
+    ),
+  },
+];
+
+// Each row's `equipment` is an array of link items
+const rows = [
+  { id: 1, monitor: 'Mary A.', facility: 'Kisumu DH', equipment: [
+    { label: 'Vestfrost MK144', href: '/equipment/mk144' },
+  ]},
+  { id: 2, monitor: 'James O.', facility: 'Nairobi Gen.', equipment: [
+    { label: 'Vestfrost MK144', href: '/equipment/mk144' },
+    { label: 'Ambient Ambient', href: '/equipment/ambient' },
+    { label: 'AUCMA CFD-50',    href: '/equipment/aucma' },
+  ]},
+];
+```
+
+### `LinkCell` props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | `{ label, href?, onClick? }[]` | `[]` | Links to render. `href` renders an `<a>`; `onClick` renders a `<button>` styled as a link. Either is supported per item. |
+| `visible` | `number` | `1` | How many items to render inline before collapsing the rest into "+N Others". |
+| `othersLabel` | `string` | `'Others'` | Suffix used in the overflow trigger label. E.g. `'Locations'` → "+3 Locations". |
+| `ariaLabel` | `string` | auto | Accessible label for the overflow trigger button. Defaults to `"{N} more {othersLabel}"`. |
+
+### Behavior
+
+- The "+N Others" trigger is a `<button>` with `aria-haspopup` and `aria-expanded` — it opens on **hover**, **focus**, and **click**.
+- The dropdown is portaled to `document.body`, so the table's horizontal scroll container does not clip it.
+- The dropdown closes on `Escape`, on outside click, and after a brief delay when the cursor leaves both the trigger and the menu.
+- The dropdown is scrollable when its content exceeds `max-height: 240px` — useful for cells linking to many items.
+
+---
+
 ## Empty state
 
 Shown when `rows` is an empty array and `loading` is false. Pass `emptyState={{ heading, description }}` to customise the message.
@@ -50,7 +102,54 @@ Shown when `rows` is an empty array and `loading` is false. Pass `emptyState={{ 
 
 When `loading={true}`, five placeholder rows with pulsing gray bars are rendered in place of data. No real data is required — pass `rows={[]}` alongside `loading={true}`.
 
+Uses the shared [`Skeleton`](?path=/docs/components-skeleton-docs--docs) primitive — pulse timing and base color are inherited from the system, not redefined locally.
+
 <Canvas of={IndexTableStories.Loading} />
+
+---
+
+## Mobile (stacked-card view)
+
+Below **640px**, `IndexTable` switches from a horizontal `<table>` to a stacked-card layout — one card per row. The desktop `<thead>` is replaced by a small bar at the top with **Select all** and a portal **Sort ▾** menu.
+
+<Canvas of={IndexTableStories.Mobile} />
+
+### Column flags (opt-in)
+
+The card layout reads four optional fields off each `column` to decide what goes where. None are required — sensible defaults kick in if you omit them.
+
+| Field            | Type      | Effect on mobile                                                                          |
+| ---------------- | --------- | ----------------------------------------------------------------------------------------- |
+| `primary`        | `boolean` | Renders this column as the card's **title line**. First match wins.                       |
+| `subtitle`       | `boolean` | Renders this column directly under the title in subdued text.                             |
+| `hideOnMobile`   | `boolean` | Drops the column from the card entirely.                                                  |
+| `mobileLabel`    | `string`  | Overrides the label shown in the field grid. Useful when `label` is JSX (sr-only spans).  |
+
+If no column is marked `primary`, the **first non-hidden column** becomes the title automatically. The column's existing `render` is reused as-is, so cell components like `LinkCell`, `Badge`, and `StatusBadge` keep working in card mode.
+
+### Layout
+
+```
+┌────────────────────────────────────────────┐
+│ ☐  ⟨primary column⟩                    ⋮  │  ← checkbox + title + row actions
+│    ⟨subtitle column⟩                       │  ← subtitle, in #616161
+│    ─────────────────────────────────       │
+│    ⟨label⟩          ⟨value (right-align)⟩  │
+│    ⟨label⟩          ⟨value⟩                │  ← every other column, in a 2-col grid
+└────────────────────────────────────────────┘
+```
+
+### Sorting on mobile
+
+If any column is `sortable` **and** an `onSort` handler is provided, a **Sort ▾** button appears in the mobile header. It opens a portal menu listing sortable columns with the active direction indicated by an arrow. Selecting an option calls `onSort(key)` — the same callback used by desktop column headers.
+
+### Toolbar reflow
+
+The toolbar stacks vertically below 640px: tabs sit on top (scrollable horizontally if many), then a full-width search input, then any `toolbarActions` wrapping below it.
+
+### Popover safety
+
+Both `LinkCell`'s "+N Others" dropdown and the row-actions menu portal are viewport-clamped — they shift inward and/or flip above the trigger if they would otherwise clip off-screen on narrow viewports.
 
 ---
 
@@ -69,7 +168,7 @@ boxShadow: [
 ].join(', ')
 ```
 
-The `@keyframes indexTablePulse` animation for skeleton rows is injected via an inline `<style>` tag inside the component.
+Skeleton rows compose `<Skeleton />` and `<Skeleton.Line />` from the shared primitive, so the pulse keyframe is injected once for the whole page rather than per component.
 
 ---
 
@@ -89,6 +188,38 @@ The `@keyframes indexTablePulse` animation for skeleton rows is injected via an 
 | `color-primary` | `#005bd3` | Checkbox accent; "Deselect all" link |
 | `border-secondary-btn` | `#c9c9c9` | Bulk action button border |
 | `text-disabled` | `#b5b5b5` | Disabled checkbox / icon stroke |
+
+---
+
+## Angular component
+
+```ts
+import { NxIndexTableModule } from 'components/IndexTable/index-table.module';
+
+// In your component template:
+<nx-index-table
+  [columns]="columns"
+  [rows]="rows"
+  [selectedRows]="selected"
+  (selectionChange)="selected = $event"
+  [sortKey]="sortKey"
+  [sortDir]="sortDir"
+  (sort)="handleSort($event)"
+  [loading]="loading"
+  [bulkActions]="bulkActions"
+  [rowActions]="rowActions"
+  [emptyState]="{ heading: 'No records found', description: 'Adjust your filters.' }"
+>
+  <nx-pagination
+    type="table"
+    [hasPrevious]="page > 0"
+    [hasNext]="hasMore"
+    (previous)="page = page - 1"
+    (next)="page = page + 1"
+    [label]="'Showing ' + start + '–' + end + ' of ' + total"
+  />
+</nx-index-table>
+```
 
 ---
 
@@ -173,6 +304,15 @@ function MyPage() {
 | `bulkActions` | `{ label, onAction }[]` | — | Actions shown in the bulk bar |
 | `loading` | `boolean` | `false` | Shows 5 skeleton rows when true |
 | `footer` | `ReactNode` | — | Rendered below the table (use `<Pagination type="table" />`) |
+| `tabs` | `{ label, badge? }[]` | — | Toolbar tabs (left side of the toolbar) |
+| `activeTab` | `number` | `0` | Index of the active tab |
+| `onTabChange` | `(index) => void` | — | Called when a tab is clicked |
+| `searchValue` | `string` | — | Controlled value for the toolbar search input |
+| `onSearchChange` | `(event) => void` | — | Called on every keystroke in the search input |
+| `searchPlaceholder` | `string` | `'Search…'` | Placeholder + accessible name for the search input |
+| `toolbarActions` | `{ label, icon?, onClick }[]` | — | Secondary action buttons on the right of the toolbar |
+| `rowActions` | `Action[] \| (row) => Action[]` | — | Per-row 3-dot menu items. Pass a function for row-specific actions. |
+| `bare` | `boolean` | `false` | Embedded/read-only mode. Removes selection, bulk bar, and slims the card chrome. |
 
 ### Column definition
 
@@ -185,12 +325,195 @@ function MyPage() {
 | `width` | `string \| number` | Optional column width |
 | `render` | `(row) => ReactNode` | Custom cell renderer — overrides default `row[key]` |
 | `noWrap` | `boolean` | Sets `white-space: nowrap` on data cells |
+| `primary` | `boolean` | **Mobile only.** Renders this column as the card title. First match wins; if no column is marked, the first visible column becomes the title. |
+| `subtitle` | `boolean` | **Mobile only.** Renders directly below the title in subdued text. |
+| `hideOnMobile` | `boolean` | **Mobile only.** Skips this column in card view. |
+| `mobileLabel` | `string` | **Mobile only.** Overrides the label shown in the field grid when `label` is JSX. |
+
+---
+
+## Selection model
+
+The header checkbox toggles **only the currently rendered rows** (i.e. the rows actually present in the `rows` prop at that moment — typically the current page after any search/tab filter).
+
+- **No "select across pages" semantics.** If a dataset spans pages, selection lives per page. Callers that need cross-page selection must store it themselves and merge.
+- **No "select all filtered" affordance** is rendered. If product needs it, add a banner under the bulk bar (e.g. "12 selected on this page. Select all 240 matching records?").
+- `selectedRows` is a `Set` — passing an array breaks `.has()` / `.size`. Always wrap state with `new Set(...)`.
+- Re-rendering with a new `rows` reference does **not** automatically clear the selection. Callers must decide whether selection survives tab/search/page changes.
+
+### Recommended wording for the header label
+
+| Selection scope | Header checkbox aria-label |
+|-----------------|----------------------------|
+| Visible page only (current behaviour) | `Select all rows on this page` |
+| All filtered results (if implemented) | `Select all matching results` |
+
+The current implementation uses the generic `"Select all rows"` — tighten this when scope decisions are finalised.
+
+---
+
+## Row identity
+
+Every row must expose a stable `id`. The component reads `row.id` directly — it does **not** accept a `getRowId(row)` prop yet.
+
+- **Never use the array index as `id`** — selection and React keys break as soon as the data reorders.
+- If the backend uses a different primary key (`uuid`, `equipmentId`, `installId`, etc.), map it to `id` before passing the rows in:
+  ```jsx
+  const rows = data.map(r => ({ ...r, id: r.equipmentId }));
+  ```
+- An optional `getRowId(row)` prop is an **open question** — see the engineering questions section.
+
+---
+
+## Sorting
+
+- Sort is **single-column only**. Clicking a sortable header calls `onSort(key)`; the parent owns the actual sort and re-renders with the new order. Multi-column sort is not in scope.
+- The header shows: up-chevron when `sortKey === col.key && sortDir === 'asc'`, down-chevron when `'desc'`, a dimmed double-chevron on hover when inactive, nothing otherwise.
+- Sortable headers are currently clickable `th` elements. They respond to mouse click but **not** to keyboard `Enter`/`Space`. Production-readiness item: wrap the header label in a `button` element or add `role="button"` + `tabIndex={0}` + `onKeyDown` for `Enter`/`Space`.
+- `aria-sort` is **not yet applied**. Production target:
+
+  | State | Attribute |
+  |-------|-----------|
+  | Active ascending | `aria-sort="ascending"` |
+  | Active descending | `aria-sort="descending"` |
+  | Inactive sortable | `aria-sort="none"` |
+  | Not sortable | omit the attribute |
+
+---
+
+## Keyboard interaction
+
+| Key | Context | Behaviour |
+|-----|---------|-----------|
+| `Tab` | Anywhere | Moves focus through toolbar → search → toolbar actions → header select-all → sortable headers (when implemented) → row checkboxes → row-action triggers → footer |
+| `Space` | Checkbox | Toggle row / select-all (native input) |
+| `Enter` / `Space` | Sortable header | **Target:** invoke `onSort(key)`. Not yet wired in the current code — see Sorting above. |
+| `Enter` / `Space` | Row-actions `…` button | Opens the action menu |
+| `Escape` | Open action menu | Closes the menu (already implemented) |
+| `Escape` | Anywhere else | No-op |
+| Arrow keys | Inside table | **Not implemented.** Cell-level navigation is not in scope; this is a flat row table, not a grid. |
+
+Focus return after an action menu closes is currently the document default (focus is lost). Production target: restore focus to the trigger `…` button.
+
+---
+
+## Search behaviour
+
+The search input is controlled — `searchValue` + `onSearchChange` are owned entirely by the parent. The component does **not** filter rows itself.
+
+### Rules
+
+- **Debounce or immediate?** Parent's choice. The component fires `onSearchChange` synchronously on every keystroke. For server-driven search, the parent should debounce (~300ms) before hitting the API.
+- **Local vs. server search?** Parent's choice. The component is agnostic — it just exposes the input.
+- **Clear button:** the search input renders the design-system `TextInput` with `clearButton`. Clearing sets the input to `""`; the parent decides whether that re-fetches or just resets the filter.
+- **Search + tabs:** when the user switches tabs, the parent should decide whether to clear or preserve `searchValue`. Default expectation: **clear** — search scope is per tab.
+- **Search + pagination:** when `searchValue` changes, the parent should reset pagination to page 1. The component does not do this automatically.
+- **Empty query:** treat the same as no search — render the full list for the active tab.
+
+---
+
+## Loading behaviour
+
+When `loading={true}`, the body renders 5 `SkeletonRow`s in place of `rows`.
+
+### Rules
+
+- **Skeleton replaces data.** Previous rows do not stay visible underneath. If you need "stale while revalidating" behaviour (keep previous rows + show a subtle loader), don't pass `loading={true}` — keep rows visible and render a separate indicator in the toolbar.
+- **Toolbar stays interactive during loading.** Tabs, search, and toolbar actions remain clickable. Bulk actions / row actions are not reachable because rows are hidden.
+- **Selection is not cleared on `loading={true}`.** It's preserved across the loading state. If a refetch returns a different row set, callers may want to prune `selectedRows` to only the IDs still present.
+- **Empty state and loading are mutually exclusive.** If `loading=true`, skeleton wins. If `loading=false && rows=[]`, empty state shows.
+
+---
+
+## Empty state variants
+
+The component renders **one generic empty state** today. Callers control the wording via `emptyState={{ heading, description }}`. Recommended variants the caller should pass:
+
+| Scenario | Heading | Description |
+|----------|---------|-------------|
+| No data yet (fresh) | `No records yet` | `Records will appear here once they're created.` |
+| No search results | `No results for "{query}"` | `Try a different search term or clear the filter.` |
+| Filtered empty (tab/filter scope) | `No records in this view` | `Switch tabs or remove filters to see more records.` |
+| Permission / access blocked | `You don't have access` | `Ask an admin to grant you access to this list.` |
+| Load failed (error) | `Couldn't load records` | `Try again, or contact support if this keeps happening.` Include a "Retry" toolbar action. |
+
+Note: there is no built-in error state — render `emptyState` with an error message + a retry button via `toolbarActions`. An explicit `errorState` prop is an open question.
+
+---
+
+## Bare mode
+
+`bare={true}` strips the table down for embedded use.
+
+### What changes
+
+- Header select-all `th` cell is hidden
+- Per-row checkboxes are hidden (`hideCheckbox`)
+- Bulk action bar is suppressed
+- Card chrome: `8px` radius + flat `1px solid #e0e0e0` border (no shadow layers)
+
+### When to use
+
+- Embedded inside a details/overview page (e.g. installations under an equipment record)
+- Small related-records tables
+- Read-only secondary lists
+
+### When **not** to use
+
+- Primary index pages (Spare Parts, Equipment, Requests) — these need selection + bulk actions
+- Workflows where the user manages many records at once
+- Any operational table where row-level actions are the point
+
+---
+
+## Row-actions menu positioning
+
+The 3-dot menu is rendered via `createPortal` to `document.body` so it can escape `overflow: hidden` ancestors. The position is captured **once** via `getBoundingClientRect()` when the menu opens.
+
+### Known limitation
+
+If the page scrolls (or the window resizes) while the menu is open, the menu **does not follow** the trigger — it stays anchored to the captured rect and visually detaches from its row.
+
+### Resolution options (open question — see below)
+
+- **Close on scroll/resize** — simplest, but interrupts the user mid-task
+- **Reposition on scroll/resize** — listen for scroll on the nearest scrollable ancestor + window resize; recompute the rect
+- **Use a floating positioning utility** — adopt Floating UI or similar across all popovers in the system (Tooltip, SearchSelectButton, RowActionsMenu) for consistent behaviour
 
 ---
 
 ## Accessibility
 
-- Select-all checkbox uses a native `indeterminate` state via `ref` when some (not all) rows are selected
-- All `<th>` headers that are sortable respond to keyboard `click` events — wrap in `<button>` if stricter keyboard navigation is required
-- Bulk action buttons are native `<button>` elements with visible focus states
-- Empty state and skeleton rows use `colSpan={999}` to span all columns correctly
+| Concern | Current state |
+|---------|---------------|
+| Native table semantics | Uses `table` / `thead` / `tbody` / `th` / `td` elements |
+| Column headers labelled | All `th` cells have `scope="col"` |
+| Select-all checkbox | `aria-label="Select all rows"` + native `indeterminate` via ref |
+| Row checkboxes | aria-label set per row, e.g. `Select row 42` |
+| Search input | `ariaLabel={searchPlaceholder || 'Search'}` passed to TextInput |
+| Row-actions trigger | `aria-label="More actions"`; menu closes on Escape and outside click |
+| Row-actions header cell | Visually empty but carries a visually-hidden "Row actions" label (passes axe `empty-table-header`) |
+| Sort state | `aria-sort` **not yet applied** — see Sorting |
+| Keyboard sort activation | **Not wired** — `th` header is clickable but not keyboard-activatable |
+| Focus return after menu action | **Not wired** — focus is lost when the menu closes |
+| Empty state colspan | Uses `colSpan={999}` as a catch-all. Production target: compute `columns.length + (bare ? 0 : 1) + (rowActions ? 1 : 0)` |
+| Sticky headers | Not implemented — open question |
+
+---
+
+## Engineering questions to validate
+
+Before sharing for engineering implementation:
+
+1. Should "select all" apply to **visible rows only**, the **current page**, or **all filtered results**? Today it's effectively "all rows currently rendered" — confirm this is intentional and tighten the aria-label accordingly.
+2. Do we need a `getRowId(row)` prop so callers don't have to remap their backend key to `id`?
+3. Should the row-actions menu **close on scroll**, **reposition on scroll**, or adopt a floating positioning utility globally?
+4. Is search **local**, **server-driven**, or per-page parent's choice? Should the component ship with a built-in debounce, or stay fully controlled?
+5. Should changing `searchValue` automatically reset pagination to page 1, or is that the parent's job?
+6. Is sorting **single-column only** for now, or do we plan multi-column sort? Confirm so we don't paint ourselves into a corner with the `sortKey` / `sortDir` shape.
+7. During `loading={true}`, should we **replace** previous rows with skeletons (current behaviour) or **keep previous rows visible** with a subtle indicator?
+8. Which empty-state variants do we ship as presets (no data / no results / filtered empty / no access / error), and is a dedicated `errorState` prop worth adding?
+9. Do we need **sticky headers** when the table is taller than the viewport?
+10. Which pages use **full mode** (Spare Parts, Equipment, Requests, …) and which use **bare mode** (embedded lists in details pages)? Lock the list before engineering picks ad hoc.
+11. Should `aria-sort` be added in this release, and do sortable headers need to become real keyboard-activatable controls (a `button` inside the `th`)?
+12. Should focus return to the row-actions trigger after the menu closes (recommended), or to the activated action's row?

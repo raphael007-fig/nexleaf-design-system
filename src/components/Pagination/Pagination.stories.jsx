@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pagination } from './Pagination.jsx';
 
 export default {
-  title: 'Components/Pagination',
+  title: 'Components/Navigation/Pagination',
   component: Pagination,
   parameters: { layout: 'centered' },
   argTypes: {
@@ -43,6 +43,28 @@ export const AllTypes = {
         </div>
         <div style={{ width: 480, border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', marginTop: 8 }}>
           <Pagination type="table" hasPrevious={false} hasNext={false} label="Showing all 12 results" />
+        </div>
+      </div>
+    </div>
+  ),
+};
+
+export const Loading = {
+  name: 'Loading',
+  parameters: { layout: 'padded' },
+  render: () => (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'Inter, sans-serif' }}>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Page type — loading</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'flex-start' }}>
+          <Pagination loading label="Record 3 of 12" />
+          <Pagination loading />
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>Table type — loading</div>
+        <div style={{ width: 480, border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden' }}>
+          <Pagination type="table" loading label="Showing 1–20 of 134" />
         </div>
       </div>
     </div>

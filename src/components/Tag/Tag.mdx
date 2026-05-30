@@ -1,0 +1,221 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TagStories from './Tag.stories.jsx';
+
+<Meta title="Components/Tag/Docs" />
+
+# Tag
+
+A pill-shaped chip used to represent a keyword, selected value, or applied filter. Used inside multi-select inputs (`SearchSelectMulti`), filter bars, and AI-suggestion lists.
+
+<Canvas of={TagStories.AllStates} />
+
+---
+
+## When to use
+
+- **Tag** — represent a user-selected value (filter chip, multi-select chip, keyword)
+- **Badge** — represent system-supplied status or category (no user action)
+- **Btn (small)** — a primary interaction the user is being asked to perform
+
+Tags should never be the primary action on a screen. If a user clicks a tag, it should either filter, remove, or open a detail — never submit a form.
+
+---
+
+## Interaction states
+
+<Canvas of={TagStories.InteractionStates} />
+
+---
+
+## States
+
+| State | Background | Text | Notes |
+|-------|------------|------|-------|
+| Default — rest | `#ebebeb` | `#303030` | — |
+| Default — hover | `#e0e0e0` | `#303030` | Only when clickable or removable |
+| Default — focus | `#ebebeb` | `#303030` | + `0 0 0 2px #005bd3` ring |
+| Default — active | `#d2d2d2` | `#303030` | Mouse-down state |
+| Default — disabled | `rgba(0,0,0,0.06)` | `#b5b5b5` | `cursor: not-allowed`, X hidden |
+| Magic — rest | `#ede7ff` | `#5700d1` | Purple variant for AI suggestions |
+| Magic — hover | `#dcd0ff` | `#5700d1` | — |
+| Magic — active | `#cbb8ff` | `#5700d1` | — |
+| Magic — disabled | `rgba(0,0,0,0.06)` | `#b5b5b5` | — |
+| X button — rest | transparent | `#616161` (default) / `#5700d1` (magic) | — |
+| X button — hover | `#303030` (default) / `#5700d1` (magic) | `#ffffff` | Circle, 18×18px |
+
+Pill `border-radius: 100px`. Padding `3px 10px` (`3px 4px 3px 10px` when removable). Font `13px / weight 450`. Height ~24px.
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Tag/Tag.css';
+```
+
+```html
+<!-- Default -->
+<span class="nx-tag">
+  <span class="nx-tag__label">Label</span>
+</span>
+
+<!-- With icon -->
+<span class="nx-tag">
+  <span class="nx-tag__icon"><!-- icon SVG --></span>
+  <span class="nx-tag__label">Label</span>
+</span>
+
+<!-- Removable -->
+<span class="nx-tag">
+  <span class="nx-tag__label">Label</span>
+  <button class="nx-tag__remove" aria-label="Remove Label">
+    <!-- X icon SVG -->
+  </button>
+</span>
+
+<!-- Magic tone -->
+<span class="nx-tag nx-tag--magic">
+  <span class="nx-tag__icon"><!-- info SVG --></span>
+  <span class="nx-tag__label">Label</span>
+  <button class="nx-tag__remove nx-tag__remove--magic" aria-label="Remove Label">
+    <!-- X icon SVG -->
+  </button>
+</span>
+
+<!-- Disabled -->
+<span class="nx-tag nx-tag--disabled">
+  <span class="nx-tag__label">Label</span>
+</span>
+
+<!-- Group wrapper -->
+<div class="nx-tag-group">
+  <span class="nx-tag">…</span>
+  <span class="nx-tag">…</span>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-surface` | `#ebebeb` | Default rest background |
+| `--nx-border-default` | `#e0e0e0` | Default hover background |
+| `--nx-text-default` | `#303030` | Default text + X hover fill |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.06)` | Disabled background |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled text |
+| `--nx-text-subdued` | `#616161` | X rest color (default tone) |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus ring |
+| `--nx-magic-bg-tag-rest` | `#ede7ff` | Magic rest background |
+| `--nx-magic-bg-tag-hover` | `#dcd0ff` | Magic hover background |
+| `--nx-magic-text` | `#5700d1` | Magic text + X hover fill |
+| `--nx-radius-pill` | `100px` | Pill corner radius |
+| `--nx-font-size-label` | `13px` | Label size |
+| `--nx-text-on-primary` | `#ffffff` | X icon when hovered |
+
+---
+
+## Accessibility
+
+- The X button is a real `<button>` with `aria-label="Remove {label}"` — screen readers announce both label and action
+- Clickable tags (via `onClick`) are focusable (`tabIndex={0}`) and respond to Space / Enter
+- Removable tags also respond to **Backspace** / **Delete** when focused
+- Disabled tags have `tabIndex={-1}` and `cursor: not-allowed`; their X button is hidden via `disabled`
+- The wrapper exposes a visible focus ring (`0 0 0 2px #005bd3`) — never override with `outline: none` without a replacement
+- Icon glyphs are decorative — wrapped in `aria-hidden="true"`. Never use icon as the only label.
+
+---
+
+## Angular component
+
+```ts
+import { NxTagModule } from 'components/Tag/tag.module';
+
+// Basic
+<nx-tag label="Africa" />
+
+// Removable
+<nx-tag label="Africa" removable (remove)="removeRegion('Africa')" />
+
+// Magic tone with icon
+<nx-tag label="Smart suggestion" tone="magic" [icon]="infoIcon" removable (remove)="dismiss()" />
+
+// Disabled
+<nx-tag label="Locked" [disabled]="true" />
+
+// Group
+<nx-tag-group>
+  <nx-tag *ngFor="let t of tags" [label]="t" removable (remove)="remove(t)" />
+</nx-tag-group>
+```
+
+---
+
+## React component
+
+```jsx
+import { Tag, TagGroup } from 'components/Tag/Tag.jsx';
+
+// Basic
+<Tag label="Africa" />
+
+// Removable (used inside SearchSelectMulti)
+<Tag label="Africa" removable onRemove={() => removeRegion('Africa')} />
+
+// Clickable filter
+<Tag label="Active" onClick={() => toggleFilter('active')} />
+
+// Magic tone (AI-suggested chip)
+<Tag label="Predictive" tone="magic" icon={<IcoInfo />} removable onRemove={dismiss} />
+
+// Disabled
+<Tag label="Locked" disabled />
+
+// Group of tags (auto-wrap)
+<TagGroup>
+  {tags.map(t => (
+    <Tag key={t} label={t} removable onRemove={() => remove(t)} />
+  ))}
+</TagGroup>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | `string` | — | Tag text (also accepts `children`) |
+| `tone` | `'default' \| 'magic'` | `'default'` | Color treatment |
+| `icon` | `ReactNode` | — | Optional leading icon, 14×14 |
+| `removable` | `boolean` | `false` | Show trailing X button |
+| `onRemove` | `() => void` | — | Fires when X is clicked or Backspace/Delete pressed |
+| `onClick` | `(e) => void` | — | Makes the tag clickable + focusable |
+| `disabled` | `boolean` | `false` | Disables interaction; hides X |
+
+---
+
+## Usage inside SearchSelect
+
+`SearchSelectMulti` renders selected values as a `<TagGroup>` of removable Tags below the field. When a chip's X is clicked, the multi-select removes that value from `value` and calls `onChange` with the new array.
+
+```jsx
+<SearchSelectMulti
+  label="Regions"
+  options={REGIONS}
+  value={regions}
+  onChange={setRegions}
+/>
+// internally renders:
+// <TagGroup>
+//   {regions.map(r => <Tag key={r} label={labelOf(r)} removable onRemove={() => remove(r)} />)}
+// </TagGroup>
+```
+
+---
+
+<Canvas of={TagStories.Default} />
+<Canvas of={TagStories.Removable} />
+<Canvas of={TagStories.Magic} />
+<Canvas of={TagStories.MagicWithIcon} />
+<Canvas of={TagStories.Disabled} />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Badge } from '../Badge/Badge.jsx';
 import { Tooltip } from '../Tooltip/Tooltip.jsx';
+import { Skeleton } from '../Skeleton/Skeleton.jsx';
 
 // ─── Info Icon (InfoIcon from PolarisIcon) ────────────────────────────────────
 
@@ -11,22 +12,6 @@ const InfoIcon = ({ color = '#9e9e9e' }) => (
     <path fillRule="evenodd" d="M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-1.5 0a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0Z" />
   </svg>
 );
-
-// ─── Skeleton bar ─────────────────────────────────────────────────────────────
-
-function SkeletonBar({ width, height, animDelay = 0 }) {
-  return (
-    <div style={{
-      width,
-      height,
-      borderRadius: 8,
-      background: '#e3e3e3',
-      animation: 'metricCardPulse 1.4s ease-in-out infinite',
-      animationDelay: `${animDelay}s`,
-      flexShrink: 0,
-    }} />
-  );
-}
 
 // ─── MetricCard ───────────────────────────────────────────────────────────────
 
@@ -119,13 +104,6 @@ export function MetricCard({
 
   return (
     <>
-      <style>{`
-        @keyframes metricCardPulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.4; }
-        }
-      `}</style>
-
       <div
         role={isClickable ? 'button' : undefined}
         tabIndex={isClickable ? 0 : undefined}
@@ -153,15 +131,11 @@ export function MetricCard({
           /* ── Loading skeleton ────────────────────────────────────────────── */
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <SkeletonBar width={120} height={16} animDelay={0} />
-              <div style={{
-                width: 14, height: 14, borderRadius: 4,
-                background: 'rgba(0,0,0,0.12)',
-                animation: 'metricCardPulse 1.4s ease-in-out infinite',
-              }} />
+              <Skeleton width={120} height={16} radius={8} />
+              <Skeleton width={14} height={14} radius={4} ariaLabel={null} />
             </div>
-            <SkeletonBar width={120} height={40} animDelay={0.07} />
-            <SkeletonBar width={88}  height={20} animDelay={0.14} />
+            <Skeleton width={120} height={40} radius={8} delay={0.07} ariaLabel={null} />
+            <Skeleton width={88}  height={20} radius={8} delay={0.14} ariaLabel={null} />
           </>
         ) : (
           /* ── Data content ──────────────────────────────────────────────────── */
@@ -182,31 +156,63 @@ export function MetricCard({
                 content={infoTooltip || 'More information'}
                 position="above"
               >
-                <button
-                  onClick={e => { e.stopPropagation(); if (onInfoClick) onInfoClick(e); }}
-                  onMouseEnter={() => !disabled && setIconHovered(true)}
-                  onMouseLeave={() => setIconHovered(false)}
-                  tabIndex={!disabled ? 0 : -1}
-                  aria-label="More information"
-                  style={{
-                    background: iconHovered && !disabled ? 'rgba(0,0,0,0.06)' : 'none',
-                    border: 'none',
-                    padding: 0,
-                    margin: 0,
-                    width: 20,
-                    height: 20,
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderRadius: 4,
-                    cursor: !disabled ? 'pointer' : 'default',
-                    outline: 'none',
-                    transition: 'background 0.1s',
-                  }}
-                >
-                  <InfoIcon color={disabled ? '#b5b5b5' : iconHovered ? '#616161' : '#9e9e9e'} />
-                </button>
+                {/* Info trigger element.
+                    • When the card is clickable (role="button" on the wrapper),
+                      we MUST NOT render a <button> here — that would be a
+                      button-inside-button (axe `nested-interactive`).
+                      Render a non-interactive <span> instead; the Tooltip still
+                      surfaces the hint on hover, and the card's own focus
+                      state remains the single keyboard target.
+                    • When the card is NOT clickable, a real <button> is fine
+                      and we preserve onInfoClick + keyboard activation. */}
+                {isClickable ? (
+                  <span
+                    onMouseEnter={() => !disabled && setIconHovered(true)}
+                    onMouseLeave={() => setIconHovered(false)}
+                    aria-hidden="true"
+                    style={{
+                      background: iconHovered && !disabled ? 'rgba(0,0,0,0.06)' : 'none',
+                      width: 20,
+                      height: 20,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 4,
+                      cursor: 'default',
+                      transition: 'background 0.1s',
+                    }}
+                  >
+                    <InfoIcon color={disabled ? '#b5b5b5' : iconHovered ? '#303030' : '#616161'} />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={e => { e.stopPropagation(); if (onInfoClick) onInfoClick(e); }}
+                    onMouseEnter={() => !disabled && setIconHovered(true)}
+                    onMouseLeave={() => setIconHovered(false)}
+                    tabIndex={!disabled ? 0 : -1}
+                    aria-label="More information"
+                    style={{
+                      background: iconHovered && !disabled ? 'rgba(0,0,0,0.06)' : 'none',
+                      border: 'none',
+                      padding: 0,
+                      margin: 0,
+                      width: 20,
+                      height: 20,
+                      flexShrink: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 4,
+                      cursor: !disabled ? 'pointer' : 'default',
+                      outline: 'none',
+                      transition: 'background 0.1s',
+                    }}
+                  >
+                    <InfoIcon color={disabled ? '#b5b5b5' : iconHovered ? '#303030' : '#616161'} />
+                  </button>
+                )}
               </Tooltip>
             </div>
 

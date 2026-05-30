@@ -1,7 +1,7 @@
 import { Meta, Canvas } from '@storybook/addon-docs/blocks';
 import * as TabsStories from './Tabs.stories.jsx';
 
-<Meta title="Components/Tabs/Docs" />
+<Meta title="Components/Navigation/Tabs/Docs" />
 
 # Tabs
 
@@ -81,15 +81,73 @@ Do **not** use Tabs for top-level page navigation — use the sidebar/nav instea
 
 ## Accessibility
 
-- Wrap in `<div role="tablist">` 
+- Wrap in `<div role="tablist">`
 - Each tab: `role="tab"`, `aria-selected="true/false"`
 - The content panel: `role="tabpanel"` with `aria-labelledby` pointing to the active tab's `id`
-- Keyboard: Arrow keys move focus between tabs; Enter/Space selects
-- Disabled tabs: add `disabled` attribute and `aria-disabled="true"`
+- Disabled tabs: add `aria-disabled="true"` (the React component handles this automatically when `disabled: true`)
+
+### Keyboard support
+
+Follows the WAI-ARIA Authoring Practices [tablist pattern](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/). Implements a roving-tabindex: only the active tab is in the page's tab sequence, and arrow keys move focus + selection between siblings.
+
+| Key | Action |
+|-----|--------|
+| `Tab` | Move focus into / out of the tablist. Only the active tab is reachable from outside. |
+| `Arrow Right` | Move focus and selection to the next non-disabled tab (wraps to the first). |
+| `Arrow Left` | Move focus and selection to the previous non-disabled tab (wraps to the last). |
+| `Home` | Move focus and selection to the first non-disabled tab. |
+| `End` | Move focus and selection to the last non-disabled tab. |
+| `Enter` / `Space` | Activate the focused tab. (Arrow keys already activate, so these are only needed if you wire up a manual-activation variant later.) |
+
+Disabled tabs are skipped by arrow / Home / End navigation but remain in the DOM for screen reader context.
+
+---
+
+## Angular component
+
+```ts
+import { NxTabsModule } from 'components/Tabs/tabs.module';
+
+<nx-tabs
+  [activeIndex]="active"
+  (change)="active = $event"
+  [tabs]="[
+    { label: 'All', badge: 24 },
+    { label: 'Active', badge: 12 },
+    { label: 'Archived', disabled: true }
+  ]"
+/>
+
+// Fitted
+<nx-tabs [fitted]="true" [activeIndex]="active" (change)="active = $event"
+  [tabs]="[{ label: 'Morning' }, { label: 'Evening' }]" />
+```
 
 ---
 
 ## React component
+
+### Selection callback API
+
+Two callbacks are supported. **`onSelect(id, item)` is preferred** going forward — it matches the rest of the component library and gives consumers the full item without an index lookup. `onChange(newIndex)` is kept for backward compatibility. Both fire when both are provided.
+
+```jsx
+// Preferred — id-based, matches other components
+<Tabs
+  activeIndex={active}
+  onSelect={(id, item) => navigate(`/orders?status=${id}`)}
+  tabs={[
+    { id: 'all',    label: 'All' },
+    { id: 'active', label: 'Active' },
+    { id: 'draft',  label: 'Draft' },
+  ]}
+/>
+
+// Legacy — index-based, still supported
+<Tabs activeIndex={active} onChange={setActive} tabs={…} />
+```
+
+If `item.id` is omitted, `onSelect` falls back to passing the string-coerced index (`'0'`, `'1'`, …).
 
 ```jsx
 import { Tabs } from 'components/Tabs/Tabs.jsx';

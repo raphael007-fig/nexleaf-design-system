@@ -1,0 +1,210 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as RadioStories from './RadioButton.stories.jsx';
+
+<Meta title="Components/RadioButton/Docs" />
+
+# RadioButton
+
+A circular selection control representing a single choice from a mutually exclusive list. Pair multiple RadioButtons inside a `RadioGroup` so only one can be active.
+
+<Canvas of={RadioStories.AllStates} />
+
+---
+
+## When to use
+
+- **RadioButton** — mutually exclusive choice between two or more options where all options should be visible
+- **Checkbox** — opt-in agreement or independent boolean choices within a form
+- **SelectInput** — mutually exclusive choice when there are many options and space is constrained
+- **Toggle** — single on/off setting that takes effect immediately
+
+Always present radios in groups of two or more — never a single radio.
+
+---
+
+## Interaction states
+
+<Canvas of={RadioStories.InteractionStates} />
+
+---
+
+## States
+
+| State | Ring (off) | Ring (on) | Notes |
+|-------|------------|-----------|-------|
+| Rest | `#fdfdfd` + `0.66px solid #8a8a8a` | `#303030` | Inner dot `#ffffff`, `6×6px` |
+| Hover | `#fafafa` + `0.66px solid #616161` | — | Slightly darker border |
+| Focus | rest colours | rest colours | + `0 0 0 2px #005bd3` ring |
+| Disabled | `rgba(0,0,0,0.08)` | `rgba(0,0,0,0.08)` | Inner dot `rgba(160,160,160,0.7)`, `cursor: not-allowed` |
+| Error (off) | `#fee9e8` + `0.66px solid #8e1f0b` | — | Shows error message below |
+| Error (on) | — | `#8e1f0b` | Shows error message below |
+| Magic — Rest | `#f8f7ff` + `0.66px solid #9474ff` | `#8051ff` | Label `#5700d1` when checked |
+| Magic — Hover | `#f3f1ff` + `0.66px solid #8051ff` | — | — |
+
+**Outer ring** — `16×16px` circle. **Inner dot** — `6×6px`, only rendered when `checked`.
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/RadioButton/RadioButton.css';
+```
+
+```html
+<!-- Unchecked -->
+<label class="nx-radio">
+  <input class="nx-radio__input" type="radio" name="group" />
+  <span class="nx-radio__ring"></span>
+  <span class="nx-radio__label">Label</span>
+</label>
+
+<!-- Checked -->
+<label class="nx-radio">
+  <input class="nx-radio__input" type="radio" name="group" checked />
+  <span class="nx-radio__ring nx-radio__ring--checked">
+    <span class="nx-radio__dot"></span>
+  </span>
+  <span class="nx-radio__label">Label</span>
+</label>
+
+<!-- Disabled -->
+<label class="nx-radio nx-radio--disabled">
+  <input class="nx-radio__input" type="radio" name="group" disabled />
+  <span class="nx-radio__ring nx-radio__ring--disabled"></span>
+  <span class="nx-radio__label nx-radio__label--disabled">Label</span>
+</label>
+
+<!-- Error -->
+<label class="nx-radio">
+  <input class="nx-radio__input" type="radio" name="group" />
+  <span class="nx-radio__ring nx-radio__ring--error"></span>
+  <span class="nx-radio__label">Label</span>
+</label>
+<div class="nx-field__error">
+  <!-- IcoAlertCircle SVG -->
+  Error message
+</div>
+
+<!-- Magic tone -->
+<label class="nx-radio">
+  <input class="nx-radio__input" type="radio" name="group" />
+  <span class="nx-radio__ring nx-radio__ring--magic"></span>
+  <span class="nx-radio__label">Label</span>
+</label>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-input` | `#fdfdfd` | Ring rest (unchecked) |
+| `--nx-bg-input-focus` | `#fafafa` | Ring hover/focus (unchecked) |
+| `--nx-border-input` | `0.66px solid #8a8a8a` | Ring rest border |
+| `--nx-border-input-focus` | `0.66px solid #616161` | Ring hover/focus border |
+| `--nx-text-default` | `#303030` | Ring fill (default tone, checked) + label |
+| `--nx-bg-control-disabled` | `rgba(0,0,0,0.08)` | Ring disabled |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled label |
+| `--nx-text-subdued` | `#616161` | Help text |
+| `--nx-bg-error` | `#fee9e8` | Ring error (unchecked) |
+| `--nx-border-input-error` | `0.66px solid #8e1f0b` | Ring error border |
+| `--nx-text-critical` | `#8e1f0b` | Ring error (checked) + error message |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus shadow ring |
+| `--nx-magic-primary` | `#8051ff` | Magic tone — checked + hover border |
+| `--nx-magic-secondary` | `#9474ff` | Magic tone — rest border |
+| `--nx-magic-bg-input-focus` | `#f3f1ff` | Magic tone — hover fill |
+| `--nx-magic-bg-input-rest` | `#f8f7ff` | Magic tone — rest fill |
+| `--nx-magic-text` | `#5700d1` | Magic tone — checked label |
+| `--nx-font-size-label` | `13px` | Label size |
+
+---
+
+## Accessibility
+
+- Uses `role="radio"` and `aria-checked` to communicate state to screen readers
+- Keyboard accessible — `Space` and `Enter` select the radio
+- Disabled radios have `tabIndex={-1}` and `cursor: not-allowed`
+- Use the `RadioGroup` wrapper to share a `name` and provide a group `title` — screen readers will announce the group label
+- Always present at least two options — a single radio should be a Checkbox instead
+
+---
+
+## Angular component
+
+```ts
+import { NxRadioModule } from 'components/RadioButton/radio.module';
+
+// Basic
+<nx-radio-group [(value)]="pref">
+  <nx-radio value="email" label="Email" />
+  <nx-radio value="sms"   label="SMS" />
+  <nx-radio value="push"  label="Push notification" />
+</nx-radio-group>
+
+// With help text
+<nx-radio value="email" label="Email" helpText="Daily digest at 8am" />
+
+// Magic tone
+<nx-radio value="pro" label="Pro" tone="magic" />
+
+// Error
+<nx-radio-group [(value)]="plan" error="Please select a plan.">
+  <nx-radio value="basic" label="Basic" />
+  <nx-radio value="pro"   label="Pro" />
+</nx-radio-group>
+
+// Disabled
+<nx-radio value="none" label="None" [disabled]="true" />
+```
+
+---
+
+## React component
+
+```jsx
+import { RadioButton, RadioGroup } from 'components/RadioButton/RadioButton.jsx';
+
+// Basic group
+<RadioGroup
+  title="Notification preference"
+  name="pref"
+  value={pref}
+  onChange={setPref}
+  options={[
+    { value: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
+    { value: 'sms',   label: 'SMS' },
+    { value: 'push',  label: 'Push notification' },
+  ]}
+/>
+
+// Magic tone
+<RadioGroup
+  title="Choose a plan"
+  required
+  name="plan"
+  value={plan}
+  onChange={setPlan}
+  tone="magic"
+  options={[
+    { value: 'basic', label: 'Basic' },
+    { value: 'pro',   label: 'Pro' },
+  ]}
+  error="Please select a plan."
+/>
+
+// Single radio (composed manually)
+<RadioButton label="Email" checked={v === 'email'} onChange={() => setV('email')} />
+
+// Disabled
+<RadioButton label="None" checked={false} disabled />
+```
+
+---
+
+<Canvas of={RadioStories.Default} />
+<Canvas of={RadioStories.Checked} />
+<Canvas of={RadioStories.Magic} />
+<Canvas of={RadioStories.WithError} />

@@ -1,0 +1,213 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TextareaInputStories from './TextareaInput.stories.jsx';
+
+<Meta title="Components/Forms/TextareaInput/Docs" />
+
+# TextareaInput
+
+Multi-line text entry field. Use when the expected input could be more than one line — comments, notes, descriptions, observations.
+
+<Canvas of={TextareaInputStories.AllStates} />
+
+---
+
+## When to use
+
+- **TextareaInput** — multi-line free-form text (notes, comments, descriptions, observations)
+- **TextInput** — short single-line values (names, IDs, temperatures, emails)
+- **NumberInput** — numeric values with step controls
+
+Do not use TextareaInput for short single-line values — use TextInput instead.
+
+---
+
+## Interaction states
+
+<Canvas of={TextareaInputStories.InteractionStates} />
+
+---
+
+## States
+
+| State | Border | Background | Notes |
+|-------|--------|------------|-------|
+| Default | `0.66px solid #8a8a8a` | `#fdfdfd` | — |
+| Hover | `0.66px solid #616161` | `#fafafa` | — |
+| Focus | `0.66px solid #616161` | `#fafafa` | + `0 0 0 2px #005bd3` ring |
+| Error | `0.66px solid #8e1f0b` | `#fee9e8` | No focus ring |
+| Disabled | none | `rgba(0,0,0,0.08)` | `#b5b5b5` text, `cursor: not-allowed` |
+| Read-only | none | `rgba(0,0,0,0.08)` | In tab order, announced differently |
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/TextareaInput/TextareaInput.css';
+```
+
+```html
+<!-- Basic -->
+<div class="nx-field">
+  <label class="nx-field__label">Notes</label>
+  <textarea class="nx-textarea" rows="4" placeholder="Add notes…"></textarea>
+</div>
+
+<!-- Required -->
+<div class="nx-field">
+  <label class="nx-field__label nx-field__label--required">
+    Notes <span class="nx-required">*</span>
+  </label>
+  <textarea class="nx-textarea" rows="4" required></textarea>
+</div>
+
+<!-- With max length counter -->
+<div class="nx-field">
+  <label class="nx-field__label">Description</label>
+  <div class="nx-textarea-wrap">
+    <textarea class="nx-textarea" rows="4" maxlength="120"></textarea>
+    <span class="nx-textarea__counter">42/120</span>
+  </div>
+</div>
+
+<!-- Error state -->
+<div class="nx-field">
+  <label class="nx-field__label">Notes</label>
+  <textarea class="nx-textarea nx-textarea--error" rows="4"></textarea>
+  <div class="nx-field__error">
+    <!-- IcoErrorCircle SVG -->
+    This field is required.
+  </div>
+</div>
+
+<!-- Disabled -->
+<div class="nx-field">
+  <label class="nx-field__label nx-field__label--disabled">Notes</label>
+  <textarea class="nx-textarea" rows="4" disabled>Cannot edit</textarea>
+</div>
+
+<!-- With help text -->
+<div class="nx-field">
+  <label class="nx-field__label">Notes</label>
+  <textarea class="nx-textarea" rows="4"></textarea>
+  <span class="nx-field__help">Describe any unusual conditions observed.</span>
+</div>
+
+<!-- Label action -->
+<div class="nx-field">
+  <div class="nx-field__label-row">
+    <label class="nx-field__label">Notes</label>
+    <button class="nx-field__label-action">Action</button>
+  </div>
+  <textarea class="nx-textarea" rows="4"></textarea>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-border-input` | `0.66px solid #8a8a8a` | Default border |
+| `--nx-border-input-focus` | `0.66px solid #616161` | Hover + focus border |
+| `--nx-border-input-error` | `0.66px solid #8e1f0b` | Error border |
+| `--nx-bg-input` | `#fdfdfd` | Default background |
+| `--nx-bg-input-focus` | `#fafafa` | Hover + focus background |
+| `--nx-bg-error` | `#fee9e8` | Error background |
+| `--nx-bg-disabled` | `rgba(0,0,0,0.08)` | Disabled background |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus shadow ring |
+| `--nx-text-default` | `#303030` | Input value text |
+| `--nx-text-placeholder` | `#9e9e9e` | Placeholder text |
+| `--nx-text-subdued` | `#616161` | Help text, label action, counter |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled label and value |
+| `--nx-color-critical` | `#d92d20` | Required asterisk, error message |
+| `--nx-radius-sm` | `8px` | Corner radius |
+| `--nx-font-size-label` | `13px` | Input value and label |
+
+---
+
+## Accessibility
+
+- Always pair with a visible `<label>` — never use `placeholder` as the only label
+- Required fields use the native `required` attribute, not just the visual asterisk
+- `maxLength` counter is decorative — also enforce limit via the `maxlength` HTML attribute
+- Disabled textareas use the native `disabled` attribute — screen readers announce state
+- Read-only textareas remain in the tab order and are announced as read-only
+
+---
+
+## Angular component
+
+```ts
+import { NxTextareaInputModule } from 'components/TextareaInput/textarea-input.module';
+
+// Basic
+<nx-textarea-input label="Notes" placeholder="Add notes…" [value]="v" (change)="fn($event)" />
+
+// Required
+<nx-textarea-input label="Notes" [required]="true" [value]="v" (change)="fn($event)" />
+
+// With max length
+<nx-textarea-input label="Description" [maxLength]="120" [value]="v" (change)="fn($event)" />
+
+// Error state
+<nx-textarea-input label="Notes" [value]="v" (change)="fn($event)" error="This field is required." />
+
+// Disabled
+<nx-textarea-input label="Notes" value="Cannot edit" [disabled]="true" />
+
+// With help text
+<nx-textarea-input
+  label="Notes"
+  helpText="Describe any unusual conditions observed."
+  [value]="v"
+  (change)="fn($event)"
+/>
+
+// Label action
+<nx-textarea-input label="Notes" labelAction="Clear" (labelAction)="clearFn()" [value]="v" (change)="fn($event)" />
+```
+
+---
+
+## React component
+
+```jsx
+import { TextareaInput } from 'components/TextareaInput/TextareaInput.jsx';
+
+// Basic
+<TextareaInput label="Notes" placeholder="Add notes…" value={v} onChange={fn} />
+
+// Required
+<TextareaInput label="Notes" required value={v} onChange={fn} />
+
+// With max length (shows counter bottom-right)
+<TextareaInput label="Description" value={v} onChange={fn} maxLength={120} />
+
+// Error state
+<TextareaInput label="Notes" value={v} onChange={fn} error="This field is required." />
+
+// Disabled
+<TextareaInput label="Notes" value="Cannot edit" disabled />
+
+// Read-only
+<TextareaInput label="Previous notes" value="Fridge door was open." readOnly />
+
+// With help text
+<TextareaInput
+  label="Notes"
+  value={v}
+  onChange={fn}
+  helpText="Describe any unusual conditions observed."
+  rows={5}
+/>
+
+// Label action
+<TextareaInput label="Notes" value={v} onChange={fn} labelAction="Clear" onLabelAction={clearFn} />
+```
+
+---
+
+<Canvas of={TextareaInputStories.WithMaxLength} />

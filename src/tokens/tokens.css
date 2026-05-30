@@ -16,15 +16,31 @@
   --nx-bg-page:        #f1f1f1;   /* App/page background */
   --nx-bg-surface:     #ffffff;   /* Cards, modals, panels */
   --nx-bg-input:       #fdfdfd;   /* Text inputs, selects, textareas at rest */
-  --nx-bg-input-hover: #fafafa;   /* Input background on hover or focus */
-  --nx-bg-disabled:    rgba(0, 0, 0, 0.06); /* Disabled field background */
+  --nx-bg-input-focus: #fafafa;   /* Input background on hover/focus */
+  --nx-bg-disabled:    rgba(0, 0, 0, 0.06); /* Disabled field background — text inputs (large surface) */
+  --nx-bg-control-disabled: rgba(0, 0, 0, 0.08); /* Disabled background for small controls (Checkbox, Radio, Toggle) */
+  --nx-bg-error:       #fee9e8;   /* Error input background */
   --nx-bg-selected:    #f0f7ff;   /* Selected row / checked option highlight */
   --nx-bg-open:        #f7f9fc;   /* Accordion open / tab panel background */
+  --nx-bg-skeleton:    #e8e8e8;   /* Skeleton/placeholder block fill */
+
+  /* ─────────────────────────────────────────────
+   * INTERACTIVE STATE OVERLAYS
+   * Translucent black overlays for hover/pressed on neutral surfaces,
+   * plus the two opaque grays used by MetricCard.
+   * ───────────────────────────────────────────── */
+  --nx-bg-hover-subtle:  rgba(0, 0, 0, 0.05); /* Tabs hover, MetricCard disabled bg */
+  --nx-bg-hover:         rgba(0, 0, 0, 0.06); /* Page back-button hover, Badge default bg */
+  --nx-bg-pressed:       rgba(0, 0, 0, 0.08); /* Tabs active tab, MetricCard selected */
+  --nx-bg-surface-hover: #f7f7f7;             /* MetricCard hover (on white surface) */
+  --nx-bg-surface-active:#f3f3f3;             /* MetricCard active/pressed */
 
   /* ─────────────────────────────────────────────
    * PRIMARY (INTERACTIVE)
    * ───────────────────────────────────────────── */
   --nx-color-primary:          #005bd3;
+  --nx-color-primary-hover:    #004bb0;  /* Primary button hover bg */
+  --nx-color-primary-pressed:  #003a8a;  /* Primary button pressed/active bg */
   --nx-color-primary-disabled: rgba(0, 0, 0, 0.17);
   --nx-color-primary-hover-shadow: rgba(0, 91, 211, 0.12);
 
@@ -41,7 +57,8 @@
    * BORDERS
    * ───────────────────────────────────────────── */
   --nx-border-default:       #e0e0e0;  /* Cards, accordion, dividers */
-  --nx-border-input:         #8a8a8a;  /* Active input/select border */
+  --nx-border-input:         #8a8a8a;  /* Default input/select border */
+  --nx-border-input-focus:   #616161;  /* Input border on hover/focus */
   --nx-border-input-error:   #8e1f0b;  /* Input error state border */
   --nx-border-light:         #ebebeb;  /* Subtle dividers, list separators */
   --nx-border-lighter:       #f0f0f0;  /* Intra-list separators */
@@ -50,8 +67,9 @@
   /* ─────────────────────────────────────────────
    * SEMANTIC — STATUS STATES
    * ───────────────────────────────────────────── */
-  --nx-color-critical:  #d92d20;
-  --nx-color-success:   #12b76a;
+  --nx-color-critical:        #d92d20;
+  --nx-color-critical-strong: #e51c00;  /* Filled destructive button, PDF file tile */
+  --nx-color-success:         #12b76a;
 
   --nx-bg-success:      #cdfee1;
   --nx-text-success:    #0c5132;
@@ -65,9 +83,24 @@
   --nx-text-info:       #00527c;
   --nx-border-info:     #b3d9f7;
 
-  --nx-bg-critical:     #fee9e8;
-  --nx-text-critical:   #8e1f0b;
-  --nx-border-critical: #f5b8b5;
+  --nx-bg-critical:      #fee9e8;
+  --nx-bg-critical-soft: #fde2e1;  /* Subtler — error badge circle in Upload */
+  --nx-text-critical:    #8e1f0b;
+  --nx-border-critical:  #f5b8b5;
+
+  /* ─────────────────────────────────────────────
+   * MAGIC TONE (PURPLE)
+   * Optional purple variant for emphasis. Tag chips use the
+   * deeper bg-tag-* shades; form-control fills use the subtler
+   * bg-input-* shades.
+   * ───────────────────────────────────────────── */
+  --nx-magic-text:           #5700d1;  /* Purple label/text */
+  --nx-magic-primary:        #8051ff;  /* Strong border + checked fill */
+  --nx-magic-secondary:      #9474ff;  /* Subtle rest border */
+  --nx-magic-bg-tag-rest:    #ede7ff;  /* Tag chip rest */
+  --nx-magic-bg-tag-hover:   #dcd0ff;  /* Tag chip hover */
+  --nx-magic-bg-input-rest:  #f8f7ff;  /* Input fill rest */
+  --nx-magic-bg-input-focus: #f3f1ff;  /* Input fill hover/focus */
 
   /* ─────────────────────────────────────────────
    * CONTEXTUAL / DOMAIN-SPECIFIC

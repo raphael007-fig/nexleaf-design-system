@@ -85,6 +85,26 @@ Icons in non-React stacks should use inline SVG directly. Copy the SVG path from
 
 ---
 
+## Angular component
+
+```ts
+import { NxPolarisIconModule } from 'components/PolarisIcon/polaris-icon.module';
+
+// Basic usage
+<nx-polaris-icon name="SearchIcon" [size]="20" color="#616161" />
+
+// Using token value
+<nx-polaris-icon name="DeleteIcon" [size]="20" color="var(--nx-color-critical)" />
+
+// In a button
+<nx-btn variant="secondary">
+  <nx-polaris-icon name="PlusIcon" [size]="16" color="currentColor" />
+  Add item
+</nx-btn>
+```
+
+---
+
 ## React component
 
 ```jsx

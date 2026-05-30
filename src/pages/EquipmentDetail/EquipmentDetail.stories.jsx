@@ -1,8 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Page } from '../../components/Page/Page.jsx';
 import { MetricCard } from '../../components/MetricCard/MetricCard.jsx';
-import { IndexTable } from '../../components/IndexTable/IndexTable.jsx';
+import { IndexTable, LinkCell } from '../../components/IndexTable/IndexTable.jsx';
 import { Pagination } from '../../components/Pagination/Pagination.jsx';
+import { SearchSelectButton } from '../../components/SearchSelect/SearchSelect.jsx';
+import { PolarisIconImg } from '../../components/PolarisIcon/PolarisIcon.jsx';
+import { siblingsFor } from '../../components/SideNavigation/SideNavigation.jsx';
+
+// Same `Inventory` group children used by the Side Navigation's Equipment
+// Management variant. Keeping them defined once here means the Title
+// Disclosure stays in sync if we ever rename a sibling.
+const INVENTORY_GROUP = [
+  { id: 'coldchain', label: 'ColdChain Equipment' },
+  { id: 'rtmds',     label: 'RTMDs' },
+  { id: 'solar',     label: 'Solar Equipments' },
+  { id: 'passive',   label: 'Passive Equipment' },
+  { id: 'oxygen',    label: 'Oxygen Equipment' },
+  { id: 'lab',       label: 'Lab Equipment' },
+  { id: 'general',   label: 'General Equipment' },
+];
+const INVENTORY_NAV = [{ id: 'inventory', label: 'Inventory', children: INVENTORY_GROUP }];
 
 const IcoFilter = ({ size = 16, color = '#303030' }) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill={color} aria-hidden="true">
@@ -23,6 +40,7 @@ import {
   CardLayoutType2,
   CardLayoutType3,
   CardLayoutType4,
+  CardLayoutType5,
 } from '../../components/Card/Card.jsx';
 
 export default {
@@ -43,9 +61,12 @@ const STATUS_STYLES = {
 const StatusBadge = ({ status }) => {
   const s = STATUS_STYLES[status] || STATUS_STYLES['Unknown'];
   return (
-    <span style={{ background: s.bg, color: s.color, fontSize: 12, fontWeight: 550,
-      fontFamily: 'Inter, sans-serif', padding: '2px 8px', borderRadius: 8,
-      whiteSpace: 'nowrap', display: 'inline-block', lineHeight: '16px' }}>
+    <span
+      role="status"
+      aria-label={`Equipment status: ${status}`}
+      style={{ background: s.bg, color: s.color, fontSize: 12, fontWeight: 550,
+        fontFamily: 'Inter, sans-serif', padding: '2px 8px', borderRadius: 8,
+        whiteSpace: 'nowrap', display: 'inline-block', lineHeight: '16px' }}>
       {status}
     </span>
   );
@@ -65,47 +86,167 @@ const COMPONENT_ROWS = [
 ];
 
 const COMPONENT_COLUMNS = [
-  { key: 'installId',       label: 'Installation ID',  width: 148 },
-  { key: 'facility',        label: 'Facility',          width: 240 },
+  { key: 'installId',       label: 'Installation ID',  width: 148, primary: true },
+  { key: 'facility',        label: 'Facility',          width: 240, subtitle: true },
   { key: 'equipmentType',   label: 'Equipment Type',    width: 160 },
   { key: 'manufacturer',    label: 'Manufacturer',      width: 180 },
   { key: 'qty',             label: 'Quantity',          width: 100, align: 'right' },
   { key: 'status',          label: 'Equipment Status',  width: 180, render: row => <StatusBadge status={row.status} /> },
   { key: 'lastMaintenance', label: 'Last Maintenance',  width: 160 },
-  { key: 'view',            label: '',                  width: 56, render: () => (
-    <a href="#" onClick={e => e.preventDefault()} style={{ color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450, fontFamily: 'Inter, sans-serif' }}>View</a>
+  { key: 'view',            hideOnMobile: true, mobileLabel: 'View', label: (
+      <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+        View action
+      </span>
+    ), width: 56, render: row => (
+    <button
+      type="button"
+      aria-label={`View installation ${row.installId} — ${row.facility}`}
+      onClick={() => {}}
+      style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+        color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450,
+        fontFamily: 'Inter, sans-serif' }}>
+      View
+    </button>
   )},
 ];
 
+// Pools used to build varied LinkCell arrays (some rows single item, some with overflow).
+const SOLAR_POOL = [
+  'Jinko Solar', 'Canadian Solar', 'LONGi Solar', 'Trina Solar', 'JA Solar',
+  'REC', 'SunPower', 'Q CELLS', 'Hanwha', 'First Solar',
+  'Risen Energy', 'Astronergy', 'GCL', 'Suntech', 'Yingli',
+  'ZNShine', 'Talesun', 'Phono Solar', 'Seraphim', 'Tongwei',
+  'Akcome',
+];
+const BATTERY_POOL = [
+  'CATL', 'BYD', 'LG Chem', 'Samsung SDI', 'Panasonic',
+  'Tesla', 'Pylontech', 'Sonnen', 'Enphase', 'AlphaESS',
+];
+
+const linkItems = (pool, count, start = 0) =>
+  Array.from({ length: count }, (_, i) => ({
+    label: pool[(start + i) % pool.length],
+    href: '#',
+  }));
+
 const TABLE_ROWS = [
-  { id: '1',  installId: 'DCM-2024-001', systemType: 'Hybrid',    region: 'Mombasa',      facility: 'Coast General Hospital',           inverter: 'Victron Energy', solar: 'Jinko Solar',    battery: 'CATL', accessories: 3,  date: 'Jan 15, 2024' },
-  { id: '2',  installId: 'DCM-2024-002', systemType: 'Off-Grid',  region: 'Nairobi West', facility: 'Kenyatta National Hospital',        inverter: 'SMA Solar',      solar: 'Canadian Solar', battery: 'CATL', accessories: 8,  date: 'Feb 20, 2024' },
-  { id: '3',  installId: 'DCM-2024-003', systemType: 'Off-Grid',  region: 'Kisumu',       facility: 'Jaramogi Oginga Odinga Hospital',  inverter: 'Growatt',        solar: 'LONGi Solar',    battery: 'BYD',  accessories: 2,  date: 'Mar 10, 2024' },
-  { id: '4',  installId: 'DCM-2024-004', systemType: 'Grid-Tied', region: 'Nakuru',       facility: 'PGH Nakuru',                       inverter: 'Huawei',         solar: 'Jinko Solar',    battery: 'BYD',  accessories: 3,  date: 'Apr 5, 2024'  },
-  { id: '5',  installId: 'DCM-2024-005', systemType: 'Hybrid',    region: 'Eldoret',      facility: 'Moi Teaching & Referral Hospital', inverter: 'Victron Energy', solar: 'Canadian Solar', battery: 'CATL', accessories: 4,  date: 'May 30, 2024' },
-  { id: '6',  installId: 'DCM-2024-006', systemType: 'Grid-Tied', region: 'Malindi',      facility: 'Malindi Sub-County Hospital',      inverter: 'SMA Solar',      solar: 'LONGi Solar',    battery: 'CATL', accessories: 3,  date: 'Jun 25, 2024' },
-  { id: '7',  installId: 'DCM-2024-007', systemType: 'Grid-Tied', region: 'Nairobi West', facility: 'Pumwani Maternity Hospital',       inverter: 'Growatt',        solar: 'Jinko Solar',    battery: 'BYD',  accessories: 4,  date: 'Jul 15, 2024' },
-  { id: '8',  installId: 'DCM-2024-008', systemType: 'Hybrid',    region: 'Starehe',      facility: 'Starehe Sub-County Hospital',      inverter: 'Huawei',         solar: 'Canadian Solar', battery: 'CATL', accessories: 3,  date: 'Aug 1, 2024'  },
-  { id: '9',  installId: 'DCM-2024-009', systemType: 'Off-Grid',  region: 'Malindi',      facility: 'Malindi District Hospital',        inverter: 'Victron Energy', solar: 'LONGi Solar',    battery: 'BYD',  accessories: 2,  date: 'Sep 10, 2024' },
-  { id: '10', installId: 'DCM-2024-010', systemType: 'Hybrid',    region: 'Malindi',      facility: 'Malindi Level 4 Hospital',         inverter: 'SMA Solar',      solar: 'Jinko Solar',    battery: 'CATL', accessories: 2,  date: 'Sep 10, 2024' },
+  { id: '1',  installId: 'DCM-2024-001', systemType: 'Hybrid',    region: 'Mombasa',      facility: 'Coast General Hospital',           inverter: 'Victron Energy', solar: linkItems(SOLAR_POOL, 1),       battery: linkItems(BATTERY_POOL, 1),       accessories: 3,  date: 'Jan 15, 2024' },
+  { id: '2',  installId: 'DCM-2024-002', systemType: 'Off-Grid',  region: 'Nairobi West', facility: 'Kenyatta National Hospital',        inverter: 'SMA Solar',      solar: linkItems(SOLAR_POOL, 6, 1),    battery: linkItems(BATTERY_POOL, 1, 1),    accessories: 8,  date: 'Feb 20, 2024' },
+  { id: '3',  installId: 'DCM-2024-003', systemType: 'Off-Grid',  region: 'Kisumu',       facility: 'Jaramogi Oginga Odinga Hospital',  inverter: 'Growatt',        solar: linkItems(SOLAR_POOL, 1, 2),    battery: linkItems(BATTERY_POOL, 3, 1),    accessories: 2,  date: 'Mar 10, 2024' },
+  { id: '4',  installId: 'DCM-2024-004', systemType: 'Grid-Tied', region: 'Nakuru',       facility: 'PGH Nakuru',                       inverter: 'Huawei',         solar: linkItems(SOLAR_POOL, 3),       battery: linkItems(BATTERY_POOL, 1, 2),    accessories: 3,  date: 'Apr 5, 2024'  },
+  { id: '5',  installId: 'DCM-2024-005', systemType: 'Hybrid',    region: 'Eldoret',      facility: 'Moi Teaching & Referral Hospital', inverter: 'Victron Energy', solar: linkItems(SOLAR_POOL, 10),      battery: linkItems(BATTERY_POOL, 1, 3),    accessories: 4,  date: 'May 30, 2024' },
+  { id: '6',  installId: 'DCM-2024-006', systemType: 'Grid-Tied', region: 'Malindi',      facility: 'Malindi Sub-County Hospital',      inverter: 'SMA Solar',      solar: linkItems(SOLAR_POOL, 1, 3),    battery: linkItems(BATTERY_POOL, 6),       accessories: 3,  date: 'Jun 25, 2024' },
+  { id: '7',  installId: 'DCM-2024-007', systemType: 'Grid-Tied', region: 'Nairobi West', facility: 'Pumwani Maternity Hospital',       inverter: 'Growatt',        solar: linkItems(SOLAR_POOL, 21),      battery: linkItems(BATTERY_POOL, 1, 4),    accessories: 4,  date: 'Jul 15, 2024' },
+  { id: '8',  installId: 'DCM-2024-008', systemType: 'Hybrid',    region: 'Starehe',      facility: 'Starehe Sub-County Hospital',      inverter: 'Huawei',         solar: linkItems(SOLAR_POOL, 1, 4),    battery: linkItems(BATTERY_POOL, 10),      accessories: 3,  date: 'Aug 1, 2024'  },
+  { id: '9',  installId: 'DCM-2024-009', systemType: 'Off-Grid',  region: 'Malindi',      facility: 'Malindi District Hospital',        inverter: 'Victron Energy', solar: linkItems(SOLAR_POOL, 11),      battery: linkItems(BATTERY_POOL, 1, 5),    accessories: 2,  date: 'Sep 10, 2024' },
+  { id: '10', installId: 'DCM-2024-010', systemType: 'Hybrid',    region: 'Malindi',      facility: 'Malindi Level 4 Hospital',         inverter: 'SMA Solar',      solar: linkItems(SOLAR_POOL, 1, 5),    battery: linkItems(BATTERY_POOL, 1, 6),    accessories: 2,  date: 'Sep 10, 2024' },
 ];
 
 const COLUMNS = [
-  { key: 'installId',   label: 'Installation ID',  width: 148 },
+  { key: 'installId',   label: 'Installation ID',  width: 148, primary: true },
   { key: 'systemType',  label: 'System Type',       width: 120 },
   { key: 'region',      label: 'Region',            width: 120 },
-  { key: 'facility',    label: 'Facility',          width: 200 },
+  { key: 'facility',    label: 'Facility',          width: 200, subtitle: true },
   { key: 'inverter',    label: 'Inverter',          width: 140, render: row => (
-    <a href="#" onClick={e => e.preventDefault()} style={{ color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450, fontFamily: 'Inter, sans-serif' }}>{row.inverter}</a>
+    <button
+      type="button"
+      aria-label={`View inverter ${row.inverter} for ${row.facility}`}
+      onClick={() => {}}
+      style={{ background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
+        color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450,
+        fontFamily: 'Inter, sans-serif' }}>
+      {row.inverter}
+    </button>
   )},
-  { key: 'solar',       label: 'Solar Panels',      width: 140, render: row => (
-    <a href="#" onClick={e => e.preventDefault()} style={{ color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450, fontFamily: 'Inter, sans-serif' }}>{row.solar}</a>
+  { key: 'solar',       label: 'Solar Panels',      width: 180, render: row => (
+    <LinkCell
+      items={row.solar}
+      visible={1}
+      othersLabel="Others"
+      ariaLabel={`Solar panels for ${row.facility}`}
+    />
   )},
-  { key: 'battery',     label: 'Battery',           width: 120, render: row => (
-    <a href="#" onClick={e => e.preventDefault()} style={{ color: '#005bd3', textDecoration: 'underline', fontSize: 13, fontWeight: 450, fontFamily: 'Inter, sans-serif' }}>{row.battery}</a>
+  { key: 'battery',     label: 'Battery',           width: 160, render: row => (
+    <LinkCell
+      items={row.battery}
+      visible={1}
+      othersLabel="Others"
+      ariaLabel={`Batteries for ${row.facility}`}
+    />
   )},
   { key: 'accessories', label: 'Accessories',       width: 108, align: 'right' },
   { key: 'date',        label: 'Installation Date', width: 140 },
+];
+
+// 3-level nested region tree: Province → County → Sub-county.
+// Sub-counties are the only selectable leaves; parents toggle every leaf
+// beneath them. Matches the design-system 3-level depth recommendation.
+const REGION_OPTIONS = [
+  {
+    value: 'coast', label: 'Coast',
+    children: [
+      {
+        value: 'mombasa-county', label: 'Mombasa County',
+        children: [
+          { value: 'mombasa-island', label: 'Mombasa Island' },
+          { value: 'kisauni',        label: 'Kisauni' },
+          { value: 'likoni',         label: 'Likoni' },
+        ],
+      },
+      {
+        value: 'kilifi-county', label: 'Kilifi County',
+        children: [
+          { value: 'malindi',     label: 'Malindi' },
+          { value: 'kilifi-town', label: 'Kilifi Town' },
+        ],
+      },
+    ],
+  },
+  {
+    value: 'nairobi', label: 'Nairobi',
+    children: [
+      {
+        value: 'nairobi-county', label: 'Nairobi County',
+        children: [
+          { value: 'nairobi-west', label: 'Nairobi West' },
+          { value: 'starehe',      label: 'Starehe' },
+          { value: 'dagoretti',    label: 'Dagoretti' },
+          { value: 'embakasi',     label: 'Embakasi' },
+        ],
+      },
+    ],
+  },
+  {
+    value: 'rift-valley', label: 'Rift Valley',
+    children: [
+      {
+        value: 'nakuru-county', label: 'Nakuru County',
+        children: [
+          { value: 'nakuru-town', label: 'Nakuru Town' },
+          { value: 'naivasha',    label: 'Naivasha' },
+        ],
+      },
+      {
+        value: 'uasin-gishu-county', label: 'Uasin Gishu County',
+        children: [
+          { value: 'eldoret',   label: 'Eldoret' },
+          { value: 'turbo',     label: 'Turbo' },
+        ],
+      },
+    ],
+  },
+  {
+    value: 'nyanza', label: 'Nyanza',
+    children: [
+      {
+        value: 'kisumu-county', label: 'Kisumu County',
+        children: [
+          { value: 'kisumu-central', label: 'Kisumu Central' },
+          { value: 'kisumu-east',    label: 'Kisumu East' },
+        ],
+      },
+    ],
+  },
 ];
 
 // ─── Main View ────────────────────────────────────────────────────────────────
@@ -118,6 +259,14 @@ export const MainView = {
     const [search, setSearch]             = useState('');
     const [activeMetric, setActiveMetric] = useState(null);
     const [loading, setLoading]           = useState(false);
+    const [region, setRegion]             = useState([]);
+    // Current page id within the Inventory group. The Title Disclosure
+    // mutates this; the title and `siblingsFor(...).activeItemId` then read
+    // back from it so the chevron menu always reflects the actual page.
+    const [pageId, setPageId]             = useState('solar');
+    const pageTitle = INVENTORY_GROUP.find(p => p.id === pageId)?.label ?? 'Solar Equipments';
+    const disclosure = siblingsFor(INVENTORY_NAV, pageId);
+    if (disclosure) disclosure.onSelect = setPageId;
 
     useEffect(() => {
       if (!loading) return;
@@ -150,11 +299,44 @@ export const MainView = {
     const activeColumns = isComponentView ? COMPONENT_COLUMNS : COLUMNS;
 
     return (
-      <div style={{ background: '#f1f1f1', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      <main
+        aria-labelledby="solar-equipments-title"
+        style={{ background: '#f1f1f1', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}
+      >
+        {/* maxWidth pinned to 1280 in both stories so Main View ↔ View Detail
+            don't visibly resize when the user navigates between them. */}
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 48px' }}>
 
+          <h1 id="solar-equipments-title" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+            Solar Equipments
+          </h1>
+
           <Page
-            title="Solar Equipments"
+            title={pageTitle}
+            // Subtitle reserved here (even though it's a list page) so the
+            // header matches the height of View Detail's header — without it
+            // the cards below would render 20 px higher than the equivalent
+            // section in View Detail, causing a noticeable shift when the
+            // user navigates between the two stories.
+            subtitle="Active installations across all regions"
+            // Sibling pages live under the same "Inventory" group in the
+            // Side Navigation. `siblingsFor` returns null if the current
+            // page has no siblings — null safely hides the chevron.
+            titleDisclosure={disclosure}
+            secondaryActions={[{
+              node: (
+                <SearchSelectButton
+                  label="Region"
+                  placeholder="Choose Region"
+                  leadingIcon={<PolarisIconImg name="LocationIcon" size={16} color="currentColor" />}
+                  options={REGION_OPTIONS}
+                  value={region}
+                  onChange={setRegion}
+                  multiple
+                  size="large"
+                />
+              ),
+            }]}
             primaryAction={{ content: 'Add Installation', onAction: () => {} }}
           />
 
@@ -219,7 +401,7 @@ export const MainView = {
           />
 
         </div>
-      </div>
+      </main>
     );
   },
 };
@@ -259,8 +441,16 @@ export const ViewDetail = {
     const tableRows = tab === 0 ? PRIMARY_ROWS : ACCESSORY_ROWS;
 
     return (
-      <div style={{ background: '#f1f1f1', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px 48px' }}>
+      <main
+        aria-labelledby="coldtrace-g3-title"
+        style={{ background: '#f1f1f1', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}
+      >
+        {/* Same maxWidth + wrapper as Main View so the two pages don't
+            visibly resize when the user switches between them. */}
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px 48px' }}>
+          <h1 id="coldtrace-g3-title" style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>
+            ColdTrace G3
+          </h1>
 
           <Page
             title="ColdTrace G3"
@@ -306,6 +496,10 @@ export const ViewDetail = {
                 mapLat={3.1211}
                 mapLon={35.5975}
               />
+              <CardLayoutType5
+                title="QR Code"
+                onAssign={() => {}}
+              />
               <CardLayoutType4
                 addedBy="Grace Mwangi"
                 contactNumber="+254 712 345 678"
@@ -314,7 +508,7 @@ export const ViewDetail = {
 
           </div>
         </div>
-      </div>
+      </main>
     );
   },
 };

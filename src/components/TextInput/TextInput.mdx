@@ -1,7 +1,7 @@
 import { Meta, Canvas } from '@storybook/addon-docs/blocks';
 import * as TextInputStories from './TextInput.stories.jsx';
 
-<Meta title="Components/TextInput/Docs" />
+<Meta title="Components/Forms/TextInput/Docs" />
 
 # TextInput
 
@@ -23,6 +23,19 @@ Single-line text entry field. Used for short free-form values: names, temperatur
 ## Interaction states
 
 <Canvas of={TextInputStories.InteractionStates} />
+
+---
+
+## Prefix & Suffix
+
+Use `prefix` and `suffix` to attach context to either side of the input value. Both accept a string (text label) or a JSX element (inline SVG icon). They can be used independently or combined.
+
+<Canvas of={TextInputStories.PrefixAndSuffix} />
+
+| Prop | Type | Example |
+|------|------|---------|
+| `prefix` | `string \| ReactNode` | `"$"` · `"~"` · `<SearchIcon />` |
+| `suffix` | `string \| ReactNode` | `"°C"` · `"lbs"` · `"USD"` · `<CalendarIcon />` |
 
 ---
 
@@ -103,7 +116,7 @@ Single-line text entry field. Used for short free-form values: names, temperatur
 | `--nx-border-input` | `#8a8a8a` | Rest/hover/focus border |
 | `--nx-border-input-error` | `#8e1f0b` | Error state border |
 | `--nx-bg-input` | `#fdfdfd` | Rest background |
-| `--nx-bg-input-hover` | `#fafafa` | Hover + focus background |
+| `--nx-bg-input-focus` | `#fafafa` | Hover + focus background |
 | `--nx-bg-critical` | `#fee9e8` | Error background |
 | `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus ring |
 | `--nx-text-default` | `#303030` | Input value text |
@@ -122,6 +135,32 @@ Single-line text entry field. Used for short free-form values: names, temperatur
 - Error messages must be connected via `aria-describedby` pointing to the error element
 - Disabled inputs use the native `disabled` attribute — assistive technology announces state
 - `readonly` inputs behave like disabled visually but remain in the tab order and are announced differently
+
+---
+
+## Angular component
+
+```ts
+import { NxTextInputModule } from 'components/TextInput/text-input.module';
+
+// Basic
+<nx-text-input label="Store name" placeholder="e.g. My Store" [value]="v" (change)="fn($event)" />
+
+// Required with suffix
+<nx-text-input label="Temperature" [required]="true" suffix="°C" type="number" [value]="v" (change)="fn($event)" />
+
+// Error state
+<nx-text-input label="Email" [value]="v" (change)="fn($event)" error="Enter a valid email address." />
+
+// Disabled
+<nx-text-input label="Record ID" value="REC-0042" [disabled]="true" />
+
+// With help text
+<nx-text-input label="Password" type="password" helpText="Must be at least 8 characters." [value]="v" (change)="fn($event)" />
+
+// Clear button
+<nx-text-input label="Search" [clearButton]="true" [value]="v" (change)="fn($event)" />
+```
 
 ---
 

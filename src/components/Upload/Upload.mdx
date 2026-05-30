@@ -1,0 +1,326 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as UploadStories from './Upload.stories.jsx';
+
+<Meta title="Components/Forms/Upload/Docs" />
+
+# Upload
+
+A file-upload field with three per-file states — **uploading**, **done**, and **error** — plus an "Add file" trigger and an optional helper line that documents the constraints (file types, count, size).
+
+<Canvas of={UploadStories.ThreeStates} />
+
+---
+
+## When to use
+
+- A form needs one or more documents/images attached (e.g. compliance evidence, vaccine cold-chain records).
+- The set of allowed types and the per-file size limit are well-defined and worth stating up front in the helper line.
+
+Do **not** use Upload for bulk dataset imports — those need a dedicated drag‑drop region with chunked progress UI.
+
+---
+
+## Anatomy
+
+| Region | Notes |
+|---|---|
+| **Label** | Inline form label. Pass `required` for a red asterisk. |
+| **Add file button** | Design-system `<Btn variant="secondary">` with an upload-arrow icon. Triggers the hidden `<input type="file">`. Disables itself automatically when `files.length >= maxFiles`. |
+| **Helper text** | Single-line copy describing constraints. Use it to set expectations (allowed types, max count, max size). |
+| **File rows** | One row per file. The right-side action and the left badge swap based on `file.status`. |
+
+---
+
+## File states
+
+| `status` | Left badge | Right action |
+|---|---|---|
+| `uploading` | Coloured file-type tile (PDF/JPG/…) | Circular progress ring with `%` + plain "X" to cancel |
+| `done` | Coloured file-type tile | Filled red square icon button to delete |
+| `error` | Pink circle with warning triangle | `<Btn variant="ghost">` "Try Again" link |
+
+The file-type tile colour is derived from the file extension:
+
+| Extension | Colour |
+|---|---|
+| `pdf` | `#e51c00` (Btn critical red) |
+| `jpg` / `jpeg` / `png` / `gif` / `webp` / `svg` | `#16a34a` |
+| `doc` / `docx` / `txt` | `#2563eb` |
+| `xls` / `xlsx` / `csv` | `#0e7340` |
+| `zip` / `rar` / `7z` | `#a16207` |
+| anything else | `#616161` (text-subdued) |
+
+<Canvas of={UploadStories.MultipleFileTypes} />
+
+---
+
+## Controlled API
+
+Upload is **stateless**. The consumer owns the `files` array and updates it in response to callbacks. The component never mutates files internally — it just renders the current state and emits events.
+
+Each file is shaped as:
+
+```js
+{
+  id:           string,                          // stable id
+  name:         string,                          // filename including extension
+  size:         number,                          // bytes
+  uploadedAt:   Date | string | null,            // shown in the meta row
+  status:       'uploading' | 'done' | 'error',
+  progress?:    number,                          // 0–100 (uploading only)
+  errorMessage?: string                          // shown in red (error only)
+}
+```
+
+Callbacks:
+
+| Prop | Fires when | Consumer should |
+|---|---|---|
+| `onAddFiles(File[])` | User picks one or more files from the OS picker. | Convert each `File` into the file shape above, push onto `files`, and start the upload. |
+| `onCancel(id)` | User clicks the X next to an uploading row. | Abort the in-flight upload and remove the file from `files`. |
+| `onRemove(id)` | User clicks the red delete button on a `done` row. | Remove the file from `files` (and from the server, if needed). |
+| `onRetry(id)` | User clicks "Try Again" on an `error` row. | Reset the file to `status: 'uploading', progress: 0` and re-upload. |
+
+<Canvas of={UploadStories.LiveSimulated} />
+
+---
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `label` | `string` | `"Upload document"` | Field label rendered above the button. |
+| `required` | `boolean` | `false` | Adds a red asterisk to the label. |
+| `helperText` | `string` | `"Upload up to 5 files (JPEG, PNG), max 10 MB each."` | Constraints line under the button. Pass `null` / `""` to hide. |
+| `accept` | `string` | `"image/jpeg,image/png,application/pdf"` | Forwarded to the native `<input type="file" accept>`. |
+| `multiple` | `boolean` | `true` | Whether the picker allows selecting multiple files at once. |
+| `maxFiles` | `number` | `5` | When `files.length >= maxFiles`, "Add file" disables. |
+| `files` | `File[]` (see shape) | `[]` | Current set of files. |
+| `onAddFiles` | `(File[]) => void` | — | Fires with the native `File` objects after the picker closes. |
+| `onCancel` | `(id) => void` | — | Cancel an in-flight upload. |
+| `onRemove` | `(id) => void` | — | Delete a completed file. |
+| `onRetry` | `(id) => void` | — | Retry a failed upload. |
+| `disabled` | `boolean` | `false` | Disables the whole component — picker won't open and per-file actions are inert. |
+
+---
+
+## Visual spec
+
+| Element | Token / value |
+|---|---|
+| Add file button | `<Btn variant="secondary">` |
+| File-type tile | 44×52, body `#f1f1f1`, folded corner `#ffffff` with `#e0e0e0` 1px stroke, label band in extension colour |
+| Error tile | 44×44 circle, background `#fde2e1`, warning triangle in `#d92d20` |
+| Progress ring | 40×40, track `#e0e0e0`, arc `#005bd3`, 3.5px stroke, centre `%` in `14/600 #303030` |
+| Filename | `14/600 #303030` |
+| Meta line | `13/450 #9e9e9e`, separators `|` (in `#e0e0e0`) and `•` |
+| Error message | `13/450 #d92d20` |
+| Cancel "X" button | 28×28, transparent → `#f1f1f1` on hover, focus ring `#005bd3` |
+| Delete button | `<Btn variant="destructive">` with the trash icon (renders as the design-system critical primary — `#e51c00` filled with white icon, focus ring `#005bd3`) |
+| Try Again link | `<Btn variant="ghost">` with the retry icon — inherits `#005bd3` text/icon colour from the plain Btn variant |
+| Row gap | 4px between rows, 16px between icon and text |
+
+---
+
+## Accessibility
+
+- The visible "Add file" button delegates to a visually-hidden but focusable `<input type="file">`. Both share the label via `htmlFor`/`id`.
+- Per-row actions all carry `aria-label` referencing the filename (e.g. *"Cancel upload of Name of document.pdf"*).
+- The progress ring is decorative (`aria-hidden`); consumers wanting screen-reader progress announcements should include their own `aria-live` region tracking the upload state.
+- Disabled state uses `cursor: not-allowed` and the design-system `#b5b5b5` text colour throughout.
+- The **Add file** button auto-disables when `files.length >= maxFiles` (default 5), so users can't exceed the documented limit. Once a file is removed (or upload cancelled), the button re-enables.
+
+<Canvas of={UploadStories.AtMaxLimit} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Upload/Upload.css';
+```
+
+```html
+<!-- Root field -->
+<div class="nx-upload">
+  <label class="nx-upload__label">
+    Upload document
+    <span class="nx-upload__required" aria-hidden="true">*</span>
+  </label>
+
+  <input type="file" class="nx-upload__input" accept="image/jpeg,image/png,application/pdf" multiple />
+
+  <button type="button" class="nx-btn nx-btn--secondary nx-upload__add">
+    <span class="nx-btn__icon"><!-- upload arrow svg --></span>
+    Add file
+  </button>
+
+  <!-- Disabled once 5/5 -->
+  <button type="button" class="nx-btn nx-btn--secondary nx-upload__add nx-upload__add--disabled" disabled aria-disabled="true">
+    <span class="nx-btn__icon"><!-- upload arrow svg --></span>
+    Add file
+  </button>
+
+  <p class="nx-upload__helper">Upload up to 5 files (JPEG, PNG), max 10 MB each.</p>
+
+  <ul class="nx-upload__list" role="list">
+
+    <!-- Uploading row -->
+    <li class="nx-upload__row nx-upload__row--uploading">
+      <span class="nx-upload__icon nx-upload__icon--pdf"><!-- file-type tile svg --></span>
+      <div class="nx-upload__body">
+        <span class="nx-upload__name">Name of document.pdf</span>
+        <span class="nx-upload__meta">
+          <span class="nx-upload__date">11 Sep, 2023</span>
+          <span class="nx-upload__sep">|</span>
+          <span class="nx-upload__time">12:24pm</span>
+          <span class="nx-upload__bullet" aria-hidden="true">•</span>
+          <span class="nx-upload__size">13MB</span>
+        </span>
+      </div>
+      <div class="nx-upload__action">
+        <span class="nx-upload__progress" aria-hidden="true">25%</span>
+        <button type="button" class="nx-upload__cancel" aria-label="Cancel upload of Name of document.pdf">
+          <!-- X svg -->
+        </button>
+      </div>
+    </li>
+
+    <!-- Done row -->
+    <li class="nx-upload__row nx-upload__row--done">
+      <span class="nx-upload__icon nx-upload__icon--pdf"><!-- file-type tile svg --></span>
+      <div class="nx-upload__body">
+        <span class="nx-upload__name">Name of document.pdf</span>
+        <span class="nx-upload__meta">11 Sep, 2023 <span class="nx-upload__sep">|</span> 12:24pm <span class="nx-upload__bullet">•</span> 13MB</span>
+      </div>
+      <div class="nx-upload__action">
+        <button type="button" class="nx-btn nx-btn--destructive nx-upload__delete" aria-label="Remove Name of document.pdf">
+          <!-- trash svg -->
+        </button>
+      </div>
+    </li>
+
+    <!-- Error row -->
+    <li class="nx-upload__row nx-upload__row--error">
+      <span class="nx-upload__icon nx-upload__icon--error"><!-- warning triangle svg in pink circle --></span>
+      <div class="nx-upload__body">
+        <span class="nx-upload__name">Name of document.pdf</span>
+        <span class="nx-upload__error-msg">Error message</span>
+      </div>
+      <div class="nx-upload__action">
+        <button type="button" class="nx-btn nx-btn--ghost nx-upload__retry">
+          <span class="nx-btn__icon"><!-- retry svg --></span>
+          Try Again
+        </button>
+      </div>
+    </li>
+
+  </ul>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-radius-sm` | `8px` | Add file button, cancel/delete buttons |
+| `--nx-radius-pill` | `9999px` (50%) | Error badge circle |
+| `--nx-color-primary` | `#005bd3` | Progress arc, Try Again text, focus ring |
+| `--nx-color-critical` | `#d92d20` | Error message text, required asterisk, warning icon |
+| `--nx-color-critical-strong` | `#e51c00` | Delete button background |
+| `--nx-bg-critical-soft` | `#fde2e1` | Error badge circle background |
+| `--nx-text-default` | `#303030` | Filename, label, progress `%` |
+| `--nx-text-subdued` | `#616161` | Helper text, cancel X icon |
+| `--nx-text-placeholder` | `#9e9e9e` | Metadata line (date/time/size) |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled state |
+| `--nx-border-default` | `#e0e0e0` | Progress ring track, folded-corner stroke, meta separator |
+| `--nx-bg-page` | `#f1f1f1` | File-type tile body, cancel-button hover |
+| `--nx-font-size-body` | `14px` | Filename |
+| `--nx-font-size-label` | `13px` | Helper text, meta line, error message |
+| `--nx-font-weight-semibold` | `600` | Filename, progress `%` |
+| `--nx-space-1` | `4px` | Row vertical gap |
+| `--nx-space-4` | `16px` | Icon → text gap |
+
+---
+
+## Angular component
+
+```ts
+import { NxUploadModule } from 'components/Upload/upload.module';
+
+<nx-upload
+  label="Upload document"
+  [required]="true"
+  helperText="Upload up to 5 files (JPEG, PNG), max 10 MB each."
+  accept="image/jpeg,image/png,application/pdf"
+  [multiple]="true"
+  [maxFiles]="5"
+  [files]="files"
+  (addFiles)="onAdd($event)"
+  (cancel)="onCancel($event)"
+  (remove)="onRemove($event)"
+  (retry)="onRetry($event)"
+/>
+
+// Disabled (whole component)
+<nx-upload [disabled]="true" [files]="files" label="Upload document" />
+```
+
+File model (TypeScript):
+
+```ts
+interface NxUploadFile {
+  id: string;
+  name: string;
+  size: number;                                  // bytes
+  uploadedAt?: Date | string | null;             // shown in meta row
+  status: 'uploading' | 'done' | 'error';
+  progress?: number;                             // 0-100 for uploading
+  errorMessage?: string;                         // shown in red for error
+}
+```
+
+---
+
+## React component
+
+```jsx
+import { Upload } from 'components/Upload/Upload.jsx';
+
+const [files, setFiles] = useState([]);
+
+<Upload
+  label="Upload document"
+  required
+  helperText="Upload up to 5 files (JPEG, PNG), max 10 MB each."
+  accept="image/jpeg,image/png,application/pdf"
+  maxFiles={5}
+  files={files}
+  onAddFiles={(picked) => {
+    setFiles((curr) => [
+      ...curr,
+      ...picked.map((p, i) => ({
+        id: `${Date.now()}-${i}`,
+        name: p.name,
+        size: p.size,
+        uploadedAt: new Date(),
+        status: 'uploading',
+        progress: 0,
+      })),
+    ]);
+  }}
+  onCancel={(id) => setFiles((c) => c.filter((f) => f.id !== id))}
+  onRemove={(id) => setFiles((c) => c.filter((f) => f.id !== id))}
+  onRetry={(id) =>
+    setFiles((c) => c.map((f) =>
+      f.id === id ? { ...f, status: 'uploading', progress: 0, errorMessage: undefined } : f
+    ))
+  }
+/>
+
+// Disabled (whole component)
+<Upload disabled files={files} label="Upload document" />
+```

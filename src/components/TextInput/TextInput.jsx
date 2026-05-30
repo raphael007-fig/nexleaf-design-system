@@ -12,6 +12,7 @@ export function TextInput({
   label, placeholder, value, onChange, disabled, readOnly,
   suffix, prefix, required, helpText, error, labelAction, onLabelAction,
   type = 'text', clearButton, borderless = false, tone = 'default', size = 'medium',
+  ariaLabel,
 }) {
   const [internalVal, setInternalVal] = useState(value || '');
   const [focused, setFocused] = useState(false);
@@ -66,20 +67,24 @@ export function TextInput({
         {prefix && <span style={{ color: tone === 'magic' ? '#8051ff' : '#616161', flexShrink: 0, display: 'flex', alignItems: 'center', fontSize: 13 }}>{prefix}</span>}
         <input type={type} value={val} onChange={handleChange}
           placeholder={placeholder} disabled={disabled || readOnly}
+          aria-label={!label && ariaLabel ? ariaLabel : undefined}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           style={{ flex: 1, border: 'none', outline: 'none', background: 'transparent',
             fontSize: 13, fontFamily: 'Inter,sans-serif', lineHeight: '20px',
             color: disabled || readOnly ? '#b5b5b5' : textColor,
             cursor: disabled ? 'not-allowed' : readOnly ? 'default' : 'auto', minWidth: 0 }} />
         {clearButton && val && !disabled && (
-          <button onClick={() => handleChange({ target: { value: '' } })}
+          <button
+            type="button"
+            aria-label="Clear input"
+            onClick={() => handleChange({ target: { value: '' } })}
             style={{ border: 'none', background: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="#9e9e9e">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="#616161" aria-hidden="true">
               <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM8.28 7.22a.75.75 0 0 0-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06L10 11.06l1.72 1.72a.75.75 0 1 0 1.06-1.06L11.06 10l1.72-1.72a.75.75 0 0 0-1.06-1.06L10 8.94 8.28 7.22Z" />
             </svg>
           </button>
         )}
-        {suffix && <span style={{ fontSize: 13, color: '#616161', flexShrink: 0, fontFamily: 'Inter,sans-serif' }}>{suffix}</span>}
+        {suffix && <span style={{ fontSize: 13, color: '#616161', flexShrink: 0, fontFamily: 'Inter,sans-serif', display: 'flex', alignItems: 'center' }}>{suffix}</span>}
       </div>
       {error && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>

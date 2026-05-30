@@ -94,6 +94,24 @@ Do **not** use Accordion when all sections need to be visible simultaneously —
 
 ---
 
+## Angular component
+
+```ts
+import { NxAccordionModule } from 'components/Accordion/accordion.module';
+
+<nx-accordion
+  title="Morning Reading"
+  [required]="true"
+  [open]="open"
+  [hasContent]="!!morningValue"
+  (toggle)="open = !open"
+>
+  <nx-text-input label="Temperature" suffix="°C" [value]="morningValue" (change)="fn($event)" />
+</nx-accordion>
+```
+
+---
+
 ## React component
 
 ```jsx

@@ -1,0 +1,205 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as DatePickerStories from './DatePicker.stories.jsx';
+
+<Meta title="Components/DatePicker/Docs" />
+
+# DatePicker
+
+A visual calendar for picking a single date or a range of dates. Supports single-month, multi-month side-by-side, and vertically-stacked (mobile) layouts.
+
+<Canvas of={DatePickerStories.AllStates} />
+
+---
+
+## When to use
+
+- **DatePicker** — picking a specific calendar date or range (booking, scheduling, filtering)
+- **NumberInput / TextInput** — when only a year, month, or day-of-month is needed
+- **SelectInput** — when the user is choosing between a small number of preset dates
+
+Use `multiMonth` for date-range selection on desktop, and `verticalStack` to reflow for mobile.
+
+---
+
+## Interaction states
+
+<Canvas of={DatePickerStories.InteractionStates} />
+
+---
+
+## Anatomy
+
+| Part | Style |
+|------|-------|
+| Card | `#fdfdfd` bg, `0.66px solid #e0e0e0` border, `12px` radius, `16px` padding |
+| Month header | `13px` `#303030`, weight `500`, centered |
+| Prev/Next arrows | 16px arrows in `#303030`, 32×32px tap target |
+| Weekday row | `12px` `#9e9e9e`, weight `500`, 32×32px cells |
+| Day — current month | `13px` `#303030` |
+| Day — other month | `13px` `#b5b5b5` |
+| Day — hover | `#f5f5f5` bg, full radius |
+| Day — selected | `#303030` bg, `#ffffff` text, full radius (or capped if range edge) |
+| Day — range middle | `#ebebeb` bg, `#303030` text, no radius |
+| Day — today (unselected) | inset `0.66px solid #8a8a8a` ring |
+| Day — disabled | `#b5b5b5` text, no hover |
+
+Day cells are `32×32px`. Range edges use half-radius (`999px 0 0 999px` on the start, `0 999px 999px 0` on the end) so the highlighted middle row reads as one continuous bar.
+
+---
+
+## States
+
+| State | Background | Text | Notes |
+|-------|------------|------|-------|
+| Default | transparent | `#303030` | — |
+| Hover | `#f5f5f5` | `#303030` | Current month only |
+| Selected (single) | `#303030` | `#ffffff` | Full pill |
+| Range — start | `#303030` | `#ffffff` | Rounded left only |
+| Range — end | `#303030` | `#ffffff` | Rounded right only |
+| Range — middle | `#ebebeb` | `#303030` | No radius |
+| Today | transparent | `#303030` | Inset border ring `#8a8a8a` |
+| Disabled (out of bounds) | transparent | `#b5b5b5` | No hover, no click |
+| Other month | transparent | `#b5b5b5` | Not interactive |
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/DatePicker/DatePicker.css';
+```
+
+```html
+<div class="nx-datepicker">
+  <div class="nx-datepicker__month">
+    <div class="nx-datepicker__header">
+      <button class="nx-datepicker__nav">←</button>
+      <span class="nx-datepicker__title">August 2023</span>
+      <button class="nx-datepicker__nav">→</button>
+    </div>
+
+    <div class="nx-datepicker__weekdays">
+      <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+    </div>
+
+    <div class="nx-datepicker__grid">
+      <button class="nx-datepicker__day">1</button>
+      <button class="nx-datepicker__day nx-datepicker__day--today">9</button>
+      <button class="nx-datepicker__day nx-datepicker__day--selected">10</button>
+      <button class="nx-datepicker__day nx-datepicker__day--in-range">11</button>
+      <button class="nx-datepicker__day nx-datepicker__day--range-end">12</button>
+      <button class="nx-datepicker__day nx-datepicker__day--disabled">13</button>
+      <button class="nx-datepicker__day nx-datepicker__day--other-month">31</button>
+    </div>
+  </div>
+</div>
+```
+
+For multi-month, repeat `.nx-datepicker__month` inside the card. For mobile, set the card to `flex-direction: column`.
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-input` | `#fdfdfd` | Card background |
+| `--nx-border-default` | `#e0e0e0` | Card border |
+| `--nx-radius-md` | `12px` | Card corner radius |
+| `--nx-text-default` | `#303030` | Day text, month title, selected bg |
+| `--nx-text-placeholder` | `#9e9e9e` | Weekday labels |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled / other-month text |
+| `--nx-bg-hover` | `#f5f5f5` | Day hover background |
+| `--nx-bg-surface` | `#ebebeb` | Range middle background |
+| `--nx-border-input` | `#8a8a8a` | Today inset border |
+| `--nx-text-on-primary` | `#ffffff` | Selected day text |
+| `--nx-font-size-label` | `13px` | Day numbers, month title |
+| `--nx-font-size-caption` | `12px` | Weekday labels |
+
+---
+
+## Accessibility
+
+- Day cells are reachable via keyboard — `Tab` enters the grid, arrow keys move between days
+- Selected day has `aria-selected="true"`
+- Disabled days have `aria-disabled="true"` and skip tab order
+- Month title is announced via `aria-live="polite"` when navigation changes the cursor
+- Pair with a visible label outside the picker (e.g., "Departure date") when used in a form
+- Range mode: announce the start once chosen, then prompt for the end
+
+---
+
+## Angular component
+
+```ts
+import { NxDatePickerModule } from 'components/DatePicker/date-picker.module';
+
+// Single date
+<nx-date-picker [(value)]="date" />
+
+// Range
+<nx-date-picker [(value)]="range" allowRange />
+
+// Multi month
+<nx-date-picker [(value)]="date" multiMonth />
+
+// Vertical stack (mobile)
+<nx-date-picker [(value)]="date" multiMonth verticalStack />
+
+// Min / max
+<nx-date-picker [(value)]="date" [minDate]="min" [maxDate]="max" />
+```
+
+---
+
+## React component
+
+```jsx
+import { DatePicker } from 'components/DatePicker/DatePicker.jsx';
+
+// Single date
+<DatePicker value={date} onChange={setDate} />
+
+// Range
+<DatePicker value={range} onChange={setRange} allowRange />
+// value shape: { start: Date | null, end: Date | null }
+
+// Multi-month for range selection
+<DatePicker value={range} onChange={setRange} allowRange multiMonth />
+
+// Mobile (vertically stacked months)
+<DatePicker value={range} onChange={setRange} allowRange multiMonth verticalStack />
+
+// Bounded
+<DatePicker
+  value={date}
+  onChange={setDate}
+  minDate={new Date(2024, 0, 1)}
+  maxDate={new Date(2024, 11, 31)}
+/>
+
+// Custom initial month (when value is null)
+<DatePicker value={null} onChange={setDate} initialMonth={new Date(2024, 5, 1)} />
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `value` | `Date \| { start, end } \| null` | — | Selected date (single) or range object |
+| `onChange` | `(value) => void` | — | Fires with new date or `{ start, end }` |
+| `allowRange` | `boolean` | `false` | Enables range selection |
+| `multiMonth` | `boolean` | `false` | Show two months side by side |
+| `verticalStack` | `boolean` | `false` | Stack multi-month vertically (mobile) |
+| `minDate` | `Date` | — | Earliest selectable date |
+| `maxDate` | `Date` | — | Latest selectable date |
+| `initialMonth` | `Date` | today | First month shown when there's no value |
+
+---
+
+<Canvas of={DatePickerStories.Single} />
+<Canvas of={DatePickerStories.Range} />
+<Canvas of={DatePickerStories.MultiMonth} />
+<Canvas of={DatePickerStories.VerticalStack} />
+<Canvas of={DatePickerStories.WithBounds} />

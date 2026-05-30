@@ -172,6 +172,32 @@ Three progress variants are shown as a small shape to the left of the label:
 
 ---
 
+## Angular component
+
+```ts
+import { NxBadgeModule } from 'components/Badge/badge.module';
+
+// Regular tones
+<nx-badge tone="success">Completed</nx-badge>
+<nx-badge tone="attention">Pending</nx-badge>
+<nx-badge tone="critical" size="large">Overdue</nx-badge>
+<nx-badge tone="default" progress="partial">In progress</nx-badge>
+
+// Strong tones
+<nx-badge tone="info-strong">Info</nx-badge>
+<nx-badge tone="success-strong">Active</nx-badge>
+<nx-badge tone="warning-strong">Warning</nx-badge>
+<nx-badge tone="attention-strong">Attention</nx-badge>
+<nx-badge tone="critical-strong" size="large">Failed</nx-badge>
+
+// With progress indicator, icon, or dismiss
+<nx-badge tone="info-strong" [progressIndicator]="true">Label</nx-badge>
+<nx-badge tone="info-strong" [icon]="true">Label</nx-badge>
+<nx-badge tone="info-strong" (dismiss)="handleDismiss()">Label</nx-badge>
+```
+
+---
+
 ## React component
 
 ```jsx

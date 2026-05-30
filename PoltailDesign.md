@@ -1,0 +1,573 @@
+# Nexleaf Design System Rules
+
+This file governs how all UI work in this project should be implemented. Follow these rules for every design, component, or Figma-driven change.
+
+---
+
+## Project Stack
+
+- **Storybook component library** — source of truth lives in `/src/components/`. Always import from there.
+- **React 18** via CDN UMD for HTML prototypes (`unpkg.com/react@18/umd/react.production.min.js`)
+- **ReactDOM 18** via CDN UMD
+- **Babel standalone** — JSX is written inside `<script type="text/babel">` tags in HTML prototypes
+- **Inter** font from Google Fonts (weights 400, 500, 600, 700)
+- **Styling** — inline CSS in `<style>` blocks + inline `style={{}}` props in React components. No Tailwind, no CSS modules, no styled-components.
+
+---
+
+## Figma Design System Files
+
+Always reference these three files when implementing designs:
+
+| Purpose | File |
+|---------|------|
+| **Components** | [Nexleaf Design System v2.1](https://www.figma.com/design/y4XdS2kaiS8eMHY3z8wORP/Nexleaf-Design-System-v2.1--Test-) |
+| **Styles / Tokens** | [Nexleaf Styles – Polaris Focused](https://www.figma.com/design/db0FKgCAeJWBYyd1pSnmeg/Nexleaf-Styles--Polaris-Focused-) |
+| **Icons** | [Nexleaf Icons V2](https://www.figma.com/design/JhGY89eiVhgdfJMIQMCjNn/Nexleaf-Icons-V2) |
+
+---
+
+## Figma Implementation Flow (Required — do not skip)
+
+1. Run `get_design_context` on the target node to get structured design data
+2. If the response is too large, run `get_metadata` first to find the right sub-nodes, then re-fetch with `get_design_context`
+3. Run `get_screenshot` for visual reference
+4. Translate output into this project's conventions (inline styles, React, HTML files) — not raw Tailwind or framework-specific code
+5. Validate the final UI against the Figma screenshot before marking complete
+
+---
+
+## Color Tokens
+
+IMPORTANT: Never hardcode colors outside of this palette. Every color used in the codebase must map to one of these tokens.
+
+### Core Surface & Background
+| Token | Value | Usage |
+|-------|-------|-------|
+| `bg-page` | `#f1f1f1` | Page/app background |
+| `bg-surface` | `#ffffff` | Cards, modals, panels |
+| `bg-input` | `#fdfdfd` | Text inputs, selects, textareas (default) |
+| `bg-input-focus` | `#fafafa` | Input background on hover/focus |
+| `bg-disabled` | `rgba(0,0,0,0.06)` | Disabled input backgrounds (text fields — large surfaces) |
+| `bg-control-disabled` | `rgba(0,0,0,0.08)` | Disabled background for small controls (Checkbox, Radio, Toggle) — stronger contrast needed at small sizes |
+| `bg-error` | `#fee9e8` | Error input background |
+| `bg-selected` | `#f0f7ff` | Selected/checked row highlight |
+| `bg-open` | `#f7f9fc` | Accordion/section open state |
+| `bg-skeleton` | `#e8e8e8` | Skeleton/placeholder block fill (Skeleton primitive, all loading states) |
+
+### Interactive State Overlays
+Translucent black overlays for hover/pressed states on neutral surfaces, plus the two opaque grays used by MetricCard. Use these instead of hardcoding overlay values inside components.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `bg-hover-subtle` | `rgba(0,0,0,0.05)` | Tabs hover, MetricCard disabled background |
+| `bg-hover` | `rgba(0,0,0,0.06)` | Page back-button hover, Badge default background |
+| `bg-pressed` | `rgba(0,0,0,0.08)` | Tabs active tab, MetricCard selected |
+| `bg-surface-hover` | `#f7f7f7` | MetricCard hover (opaque, on white surface) |
+| `bg-surface-active` | `#f3f3f3` | MetricCard active/pressed (opaque, on white surface) |
+
+### Primary (Interactive)
+| Token | Value | Usage |
+|-------|-------|-------|
+| `color-primary` | `#005bd3` | Primary buttons, links, focus rings, interactive icons |
+| `color-primary-hover` | `#004bb0` | Primary button hover background |
+| `color-primary-pressed` | `#003a8a` | Primary button pressed/active background |
+| `color-primary-disabled` | `rgba(0,0,0,0.17)` | Disabled primary button background |
+| `color-primary-hover-shadow` | `rgba(0,91,211,0.12)` | Hover shadow on interactive cards |
+
+### Text
+| Token | Value | Usage |
+|-------|-------|-------|
+| `text-default` | `#303030` | Body text, labels, headings |
+| `text-subdued` | `#616161` | Secondary text, input icons |
+| `text-placeholder` | `#9e9e9e` | Placeholders, tertiary text, chevron icons |
+| `text-disabled` | `#b5b5b5` | Disabled text and disabled icon strokes |
+| `text-on-primary` | `#ffffff` | Text/icons on primary blue backgrounds |
+
+### Borders
+| Token | Value | Usage |
+|-------|-------|-------|
+| `border-default` | `#e0e0e0` | Card borders, accordion borders, dividers |
+| `border-input` | `0.66px solid #8a8a8a` | Default input/select/textarea border |
+| `border-input-focus` | `0.66px solid #616161` | Input border on hover/focus |
+| `border-input-error` | `0.66px solid #8e1f0b` | Input border in error state |
+| `border-light` | `#ebebeb` | Subtle dividers, list separators |
+| `border-lighter` | `#f0f0f0` | Intra-list separators |
+| `border-secondary-btn` | `#c9c9c9` | Secondary button borders |
+
+### Semantic States
+| Token | Value | Usage |
+|-------|-------|-------|
+| `color-critical` | `#d92d20` | Error text, required field asterisk |
+| `color-critical-strong` | `#e51c00` | Filled destructive button background, PDF file-type tile |
+| `color-success` | `#12B76A` | Success icon fill, indicator dots |
+| `bg-success` | `#cdfee1` | Success banner/badge background |
+| `text-success` | `#0c5132` | Success banner/badge text |
+| `border-success` | `#7be8b4` | Success banner border |
+| `bg-warning` | `#fff3cd` | Warning banner/badge background |
+| `text-warning` | `#856404` | Warning banner/badge text |
+| `border-warning` | `#ffd966` | Warning banner border |
+| `bg-info` | `#eaf4ff` | Info banner background |
+| `text-info` | `#00527c` | Info banner text |
+| `border-info` | `#b3d9f7` | Info banner border |
+| `bg-critical-soft` | `#fde2e1` | Subtler error background — error badge circle in Upload |
+
+### Magic Tone (Purple)
+Optional purple variant for emphasis or marketing-style tones. Used by Tag (`tone="magic"`) and form controls (Checkbox, RadioButton, TextInput with `tone="magic"`). Tag chips and input fills use different background shades — names are disambiguated.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `magic-text` | `#5700d1` | Purple label/text, checked label in form controls |
+| `magic-primary` | `#8051ff` | Strong border (focused/hover) + filled fill on check |
+| `magic-secondary` | `#9474ff` | Subtle rest border on unchecked controls |
+| `magic-bg-tag-rest` | `#ede7ff` | Tag chip rest background |
+| `magic-bg-tag-hover` | `#dcd0ff` | Tag chip hover background |
+| `magic-bg-input-rest` | `#f8f7ff` | Input fill on unchecked rest |
+| `magic-bg-input-focus` | `#f3f1ff` | Input fill on hover/focus |
+
+### Contextual / Domain-specific
+| Token | Value | Usage |
+|-------|-------|-------|
+| `color-morning` | `#F59E0B` | Morning/day session indicators |
+| `color-evening` | `#6366F1` | Evening/night session indicators |
+
+---
+
+## Typography
+
+IMPORTANT: All text must use the Inter font. Never use system fonts.
+
+| Scale | Size | Weight | Usage |
+|-------|------|--------|-------|
+| body | 14px | 400 | Default body |
+| label | 13px | 500 | Field labels, input values, secondary text |
+| caption | 12px | 400–600 | Badges, footnotes |
+| heading-sm | 16px | 600 | Card titles, section headings |
+| heading-md | 18–20px | 600–700 | Screen/modal headings |
+
+> **Note on font weights:** Inter is loaded with weights 400/500/600/700, but Polaris's source designs use the intermediate weights **450 / 550 / 650** for body-default / medium / semibold. Both ranges are valid in this system; components in `src/components/` standardize on the 450/550/650 set for visual parity with the Polaris source. New components should pick one set and stay consistent.
+
+---
+
+## Spacing Scale
+
+Use multiples of 4px. Common values: `4` `6` `8` `10` `12` `14` `16` `20` `24`
+
+---
+
+## Border Radius
+
+| Usage | Value |
+|-------|-------|
+| Buttons, inputs, banners, list containers | `8px` |
+| Accordions | `10px` |
+| Option-card, checkbox containers | `12px` |
+| Proto/navigation cards | `16px` |
+| Badges/pills | `100px` (full pill) |
+| Status indicator dots | `50%` (circle) |
+
+---
+
+## Input Field Style (shared across ALL inputs)
+
+`TextInput`, `SelectInput`, `SearchSelect`, `SearchSelectMulti`, `TextareaInput` all share identical field styling:
+
+| State | Border | Background | Shadow |
+|-------|--------|------------|--------|
+| Default | `0.66px solid #8a8a8a` | `#fdfdfd` | none |
+| Hover | `0.66px solid #616161` | `#fafafa` | none |
+| Focus | `0.66px solid #616161` | `#fafafa` | `0 0 0 2px #005bd3` |
+| Error | `0.66px solid #8e1f0b` | `#fee9e8` | none |
+| Disabled | none | `rgba(0,0,0,0.08)` | none |
+
+- Padding: `6px 12px`
+- Font: `13px`, weight `450`, Inter
+- Border radius: `8px`
+- Error display: error icon (`IcoErrorCircle`) + `13px #d92d20` text below the field
+
+---
+
+## Component Patterns
+
+### `Btn` — Button
+```jsx
+<Btn variant="primary" onClick={fn}>Label</Btn>
+<Btn variant="secondary" onClick={fn}>Label</Btn>
+<Btn variant="ghost" onClick={fn}>Label</Btn>
+<Btn variant="primary" disabled>Label</Btn>
+<Btn variant="primary" fullWidth small onClick={fn}>Label</Btn>
+```
+- Primary: `#005bd3` bg, white text; disabled → `rgba(0,0,0,0.17)` bg, `#b5b5b5` text
+- Secondary: white bg, `#303030` text, `1.5px solid #c9c9c9` border
+- Ghost: transparent bg, `#005bd3` text
+- Padding: `11px 20px` (default), `8px 16px` (small)
+- Font: 14px (default), 13px (small), weight 600, border radius 8px
+- IMPORTANT: Always use `<Btn>` — never write raw `<button>` elements in stories or UI code
+
+### `TextInput` — Text / Number Input
+```jsx
+<TextInput label="Max Temp" required value={v} onChange={fn} type="number" suffix="°C" />
+<TextInput label="Notes" value={v} onChange={fn} disabled />
+<TextInput label="Search" value={v} onChange={fn} clearButton />
+```
+Props: `label`, `value`, `onChange`, `type`, `placeholder`, `prefix`, `suffix`, `disabled`, `readOnly`, `required`, `helpText`, `error`, `clearButton`, `borderless`, `tone`, `size` (medium/slim), `labelAction`, `onLabelAction`
+
+### `SelectInput` — Dropdown Select
+```jsx
+<SelectInput label="Status" required value={v} onChange={fn} options={OPTIONS} placeholder="Select…" />
+<SelectInput label="Status" error="Required." value={v} onChange={fn} options={OPTIONS} />
+```
+Props: `label`, `options` (string[] or `{value, label}[]`), `placeholder`, `disabled`, `value`, `onChange`, `required`, `error`, `helpText`
+
+### `SearchSelect` — Searchable Single Select
+```jsx
+<SearchSelect label="Region" required placeholder="Select a region" options={OPTS} value={v} onChange={setV} />
+<SearchSelect label="Region" error="Required." options={OPTS} value={v} onChange={setV} />
+<SearchSelect label="Region" disabled value="nairobi" options={OPTS} />
+
+// Nested options — branches are not selectable, only leaves
+<SearchSelect label="Region" options={NESTED} value={v} onChange={setV} />
+```
+- Trigger becomes a live `<input>` when open — typing filters the dropdown
+- Options can carry `children` for hierarchical menus (unbounded depth, indented by `level * 20px`, parent labels in weight 600)
+- In single-select, branches are non-selectable — only leaves can be picked
+- Props: `label`, `required`, `placeholder`, `options` (`{value, label, disabled?, children?}[]`), `value`, `onChange`, `disabled`, `error`
+
+### `SearchSelectButton` — Button-trigger Search Select
+```jsx
+// Single
+<SearchSelectButton label="Region" placeholder="Select region" options={OPTS} value={v} onChange={setV} />
+
+// Multi — button text becomes "First +N Others"
+<SearchSelectButton label="Region" placeholder="Select regions" options={OPTS} value={arr} onChange={setArr} multiple />
+
+// Sizes (matches Btn): 'small' | 'medium' (default) | 'large'
+<SearchSelectButton label="Region" options={OPTS} value={arr} onChange={setArr} multiple size="large" />
+```
+- Same dropdown, search, and tree behaviour as `SearchSelect`/`SearchSelectMulti` — but the trigger is the actual `Btn` component (`variant="secondary"`, `disclosure`) from the design system
+- Search lives **inside** the popover, rendered with the design-system `<TextInput>` (with `clearButton`) — no separator line below it
+- Checkboxes in the option list are stateless renderings of the `<Checkbox>` component visuals (same 16×16 box, `#303030` checked bg, identical SVG paths)
+- Button text: `placeholder` when empty, the option label when 1 selected, `"First +N Others"` (or `+1 Other`) when multi
+- Props: `label`, `placeholder`, `options`, `value`, `onChange`, `multiple`, `disabled`, `size` (`'small' \| 'medium' \| 'large'`), `maxTags`, `dropdownWidth`
+
+### `SearchSelectMulti` — Searchable Multi Select
+```jsx
+<SearchSelectMulti label="Regions" required placeholder="Select regions" options={OPTS} value={arr} onChange={setArr} />
+<SearchSelectMulti label="Regions" options={OPTS} value={arr} onChange={setArr} maxTags={3} />
+
+// Nested options — clicking a parent toggles every descendant leaf
+<SearchSelectMulti label="Regions" options={NESTED} value={arr} onChange={setArr} />
+
+// tagsInside — first chip inline (≤50% width, ellipsises if longer) + "+N others" overflow
+<SearchSelectMulti label="Regions" options={OPTS} value={arr} onChange={setArr} tagsInside />
+```
+- Trigger becomes a live `<input>` when open — typing filters the dropdown
+- Hierarchical options: parents render with checkbox + indeterminate state derived from leaf descendants (`checked` / `indeterminate` / `unchecked`). Clicking a parent toggles every leaf beneath it. Only leaf values are stored in `value`.
+- **Tag placement**:
+  - Default (`tagsInside={false}`) — every selected leaf renders as a removable `Tag` below the field
+  - `tagsInside` — first selection renders inline (max-width 50%, ellipsis on overflow), remaining selections collapse into a single `+ N others` chip; nothing escapes the field boundary
+- Props: `label`, `required`, `placeholder`, `options`, `value`, `onChange`, `disabled`, `error`, `maxTags`, `tagsInside`
+
+### `NumberInput` — Numeric Input
+```jsx
+<NumberInput label="Quantity" value={v} onChange={setV} />
+<NumberInput label="Temperature" suffix="°C" step={0.1} required value={v} onChange={setV} helpText="Normal: 2 – 8 °C" />
+<NumberInput label="Percentage" suffix="%" min={0} max={100} value={v} onChange={setV} />
+<NumberInput label="Record count" value={42} disabled />
+```
+- Uses native browser number spinner — same height as TextInput (no custom +/− buttons)
+- Props: `label`, `value`, `onChange`, `prefix`, `suffix`, `min`, `max`, `step`, `placeholder`, `required`, `disabled`, `readOnly`, `helpText`, `error`, `labelAction`, `onLabelAction`
+
+### `TextareaInput` — Textarea
+```jsx
+<TextareaInput label="Comments" value={v} onChange={fn} rows={4} />
+<TextareaInput label="Notes" value={v} onChange={fn} required error="Required." maxLength={500} />
+```
+
+### `Checkbox` — Single Checkbox
+```jsx
+<Checkbox label="I agree" checked={v} onChange={fn} />
+<Checkbox label="Disabled" checked disabled />
+<Checkbox label="Error" checked={v} onChange={fn} error="Required." />
+```
+
+### `RadioButton` / `RadioGroup` — Mutually Exclusive Choice
+```jsx
+<RadioGroup
+  title="Notification preference"
+  name="pref"
+  value={v}
+  onChange={setV}
+  options={[
+    { value: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
+    { value: 'sms',   label: 'SMS' },
+  ]}
+/>
+<RadioGroup title="Plan" required tone="magic" value={v} onChange={setV} options={OPTS} error="Required." />
+<RadioButton label="Email" checked onChange={fn} />
+```
+- Always present at least two options — a single radio should be a Checkbox
+- Supports `tone="magic"` (purple) variant
+- Outer ring `16×16px`, inner dot `6×6px`, `role="radio"`
+- Props (RadioButton): `label`, `checked`, `onChange`, `disabled`, `helpText`, `error`, `tone`, `name`
+- Props (RadioGroup): `title`, `name`, `value`, `onChange`, `options`, `tone`, `error`, `required`, `disabled`
+
+### `DatePicker` — Calendar Date Picker
+```jsx
+<DatePicker value={date} onChange={setDate} />
+<DatePicker value={range} onChange={setRange} allowRange multiMonth />
+<DatePicker value={range} onChange={setRange} allowRange multiMonth verticalStack />
+<DatePicker value={date} onChange={setDate} minDate={min} maxDate={max} />
+```
+- Single date when `allowRange={false}`, range `{ start, end }` when `true`
+- `multiMonth` shows two months side by side; combine with `verticalStack` for mobile
+- Card: `#fdfdfd` bg, `0.66px solid #e0e0e0`, `12px` radius, `16px` padding
+- Day cells `32×32px`; selected `#303030`/`#fff`; range middle `#ebebeb`; today inset `0.66px #8a8a8a`
+- Props: `value`, `onChange`, `allowRange`, `multiMonth`, `verticalStack`, `minDate`, `maxDate`, `initialMonth`
+
+### `Tag` / `TagGroup` — Keyword Chip
+```jsx
+<Tag label="Africa" />
+<Tag label="Africa" removable onRemove={fn} />
+<Tag label="Smart suggestion" tone="magic" icon={<IcoInfo />} removable onRemove={fn} />
+<Tag label="Locked" disabled />
+<TagGroup>
+  {tags.map(t => <Tag key={t} label={t} removable onRemove={() => remove(t)} />)}
+</TagGroup>
+```
+- Used inside `SearchSelectMulti` for selected chips, and in filter bars / AI-suggestion lists
+- Pill `border-radius: 100px`, `13px / 450`, padding `3px 10px` (`3px 4px 3px 10px` when removable)
+- Default rest `#ebebeb`/`#303030`; magic `#ede7ff`/`#5700d1`
+- X button has `aria-label="Remove {label}"`; tag responds to Backspace/Delete when focused
+- Props: `label`, `tone` (`default`/`magic`), `icon`, `removable`, `onRemove`, `onClick`, `disabled`
+
+### `Toggle` — Switch
+```jsx
+<Toggle label="Enable notifications" checked={v} onChange={setV} />
+<Toggle label="Auto-sync" checked={v} onChange={setV} helpText="Receive alerts when readings are out of range." />
+<Toggle label="Auto-sync" checked={v} onChange={setV} error="Auto-sync must be enabled." />
+<Toggle label="Apply to all" checked={false} disabled />
+```
+- Use for immediate on/off settings (notifications, dark mode). For opt-in inside a form with Save, use `Checkbox` instead.
+- Pill-shaped track `36×20px`, white thumb `14×14px`, `role="switch"`
+- Props: `label`, `checked`, `onChange`, `disabled`, `helpText`, `error`
+
+### `Badge` — Status/Label Badge
+```jsx
+<Badge tone="success">Active</Badge>
+<Badge tone="warning" size="large">Pending</Badge>
+<Badge tone="critical" progress="incomplete">Overdue</Badge>
+<Badge tone="default" onDismiss={fn}>Removable</Badge>
+```
+Props: `tone` (default/info/success/attention/warning/critical), `size` (medium/large), `progress` (incomplete/partial/complete), `progressIndicator`, `icon`, `onDismiss`, `children`
+
+### `StatusBadge` — Preset Status Pill
+```jsx
+<StatusBadge status="pending" />    // #fff3cd bg, #856404 text
+<StatusBadge status="completed" />  // #cdfee1 bg, #0c5132 text
+<StatusBadge status="locked" />     // #f0f0f0 bg, #b5b5b5 text
+```
+
+### `Banner` — Contextual Banner
+```jsx
+<Banner type="info">Message here</Banner>
+<Banner type="success">Saved!</Banner>
+<Banner type="warning">Check this value.</Banner>
+<Banner type="critical">Something went wrong.</Banner>
+```
+
+### `Accordion` — Expandable Section
+```jsx
+<Accordion title="Morning Reading" description="Optional subtitle" required open={open} onToggle={fn} hasContent={!!value}>
+  {/* form fields */}
+</Accordion>
+```
+- Green dot indicator when `hasContent && !open`
+- Props: `title`, `description`, `required`, `open`, `onToggle`, `hasContent`, `children`
+
+### `Overlay` — Modal Backdrop
+```jsx
+<Overlay onClose={fn}>
+  <div style={{ background: '#fff', borderRadius: 16, padding: 24 }}>
+    {/* modal content */}
+  </div>
+</Overlay>
+```
+- Backdrop: `rgba(0,0,0,0.5)`, fixed full-screen, `fadeInScale 0.18s ease-out`
+- Closes on Escape key and backdrop click, max width 620px centered
+
+### `Card` — Detail Card
+```jsx
+<Card>
+  <CardSectionTitle icon={<MyIcon />} title="Location" />
+  <CardField label="Region" value="Nairobi" />
+  <CardField label="Website" value="View" linkHref="https://…" />
+  <CardDivider />
+</Card>
+```
+Exports: `Card`, `CardSectionTitle`, `CardField`, `CardDivider`
+
+### `MetricCard` — KPI Metric Tile
+```jsx
+<MetricCard title="Total Installations" metric="142" badge={{ tone: 'success', label: '+12%' }} onClick={fn} infoTooltip="Updated daily" />
+<MetricCard title="Offline Devices" metric="3" loading={false} selected={false} />
+```
+Props: `title`, `metric`, `badge` (`{tone, label}`), `onClick`, `selected`, `disabled`, `loading`, `infoTooltip`
+
+### `Tooltip` — Hover Tooltip
+```jsx
+<Tooltip content="Helpful hint" position="above">
+  <button>Hover me</button>
+</Tooltip>
+```
+Props: `content`, `position` (above/below), `children`
+
+### `OptionList` — Selectable List
+```jsx
+<OptionList options={OPTIONS} selected={selected} onChange={setSelected} />
+<OptionList options={OPTIONS} selected={selected} onChange={setSelected} allowMultiple />
+<OptionList sections={[
+  { title: 'Actions', options: [{ value: 'edit', label: 'Edit' }] },
+  { title: '', options: [{ value: 'delete', label: 'Delete', tone: 'critical' }] },
+]} onChange={handleChange} />
+```
+Props: `title`, `options` (`{value, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections`, `error`
+
+### `IndexTable` — Data Table
+```jsx
+<IndexTable
+  columns={COLUMNS}
+  rows={ROWS}
+  selectedRows={selected}
+  onSelectionChange={setSelected}
+  tabs={TABS}
+  activeTab={activeTab}
+  onTabChange={handleTabChange}
+  loading={loading}
+  rowActions={[
+    { label: 'Edit', onAction: fn },
+    { label: 'Delete', tone: 'critical', onAction: fn },
+  ]}
+/>
+```
+- Bulk selection, search, tabs, loading skeleton, row actions (three-dot menu using `OptionList`)
+
+### `Tabs` — Tab Bar
+```jsx
+<Tabs tabs={[{ label: 'Overview' }, { label: 'History', badge: '3' }]} activeIndex={i} onChange={setI} />
+<Tabs tabs={TABS} activeIndex={i} onChange={setI} fitted />
+```
+Props: `tabs` (`{label, badge, disabled}[]`), `activeIndex`, `onChange`, `fitted`, `moreViews`, `canAddNew`, `mobile`
+
+### `Pagination` — Prev / Next
+```jsx
+<Pagination hasPrevious hasNext onPrevious={fn} onNext={fn} label="Page 1 of 10" type="page" />
+<Pagination hasPrevious hasNext onPrevious={fn} onNext={fn} label="1–20 of 80" type="table" />
+```
+Props: `hasPrevious`, `hasNext`, `onPrevious`, `onNext`, `label`, `type` (page/table)
+
+### `Divider`
+```jsx
+<Divider />                   // 1px #ebebeb, 4px vertical margin
+<Divider variant="strong" />  // 1.5px #e0e0e0, 8px vertical margin
+<Divider variant="subtle" />  // 1px #f0f0f0, no margin
+```
+
+### `Page` — Page Header Wrapper
+```jsx
+<Page title="Temperature Records">
+  {/* content */}
+</Page>
+
+<Page
+  title="Fridge A — Zone 1"
+  subtitle="Last synced 2 hours ago"
+  backAction={{ onAction: () => navigate(-1) }}
+  metadata={[{ label: 'Active', tone: 'success' }]}
+  primaryAction={{ content: 'Record reading', onAction: openForm }}
+  secondaryActions={[{ content: 'Export', onAction: exportData }]}
+>
+  {/* content */}
+</Page>
+```
+
+---
+
+## Storybook Sidebar Groups
+
+| Group | Components |
+|-------|-----------|
+| `Components/Inputs` | TextInput, NumberInput, TextareaInput, SelectInput, SearchSelect |
+| `Components/Navigation` | Tabs, Pagination |
+| `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, OptionList, Tooltip, Divider, Page |
+| `Foundation/` | PolarisIcon |
+
+MDX docs pages use `Components/[Group]/[Name]/Docs` as the `<Meta title>`.
+
+---
+
+## Icon System
+
+### Primary: Nexleaf Icons V2
+512 icons, PascalCase naming, 20×20px native. Render as inline SVG:
+
+```jsx
+const IconSearch = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+    {/* paths from Figma */}
+  </svg>
+);
+```
+
+Naming: `Filled` → solid · `Up/Down/Left/Right` → directional · `Add/Remove/Check/None` → state · `Small` → smaller design · `Logo*` → brand · `Chart*` → data viz
+
+### Fallback: Phosphor Icons (fill weight, 20px preferred)
+Inline SVG only — never icon font or external image. Do not install icon packages.
+
+---
+
+## Layout Conventions
+
+- Mobile-first. Max content width: 480–620px centered.
+- Cards and modals: `padding: 24px`
+- Form sections: `display: flex; flexDirection: column; gap: 20px`
+- Button rows: `display: flex; gap: 12px`
+- Interactive elements: `cursor: pointer` (enabled), `cursor: not-allowed` (disabled)
+
+---
+
+## Animations
+
+| Usage | Definition |
+|-------|------------|
+| Loading spinner | `spin 0.7s linear infinite` |
+| Modal entrance | `fadeInScale 0.18s ease-out` |
+| QR scan beam | `scanBeam 1.4s ease-in-out alternate infinite` |
+| Accordion open/close | `max-height` transition `0.25s ease` |
+| Card hover | `transition: border-color 0.15s, box-shadow 0.15s` |
+
+---
+
+## File Structure (HTML Prototypes)
+
+`<script type="text/babel">` block order:
+1. Constants & data
+2. Utility functions
+3. Inline SVG icon components
+4. UI primitives (Btn, TextInput, etc.)
+5. Feature-specific components / modals
+6. Screen-level components
+7. Root `App` component
+8. `ReactDOM.createRoot(document.getElementById('root')).render(<App/>)`
+
+---
+
+## General Rules
+
+- IMPORTANT: Never hardcode colors — always use token values above
+- IMPORTANT: Never import or link to icon packages — always inline SVG
+- IMPORTANT: All new `.html` files must include React 18 CDN scripts and Inter font link
+- IMPORTANT: When implementing Figma designs, use inline-style React — no Tailwind, no CSS modules
+- IMPORTANT: Always use `<Btn>` — never write raw `<button>` elements in stories or UI
+- All input fields share the same border/focus/error style — see Input Field Style section
+- Interactive card hover: `borderColor: '#005bd3'`, shadow `rgba(0,91,211,0.12)`

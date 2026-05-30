@@ -1,5 +1,16 @@
 import { useState } from 'react';
 import { IndexTable } from '../IndexTable/IndexTable.jsx';
+import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
+import { Btn } from '../Btn/Btn.jsx';
+import { Overlay } from '../Overlay/Overlay.jsx';
+
+// Inline close icon — same SVG used by the Page image-preview modal so both
+// previews share an identical look.
+const CardModalCloseIcon = ({ size = 16, color = '#303030' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill={color} aria-hidden="true">
+    <path d="M11.06 10l4.47-4.47a.75.75 0 1 0-1.06-1.06L10 8.94 5.53 4.47a.75.75 0 1 0-1.06 1.06L8.94 10l-4.47 4.47a.75.75 0 1 0 1.06 1.06L10 11.06l4.47 4.47a.75.75 0 1 0 1.06-1.06L11.06 10Z" />
+  </svg>
+);
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -69,10 +80,13 @@ const CARD_SHADOW = [
  * Base container. All layout types are built on top of this.
  *
  * Props:
- *   children — card content
- *   style    — optional style overrides
+ *   children       — card content
+ *   loading        — boolean — render a skeleton in place of children
+ *   loadingContent — ReactNode — custom skeleton layout (overrides the default)
+ *   loadingLabel   — accessible label for the skeleton group (default 'Loading card')
+ *   style          — optional style overrides
  */
-export function Card({ children, style }) {
+export function Card({ children, loading = false, loadingContent, loadingLabel = 'Loading card', style }) {
   return (
     <div style={{
       background: '#ffffff',
@@ -86,8 +100,34 @@ export function Card({ children, style }) {
       boxSizing: 'border-box',
       ...style,
     }}>
-      {children}
+      {loading
+        ? (loadingContent || <CardSkeleton />)
+        : children}
     </div>
+  );
+}
+
+// ─── CardSkeleton ─────────────────────────────────────────────────────────────
+
+/**
+ * CardSkeleton
+ *
+ * Default skeleton layout for `<Card loading />`. Two label-style placeholder
+ * rows (title + value pair) repeated twice, mimicking a typical CardField stack.
+ *
+ * Use `<Card loading loadingContent={...} />` to supply a custom layout when
+ * the default doesn't match the real card's content shape.
+ */
+export function CardSkeleton({ rows = 2 }) {
+  return (
+    <SkeletonGroup label="Loading card">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <Skeleton width={120} height={13} delay={i * 0.08} ariaLabel={null} />
+          <Skeleton width="70%" height={16} delay={i * 0.08 + 0.04} ariaLabel={null} />
+        </div>
+      ))}
+    </SkeletonGroup>
   );
 }
 
@@ -303,11 +343,47 @@ export function CardNotes({ icon, title, text }) {
  * Equipment detail card. Shows photos, a 2-column key/value grid, and optional notes.
  *
  * Props:
- *   images — string[] (1–3 image src values)
- *   fields — { label, value, icon?, linkHref?, onLinkClick? }[]
- *   notes  — string
+ *   images  — string[] (1–3 image src values)
+ *   fields  — { label, value, icon?, linkHref?, onLinkClick? }[]
+ *   notes   — string
+ *   loading — boolean — show a shape-matching skeleton
  */
-export function CardLayoutType1({ images = [], fields = [], notes }) {
+export function CardLayoutType1({ images = [], fields = [], notes, loading = false }) {
+  if (loading) {
+    return (
+      <Card
+        loading
+        loadingContent={
+          <SkeletonGroup label="Loading equipment details">
+            {/* Image row */}
+            <div style={{ display: 'flex', gap: 16 }}>
+              {[0, 1, 2].map(i => (
+                <Skeleton key={i} width={120} height={120} radius={8} delay={i * 0.06} ariaLabel={null} />
+              ))}
+            </div>
+            {/* Two field rows */}
+            {[0, 1].map(row => (
+              <div key={row} style={{ display: 'flex', gap: 12, height: 44, alignItems: 'center' }}>
+                {[0, 1].map(col => (
+                  <div key={col} style={{ flex: '1 0 0', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Skeleton width={96}  height={13} delay={(row * 2 + col) * 0.06} ariaLabel={null} />
+                    <Skeleton width="60%" height={16} delay={(row * 2 + col) * 0.06 + 0.03} ariaLabel={null} />
+                  </div>
+                ))}
+              </div>
+            ))}
+            {/* Notes */}
+            <div style={{ height: 1, background: '#ebebeb' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <Skeleton width={80} height={16} ariaLabel={null} />
+              <Skeleton width="100%" height={13} delay={0.04} ariaLabel={null} />
+              <Skeleton width="85%"  height={13} delay={0.08} ariaLabel={null} />
+            </div>
+          </SkeletonGroup>
+        }
+      />
+    );
+  }
   return (
     <Card>
       {images.length > 0 && (
@@ -544,6 +620,32 @@ export function CardLayoutType3({ region, facilityName, facilityHref, onFacility
   );
 }
 
+// ─── QR icon (inline SVG, scales) ─────────────────────────────────────────────
+
+const QrCodeIcon = ({ size = 48, color = '#303030' }) => (
+  <svg width={size} height={size} viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    {/* Top-left finder square */}
+    <rect x="4"  y="4"  width="14" height="14" rx="2" stroke={color} strokeWidth="2" />
+    <rect x="9"  y="9"  width="4"  height="4"  rx="0.5" fill={color} />
+    {/* Top-right finder square */}
+    <rect x="30" y="4"  width="14" height="14" rx="2" stroke={color} strokeWidth="2" />
+    <rect x="35" y="9"  width="4"  height="4"  rx="0.5" fill={color} />
+    {/* Bottom-left finder square */}
+    <rect x="4"  y="30" width="14" height="14" rx="2" stroke={color} strokeWidth="2" />
+    <rect x="9"  y="35" width="4"  height="4"  rx="0.5" fill={color} />
+    {/* Data dots in the bottom-right quadrant */}
+    <rect x="22" y="22" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="30" y="22" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="40" y="22" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="22" y="30" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="36" y="30" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="30" y="36" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="40" y="36" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="22" y="40" width="4" height="4" rx="0.5" fill={color} />
+    <rect x="32" y="40" width="4" height="4" rx="0.5" fill={color} />
+  </svg>
+);
+
 // ─── CardLayoutType4 — Contact card ──────────────────────────────────────────
 
 /**
@@ -568,6 +670,199 @@ export function CardLayoutType4({ addedBy, contactNumber }) {
         label="Contact Number"
         value={contactNumber}
       />
+    </Card>
+  );
+}
+
+// ─── CardLayoutType5 — QR Code card ──────────────────────────────────────────
+
+/**
+ * CardLayoutType5
+ *
+ * QR Code card. Two states:
+ *   • Empty (no `qrCodeSrc` provided) — centered QR icon inside a soft circle,
+ *     "No QR Code Assigned" caption, and an "Assign QR Code" secondary button.
+ *   • Assigned (`qrCodeSrc` provided) — renders the scannable QR image, plus a
+ *     "View QR Code" secondary button that opens a full-size modal preview.
+ *     The preview reuses the same `Overlay`-based modal layout as the Page
+ *     header image preview, so the two interactions feel identical.
+ *
+ * Props:
+ *   title               — string (default 'QR Code')
+ *   qrCodeSrc           — string | null — when null/empty, shows the empty state
+ *   emptyText           — string (default 'No QR Code Assigned')
+ *   emptyActionLabel    — string (default 'Assign QR Code')
+ *   assignedActionLabel — string (default 'View QR Code')
+ *   onAssign            — fn — called when the empty-state button is clicked
+ *   onView              — fn — optional, fires alongside the modal opening
+ *                         (useful for analytics)
+ *   loading             — boolean — show a shape-matching skeleton
+ */
+export function CardLayoutType5({
+  title = 'QR Code',
+  qrCodeSrc,
+  emptyText = 'No QR Code Assigned',
+  emptyActionLabel = 'Assign QR Code',
+  assignedActionLabel = 'View QR Code',
+  onAssign,
+  onView,
+  loading = false,
+}) {
+  const [qrOpen, setQrOpen] = useState(false);
+  if (loading) {
+    return (
+      <Card
+        loading
+        loadingContent={
+          <SkeletonGroup label="Loading QR code card">
+            <Skeleton width={80}  height={20} ariaLabel={null} />
+            <div style={{
+              display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center',
+              gap: 12, padding: 12, width: '100%',
+            }}>
+              <Skeleton width={88}  height={88} radius={44} delay={0.04} ariaLabel={null} />
+              <Skeleton width={160} height={16} delay={0.10} ariaLabel={null} />
+              <Skeleton width={132} height={32} radius={8}  delay={0.16} ariaLabel={null} />
+            </div>
+          </SkeletonGroup>
+        }
+      />
+    );
+  }
+
+  const isEmpty = !qrCodeSrc;
+
+  return (
+    <Card>
+      <span style={{
+        fontSize: 14,
+        fontWeight: 650,
+        color: '#303030',
+        lineHeight: '20px',
+        fontFamily: 'Inter, sans-serif',
+      }}>
+        {title}
+      </span>
+
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        padding: 12,
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        {isEmpty ? (
+          <>
+            <div
+              aria-hidden="true"
+              style={{
+                width: 88, height: 88,
+                borderRadius: '50%',
+                background: '#eaf4ff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              <QrCodeIcon size={48} color="#303030" />
+            </div>
+            <p style={{
+              fontSize: 13,
+              fontWeight: 450,
+              color: '#303030',
+              lineHeight: '20px',
+              fontFamily: 'Inter, sans-serif',
+              textAlign: 'center',
+              margin: 0,
+            }}>
+              {emptyText}
+            </p>
+            <Btn variant="secondary" size="medium" onClick={onAssign}>
+              {emptyActionLabel}
+            </Btn>
+          </>
+        ) : (
+          <>
+            <img
+              src={qrCodeSrc}
+              alt="Assigned QR code"
+              style={{
+                width: 160,
+                height: 160,
+                objectFit: 'contain',
+                borderRadius: 8,
+                background: '#ffffff',
+                display: 'block',
+              }}
+            />
+            <Btn
+              variant="secondary"
+              size="medium"
+              onClick={() => {
+                setQrOpen(true);
+                if (onView) onView();
+              }}
+            >
+              {assignedActionLabel}
+            </Btn>
+          </>
+        )}
+      </div>
+
+      {/* QR preview modal — identical layout to the Page header image modal */}
+      {qrCodeSrc && qrOpen && (
+        <Overlay onClose={() => setQrOpen(false)}>
+          <div
+            role="dialog"
+            aria-label={`${title} preview`}
+            style={{
+              position: 'relative',
+              background: '#ffffff',
+              borderRadius: 12,
+              overflow: 'hidden',
+              boxShadow: '0 20px 48px rgba(0,0,0,0.24)',
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setQrOpen(false)}
+              aria-label="Close QR code preview"
+              style={{
+                position: 'absolute',
+                top: 12, right: 12,
+                width: 32, height: 32,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'rgba(255,255,255,0.92)',
+                border: '1px solid #e0e0e0',
+                borderRadius: 8,
+                cursor: 'pointer',
+                padding: 0,
+                zIndex: 1,
+                outline: 'none',
+              }}
+            >
+              <CardModalCloseIcon size={16} color="#303030" />
+            </button>
+            <img
+              src={qrCodeSrc}
+              alt={`${title} — scannable view`}
+              style={{
+                display: 'block',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '85vh',
+                objectFit: 'contain',
+                background: '#f1f1f1',
+              }}
+            />
+          </div>
+        </Overlay>
+      )}
     </Card>
   );
 }

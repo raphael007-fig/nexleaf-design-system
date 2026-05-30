@@ -36,6 +36,8 @@ Displays a high-level operational KPI in a compact, scannable card. Can function
 
 ## Loading skeleton
 
+Uses the shared [`Skeleton`](?path=/docs/components-skeleton-docs--docs) primitive for the label and metric placeholders — pulse timing and base color are inherited from the system.
+
 <Canvas of={MetricCardStories.Loading} />
 
 ---
@@ -50,7 +52,7 @@ Displays a high-level operational KPI in a compact, scannable card. Can function
 | Selected | `selected={true}` | `rgba(0,0,0,0.08)` |
 | Focus | Keyboard focus (clickable only) | `#ffffff` + `2px #005bd3` ring |
 | Disabled | `disabled={true}` | `rgba(0,0,0,0.05)` + muted text |
-| Loading | `loading={true}` | Skeleton bars, `#e3e3e3` |
+| Loading | `loading={true}` | Skeleton bars, `#e8e8e8` |
 
 ---
 
@@ -95,7 +97,7 @@ Uses the existing `Badge` component — tone values map directly to `Badge` tone
 | Drop shadow | `0 1px 0 rgba(26,26,26,0.07)` | shadow-100 |
 | Inset border | `inset ±1px …` | shadow-100 |
 | Pressed inset | `inset 0 2px 1px rgba(26,26,26,0.2)` | shadow-inset-200 |
-| Skeleton fill | `#e3e3e3` | — |
+| Skeleton fill | `#e8e8e8` | inherited from `Skeleton` primitive |
 
 ---
 
@@ -106,6 +108,34 @@ Uses the existing `Badge` component — tone values map directly to `Badge` tone
 - Selected state is communicated via `aria-pressed` (recommended in consuming pages)
 - Info icon has `aria-label="More information"`
 - Disabled cards are non-interactive — do not use `disabled` HTML attribute on the wrapper (it would break keyboard navigation for screen readers)
+
+---
+
+## Angular component
+
+```ts
+import { NxMetricCardModule } from 'components/MetricCard/metric-card.module';
+
+// Static display
+<nx-metric-card
+  title="Total Installations"
+  metric="247"
+  [badge]="{ label: '3 Critical', tone: 'critical' }"
+/>
+
+// Interactive filter card
+<nx-metric-card
+  title="Devices Offline"
+  metric="12"
+  [badge]="{ label: '12 Offline', tone: 'warning' }"
+  [selected]="activeFilter === 'offline'"
+  (click)="toggleFilter('offline')"
+/>
+
+// Loading / Disabled
+<nx-metric-card [loading]="true" />
+<nx-metric-card title="Unknown" metric="—" [disabled]="true" />
+```
 
 ---
 

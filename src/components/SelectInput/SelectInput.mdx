@@ -1,7 +1,7 @@
 import { Meta, Canvas } from '@storybook/addon-docs/blocks';
 import * as SelectInputStories from './SelectInput.stories.jsx';
 
-<Meta title="Components/SelectInput/Docs" />
+<Meta title="Components/Forms/SelectInput/Docs" />
 
 # SelectInput
 
@@ -112,6 +112,36 @@ SelectInput's styling is primarily applied to the native `<select>` element to k
 - Required fields use the native `required` attribute on `<select>`
 - Custom chevron is decorative — `aria-hidden="true"` if implemented as a separate element
 - Native `<select>` has full keyboard and screen-reader support out of the box — do not replace it with a `<div>` dropdown unless OptionList's richer feature set is needed
+
+---
+
+## Angular component
+
+```ts
+import { NxSelectInputModule } from 'components/SelectInput/select-input.module';
+
+// Basic
+<nx-select-input
+  label="Session type"
+  placeholder="Select type"
+  [options]="['Morning', 'Evening', 'Both']"
+  [value]="val"
+  (change)="val = $event.target.value"
+/>
+
+// Required
+<nx-select-input
+  label="Status"
+  [required]="true"
+  placeholder="Choose status"
+  [options]="['Active', 'Inactive', 'Pending']"
+  [value]="val"
+  (change)="fn($event)"
+/>
+
+// Disabled
+<nx-select-input label="Region" [options]="['North']" [disabled]="true" />
+```
 
 ---
 

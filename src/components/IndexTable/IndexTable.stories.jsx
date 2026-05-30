@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { IndexTable } from './IndexTable.jsx';
+import { IndexTable, LinkCell } from './IndexTable.jsx';
 import { Badge } from '../Badge/Badge.jsx';
 import { Pagination } from '../Pagination/Pagination.jsx';
 
@@ -243,6 +243,132 @@ export const WithRowActions = {
 };
 
 // ─── WithBulkActions — pre-selected rows ──────────────────────────────────────
+
+// ─── WithLinkCell — link-list column with overflow dropdown ────────────────
+
+const FRIDGES = {
+  vestfrostMK144: { label: 'Vestfrost MK144',          href: '#/equipment/vestfrost-mk144' },
+  ambient:        { label: 'Ambient Ambient',          href: '#/equipment/ambient' },
+  aucma:          { label: 'AUCMA CFD-50',             href: '#/equipment/aucma-cfd-50' },
+  vlsGreenline:   { label: 'VestfrostVLS 400A Greenline', href: '#/equipment/vls-400a' },
+};
+
+const LINK_ROWS = [
+  { id: 1, monitor: 'Mary A.',  facility: 'Kisumu DH',     equipment: [FRIDGES.vestfrostMK144] },
+  { id: 2, monitor: 'James O.', facility: 'Nairobi Gen.',  equipment: [FRIDGES.vestfrostMK144, FRIDGES.ambient, FRIDGES.aucma] },
+  { id: 3, monitor: 'Anne K.',  facility: 'Eldoret Ref.',  equipment: [FRIDGES.vestfrostMK144, FRIDGES.ambient, FRIDGES.aucma, FRIDGES.vlsGreenline] },
+  { id: 4, monitor: 'Peter M.', facility: 'Nakuru Prov.',  equipment: [FRIDGES.ambient] },
+  { id: 5, monitor: 'Carol N.', facility: 'Mombasa Cl.',   equipment: [FRIDGES.aucma] },
+];
+
+const LINK_COLUMNS = [
+  { key: 'monitor',   label: 'Monitor',   sortable: true },
+  { key: 'facility',  label: 'Facility',  sortable: true },
+  {
+    key: 'equipment',
+    label: 'Monitored equipment',
+    render: (row) => (
+      <LinkCell items={row.equipment} visible={1} othersLabel="Others" />
+    ),
+  },
+];
+
+export const WithLinkCell = {
+  name: 'With LinkCell column',
+  parameters: { layout: 'padded' },
+  render: () => (
+    <div style={{ fontFamily: 'Inter, sans-serif', maxWidth: 720 }}>
+      <p style={{ fontSize: 13, color: '#616161', marginBottom: 12, lineHeight: 1.6 }}>
+        The <code>LinkCell</code> shows the first item inline. Additional items collapse
+        into a "+N Others" link that opens a scrollable dropdown on hover or focus.
+      </p>
+      <IndexTable
+        columns={LINK_COLUMNS}
+        rows={LINK_ROWS}
+        selectedRows={new Set()}
+        onSelectionChange={() => {}}
+      />
+    </div>
+  ),
+};
+
+// ─── Mobile (stacked-card view) ───────────────────────────────────────────────
+//
+// Below 640px IndexTable switches to a card layout. Columns control where each
+// field lands via opt-in flags:
+//   primary       — title line of the card (first column wins when set)
+//   subtitle      — secondary line directly below the title
+//   hideOnMobile  — drop the column on mobile entirely
+//   mobileLabel   — override `label` when it's JSX (e.g. an sr-only header)
+//
+// Defaults: if no column is marked `primary`, the first visible column becomes
+// the title automatically. Sortable columns are surfaced via a portal
+// "Sort ▾" menu at the top of the card list.
+
+const MOBILE_COLUMNS = [
+  { key: 'facility',    label: 'Facility',    primary: true,  sortable: true },
+  { key: 'region',      label: 'Region',      subtitle: true, sortable: true },
+  { key: 'date',        label: 'Date',        sortable: true },
+  { key: 'morning',     label: 'Morning °C',  sortable: true, align: 'right' },
+  { key: 'evening',     label: 'Evening °C',  sortable: true, align: 'right' },
+  {
+    key: 'status',
+    label: 'Status',
+    render: (row) => <Badge tone={row.statusTone}>{row.status}</Badge>,
+  },
+  { key: 'submittedBy', label: 'Submitted by' },
+];
+
+export const Mobile = {
+  name: 'Mobile (stacked-card)',
+  parameters: {
+    layout: 'fullscreen',
+    viewport: { defaultViewport: 'mobile1' },
+  },
+  render: () => {
+    const [selected, setSelected] = useState(new Set());
+    const [sortKey, setSortKey] = useState('date');
+    const [sortDir, setSortDir] = useState('desc');
+
+    function handleSort(key) {
+      if (sortKey === key) {
+        setSortDir(d => (d === 'asc' ? 'desc' : 'asc'));
+      } else {
+        setSortKey(key);
+        setSortDir('asc');
+      }
+    }
+
+    return (
+      <div style={{ fontFamily: 'Inter, sans-serif', background: '#f1f1f1', minHeight: '100vh', padding: 12 }}>
+        <IndexTable
+          columns={MOBILE_COLUMNS}
+          rows={ROWS}
+          selectedRows={selected}
+          onSelectionChange={setSelected}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={handleSort}
+          searchValue=""
+          onSearchChange={() => {}}
+          searchPlaceholder="Search records…"
+          toolbarActions={[
+            { label: 'Filter', icon: <IcoFilter size={16} />, onClick: () => {} },
+          ]}
+          bulkActions={[
+            { label: 'Export', onAction: () => {} },
+            { label: 'Archive', onAction: () => {} },
+          ]}
+          rowActions={[
+            { label: 'View details', onAction: () => {} },
+            { label: 'Edit',         onAction: () => {} },
+            { label: 'Delete',       onAction: () => {}, destructive: true },
+          ]}
+        />
+      </div>
+    );
+  },
+};
 
 export const WithBulkActions = {
   name: 'With bulk actions',

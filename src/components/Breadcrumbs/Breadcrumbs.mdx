@@ -1,0 +1,199 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as BreadcrumbsStories from './Breadcrumbs.stories.jsx';
+
+<Meta title="Components/Navigation/Breadcrumbs/Docs" />
+
+# Breadcrumbs
+
+Hierarchical trail showing where the user is in the navigation tree. Every crumb is a "rewind" button — clicking it truncates the trail and returns the user to that point. The final crumb is the current page and renders as a grey pill.
+
+<Canvas of={BreadcrumbsStories.ProgressionFromScreenshot} />
+
+---
+
+## When to use
+
+- The user has drilled into a multi-level area (e.g. Equipment Management → ColdChain Equipment → Facility) and needs an obvious way back to any prior step.
+- The trail represents a **navigation hierarchy**, not a wizard or a process. For step-by-step wizards, use a different pattern.
+- The user wants to "rewind" rather than "undo" — clicking a crumb simply navigates, it does not undo state changes.
+
+Do **not** use Breadcrumbs as the primary nav. They supplement the sidebar/top-nav.
+
+---
+
+## Trail behaviour ("step back as reset")
+
+Breadcrumbs is **stateless** — the consumer owns the trail array. The component renders the trail and fires a navigation callback when a crumb is clicked. Two callbacks are supported (both fire on click — pick one):
+
+- **`onSelect(id, item)`** — preferred, system-standard signature. `id` is `item.id ?? item.key ?? String(index)`.
+- **`onNavigate(index, item)`** — legacy. Still supported for back-compat; new code should use `onSelect`.
+
+The canonical consumer pattern:
+
+```jsx
+const [trail, setTrail] = useState([{ label: 'Home' }]);
+
+function navigate(index) {
+  // Truncate the trail so the clicked crumb becomes the new "current".
+  setTrail(trail.slice(0, index + 1));
+}
+
+<Breadcrumbs items={trail} onNavigate={navigate} />
+```
+
+What this means in practice:
+
+| User action | Result |
+|---|---|
+| Click **Home** (index 0) | Trail collapses to `[Home]` — full reset |
+| Click any middle crumb at index `i` | Trail truncates to `items.slice(0, i + 1)` — everything after is dropped |
+| Click the last (current) crumb | No-op — it's already current |
+| Click a hidden item from the "…" popover | Same as clicking it inline — trail truncates to that point |
+
+Going *deeper* is the consumer's responsibility (push a new item onto the trail when the user opens a child page).
+
+<Canvas of={BreadcrumbsStories.LiveNavigation} />
+
+---
+
+## Collapse rule
+
+`collapseAfter` is the **threshold** at which the trail collapses. When `items.length > collapseAfter` (default **3**), the trail renders as four visual elements:
+
+- **first crumb** — usually the root (e.g. Home)
+- **second crumb** — the next step after the root
+- **"…" menu** — holds every crumb between the second and the last
+- **last crumb** — the current page (grey pill, not clickable)
+
+Hover or click "…" to open the popover; clicking any item inside it calls `onNavigate` with that item's original index. Raising `collapseAfter` only delays when collapsing kicks in — the rendered layout stays the same once collapsed.
+
+<table style={{ borderCollapse: 'collapse', fontFamily: 'Inter, sans-serif', fontSize: 14, margin: '12px 0' }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>Trail length</th>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>Rendered (default <code>collapseAfter=3</code>)</th>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #e0e0e0', fontWeight: 600 }}>In popover</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>1</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Home</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb', color: '#9e9e9e' }}>—</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>2</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Home › Equipment Management</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb', color: '#9e9e9e' }}>—</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>3</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Home › Equipment Management › ColdChain Equipment</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb', color: '#9e9e9e' }}>—</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>4</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Home › Equipment Management › … › ColdChain Equipment</td>
+      <td style={{ padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>1 item</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '8px 12px' }}>6</td>
+      <td style={{ padding: '8px 12px' }}>Home › Equipment Management › … › Facility</td>
+      <td style={{ padding: '8px 12px' }}>3 items</td>
+    </tr>
+  </tbody>
+</table>
+
+<Canvas of={BreadcrumbsStories.CustomCollapseThreshold} />
+
+---
+
+## Props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `items` | `{ label, id?, key?, icon?, iconOnly? }[]` | `[]` | Ordered trail. The last item is rendered as the current page (grey pill, not clickable). `id` is optional; if omitted, `onSelect` falls back to `item.key ?? String(index)`. `icon` renders before the label; pass `iconOnly: true` to collapse the label and render a 28×28 square pill (label is kept as the accessible name + tooltip). The Home crumb across the project uses `iconOnly` with `PolarisIconImg name="HomeFilledIcon"`. |
+| `onSelect` | `(id: string\|number, item) => void` | — | **Preferred.** Fired when any crumb is clicked. `id` is `item.id ?? item.key ?? String(index)`. Matches the system-standard navigation callback shape. |
+| `onNavigate` | `(index: number, item) => void` | — | **Legacy** (still supported). Fired alongside `onSelect`. New code should use `onSelect`. |
+| `loading` | `boolean` | `false` | When true, renders 3 skeleton chips with skeleton chevrons. The overflow-popover logic is skipped while loading. |
+| `collapseAfter` | `number` | `3` | Render the full trail when `items.length` ≤ this. Otherwise collapse the middle into a "…" menu. |
+| `maxLabelChars` | `number` | `16` | Truncates any crumb label longer than this with a trailing "…". The full label is still exposed via the `title` tooltip and `aria-label`. Set to `0` to disable. |
+| `disabled` | `boolean` | `false` | Disables the entire component (no hover, no clicks, all crumbs greyed). |
+
+---
+
+## Visual spec
+
+| Element | Token / value |
+|---|---|
+| Current crumb background | `#ebebeb` |
+| Current crumb text | `#303030`, 14px / 550 |
+| Previous crumb text | `#303030`, 14px / 450 |
+| Previous crumb hover bg | `#ebebeb` |
+| Previous crumb pressed bg | `#d2d2d2` |
+| Focus ring | `0 0 0 2px #005bd3` |
+| Chevron separator | `#616161`, 16×16 |
+| "…" button | Same hover/focus rules as previous crumb |
+| Popover | Renders the design-system `<OptionList>` (`#ffffff` bg, `1px solid #e0e0e0`, `borderRadius: 8`) inside a wrapper with `boxShadow: 0 8px 24px rgba(0,0,0,0.12)` |
+| Popover item hover | Inherited from `<OptionList>` (`#f1f1f1`) |
+| Disabled text | `#b5b5b5` |
+| Pill radius | `8px` |
+| Pill padding | `4px 10px` |
+| Inter‑item gap | `4px` |
+
+---
+
+## Interaction states
+
+<Canvas of={BreadcrumbsStories.InteractionStates} />
+
+---
+
+## Loading state
+
+Pass `loading` to render 3 skeleton chips separated by skeleton chevrons. The overflow-popover logic is skipped entirely while loading; the consumer just toggles `loading` while fetching the trail.
+
+```jsx
+<Breadcrumbs items={trail} loading onSelect={handleSelect} />
+```
+
+Skeletons match the system pulse (`Skeleton` from `components/Skeleton`).
+
+<Canvas of={BreadcrumbsStories.Loading} />
+
+---
+
+## `onSelect` — preferred callback
+
+Going forward, all navigation-style components in the system fire `onSelect(id, item)`. Breadcrumbs honors that contract while still firing the legacy `onNavigate(index, item)` for back-compat — both fire on click.
+
+```jsx
+const trail = [
+  { id: 'home',      label: 'Home' },
+  { id: 'equipment', label: 'Equipment Management' },
+  { id: 'coldchain', label: 'ColdChain Equipment' },
+];
+
+<Breadcrumbs
+  items={trail}
+  onSelect={(id, item) => {
+    // id is item.id (or item.key, or String(index)) — stable across re-orderings
+    setTrail(trail.slice(0, trail.findIndex(t => t.id === id) + 1));
+  }}
+/>
+```
+
+If `item.id` is omitted, `onSelect` falls back to `item.key ?? String(index)` for the id argument, so existing data shapes keep working unchanged.
+
+<Canvas of={BreadcrumbsStories.OnSelectCallback} />
+
+---
+
+## Accessibility
+
+- Outer element is `<nav aria-label="Breadcrumb">` wrapping `<ol>`/`<li>`.
+- The current crumb carries `aria-current="page"`.
+- The "…" button has `aria-haspopup="menu"` and `aria-expanded` tracking the popover state. Focusing it opens the popover so keyboard users get parity with hover.
+- The popover uses the design-system `<OptionList>` component — hidden crumbs render as `role="option"` rows inside it, inheriting OptionList's keyboard, hover, and focus-ring behaviour.
+- **Escape** closes the popover. **Outside click** closes it. There is a small mouseleave delay (120 ms) so users can move from the trigger into the popover without it snapping shut.
+- Disabled state uses `cursor: not-allowed` and `#b5b5b5` text per system convention.

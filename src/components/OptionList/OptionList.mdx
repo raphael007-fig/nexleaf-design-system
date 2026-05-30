@@ -102,6 +102,31 @@ A rich list of selectable options. Supports single and multi-select, sections, b
 
 ---
 
+## Angular component
+
+```ts
+import { NxOptionListModule } from 'components/OptionList/option-list.module';
+
+// Single select
+<nx-option-list
+  [options]="[
+    { label: 'Morning', value: 'morning', description: '07:30 – 12:00' },
+    { label: 'Evening', value: 'evening', description: '18:00 – 22:00' },
+    { label: 'Night',   value: 'night',   disabled: true }
+  ]"
+  [selected]="selected"
+  (change)="selected = $event"
+/>
+
+// Multi-select
+<nx-option-list [allowMultiple]="true" [options]="options" [selected]="selectedArr" (change)="selectedArr = $event" />
+
+// With sections
+<nx-option-list [sections]="sections" [selected]="selected" (change)="selected = $event" />
+```
+
+---
+
 ## React component
 
 ```jsx

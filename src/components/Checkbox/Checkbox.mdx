@@ -95,11 +95,11 @@ Selection controls for binary (checkbox) and mutually exclusive (radio) choices.
 | Token | Value | Role |
 |-------|-------|------|
 | `--nx-bg-input` | `#fdfdfd` | Rest background |
-| `--nx-bg-input-hover` | `#fafafa` | Hover background |
+| `--nx-bg-input-focus` | `#fafafa` | Hover background |
 | `--nx-border-input` | `#8a8a8a` | Rest border |
 | `--nx-border-input-error` | `#8e1f0b` | Error border |
 | `--nx-bg-critical` | `#fee9e8` | Error unchecked background |
-| `--nx-bg-disabled` | `rgba(0,0,0,0.08)` | Disabled background |
+| `--nx-bg-control-disabled` | `rgba(0,0,0,0.08)` | Disabled background |
 | `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus ring |
 | `--nx-text-default` | `#303030` | Checked fill / label text |
 | `--nx-text-disabled` | `#b5b5b5` | Disabled label |
@@ -114,6 +114,35 @@ Selection controls for binary (checkbox) and mutually exclusive (radio) choices.
 - Error message must be connected via `aria-describedby`
 - Clicking the label must toggle the control
 - Disabled controls use `tabindex="-1"` and `aria-disabled="true"`
+
+---
+
+## Angular component
+
+```ts
+import { NxCheckboxModule } from 'components/Checkbox/checkbox.module';
+
+// Checkbox
+<nx-checkbox label="Enable morning session" [checked]="checked" (change)="checked = $event" />
+<nx-checkbox label="With error" [checked]="false" error="This field is required." />
+<nx-checkbox label="Disabled" [checked]="false" [disabled]="true" />
+
+// RadioButton
+<nx-radio-button label="Morning" [checked]="val === 'morning'" (change)="val = 'morning'" />
+<nx-radio-button label="Evening" [checked]="val === 'evening'" (change)="val = 'evening'" />
+
+// ChoiceList
+<nx-choice-list
+  title="Session type"
+  [selected]="val"
+  (change)="val = $event"
+  [choices]="[
+    { label: 'Morning', value: 'morning' },
+    { label: 'Evening', value: 'evening' },
+    { label: 'Both',    value: 'both', disabled: true }
+  ]"
+/>
+```
 
 ---
 

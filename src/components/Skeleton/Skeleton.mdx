@@ -1,0 +1,177 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SkeletonStories from './Skeleton.stories.jsx';
+
+<Meta title="Components/Skeleton/Docs" />
+
+# Skeleton
+
+A low-level loading placeholder that mimics the shape of content that's about to appear. The system uses one shared `skeletonPulse` keyframe so every skeleton — primitive or composed-into-a-component — pulses at the same cadence.
+
+<Canvas of={SkeletonStories.AllStates} />
+
+---
+
+## When to use
+
+- Initial page or section load when the layout is known but data isn't ready
+- Inline placeholders for avatars, thumbnails, table cells, or text lines
+- Any time you'd otherwise show a spinner but a shape-matching placeholder would reduce perceived latency
+
+**Avoid** when:
+
+- An action is in progress on a known control — use a spinner (`<Btn loading>`) instead
+- The wait will be sub-200ms — render nothing, the flash is worse than the blank
+- The shape of incoming content is unknown — a single subtle indicator is clearer than a guess
+
+---
+
+## Primitives
+
+The module exports one base component with two static helpers plus an accessibility wrapper.
+
+| Export | Purpose | Default size |
+|--------|---------|--------------|
+| `Skeleton` | Generic rectangular block | `100% × 16`, radius `4` |
+| `Skeleton.Line` | One line of text placeholder | `100% × 13`, radius `4` |
+| `Skeleton.Circle` | Avatar or icon placeholder | `20 × 20`, radius `50%` |
+| `SkeletonGroup` | Accessibility wrapper for clusters | — |
+
+---
+
+## Component parity
+
+Every component that has a loading state delegates to `Skeleton` internally so visuals stay consistent. Pass `loading` to the parent — do not stitch skeletons by hand.
+
+<Canvas of={SkeletonStories.ComponentParity} />
+
+| Component | Loading prop | Notes |
+|-----------|--------------|-------|
+| `Btn` | `loading` (spinner) / `skeleton` (placeholder) | Spinner = in-progress action. Skeleton = page is still loading. |
+| `Card` | `loading` | Renders default 2-row label/value skeleton; override with `loadingContent`. |
+| `CardLayoutType1` | `loading` | Shape-matching skeleton: 3 image squares, 2x2 field grid, divider, notes block. |
+| `MetricCard` | `loading` | Skeleton bars sized to the rest-state label and metric. |
+| `Page` | `loading` | Title, subtitle, optional back chip, secondary actions, primary action. |
+| `Tabs` | `loading`, `loadingCount` | Renders N pill placeholders at 28px height, radius 8px, varied widths. |
+| `IndexTable` | `loading` | Per-cell skeletons across the configured columns. |
+
+---
+
+## Props
+
+### `Skeleton`
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number` or `string` | `'100%'` | CSS width |
+| `height` | `number` or `string` | `16` | CSS height |
+| `radius` | `number` or `string` | `4` | Border radius |
+| `delay` | `number` | `0` | Animation delay in seconds — stagger groups |
+| `style` | `object` | — | Inline-style escape hatch |
+| `ariaLabel` | `string` or `null` | `'Loading'` | Accessible name. Pass `null` to suppress when inside a `SkeletonGroup`. |
+
+### `Skeleton.Line`
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `width` | `number` or `string` | `'100%'` | CSS width |
+| `height` | `number` or `string` | `13` | CSS height (matches label text) |
+| `delay` | `number` | `0` | Animation delay in seconds |
+| `style` | `object` | — | Inline-style escape hatch |
+
+### `Skeleton.Circle`
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `size` | `number` | `20` | Width and height in px |
+| `delay` | `number` | `0` | Animation delay in seconds |
+| `style` | `object` | — | Inline-style escape hatch |
+
+### `SkeletonGroup`
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | `string` | `'Loading'` | Single announcement read to assistive tech |
+| `children` | `ReactNode` | — | Child skeletons (their individual `ariaLabel` should be `null`) |
+| `style` | `object` | — | Inline-style escape hatch on the wrapper |
+
+---
+
+## Anatomy
+
+1. **Block** — `#e8e8e8` fill, configurable radius
+2. **Animation** — shared `@keyframes skeletonPulse` (opacity `1 → 0.45 → 1` over `1.4s`, `ease-in-out`, infinite)
+3. **Stagger** — `delay` shifts the start of each block's cycle so groups read as a wave instead of a flash
+
+---
+
+## Accessibility
+
+- A standalone `Skeleton` announces itself via `role="status"`, `aria-live="polite"`, and `aria-busy="true"`, with `aria-label="Loading"` by default.
+- When grouping many skeletons, wrap them in `SkeletonGroup` and set each child's `ariaLabel={null}`. The group emits a single visually-hidden label so screen reader users hear *"Loading profile"* once instead of *"Loading. Loading. Loading."* a dozen times.
+- The pulse is opacity-only — it never moves layout, never flashes high-contrast, and respects user motion preferences when the browser applies them at the keyframe level.
+
+---
+
+## Design tokens used
+
+| Property | Value | Token |
+|----------|-------|-------|
+| Block fill | `#e8e8e8` | — |
+| Default radius | `4px` | — |
+| Pulse duration | `1.4s` | — |
+| Pulse easing | `ease-in-out` | — |
+
+---
+
+## React usage
+
+```jsx
+import { Skeleton, SkeletonGroup } from 'components/Skeleton/Skeleton.jsx';
+
+// Generic block
+<Skeleton width={200} height={40} radius={8} />
+
+// Paragraph
+<Skeleton.Line width="100%" />
+<Skeleton.Line width="92%" delay={0.06} />
+<Skeleton.Line width="78%" delay={0.12} />
+<Skeleton.Line width="45%" delay={0.18} />
+
+// Avatar
+<Skeleton.Circle size={32} />
+
+// Grouped (one screen-reader announcement)
+<SkeletonGroup label="Loading profile">
+  <Skeleton.Circle size={48} />
+  <Skeleton.Line width="60%" />
+  <Skeleton.Line width="40%" delay={0.06} />
+</SkeletonGroup>
+```
+
+---
+
+## Composing your own loading state
+
+When extending a component, prefer composing primitives over re-implementing the pulse.
+
+```jsx
+import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
+
+function MyWidget({ loading, ...rest }) {
+  if (loading) {
+    return (
+      <SkeletonGroup label="Loading widget">
+        <Skeleton width={120} height={20} radius={6} />
+        <Skeleton.Line width="80%" delay={0.06} />
+      </SkeletonGroup>
+    );
+  }
+  return <ActualWidget {...rest} />;
+}
+```
+
+**Rules of thumb:**
+
+- Match the shape and dimensions of the rest state — same widths, heights, and gaps.
+- Stagger `delay` in `0.06s` steps for left-to-right reading order.
+- Always wrap multi-block placeholders in `SkeletonGroup` and set child `ariaLabel={null}`.

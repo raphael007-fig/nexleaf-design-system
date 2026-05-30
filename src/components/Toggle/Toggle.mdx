@@ -1,0 +1,213 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ToggleStories from './Toggle.stories.jsx';
+
+<Meta title="Components/Toggle/Docs" />
+
+# Toggle
+
+A pill-shaped switch that represents a boolean on/off state. Use when the action takes effect immediately — no form submission required.
+
+<Canvas of={ToggleStories.AllStates} />
+
+---
+
+## When to use
+
+- **Toggle** — immediate on/off setting (notifications, dark mode, auto-sync)
+- **Checkbox** — opt-in agreement within a form that requires a Save/Submit action
+- **RadioGroup** — mutually exclusive choice between more than two options
+
+Do not use Toggle inside a form where the user must click Save before the change takes effect — use Checkbox instead.
+
+---
+
+## Interaction states
+
+<Canvas of={ToggleStories.InteractionStates} />
+
+---
+
+## States
+
+| State | Track (off) | Track (on) | Notes |
+|-------|-------------|------------|-------|
+| Rest | `#ebebeb` | `#303030` | — |
+| Hover | `#e0e0e0` | `#4a4a4a` | Slightly darker |
+| Focus | `#ebebeb` / `#303030` | + `0 0 0 2px #005bd3` ring | — |
+| Disabled | `rgba(0,0,0,0.08)` | `rgba(0,0,0,0.08)` | Thumb `#c9c9c9`, `cursor: not-allowed` |
+| Error (off) | `#fee9e8` + `0.66px solid #8e1f0b` | — | Shows error message below |
+| Error (on) | — | `#d92d20` | Shows error message below |
+
+**Thumb** — always `#ffffff`, `14×14px`, `box-shadow: 0 1px 3px rgba(0,0,0,0.20)`, slides with `transition: left 0.18s`.
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Toggle/Toggle.css';
+```
+
+```html
+<!-- Off (unchecked) -->
+<div class="nx-toggle-wrap">
+  <label class="nx-toggle">
+    <input class="nx-toggle__input" type="checkbox" role="switch" />
+    <span class="nx-toggle__track">
+      <span class="nx-toggle__thumb"></span>
+    </span>
+    <span class="nx-toggle__label">Apply to all</span>
+  </label>
+</div>
+
+<!-- On (checked) -->
+<div class="nx-toggle-wrap">
+  <label class="nx-toggle">
+    <input class="nx-toggle__input" type="checkbox" role="switch" checked />
+    <span class="nx-toggle__track nx-toggle__track--on">
+      <span class="nx-toggle__thumb nx-toggle__thumb--on"></span>
+    </span>
+    <span class="nx-toggle__label">Apply to all</span>
+  </label>
+</div>
+
+<!-- Disabled -->
+<div class="nx-toggle-wrap">
+  <label class="nx-toggle nx-toggle--disabled">
+    <input class="nx-toggle__input" type="checkbox" role="switch" disabled />
+    <span class="nx-toggle__track nx-toggle__track--disabled">
+      <span class="nx-toggle__thumb"></span>
+    </span>
+    <span class="nx-toggle__label nx-toggle__label--disabled">Apply to all</span>
+  </label>
+</div>
+
+<!-- Error -->
+<div class="nx-toggle-wrap">
+  <label class="nx-toggle">
+    <input class="nx-toggle__input" type="checkbox" role="switch" />
+    <span class="nx-toggle__track nx-toggle__track--error">
+      <span class="nx-toggle__thumb"></span>
+    </span>
+    <span class="nx-toggle__label">Apply to all</span>
+  </label>
+  <div class="nx-field__error">
+    <!-- IcoAlertCircle SVG -->
+    Error message
+  </div>
+</div>
+
+<!-- With help text -->
+<div class="nx-toggle-wrap">
+  <label class="nx-toggle">
+    <input class="nx-toggle__input" type="checkbox" role="switch" />
+    <span class="nx-toggle__track">
+      <span class="nx-toggle__thumb"></span>
+    </span>
+    <span class="nx-toggle__label">Enable notifications</span>
+  </label>
+  <span class="nx-field__help">Receive alerts when readings are out of range.</span>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--nx-bg-surface` | `#ebebeb` | Track off — rest |
+| `--nx-border-default` | `#e0e0e0` | Track off — hover |
+| `--nx-text-default` | `#303030` | Track on — rest |
+| `--nx-bg-control-disabled` | `rgba(0,0,0,0.08)` | Track disabled |
+| `--nx-bg-error` | `#fee9e8` | Track error off |
+| `--nx-border-input-error` | `0.66px solid #8e1f0b` | Track error off border |
+| `--nx-color-critical` | `#d92d20` | Track error on |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus shadow ring |
+| `--nx-text-disabled` | `#b5b5b5` | Disabled label |
+| `--nx-text-subdued` | `#616161` | Help text |
+| `--nx-text-critical` | `#8e1f0b` | Error message text + icon |
+| `--nx-font-size-label` | `13px` | Label size |
+
+---
+
+## Accessibility
+
+- Uses `role="switch"` and `aria-checked` to communicate state to screen readers
+- Keyboard accessible — `Space` and `Enter` toggle the switch
+- Disabled toggles have `tabIndex={-1}` and `cursor: not-allowed`
+- Label click area covers the entire label text — not just the track
+- Error message is visually connected below the toggle — pair with `aria-describedby` for screen readers
+
+---
+
+## Angular component
+
+```ts
+import { NxToggleModule } from 'components/Toggle/toggle.module';
+
+// Basic
+<nx-toggle label="Apply to all" [checked]="v" (change)="v = $event" />
+
+// With help text
+<nx-toggle
+  label="Enable notifications"
+  [checked]="v"
+  (change)="v = $event"
+  helpText="Receive alerts when readings are out of range."
+/>
+
+// Error state
+<nx-toggle
+  label="Auto-sync"
+  [checked]="v"
+  (change)="v = $event"
+  error="Auto-sync must be enabled."
+/>
+
+// Disabled
+<nx-toggle label="Apply to all" [checked]="false" [disabled]="true" />
+
+// No label
+<nx-toggle [checked]="v" (change)="v = $event" />
+```
+
+---
+
+## React component
+
+```jsx
+import { Toggle } from 'components/Toggle/Toggle.jsx';
+
+// Basic
+<Toggle label="Apply to all" checked={v} onChange={setV} />
+
+// With help text
+<Toggle
+  label="Enable notifications"
+  checked={v}
+  onChange={setV}
+  helpText="Receive alerts when readings are out of range."
+/>
+
+// Error state
+<Toggle
+  label="Auto-sync"
+  checked={v}
+  onChange={setV}
+  error="Auto-sync must be enabled."
+/>
+
+// Disabled
+<Toggle label="Apply to all" checked={false} disabled />
+
+// No label (icon-only toggle — add aria-label to parent)
+<Toggle checked={v} onChange={setV} />
+```
+
+---
+
+<Canvas of={ToggleStories.Default} />
+<Canvas of={ToggleStories.WithHelp} />
+<Canvas of={ToggleStories.WithError} />

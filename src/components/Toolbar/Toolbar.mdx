@@ -1,0 +1,396 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ToolbarStories from './Toolbar.stories.jsx';
+
+<Meta title="Components/Navigation/Toolbar/Docs" />
+
+# Toolbar
+
+The application-level top bar. Anchors the logo, breadcrumbs, a global search / AI chat input, region selector, action icon buttons, and the user avatar. Always present at the top of an authenticated screen.
+
+<Canvas of={ToolbarStories.FullToolbar} />
+
+---
+
+## Anatomy
+
+The Toolbar is a stateless **three-column grid** (`1fr · auto · 1fr`) so the center region stays optically centered no matter how wide the start/end clusters grow. An optional fixed-width reserved column can be prepended for app shells that dock a Side Navigation beside the toolbar.
+
+| Region | Typical contents |
+|--------|------------------|
+| Reserved (optional) | Empty slot under the docked Side Navigation. Enable with `sideNavWidth`. |
+| `start` | `<Breadcrumbs />` — or brand logo + `<Breadcrumbs />` if no side nav |
+| `center` | `<ToolbarAiChatButton />` — opens `<AiChatPanel />` on the right |
+| `end` | `<ToolbarRegionSelector />`, `<ToolbarIconButton />`s, `<ToolbarAvatar />` |
+
+The Toolbar itself is a pure layout primitive — every node inside is composed by the consumer. Subcomponents are exported so each slot's contents stay consistent across screens.
+
+### App shells with Side Navigation
+
+Pair the toolbar with the new `<SideNavigation />` rail by passing `sideNavWidth` equal to the rail's expanded width (default 240 px). The toolbar reserves an empty cell at its left edge so the docked rail visually sits *under* the toolbar — both surfaces share the `#f1f1f1` background, so the seam is invisible.
+
+```jsx
+<Toolbar
+  sideNavWidth={240}
+  start={<Breadcrumbs items={trail} />}
+  center={<ToolbarAiChatButton ... />}
+  end={<>...</>}
+/>
+```
+
+The brand logo moves into the Side Navigation in this layout — don't render it in the toolbar's `start` slot too.
+
+<Canvas of={ToolbarStories.SideNavShell} />
+
+---
+
+## AI Chat Bot button → right-side panel
+
+`<ToolbarAiChatButton />` is a single pill-shaped button (not a text input). Clicking it should open `<AiChatPanel />`, a right-anchored drawer that slides in from the edge of the viewport. The consumer owns the `open` state and the chat content; the design system only ships the chrome.
+
+```jsx
+const [open, setOpen] = useState(false);
+
+<Toolbar
+  center={
+    <ToolbarAiChatButton
+      onClick={() => setOpen(true)}
+      active={open}
+      trailingIcon={<IcoTranslate />}
+      onTrailingClick={openTranslate}
+    />
+  }
+/>
+<AiChatPanel open={open} onClose={() => setOpen(false)}>
+  {/* your chat conversation UI */}
+</AiChatPanel>
+```
+
+The button exposes `aria-haspopup="dialog"` and `aria-expanded={active}`. Pass `active={open}` so the button visually persists its "open" state (focus ring + halo) while the panel is shown.
+
+---
+
+## When to use
+
+- Persistent navigation chrome at the top of every authenticated page
+- A single place for global, cross-page controls (region, notifications, profile)
+- Pair with `<Breadcrumbs />` so the user always sees their location in the trail
+
+Do **not** use the Toolbar for page-specific actions (Save, Delete, Filter). Those belong inside the page body, not the global chrome.
+
+---
+
+## Mobile responsive
+
+Below ~480px the toolbar collapses to three compact slots: brand mark, **Ask AI** pill, hamburger menu. Pass `mobile` on `<Toolbar>` to tighten the padding and gap; swap in the mobile-tuned subcomponents:
+
+```jsx
+<Toolbar
+  mobile
+  start={<NexleafBrandLogo size={32} />}
+  center={
+    <ToolbarAskAiButton
+      label="Ask AI"
+      onClick={() => setChatOpen(true)}
+      active={chatOpen}
+    />
+  }
+  end={
+    <ToolbarMenuButton
+      onClick={() => setMenuOpen(true)}
+      expanded={menuOpen}
+    />
+  }
+/>
+```
+
+| Desktop subcomponent | Mobile replacement |
+|----------------------|--------------------|
+| `NexleafLogo` (AI mark) | `NexleafBrandLogo` (leaf + phone) |
+| `Breadcrumbs` | — hidden (recover trail via the page header below the toolbar) |
+| `ToolbarAiChatButton` ("AI Chat Bot (beta)" + translate) | `ToolbarAskAiButton` ("Ask AI" + chevron) |
+| `ToolbarRegionSelector` + icon cluster + avatar | `ToolbarMenuButton` (hamburger → drawer) |
+
+Both AI buttons open the same `<AiChatPanel />` — the drawer behavior is identical. `ToolbarMenuButton` exposes `aria-haspopup="menu"` + `aria-expanded`; wire it to the consumer's own navigation drawer.
+
+<Canvas of={ToolbarStories.Mobile} />
+
+---
+
+## Interaction states
+
+<Canvas of={ToolbarStories.InteractionStates} />
+
+---
+
+## Loading
+
+Pass `loading` on `<Toolbar>` to render the three-region layout with skeleton blocks in place of the real interactive children. Use this on first paint of an authenticated shell, before user/region/notifications data has arrived. The skeleton preserves the toolbar's overall width and height so the page below doesn't reflow when the real toolbar swaps in.
+
+```jsx
+<Toolbar loading />
+<Toolbar loading mobile />
+```
+
+This is a top-level convenience only — individual subcomponents (`ToolbarRegionSelector`, `ToolbarAvatar`, etc.) don't ship their own loading states. If you need a partial skeleton (e.g. just the avatar pending), compose your own `<Skeleton>` blocks in the relevant slot.
+
+<Canvas of={ToolbarStories.Loading} />
+
+<Canvas of={ToolbarStories.LoadingMobile} />
+
+---
+
+## Sticky variant
+
+Pass `sticky` to pin the bar to the top while content scrolls beneath it. Add `elevated` for a subtle shadow that distinguishes the bar from the scrolling content.
+
+<Canvas of={ToolbarStories.StickyOnScroll} />
+
+---
+
+## Notification badge
+
+`ToolbarIconButton` accepts a numeric or string `badge` prop. Use sparingly — only when the count is meaningful and actionable.
+
+<Canvas of={ToolbarStories.WithNotificationBadge} />
+
+---
+
+## CSS selector structure
+
+```css
+@import 'tokens/tokens.css';
+@import 'components/Toolbar/Toolbar.css';
+```
+
+```html
+<header role="banner" class="nx-toolbar">
+  <!-- Start: logo + breadcrumbs -->
+  <div class="nx-toolbar__start">
+    <span class="nx-toolbar__logo"><!-- svg --></span>
+    <nav aria-label="Breadcrumb" class="nx-breadcrumbs"><!-- … --></nav>
+  </div>
+
+  <!-- Center: AI Chat Bot pill button -->
+  <div class="nx-toolbar__center">
+    <button
+      class="nx-toolbar-aichat"
+      aria-haspopup="dialog"
+      aria-expanded="false"
+      aria-label="AI Chat Bot (beta)">
+      <span class="nx-toolbar-aichat__logo"><!-- svg --></span>
+      <span class="nx-toolbar-aichat__label">AI Chat Bot</span>
+      <span class="nx-toolbar-aichat__beta">(beta)</span>
+      <button class="nx-toolbar-aichat__trailing" aria-label="Translate">
+        <!-- svg -->
+      </button>
+    </button>
+  </div>
+
+  <!-- End: region + actions + avatar -->
+  <div class="nx-toolbar__end">
+    <button class="nx-toolbar-region" aria-haspopup="listbox">
+      <span class="nx-toolbar-region__icon"><!-- pin svg --></span>
+      <span class="nx-toolbar-region__label">Kenya</span>
+      <span class="nx-toolbar-region__chevron"><!-- svg --></span>
+    </button>
+
+    <button class="nx-toolbar-iconbtn" aria-label="Apps"><!-- svg --></button>
+
+    <button class="nx-toolbar-iconbtn" aria-label="Notifications">
+      <!-- svg -->
+      <span class="nx-toolbar-iconbtn__badge">3</span>
+    </button>
+
+    <button class="nx-toolbar-avatar" aria-label="Profile">
+      <img src="..." alt="Profile" />
+    </button>
+  </div>
+</header>
+```
+
+Right-side AI chat panel markup (rendered into a portal at the document root):
+
+```html
+<div class="nx-aichat-panel" role="presentation">
+  <aside class="nx-aichat-panel__sheet" role="dialog" aria-modal="true" aria-label="AI Chat Bot">
+    <header class="nx-aichat-panel__header">
+      <span class="nx-aichat-panel__logo"><!-- svg --></span>
+      <span class="nx-aichat-panel__title">AI Chat Bot <span class="nx-aichat-panel__beta">(beta)</span></span>
+      <button class="nx-aichat-panel__close" aria-label="Close AI chat"><!-- svg --></button>
+    </header>
+    <div class="nx-aichat-panel__body"><!-- consumer chat UI --></div>
+  </aside>
+</div>
+```
+
+Modifiers:
+
+- `.nx-toolbar--elevated` — adds shadow
+- `.nx-toolbar--sticky` — `position: sticky; top: 0`
+- `.nx-toolbar-iconbtn[disabled]` / `.nx-toolbar-region[disabled]` — disabled states
+- `.nx-toolbar-aichat[aria-expanded="true"]` — chat panel is open (persistent focus ring)
+- `.nx-aichat-panel__sheet` slides in via `@keyframes slideInRight`
+
+---
+
+## Design tokens used
+
+<table style={{ borderCollapse: 'collapse', width: '100%', fontFamily: 'Inter, sans-serif', fontSize: 13 }}>
+  <thead>
+    <tr style={{ background: '#f7f7f7' }}>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Token</th>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Value</th>
+      <th style={{ textAlign: 'left', padding: '8px 12px', borderBottom: '1px solid #ebebeb' }}>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-bg-page</td><td style={{ padding: '8px 12px' }}>#f1f1f1</td><td style={{ padding: '8px 12px' }}>Toolbar background (matches the docked Side Navigation rail and the page surface)</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-bg-surface</td><td style={{ padding: '8px 12px' }}>#ffffff</td><td style={{ padding: '8px 12px' }}>Opt-in card-style toolbar background — pass <code>background="#ffffff"</code></td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-border-light</td><td style={{ padding: '8px 12px' }}>#ebebeb</td><td style={{ padding: '8px 12px' }}>Bottom hairline divider</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-border-default</td><td style={{ padding: '8px 12px' }}>#e0e0e0</td><td style={{ padding: '8px 12px' }}>Icon button / region / search outlines</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-color-primary</td><td style={{ padding: '8px 12px' }}>#005bd3</td><td style={{ padding: '8px 12px' }}>Focus ring on every interactive child</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-text-default</td><td style={{ padding: '8px 12px' }}>#303030</td><td style={{ padding: '8px 12px' }}>Label and icon stroke color</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-text-subdued</td><td style={{ padding: '8px 12px' }}>#616161</td><td style={{ padding: '8px 12px' }}>Region pin icon, search chevron</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-text-disabled</td><td style={{ padding: '8px 12px' }}>#b5b5b5</td><td style={{ padding: '8px 12px' }}>Disabled state text/icon</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-color-critical</td><td style={{ padding: '8px 12px' }}>#e51c00</td><td style={{ padding: '8px 12px' }}>Notification badge background</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-radius-sm</td><td style={{ padding: '8px 12px' }}>8px</td><td style={{ padding: '8px 12px' }}>Icon button / region pill corners</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-radius-pill</td><td style={{ padding: '8px 12px' }}>100px</td><td style={{ padding: '8px 12px' }}>Search field shape, badge shape</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-space-3</td><td style={{ padding: '8px 12px' }}>12px</td><td style={{ padding: '8px 12px' }}>Vertical padding of the bar</td></tr>
+    <tr><td style={{ padding: '8px 12px' }}>--nx-space-4</td><td style={{ padding: '8px 12px' }}>16px</td><td style={{ padding: '8px 12px' }}>Horizontal padding + gap between regions</td></tr>
+  </tbody>
+</table>
+
+---
+
+## Accessibility
+
+- Root element is `<header role="banner">` — there should be **one banner per page**
+- `<ToolbarAiChatButton>` is a real `<button>` with `aria-haspopup="dialog"` and `aria-expanded={open}` reflecting the panel state. The button label is announced as **"AI Chat Bot (beta)"**
+- `<AiChatPanel>` is `role="dialog"` with `aria-modal="true"`; Escape and backdrop click close it. Move focus into the panel on open and restore it to the trigger on close
+- `<ToolbarRegionSelector>` has two modes:
+  - **Read-only (default).** Renders just the flag + country name with no chevron, no menu, no pointer cursor. This is the right rendering for most users — they can see which region the app is bound to, but not change it. Pass just `countryCode="KE"` + `value="Kenya"`.
+  - **Pickable (admin / multi-region operators).** Pass `pickable`, a `countries` array, and an `onCountryChange` handler. The pill grows the disclosure chevron, `aria-haspopup="listbox"` is exposed, and clicking opens a portal `OptionList` of countries (each row renders the same flag glyph as the pill). The `countries` array can come straight from `foundation/emojis/emojiCatalog` so both surfaces share one source of truth.
+- The flag glyph is `aria-hidden`; the country name in `value` carries the meaning for assistive tech. Rendering uses the Apple Color Emoji / Segoe UI Emoji / Noto Color Emoji font stack so the platform-native glyph shows up rather than the regional-indicator letter pair.
+- Every `<ToolbarIconButton>` **requires** an `ariaLabel` — there is no visible text
+- The notification `badge` is decorative; the count must also be reflected in the `ariaLabel` (e.g. `ariaLabel="Notifications, 3 unread"`)
+- Focus ring: 2px solid `#005bd3` on every interactive child (matches the design system focus token)
+- Keyboard: Tab traverses **start → center → end** in DOM order. Avatar/buttons activate on Enter/Space; the search input accepts text
+
+---
+
+## Angular component
+
+```ts
+import { NxToolbarModule } from 'components/Toolbar/toolbar.module';
+
+<nx-toolbar [sticky]="true" [elevated]="true">
+  <ng-container nxToolbarStart>
+    <nx-logo></nx-logo>
+    <nx-breadcrumbs
+      [items]="trail"
+      (navigate)="onNavigate($event)">
+    </nx-breadcrumbs>
+  </ng-container>
+
+  <ng-container nxToolbarCenter>
+    <nx-toolbar-aichat
+      label="AI Chat Bot"
+      [beta]="true"
+      [active]="chatOpen"
+      [trailingIcon]="'translate'"
+      (trailingClick)="onTranslate()"
+      (click)="chatOpen = true">
+    </nx-toolbar-aichat>
+  </ng-container>
+
+  <ng-container nxToolbarEnd>
+    <nx-toolbar-region
+      [value]="region"
+      (click)="openRegionPicker()">
+    </nx-toolbar-region>
+    <nx-toolbar-iconbtn icon="grid"  ariaLabel="Apps"          (click)="openApps()"></nx-toolbar-iconbtn>
+    <nx-toolbar-iconbtn icon="bell"  ariaLabel="Notifications" [badge]="3" (click)="openNotifs()"></nx-toolbar-iconbtn>
+    <nx-toolbar-avatar [src]="user.avatar" [alt]="user.name" (click)="openProfile()"></nx-toolbar-avatar>
+  </ng-container>
+</nx-toolbar>
+
+<!-- Right-side chat drawer -->
+<nx-aichat-panel
+  [open]="chatOpen"
+  title="AI Chat Bot"
+  [beta]="true"
+  (close)="chatOpen = false">
+  <!-- consumer-owned chat conversation UI -->
+</nx-aichat-panel>
+```
+
+```ts
+// TypeScript model
+export interface NxToolbarRegion {
+  code: string;   // e.g. 'KE'
+  label: string;  // e.g. 'Kenya'
+}
+```
+
+---
+
+## React component
+
+```jsx
+import {
+  Toolbar,
+  ToolbarAiChatButton,
+  ToolbarRegionSelector,
+  ToolbarIconButton,
+  ToolbarAvatar,
+  AiChatPanel,
+  NexleafLogo,
+} from 'components/Toolbar/Toolbar.jsx';
+import { Breadcrumbs } from 'components/Breadcrumbs/Breadcrumbs.jsx';
+
+const [trail, setTrail] = useState([
+  { label: 'Home' },
+  { label: 'Equipment Management' },
+  { label: 'ColdChain Equipment' },
+]);
+const [chatOpen, setChatOpen] = useState(false);
+
+<>
+  <Toolbar
+    sticky
+    elevated
+    start={
+      <>
+        <NexleafLogo size={32} />
+        <Breadcrumbs items={trail} onNavigate={(i) => setTrail(trail.slice(0, i + 1))} />
+      </>
+    }
+    center={
+      <ToolbarAiChatButton
+        label="AI Chat Bot"
+        beta
+        active={chatOpen}
+        trailingIcon={<IcoTranslate />}
+        onTrailingClick={() => openTranslate()}
+        onClick={() => setChatOpen(true)}
+      />
+    }
+    end={
+      <>
+        <ToolbarRegionSelector countryCode="KE" value="Kenya" />
+        <ToolbarIconButton icon={<IcoGrid />} ariaLabel="Apps" onClick={() => openApps()} />
+        <ToolbarIconButton icon={<IcoBell />} ariaLabel="Notifications, 3 unread" badge={3} onClick={() => openNotifs()} />
+        <ToolbarAvatar src={user.avatar} alt={user.name} onClick={() => openProfile()} />
+      </>
+    }
+  />
+
+  <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
+    {/* Your chat conversation UI */}
+  </AiChatPanel>
+</>
+```
+
+---
+
+<Canvas of={ToolbarStories.MinimalToolbar} />

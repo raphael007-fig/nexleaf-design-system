@@ -1,0 +1,208 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SideNavStories from './SideNavigation.stories.jsx';
+
+<Meta title="Components/Navigation/Side Navigation/Docs" />
+
+# Side Navigation
+
+Persistent left-rail navigation for app shells. Renders a vertical list of icon-labeled items with optional nested sub-items, and switches between an expanded (label + icon) and collapsed (icon-only) layout.
+
+<Canvas of={SideNavStories.EquipmentManagementExpanded} />
+
+---
+
+## When to use
+
+Reach for `SideNavigation` whenever a screen-level shell needs a fixed primary nav on the left — Equipment Management, Health Status, Performance dashboards, and any other top-level Nexleaf app surface. It is **not** a substitute for:
+
+- **`Breadcrumbs`** — that handles in-page hierarchy (you-are-here trail).
+- **`Tabs`** — that's for inline section switching within a single page.
+- **`Toolbar`** — that's a horizontal action strip; this is the vertical primary rail.
+
+---
+
+## Variants
+
+We'll add variants as new product surfaces come online. The first one is **Equipment Management**:
+
+| Variant | Story |
+|---|---|
+| Equipment Management | <Canvas of={SideNavStories.EquipmentManagementExpanded} /> |
+| Equipment Management — Collapsed | <Canvas of={SideNavStories.EquipmentManagementCollapsed} /> |
+
+Each variant is driven by a `items` array — the component itself is variant-agnostic. To add a new variant, build the array of items with `PolarisIconImg` icons and pass it in.
+
+---
+
+## States
+
+### Expanded vs collapsed
+The component renders a 240 px wide rail by default and 60 px in `collapsed` mode. Width animates over 180 ms ease. In collapsed mode, labels and sub-items are hidden; icons are centered and the outer right corners go square (no 24 px radius).
+
+<Canvas of={SideNavStories.SideBySide} />
+
+### Interactive
+Both selection (`activeItemId`) and collapse (`collapsed`) are fully controllable. Pass a `footer` slot if you want a collapse toggle near the bottom.
+
+**Auto-expand on collapsed group click.** When `onCollapsedChange` is wired up and the user clicks an icon that has sub-items in collapsed mode, the sidebar:
+
+1. Calls `onCollapsedChange(false)` to ask its parent to expand the rail.
+2. Ensures that group is open so the sub-items are visible immediately — no extra click needed to see them.
+
+This is the case to try in the story below: collapse the rail with the footer button, then click the **Inventory** icon. The rail expands and Inventory opens to show ColdChain, RTMDs, etc.
+
+<Canvas of={SideNavStories.Interactive} />
+
+---
+
+## Anatomy
+
+```
+┌──────────────────────────────┐  ← bg #f1f1f1, right corners ⌐ ⌐ radius 24
+│  [Logo slot, 44 px tall]      │
+│                              │
+│  [icon] Home                 │  ← top-level item (13/550, #303030)
+│  [icon] Health Status        │
+│  [icon] Inventory            │  ← parent with children — stub line under it
+│            ↳ ColdChain Eq.   │  ← active sub-item (bg #fafafa, 13/650, L-curve)
+│              RTMDs           │  ← rest sub-item (13/450, #616161)
+│              Solar Equipment │
+│              ...             │
+│  [icon] Spare Part           │
+│  [icon] Performance          │
+│  [icon] Electrification      │
+│                              │
+│  ── footer slot (optional) ──│
+└──────────────────────────────┘
+       ↑ inset right-edge shadow `rgba(0,0,0,0.13)`
+```
+
+- **Item row** — 8 px left / 4 px right / 4 px top-bottom padding, 8 px gap, 8 px radius. Selected: `#fafafa` bg, weight 650, letter-spacing −0.065.
+- **Sub-item row** — 36 px left indent (no icon), 13/450, color `#616161`. Active sub-item: `#fafafa` bg, weight 650, `#303030`, and an L-curve indicator at left:9 px that connects visually back to the parent stub.
+- **Expanded parent stub** — 1.5 × 4 px vertical bar at the bottom-left of the parent row, color `#b5b5b5`. Lines up with the L-curve.
+
+---
+
+## Props
+
+| Prop | Type | Notes |
+|---|---|---|
+| `items` | `NavItem[]` | Top-level items. `{ id, label, icon?, onClick?, disabled?, children? }`. `children` is `[{ id, label, onClick?, disabled? }]`. |
+| `activeItemId` | `string` | Currently-selected id (top-level OR sub). If it matches a child, its parent auto-expands. |
+| `onSelect` | `(id) => void` | **Preferred.** Fired for any item or sub-item click. |
+| `onItemSelect` | `(id) => void` | Legacy alias of `onSelect`. Both fire when both are provided. New consumers should prefer `onSelect`. |
+| `logo` | `ReactNode` | Slot rendered at the top of the panel inside a 44 px-tall flex centre. |
+| `footer` | `ReactNode` | Optional bottom slot (collapse toggle, user chip, etc.). |
+| `collapsed` | `boolean` | Switches to icon-only layout. Default `false`. |
+| `onCollapsedChange` | `(nextCollapsed) => void` | Called when the component itself wants to flip collapsed state. Fires when a user clicks a **collapsed parent that has sub-items** — the sidebar asks to expand so the children become visible. Pair with the same setter that drives `collapsed`. |
+| `defaultExpandedGroups` | `string[]` | Uncontrolled initial expanded parent ids. |
+| `expandedGroups` | `string[]` | Controlled expanded parent ids. When set, internal state is ignored. |
+| `onToggleGroup` | `(id, nextExpanded) => void` | Fired when a parent row is clicked. |
+| `width` | `number` | Default 240. |
+| `collapsedWidth` | `number` | Default 60. |
+| `ariaLabel` | `string` | Default `'Main navigation'`. |
+| `loading` | `boolean` | When `true`, renders skeleton rows in place of items. Default `false`. |
+| `skeletonRows` | `number` | Number of skeleton rows to render while `loading`. Default `6`. |
+
+### Disabled sub-items
+
+Sub-items support a `disabled` flag: `{ id, label, disabled: true }`. A disabled row dims to `text-disabled` (`#b5b5b5`), shows a `not-allowed` cursor, ignores clicks, and is skipped by keyboard arrow navigation. The button still exposes `aria-disabled="true"` and uses `tabIndex={-1}` so Tab passes over it.
+
+<Canvas of={SideNavStories.DisabledSubItem} />
+
+---
+
+## Keyboard navigation
+
+The rail implements the WAI-ARIA tree pattern. Tab into the first row, then:
+
+| Key | Action |
+|---|---|
+| `↓` / `↑` | Move focus to the next / previous visible row. Disabled rows are skipped. |
+| `Home` / `End` | Jump focus to the first / last visible row. |
+| `→` | On a collapsed parent-with-children: **expand** the group (focus stays put). |
+| `←` | On an expanded parent: **collapse** the group. On a sub-item: jump focus to the parent. |
+| `Enter` / `Space` | Activate the focused row (same as click). |
+
+Every interactive row (`NavItem` and `NavSubItem`) renders a 2 px `#005bd3` focus ring (`box-shadow`) when keyboard-focused so the WCAG 2.4.7 focus-visible requirement is met.
+
+<Canvas of={SideNavStories.KeyboardNavigation} />
+
+---
+
+## Loading & empty states
+
+Pass `loading` to render a placeholder rail while data is in flight. The logo slot, all rows, and any focus targets are replaced by `<Skeleton>` blocks; the outer panel keeps its width and right-edge shadow so the page doesn't reflow when the real items arrive.
+
+<Canvas of={SideNavStories.Loading} />
+
+**Empty `items` renders the same skeleton view.** In production, nav data almost always arrives from a fetch — "no items yet" reads better as "still initialising" than as a dead-end empty state. The `<ul>` carries `role="status"` + `aria-busy="true"` so assistive tech announces the in-progress state, and `skeletonRows` controls how many placeholder rows render in either mode (default 6).
+
+<Canvas of={SideNavStories.Empty} />
+
+**Auto-expansion rule:** if `activeItemId` matches a sub-item, its parent group is merged into the effective expanded set on every render. This is deliberate — you can't accidentally hide the active row by collapsing its parent.
+
+---
+
+## Icons
+
+All icons come from the project's `PolarisIcon` catalog and render via `<PolarisIconImg name="…" size={20} color="#303030" />`. **Always use the `…Filled` variant** — the side rail reads as one visual family only when every glyph is solid; mixing outline + filled icons creates an obvious inconsistency at small sizes.
+
+The Equipment Management variant uses:
+
+| Item | Icon name | Notes |
+|---|---|---|
+| Home | `HomeFilledIcon` | |
+| Health Status | `HeartFilledIcon` | added to the catalog for this variant |
+| Inventory | `InventoryFilledIcon` | |
+| Spare Part | `CartFilledIcon` | |
+| Performance | `GaugeFilledIcon` | added to the catalog for this variant |
+| Electrification | `FlashIcon` | added to the catalog for this variant (solid by design) |
+
+When adding new variants, prefer existing **filled** icons in the catalog; only register new ones (as inline-SVG entries in `PolarisIcon.jsx`) when no acceptable filled match exists.
+
+---
+
+## Helpers
+
+### `siblingsFor(items, currentId, options?)`
+
+Named export from `SideNavigation.jsx`. Walks the nav `items` tree, finds the group whose `children` contain `currentId`, and returns the prop shape `Page`'s `titleDisclosure` expects:
+
+```js
+{
+  sectionTitle: 'Inventory',       // group label (when it's a plain string)
+  activeItemId: 'coldchain',
+  items: [{ id, label, disabled? }, …]
+}
+```
+
+Returns `null` when:
+- `currentId` isn't a child of any group, **or**
+- the matching group has fewer than `options.minSiblings` children (default `2`).
+
+`null` is the "don't render the chevron" signal — pass it straight to `<Page titleDisclosure={…} />` and the disclosure quietly hides itself.
+
+```js
+import { siblingsFor } from '…/SideNavigation/SideNavigation.jsx';
+
+const disclosure = siblingsFor(NAV_ITEMS, currentPageId);
+if (disclosure) disclosure.onSelect = setCurrentPageId;
+```
+
+The helper deliberately doesn't bake in `onSelect` — the caller wires it after, so navigation stays inside the consumer's state model.
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|---|---|---|
+| `bg-page` | `#f1f1f1` | Sidebar background |
+| `bg-input-focus` | `#fafafa` | Selected / active row background |
+| `text-default` | `#303030` | Primary labels |
+| `text-subdued` | `#616161` | Rest sub-item labels |
+| `border-default` | derived `rgba(0,0,0,0.13)` | Right-edge inset shadow |
+| `gray-11` | `#b5b5b5` | Guide line + L-curve stroke |
+| Radius | `24 px` | Outer top/bottom-right corners (expanded only) |
+| Radius | `8 px` | Item row hover / selected pill |

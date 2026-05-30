@@ -50,7 +50,7 @@
 }
 
 .nx-checkbox__control:hover {
-  background: var(--nx-bg-input-hover);          /* #fafafa */
+  background: var(--nx-bg-input-focus);          /* #fafafa */
   border-color: #616161;
 }
 
@@ -80,7 +80,7 @@
 
 /* Disabled */
 .nx-checkbox__control--disabled {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--nx-bg-control-disabled);
   border: none;
   cursor: not-allowed;
 }
@@ -103,7 +103,7 @@
 }
 
 .nx-radio__control:hover {
-  background: var(--nx-bg-input-hover);
+  background: var(--nx-bg-input-focus);
   border-color: #616161;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .nx-radio__control--disabled {
-  background: rgba(0, 0, 0, 0.08);
+  background: var(--nx-bg-control-disabled);
   border: none;
   cursor: not-allowed;
 }

@@ -15,7 +15,8 @@ Triggers an action. Buttons are the primary interactive control in the system â€
 
 | Variant | Use when |
 |---------|----------|
-| **Primary** | The single most important action on a screen (Save, Continue, Confirm) |
+| **Primary** | The main action on a screen â€” filled brand blue (Save, Continue, Confirm) |
+| **Strong** | Highest-emphasis filled-dark CTA. Use sparingly â€” confirmation modals, marketing CTAs where you need more visual weight than blue |
 | **Secondary** | Supplementary actions alongside a primary (Cancel, Back, View) |
 | **Destructive** | Irreversible, high-risk actions (Delete, Remove, Discard) |
 | **Ghost** | Inline contextual actions; tertiary links that open drawers or modals |
@@ -40,8 +41,11 @@ Triggers an action. Buttons are the primary interactive control in the system â€
 ```
 
 ```html
-<!-- Primary -->
+<!-- Primary (brand blue) -->
 <button class="nx-btn nx-btn--primary">Save</button>
+
+<!-- Strong (dark filled, highest emphasis) -->
+<button class="nx-btn nx-btn--strong">Confirm</button>
 
 <!-- Secondary (default border style) -->
 <button class="nx-btn nx-btn--secondary">Cancel</button>
@@ -84,9 +88,13 @@ Triggers an action. Buttons are the primary interactive control in the system â€
 | `--nx-shadow-btn-rest` | *(inset shadow)* | Secondary at rest border |
 | `--nx-shadow-btn-hover` | *(inset shadow)* | Secondary on hover |
 | `--nx-shadow-btn-active` | *(inset shadow)* | All buttons pressed state |
-| `--nx-shadow-btn-primary` | *(inset shadow)* | Primary at rest |
+| `--nx-shadow-btn-primary` | *(inset shadow)* | Primary / Strong at rest |
 | `--nx-shadow-btn-critical` | *(inset shadow)* | Destructive at rest |
-| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus outline (all variants) |
+| `--nx-color-primary` | `#005bd3` | Primary button rest background |
+| `--nx-color-primary-hover` | `#004bb0` | Primary button hover background |
+| `--nx-color-primary-pressed` | `#003a8a` | Primary button pressed/active background |
+| `--nx-focus-ring` | `0 0 0 2px #005bd3` | Focus outline (Strong, Secondary, Ghost, Destructive) |
+| Primary focus ring | `inset 0 0 0 2px #fff, 0 0 0 2px #303030` | Inset-white + outer-dark ring used on Primary blue so the indicator is visible |
 | `--nx-bg-disabled` | `rgba(0,0,0,0.06)` | Disabled background |
 | `--nx-text-disabled` | `#b5b5b5` | Disabled text |
 | `--nx-text-on-primary` | `#ffffff` | Text on filled buttons |
@@ -111,6 +119,42 @@ The outset focus ring then layers on top without conflicting with the inset bord
 
 ---
 
+## Angular component
+
+```ts
+import { NxBtnModule } from 'components/Btn/btn.module';
+
+// Basic variants
+<nx-btn variant="primary" (click)="fn()">Save</nx-btn>
+<nx-btn variant="strong" (click)="fn()">Confirm</nx-btn>
+<nx-btn variant="secondary" (click)="fn()">Cancel</nx-btn>
+<nx-btn variant="destructive" (click)="fn()">Delete</nx-btn>
+<nx-btn variant="ghost" (click)="fn()">Learn more</nx-btn>
+
+// Modifiers
+<nx-btn variant="primary" [small]="true">Compact</nx-btn>
+<nx-btn variant="primary" [fullWidth]="true">Full width</nx-btn>
+<nx-btn variant="secondary" [disclosure]="true">More actions</nx-btn>
+<nx-btn variant="primary" [disabled]="true">Unavailable</nx-btn>
+
+// With icon
+<nx-btn variant="primary" icon="plus">Add item</nx-btn>
+
+// Groups
+<nx-btn-group>
+  <nx-btn variant="primary">Save</nx-btn>
+  <nx-btn variant="secondary">Cancel</nx-btn>
+</nx-btn-group>
+
+<nx-btn-group-segmented [buttons]="[
+  { label: 'All',      onClick: fn },
+  { label: 'Active',   onClick: fn },
+  { label: 'Archived', onClick: fn, disabled: true },
+]" />
+```
+
+---
+
 ## React component
 
 ```jsx
@@ -118,6 +162,7 @@ import { Btn, ButtonGroup, BtnGroupSegmented, IconBtn } from 'components/Btn/Btn
 
 // Basic variants
 <Btn variant="primary" onClick={fn}>Save</Btn>
+<Btn variant="strong" onClick={fn}>Confirm</Btn>
 <Btn variant="secondary" onClick={fn}>Cancel</Btn>
 <Btn variant="destructive" onClick={fn}>Delete</Btn>
 <Btn variant="ghost" onClick={fn}>Learn more</Btn>

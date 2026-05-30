@@ -5,7 +5,8 @@
  *
  * Selector structure:
  *   .nx-btn                    — base reset + shared shape
- *   .nx-btn--primary           — dark (#303030) filled
+ *   .nx-btn--primary           — brand blue (#005bd3) filled — main CTA
+ *   .nx-btn--strong            — dark (#303030) filled — highest-emphasis CTA
  *   .nx-btn--secondary         — white bg, inset shadow border
  *   .nx-btn--ghost             — transparent bg, blue text
  *   .nx-btn--destructive       — red (#e51c00) filled
@@ -43,23 +44,47 @@
   box-shadow: var(--nx-focus-ring);
 }
 
-/* ─── Primary ──────────────────────────────────────────────────── */
+/* ─── Primary (brand blue CTA) ─────────────────────────────────── */
 .nx-btn--primary {
-  background: #303030;
+  background: var(--nx-color-primary);             /* #005bd3 */
   color: var(--nx-text-on-primary);
   font-weight: var(--nx-font-weight-bold);
   box-shadow: var(--nx-shadow-btn-primary);
 }
 
 .nx-btn--primary:hover:not(:disabled) {
-  filter: brightness(1.08);
+  background: var(--nx-color-primary-hover);       /* #004bb0 */
 }
 
 .nx-btn--primary:active:not(:disabled) {
+  background: var(--nx-color-primary-pressed);     /* #003a8a */
   box-shadow: inset 0 2px 1px rgba(0,0,0,0.30), var(--nx-shadow-btn-primary);
 }
 
+/* Focus ring against the blue button: inset white ring + outer dark ring */
 .nx-btn--primary:focus-visible {
+  box-shadow: inset 0 0 0 2px #ffffff,
+              0 0 0 2px #303030,
+              var(--nx-shadow-btn-primary);
+}
+
+/* ─── Strong (dark filled, highest-emphasis CTA) ───────────────── */
+.nx-btn--strong {
+  background: #303030;
+  color: var(--nx-text-on-primary);
+  font-weight: var(--nx-font-weight-bold);
+  box-shadow: var(--nx-shadow-btn-primary);
+}
+
+.nx-btn--strong:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.nx-btn--strong:active:not(:disabled) {
+  box-shadow: inset 0 2px 1px rgba(0,0,0,0.30), var(--nx-shadow-btn-primary);
+}
+
+.nx-btn--strong:focus-visible {
   box-shadow: var(--nx-focus-ring), var(--nx-shadow-btn-primary);
 }
 
@@ -72,7 +97,7 @@
 }
 
 .nx-btn--secondary:hover:not(:disabled) {
-  background: var(--nx-bg-input-hover);
+  background: var(--nx-bg-input-focus);
   box-shadow: var(--nx-shadow-btn-hover);
 }
 

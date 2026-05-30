@@ -63,6 +63,34 @@ Two-row contact block: added-by person and contact phone number, each with a lea
 
 ---
 
+## Layout Type 5 — QR Code Card
+
+<Canvas of={CardStories.LayoutType5} />
+
+QR Code card with two states driven by the `qrCodeSrc` prop:
+
+- **Empty** (`qrCodeSrc` is `null` / omitted) — a 48×48 QR icon inside an 88×88 soft-blue circle, a centered "No QR Code Assigned" caption, and an **Assign QR Code** secondary button.
+- **Assigned** (`qrCodeSrc` provided) — renders the scannable QR image at 160×160 with a **View QR Code** secondary button. Clicking the button opens a full-size preview in the **same `Overlay` modal layout** used by the Page header image preview — so both interactions feel identical (Esc, backdrop click, and the × button all close).
+
+```jsx
+// Empty state
+<CardLayoutType5 title="QR Code" onAssign={() => openAssignFlow()} />
+
+// Assigned state — clicking "View QR Code" opens the modal automatically
+<CardLayoutType5
+  title="QR Code"
+  qrCodeSrc="/equipment/qr/EQ-10022.png"
+  onView={() => trackQrPreviewOpened()}   // optional analytics hook
+/>
+
+// Loading
+<CardLayoutType5 title="QR Code" loading />
+```
+
+All copy is overridable via `emptyText`, `emptyActionLabel`, and `assignedActionLabel` for localisation.
+
+---
+
 ## Primitives
 
 <Canvas of={CardStories.Primitives} />
@@ -119,6 +147,48 @@ inset 0 1px 0 rgba(204,204,204,0.5)
 | Contact number field | `PhoneIcon` — `#616161` |
 | Accordion toggle | `ChevronDownIcon` |
 | Table sort | `SortIcon` |
+
+---
+
+## Angular components
+
+```ts
+import { NxCardModule } from 'components/Card/card.module';
+
+// Layout Type 1 — Detail card
+<nx-card-layout-type1
+  [images]="[src1, src2, src3]"
+  [fields]="[
+    { label: 'Serial Number', value: 'SN-00482-KE' },
+    { label: 'Status',        value: 'Active' }
+  ]"
+  notes="Optional notes text here."
+/>
+
+// Layout Type 2 — Accordion table
+<nx-card-layout-type2
+  title="Associated Components"
+  description="Primary components and accessories"
+  [tabs]="[{ label: 'Primary Components' }, { label: 'Accessories' }]"
+  [activeTab]="tab"
+  (tabChange)="tab = $event"
+  [tableRows]="rows"
+  [defaultOpen]="true"
+/>
+
+// Layout Type 3 — Location card
+<nx-card-layout-type3
+  region="North Kenya"
+  facilityName="Lodwar County Hospital"
+  facilityHref="/facilities/lodwar"
+/>
+
+// Layout Type 4 — Contact card
+<nx-card-layout-type4
+  addedBy="Grace Mwangi"
+  contactNumber="+254 712 345 678"
+/>
+```
 
 ---
 

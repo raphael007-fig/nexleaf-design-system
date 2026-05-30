@@ -114,6 +114,32 @@ Tinted background using the tone's light color, inline icon, message, and option
 
 ---
 
+## Angular component
+
+```ts
+import { NxBannerModule } from 'components/Banner/banner.module';
+
+// Simple
+<nx-banner tone="info">Your session expires in 10 minutes.</nx-banner>
+<nx-banner tone="success">Reading saved successfully.</nx-banner>
+<nx-banner tone="warning" [dismissable]="true">Value is outside expected range.</nx-banner>
+
+// Titled
+<nx-banner
+  tone="critical"
+  title="Unable to save"
+  [dismissable]="true"
+  [actions]="[{ label: 'Review', onClick: fn }]"
+>
+  Please correct the highlighted fields and try again.
+</nx-banner>
+
+// In-card
+<nx-banner tone="info" [inCard]="true">Your session expires in 10 minutes.</nx-banner>
+```
+
+---
+
 ## React component
 
 ```jsx

@@ -1,0 +1,794 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SearchSelectStories from './SearchSelect.stories.jsx';
+
+<Meta title="Components/Forms/SearchSelect/Docs" />
+
+# SearchSelect
+
+Searchable dropdown select. The trigger field doubles as a search input — clicking the field opens the dropdown and typing immediately filters the options list. Supports both single-select and multi-select variants.
+
+<Canvas of={SearchSelectStories.InteractionStates} />
+
+---
+
+## Interaction states — all variants
+
+<Canvas of={SearchSelectStories.AllStates} />
+
+---
+
+## Variants
+
+| Variant | Component | Behaviour |
+|---------|-----------|-----------|
+| Single | `SearchSelect` | Trigger becomes an `<input>` on click; selecting an option closes the dropdown |
+| Multi | `SearchSelectMulti` | Selected items render as removable chips; dropdown has a search input at the top |
+
+---
+
+## When to use
+
+- Use `SearchSelect` when the user needs to pick one item from a long list (more than ~6 options)
+- Use `SearchSelectMulti` when the user can select multiple items
+- Prefer a standard `SelectInput` for short lists (≤ 6 options) where search adds no value
+
+---
+
+## Nested (hierarchical) options
+
+Any option can carry a `children` array to introduce sub-options. Branches and leaves
+follow the same `{ value, label }` shape — branches just add `children`. The dropdown
+indents each level by 20px and renders parent labels in weight 600 so the hierarchy
+stays scannable.
+
+**Recommended max depth: 3 levels** (e.g. *Country → Region → District*). Deeper
+trees create indentation that competes with the dropdown's fixed width and forces
+horizontal truncation on the leaf labels — if you need more depth, switch to a
+modal picker. The component does not hard-cap depth, but anything past 3 should be
+treated as a design escape hatch, not a default.
+
+```js
+const NESTED_REGIONS = [
+  {
+    value: 'nairobi', label: 'Nairobi',
+    children: [
+      { value: 'kilimani',  label: 'Kilimani' },
+      { value: 'dagoretti', label: 'Dagoretti' },
+      { value: 'westlands', label: 'Westlands' },
+    ],
+  },
+  {
+    value: 'karnataka', label: 'Karnataka',
+    children: [
+      { value: 'bengaluru', label: 'Bengaluru' },
+      { value: 'mysuru',    label: 'Mysuru' },
+    ],
+  },
+];
+```
+
+**Selection model**
+
+The default selection model is **leaves-only**: parents are visual groupings, not
+selectable values. Concretely:
+
+- **Multi select** — clicking a parent toggles every leaf beneath it. The parent
+  itself is never stored in `value`; only leaf values are. Parent state is
+  derived from its descendants: `checked` (all leaves selected), `indeterminate`
+  (some selected), or `unchecked`.
+- **Single select** — by default branches are not selectable; only leaves can be
+  picked. This is the right behaviour for hierarchies where the parent is a
+  category that the data layer cannot resolve (e.g. *"Nairobi"* in a list of
+  facilities — there's no facility called Nairobi).
+- **Search** — typing in the search box filters the tree. A branch is retained
+  if it (or any of its descendants) matches the query, so users can drill down
+  to nested matches.
+
+**Selectable parents (opt-in via `parentsSelectable`)** — for hierarchies where
+the parent *is* a valid value (e.g. *"All Nairobi facilities"* in a filter), the
+component accepts a `parentsSelectable` prop:
+
+| Mode | `parentsSelectable` | Multi-select behaviour |
+|------|---------------------|------------------------|
+| Leaves-only *(default)* | `false` | Parent click toggles all leaves; parent is never in `value` |
+| Parents-as-values | `true` | Parent click stores the parent's `value`; children collapse to that single token |
+
+This is an **open question for the data layer** — see the
+[Engineering questions](#engineering-questions-to-validate) at the end of this
+doc. Brian / engineering should confirm whether the API can accept a parent
+token (e.g. `region=nairobi`) before we ship `parentsSelectable={true}` as a
+supported mode.
+
+<Canvas of={SearchSelectStories.NestedOptions} />
+<Canvas of={SearchSelectStories.NestedOptionsSingle} />
+<Canvas of={SearchSelectStories.DeepTree} />
+
+### Checkbox states (multi)
+
+| State | Box | When |
+|-------|-----|------|
+| `unchecked` | `0.66px solid #8a8a8a` border, `#fdfdfd` fill | No descendant leaf is selected |
+| `checked` | `#303030` fill, white check glyph | Every descendant leaf is selected (or the leaf itself is) |
+| `indeterminate` | `#303030` fill, white dash glyph | Some — but not all — descendant leaves are selected |
+
+---
+
+## Tag placement (`tagsInside`)
+
+`SearchSelectMulti` supports two ways of surfacing the selected values:
+
+| Mode | Prop | Layout |
+|------|------|--------|
+| **Below field** *(default)* | `tagsInside={false}` | All selected values render as a wrapping `<TagGroup>` immediately below the trigger |
+| **Inside field** | `tagsInside` | First selected value renders as a `<Tag>` inside the trigger, clamped to 50% of the row width; remaining selections collapse into a `+ N others` chip |
+
+Use the default `tagsInside={false}` when the user benefits from seeing every
+selected value at once (filter bars where individual chips can be removed).
+
+Use `tagsInside` in dense, column-aligned UIs (table filter rows, settings rows)
+where the trigger must remain a single fixed-height line.
+
+### `tagsInside` overflow logic
+
+- The first selected value renders as a `Tag` inside the field.
+- That tag's wrapper is capped at `max-width: 50%` of the trigger.
+- If the first label is longer than 50% of the field, the label truncates with
+  `…` (ellipsis) inside the tag.
+- All other selected values collapse into a single non-removable
+  `+ N other` / `+ N others` chip immediately after the first tag.
+- Nothing ever escapes the field boundary.
+
+<Canvas of={SearchSelectStories.TagsInside} />
+<Canvas of={SearchSelectStories.TagModesCompared} />
+
+---
+
+## `SearchSelectButton` — button-trigger variant
+
+Same dropdown, search, and tree behaviour as `SearchSelect`/`SearchSelectMulti`,
+but the trigger is a button instead of a field. Use it in toolbars, filter
+bars, or any horizontal row where a full-width input would feel heavy.
+
+The button text always shows a one-line summary of the current selection:
+
+| Selection | Button text |
+|-----------|-------------|
+| nothing selected | `placeholder` (in placeholder color) |
+| 1 selected | label of that option |
+| N selected *(multi)* | `First +N Others` (`Other` when N = 1) |
+
+The search field lives **inside** the popover, not in the trigger — this is
+the key behavioural difference from `SearchSelect`, where the trigger itself
+turns into the input.
+
+<Canvas of={SearchSelectStories.ButtonSingle} />
+<Canvas of={SearchSelectStories.ButtonMulti} />
+<Canvas of={SearchSelectStories.ButtonSizes} />
+<Canvas of={SearchSelectStories.ButtonAllStates} />
+<Canvas of={SearchSelectStories.ButtonInToolbar} />
+
+### Trigger overflow rule
+
+The trigger label is split into **two inline-flex children** — the first
+label and the `+N Others` suffix — so the cap applies only to the first label
+and the overflow count stays visible no matter what.
+
+- The wrapping span has `maxWidth: 240px` (a **cap**, not a basis) — short
+  labels stay at their natural width, long labels stop growing.
+- The first label has `overflow: hidden; text-overflow: ellipsis;
+  white-space: nowrap; min-width: 0` — it's the only piece that ellipsises.
+- The `+N Others` suffix has `flex-shrink: 0` — it never shrinks, never
+  truncates, always rides at the end of the trigger.
+
+Same logic family as the `tagsInside` overflow in `SearchSelectMulti`: cap the
+first label, preserve the count chip.
+
+<Canvas of={SearchSelectStories.ButtonLongLabelOverflow} />
+
+### Leading icon
+
+Pass `leadingIcon` to render a 16-px glyph in front of the label. It goes through `Btn`'s own `icon` slot, so the icon, label, overflow suffix ("+N Others"), and disclosure chevron all share one baseline — no extra wrappers, no alignment drift.
+
+Use this when the picker reads better with a category cue:
+
+- 📍 Location / region pickers — pass `<PolarisIconImg name="LocationIcon" size={16} color="currentColor" />`
+- 🏷️ Tag / status filters — pass any 16-px filter glyph
+
+`leadingIcon` is fully optional and non-breaking; omitting it renders the label-only trigger as before.
+
+```jsx
+<SearchSelectButton
+  label="Region"
+  placeholder="Choose Region"
+  leadingIcon={<PolarisIconImg name="LocationIcon" size={16} color="currentColor" />}
+  options={REGIONS}
+  value={value}
+  onChange={setValue}
+  multiple
+  size="large"
+/>
+```
+
+### Sizes
+
+`SearchSelectButton` mirrors the three `Btn` sizes — pass `size="small" | "medium" | "large"`.
+Sizing only affects the trigger (padding + font), not the popover.
+
+| Size | Btn mapping | Padding | Font |
+|------|-------------|---------|------|
+| `small` | `small` (micro) | `4px 8px` | 12px / 16 line |
+| `medium` *(default)* | `size="medium"` | `6px 12px` | 12px / 16 line |
+| `large` | `size="large"` | `6px 12px` | 13px / 20 line |
+
+### Anatomy
+
+```html
+<!-- Trigger -->
+<button class="nx-search-select-btn" aria-haspopup="listbox" aria-expanded="false">
+  <span class="nx-search-select-btn__label">Nairobi +2 Others</span>
+  <span class="nx-search-select-btn__chevron">▾</span>
+</button>
+
+<!-- Popover (when open) -->
+<div class="nx-search-select-btn__popover">
+  <div class="nx-search-select-btn__search">
+    <input type="text" placeholder="Search" aria-label="Search options" />
+  </div>
+  <ul role="listbox">
+    <li role="option" aria-selected="true"><span class="nx-checkbox"></span> Nairobi</li>
+    <li role="option" aria-selected="true" style="padding-left:30px;">
+      <span class="nx-checkbox"></span> Dagoretti
+    </li>
+    <!-- ... -->
+  </ul>
+</div>
+```
+
+### Anatomy in code
+
+The trigger is the project's `Btn` component (`variant="secondary"`,
+`disclosure` for the chevron) — *not* a custom-styled `<button>`. This keeps
+the visuals, hover / focus / active shadows, and small-vs-medium sizing
+identical to every other secondary button in the system. The combobox role and
+`aria-expanded` / `aria-haspopup` are applied to the wrapping element.
+
+```jsx
+<span role="combobox" aria-haspopup="listbox" aria-expanded={open} aria-label={label}>
+  <Btn variant="secondary" small disclosure onClick={toggle}>
+    {triggerText /* "First +N Others" or "First" or placeholder */}
+  </Btn>
+</span>
+```
+
+### Popover spec
+
+| Token | Value | Role |
+|-------|-------|------|
+| `bg-surface` | `#ffffff` | Popover background |
+| `border-default` | `1px solid #e0e0e0` | Popover border, radius 12px |
+| — | `0 8px 24px rgba(0,0,0,0.12)` | Popover shadow |
+| `bg-input` | `#fdfdfd` | Search input background (inherited from `TextInput`) |
+| `border-input` | `0.66px solid #8a8a8a` | Search input border (inherited from `TextInput`) |
+
+The search row uses the design-system `<TextInput>` (with `clearButton`) so the
+field's border, focus ring, padding, and disabled state stay perfectly in step
+with every other input in the system. The option list sits directly below the
+search row — no separator line between them; padding alone provides the visual
+break.
+
+### Checkbox visuals
+
+The dropdown's checkboxes are a stateless rendering of the design-system
+`<Checkbox>` component's visuals — same 16×16 box, 4px radius, `#303030`
+checked background, `0.66px solid #8a8a8a` rest border, and the identical
+check / dash SVG paths and stroke widths. They're rendered as a plain cell
+(rather than `<Checkbox>`) because the option row owns the click target and
+focus ring.
+
+### Search behaviour
+
+- The search input opens with autofocus, so users can start typing immediately
+  after clicking the trigger — no second click needed.
+- Filtering uses **substring match on the lowercased label** of every node in
+  the tree. A branch is kept when its own label matches *or* any descendant
+  label matches. When a branch matches, all of its children stay visible
+  (so users can still drill in).
+- This means short queries can be ambiguous — e.g. typing `n` keeps both
+  `Nairobi` and `Karnatika` because each contains the letter `n`. To narrow
+  results, type more characters (`nair` shows only the Nairobi branch).
+
+### React component
+
+```jsx
+import { SearchSelectButton } from 'components/SearchSelect/SearchSelect.jsx';
+
+// Single
+<SearchSelectButton
+  label="Region"
+  placeholder="Select region"
+  options={NESTED_REGIONS}
+  value={region}
+  onChange={setRegion}
+/>
+
+// Multi — button shows "First +N Others"
+<SearchSelectButton
+  label="Region"
+  placeholder="Select regions"
+  options={NESTED_REGIONS}
+  value={regions}
+  onChange={setRegions}
+  multiple
+  size="small"
+/>
+```
+
+**Props**
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | `string` | — | Accessible name for the trigger (`aria-label`) |
+| `placeholder` | `string` | `'Select…'` | Button text when nothing is selected |
+| `options` | `Option[]` | `[]` | Same shape as `SearchSelect` — supports `children` for nested trees |
+| `value` | `string \| string[]` | — | Selected leaf value(s) |
+| `onChange` | `fn` | — | Fires with new value / array |
+| `multiple` | `boolean` | `false` | Switches between single-select and multi-select behaviour |
+| `disabled` | `boolean` | `false` | Disables the trigger |
+| `size` | `'small' \| 'medium' \| 'large'` | `'medium'` | Maps onto `Btn` sizing |
+| `maxTags` *(multi only)* | `number` | — | Cap on the number of selected leaves |
+| `dropdownWidth` | `number` | `320` | Popover width in pixels |
+
+---
+
+## Opening behaviour
+
+When the user clicks (or focuses) the trigger of a closed `SearchSelect`, the
+dropdown opens but the **selected label stays visible** in the trigger. The
+field only switches into "search mode" — replacing the label with an empty
+input — when the user **starts typing**. This preserves context (the user can
+see what is currently selected while browsing options) and only sacrifices it
+when the user has explicitly committed to searching.
+
+| Step | Trigger contents | Dropdown |
+|------|------------------|----------|
+| Resting (closed, value selected) | Selected label, e.g. `Nairobi` | Hidden |
+| Click trigger | Selected label, e.g. `Nairobi`, cursor at end | Open, full list scrolled to selected item |
+| User types a character | Input clears, replaced with typed query | Open, list filtered |
+| User clears input (Backspace to empty) | Empty input | Open, full unfiltered list |
+| Selection committed | Selected label re-renders | Closes (single) / stays open (multi) |
+
+For `SearchSelectButton` the rule is simpler — the trigger label never becomes
+an input, so the selected label is always visible while the popover is open.
+
+### Clear button (`×`) hit area
+
+The clear button only renders when (a) the field has a value and (b) the field
+is not disabled. Its hit area and behaviour are precise so it never competes
+with the chevron:
+
+- **Visual size:** 16×16 icon, `#616161` stroke. On hover the stroke darkens to
+  `#303030`; on press the background pill goes `#ebebeb`.
+- **Hit area:** 24×24 padded button (8px of invisible padding around the icon).
+- **Click outcome:**
+  - Single select — clears `value` to `null`/`''` and fires `onChange(null)`.
+    The dropdown stays in its current open/closed state.
+  - Multi select — clears the entire `value` array and fires `onChange([])`.
+    The dropdown stays in its current open/closed state.
+- **Chevron click outcome:** toggles open/closed only — it never clears the
+  selection. Chevron has its own 24×24 hit area immediately to the right of
+  the clear button.
+- **Stop propagation:** clicking `×` must not also toggle the dropdown.
+  Implementation: `onMouseDown={e => e.stopPropagation()}` on the clear button
+  so the trigger's open-on-click handler doesn't fire.
+
+```
+┌────────────────────────────────────────────────┐
+│ Nairobi                              [×] [▾]   │
+│                                       ↑   ↑    │
+│                            clear (24px) chevron (24px)
+└────────────────────────────────────────────────┘
+```
+
+---
+
+## Combined states
+
+Single states (focus, error, disabled, open) compose. The table below resolves
+every meaningful combination so engineering doesn't have to invent the answer
+at implementation time.
+
+| Combination | Border | Background | Focus ring | Notes |
+|-------------|--------|-----------|------------|-------|
+| Resting | `0.66px solid #8a8a8a` | `#fdfdfd` | — | — |
+| Hover (closed) | `0.66px solid #8a8a8a` | `#fafafa` | — | — |
+| Focused (closed) | `0.66px solid #8a8a8a` | `#fdfdfd` | `0 0 0 2px #005bd3` | — |
+| Open | `0.66px solid #8a8a8a` | `#fdfdfd` | `0 0 0 2px #005bd3` | Dropdown shown |
+| Error (resting) | `1px solid #8e1f0b` | `#fee9e8` | — | Inline message below field |
+| Error + focused | `1px solid #8e1f0b` | `#fee9e8` | `0 0 0 2px #005bd3` | Error wins on border colour; focus ring still shown |
+| Error + open | `1px solid #8e1f0b` | `#fee9e8` | `0 0 0 2px #005bd3` | Same as error + focused; dropdown is shown |
+| Disabled | `0.66px solid #8a8a8a` | `rgba(0,0,0,0.06)` | — | `cursor: not-allowed`; clear & chevron hidden |
+| Disabled + value | `0.66px solid #8a8a8a` | `rgba(0,0,0,0.06)` | — | Selected label rendered in `#b5b5b5` |
+| Disabled + error | `0.66px solid #8a8a8a` | `rgba(0,0,0,0.06)` | — | **Disabled wins** — error styling suppressed, message hidden |
+
+**Precedence rule:** `disabled > error > open/focused > hover > resting`. If
+two states co-apply, the higher one wins on visuals, but ARIA must still
+reflect both (e.g. `aria-disabled="true" aria-invalid="true"` together).
+
+---
+
+## Keyboard interaction
+
+The trigger is a `combobox` per the WAI-ARIA 1.2 combobox pattern (`listbox`
+popup). The full key table:
+
+| Key | When | Behaviour |
+|-----|------|-----------|
+| **Down Arrow** | Trigger focused, closed | Opens dropdown; first option (or selected option) receives `aria-activedescendant` |
+| **Down Arrow** | Open | Move active option to next (wraps to first at end) |
+| **Up Arrow** | Trigger focused, closed | Opens dropdown; last option receives `aria-activedescendant` |
+| **Up Arrow** | Open | Move active option to previous (wraps to last at start) |
+| **Home** | Open | Jump active option to first |
+| **End** | Open | Jump active option to last |
+| **Enter** | Open, option active | Single: commit + close. Multi: toggle active option, leave dropdown open |
+| **Space** | Open, option active | Multi: toggle active option (same as Enter). Single: typed into search input if user is typing |
+| **Escape** | Open | Close dropdown, return focus to trigger, discard any in-flight search query |
+| **Tab** / **Shift+Tab** | Open | Commit any "active but not yet selected" option (single only), close dropdown, advance focus normally |
+| **Backspace** | Multi, trigger empty, focus in search | Remove the last chip (acts as inline undo on the chip group) |
+| **Backspace** | Multi, search input has text | Standard text deletion |
+| **Typeable character** | Trigger focused, closed | Opens dropdown, switches trigger into search input, types the character (single only) |
+| **Typeable character** | Open, search focused | Filter list |
+| **Click outside** | Open | Close dropdown, discard search query |
+
+For `SearchSelectButton` the keyboard model is identical except: the trigger
+is a `button` (not a combobox), and `Enter`/`Space`/`Down` on the trigger open
+the popover with focus moved to the search input inside the popover.
+
+---
+
+## Accessibility
+
+### Roles & ARIA
+
+| Element | Role / attribute | Value |
+|---------|------------------|-------|
+| Field wrapper | — | — |
+| Trigger (single, in search mode) | `role="combobox"` | — |
+| Trigger | `aria-haspopup` | `"listbox"` |
+| Trigger | `aria-expanded` | `true` when open, `false` when closed |
+| Trigger | `aria-controls` | `id` of the listbox |
+| Trigger | `aria-activedescendant` | `id` of the currently active option (only while open) |
+| Trigger | `aria-autocomplete` | `"list"` |
+| Trigger | `aria-invalid` | `true` when in error state |
+| Trigger | `aria-disabled` | `true` when disabled |
+| Trigger | `aria-required` | `true` when `required` |
+| Trigger label | `<label for=…>` or `aria-labelledby` | Field label |
+| Dropdown list | `role="listbox"` | — |
+| Dropdown list (multi) | `aria-multiselectable` | `true` |
+| Option (leaf) | `role="option"` | — |
+| Option | `aria-selected` | `true` / `false` |
+| Option (branch, multi) | `aria-checked` | `"true"`, `"false"`, or `"mixed"` (indeterminate) |
+| Option (disabled) | `aria-disabled` | `true` |
+| Clear button | `<button aria-label="Clear selection">` | — |
+| Chevron button | `<button aria-label="Toggle options">` | — |
+| Error message | `<div id=… role="alert">` | Linked from trigger via `aria-describedby` |
+
+### Focus management
+
+- Opening from keyboard moves visual focus to the trigger but logical focus
+  (the active option) is tracked via `aria-activedescendant` — DOM focus does
+  **not** move into the listbox. This matches the
+  `combobox + listbox + aria-activedescendant` pattern used by Polaris and
+  ng-select.
+- `SearchSelectButton` opens with DOM focus moved to the search input inside
+  the popover, since the popover's search is a separate element from the
+  trigger.
+- Closing always returns DOM focus to the trigger.
+
+### Screen reader announcements
+
+- Field announces: *"Region, combo box, required, Nairobi selected"* (label +
+  role + required + value).
+- Option activation announces the option label + its position (e.g.
+  *"Bengaluru, 2 of 5"*) — provided by the browser's combobox implementation
+  via `aria-activedescendant`.
+- Error message announces immediately when it appears (because the wrapper has
+  `role="alert"` linked from the trigger via `aria-describedby`).
+
+---
+
+## Trigger label semantics (multi)
+
+There are three ways the component summarises a multi-selection. Each has a
+specific use case — do not swap them ad hoc.
+
+| Format | Used by | When |
+|--------|---------|------|
+| Individual chips inside the field | `SearchSelectMulti` (default `tagsInside={false}`) | Form filters and dashboard filters where the user benefits from seeing every value and being able to remove each independently |
+| `First +N Others` (e.g. `Nairobi +2 Others`) | `SearchSelectButton` (multi) | Toolbar / filter-bar triggers where space is tight but the user still wants to recognise the first selection |
+| `N selected` (e.g. `2 selected`) | `SearchSelectMulti` trigger when `tagsInside` is **not** set and selection is large | Settings tables, compact filter rows. Used as a fallback when individual chips would wrap the row |
+
+`First +N Others` uses the singular `+1 Other` (not `+1 Others`) when N is
+exactly 1. `N selected` is purely numeric — it never names a value, so it
+stays the same length regardless of the labels selected.
+
+---
+
+## CSS selector structure
+
+```html
+<!-- Single select -->
+<div class="nx-search-select">
+  <label class="nx-field-label">Region <span class="nx-required">*</span></label>
+  <!-- Trigger — shares exact styling with nx-text-input -->
+  <div class="nx-search-select__trigger">
+    <!-- Closed state -->
+    <span class="nx-search-select__value">Nairobi</span>
+    <!-- Open state — trigger text becomes a live search input -->
+    <input class="nx-search-select__input" type="text" placeholder="Nairobi" />
+    <button class="nx-search-select__clear" aria-label="Clear">×</button>
+    <span class="nx-search-select__chevron">▾</span>
+  </div>
+  <!-- Dropdown -->
+  <div class="nx-search-select__dropdown">
+    <ul role="listbox">
+      <li role="option" aria-selected="true">Nairobi</li>
+      <li role="option" aria-selected="false">Mombasa</li>
+    </ul>
+  </div>
+</div>
+
+<!-- Multi select -->
+<div class="nx-search-select nx-search-select--multi">
+  <label class="nx-field-label">Regions</label>
+  <!-- Trigger — clean single-line, shows "N selected" count -->
+  <div class="nx-search-select__trigger">
+    <span class="nx-search-select__count">2 selected</span>
+    <button class="nx-search-select__clear" aria-label="Clear all">×</button>
+    <span class="nx-search-select__chevron">▾</span>
+  </div>
+  <!-- Dropdown — has search row at top -->
+  <div class="nx-search-select__dropdown">
+    <div class="nx-search-select__search">
+      <svg><!-- search icon --></svg>
+      <input type="text" placeholder="Search…" />
+    </div>
+    <ul role="listbox">
+      <li role="option" aria-selected="true">
+        <span class="nx-checkbox nx-checkbox--checked"></span>
+        Nairobi
+      </li>
+    </ul>
+  </div>
+  <!-- Selected badges — appear below the field after selection -->
+  <div class="nx-search-select__tags">
+    <span class="nx-tag">Nairobi <button aria-label="Remove Nairobi">×</button></span>
+    <span class="nx-tag">Mombasa <button aria-label="Remove Mombasa">×</button></span>
+  </div>
+</div>
+```
+
+---
+
+## Design tokens used
+
+| Token | Value | Role |
+|-------|-------|------|
+| `bg-input` | `#fdfdfd` | Trigger background |
+| `bg-disabled` | `rgba(0,0,0,0.06)` | Disabled trigger background |
+| `border-input` | `0.66px solid #8a8a8a` | Default trigger border (matches TextInput) |
+| `color-primary` | `#005bd3` | Focus shadow ring, checkbox fill, check icon |
+| `bg-input` | `#fafafa` | Trigger background on hover/focus |
+| `color-critical` | `#8e1f0b` | Error border |
+| `bg-error` | `#fee9e8` | Error trigger background |
+| `text-default` | `#303030` | Selected value text |
+| `text-disabled` | `#b5b5b5` | Disabled label and value text |
+| `text-placeholder` | `#9e9e9e` | Placeholder text, search/chevron icons |
+| `text-subdued` | `#616161` | Chevron stroke |
+| `border-light` | `#ebebeb` | Dropdown border, search row separator |
+| `bg-disabled` | `rgba(0,0,0,0.08)` | Disabled trigger background |
+
+---
+
+## Angular component
+
+```ts
+import { NxSearchSelectModule } from 'components/SearchSelect/search-select.module';
+
+// Single select
+<nx-search-select
+  label="Region"
+  [required]="true"
+  placeholder="Select a region"
+  [options]="regionOptions"
+  [(ngModel)]="selectedRegion"
+/>
+
+// With error
+<nx-search-select
+  label="Status"
+  [required]="true"
+  [options]="statusOptions"
+  [(ngModel)]="selectedStatus"
+  error="Please select a status."
+/>
+
+// Disabled
+<nx-search-select
+  label="Region"
+  [options]="regionOptions"
+  [(ngModel)]="selectedRegion"
+  [disabled]="true"
+/>
+
+// Multi select
+<nx-search-select-multi
+  label="Regions"
+  [required]="true"
+  placeholder="Select regions"
+  [options]="regionOptions"
+  [(ngModel)]="selectedRegions"
+/>
+
+// Multi select with max tags
+<nx-search-select-multi
+  label="Regions"
+  [options]="regionOptions"
+  [(ngModel)]="selectedRegions"
+  [maxTags]="3"
+/>
+```
+
+---
+
+## React component
+
+```jsx
+import { SearchSelect, SearchSelectMulti } from 'components/SearchSelect/SearchSelect.jsx';
+
+const REGIONS = [
+  { value: 'nairobi', label: 'Nairobi' },
+  { value: 'mombasa', label: 'Mombasa' },
+  // ...
+];
+
+// Single select
+<SearchSelect
+  label="Region"
+  required
+  placeholder="Select a region"
+  options={REGIONS}
+  value={region}
+  onChange={setRegion}
+/>
+
+// With error
+<SearchSelect
+  label="Region"
+  required
+  options={REGIONS}
+  value={region}
+  onChange={setRegion}
+  error="Please select a region."
+/>
+
+// Disabled with pre-selected value
+<SearchSelect
+  label="Region"
+  options={REGIONS}
+  value="nairobi"
+  disabled
+/>
+
+// Multi select
+<SearchSelectMulti
+  label="Regions"
+  required
+  placeholder="Select regions"
+  options={REGIONS}
+  value={regions}
+  onChange={setRegions}
+/>
+
+// Multi select with max tags
+<SearchSelectMulti
+  label="Regions"
+  options={REGIONS}
+  value={regions}
+  onChange={setRegions}
+  maxTags={3}
+/>
+
+// Nested (hierarchical) options — selecting a parent toggles every leaf beneath it
+<SearchSelectMulti
+  label="Regions"
+  options={[
+    { value: 'nairobi', label: 'Nairobi', children: [
+      { value: 'kilimani',  label: 'Kilimani' },
+      { value: 'dagoretti', label: 'Dagoretti' },
+    ]},
+    { value: 'karnataka', label: 'Karnataka', children: [
+      { value: 'bengaluru', label: 'Bengaluru' },
+      { value: 'mysuru',    label: 'Mysuru' },
+    ]},
+  ]}
+  value={regions}
+  onChange={setRegions}
+/>
+
+// Inline tag mode — first tag + "+N others" overflow chip
+<SearchSelectMulti
+  label="Regions"
+  options={REGIONS}
+  value={regions}
+  onChange={setRegions}
+  tagsInside
+/>
+```
+
+### Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `label` | `string` | — | Field label |
+| `required` | `boolean` | `false` | Renders the red asterisk after the label |
+| `placeholder` | `string` | `'Select…'` | Placeholder when no value is selected |
+| `options` | `Option[]` | `[]` | Flat or nested options. Each `Option` is `{ value, label, disabled?, children? }` |
+| `value` | `string` (single) / `string[]` (multi) | — | Selected leaf value(s) |
+| `onChange` | `fn` | — | Fires with new value / value array |
+| `disabled` | `boolean` | `false` | Disables the field |
+| `error` | `string` | — | Shows the error border and inline message |
+| `maxTags` *(multi only)* | `number` | — | Cap the number of selected leaves |
+| `tagsInside` *(multi only)* | `boolean` | `false` | Render tags inside the field with `+N others` overflow instead of below |
+| `parentsSelectable` | `boolean` | `false` | Allow branch nodes to be selected as values (rather than being purely grouping headers). Opt-in — see [Selection model](#selection-model). |
+
+---
+
+## Engineering questions to validate
+
+Before this component is committed to as the standard for the platform, the
+following questions need answers from engineering / Brian. Each one has a
+default the design system *assumes* today, but the answer changes either the
+API surface or the implementation strategy.
+
+1. **Can this be implemented on top of ng-select, or does it require a custom
+   wrapper?** ng-select handles flat lists, search, and chips well, but the
+   nested tree + indeterminate parent checkbox model is not native. We need to
+   know whether to extend ng-select via `<ng-option>` templates or build a
+   thin custom component that delegates only the popover positioning.
+2. **Should parent options ever be selectable as values?** See
+   [Selection model](#selection-model). The default is leaves-only. If the
+   API can accept a parent token (e.g. `region=nairobi`), we ship
+   `parentsSelectable` as a first-class prop; if it cannot, we drop the prop
+   entirely and document leaves-only as the rule.
+3. **Should a multi-select parent click select all child leaves, or only
+   expand / collapse?** Today the spec says click-parent = toggle-all-leaves
+   and expansion is a separate chevron. Confirm this matches the dashboard
+   filter mental model — if users expect parent click to expand only, we'd
+   need to add an explicit "select all in this group" affordance.
+4. **Should the region selector in the top toolbar use the input version
+   (`SearchSelect`) or the button version (`SearchSelectButton`)?**
+   The current Toolbar uses a custom `ToolbarRegionSelector`. If we want one
+   component for both the form usage and the toolbar usage, we should pick
+   `SearchSelectButton` and retire the bespoke selector.
+5. **What is the max supported hierarchy depth?** The doc recommends 3, but
+   engineering should confirm whether the data layer ever produces deeper
+   trees and, if so, whether we render them or refuse to render past the cap.
+6. **Should selected tags appear inside the field by default or below it for
+   dashboard filters?** Today `tagsInside={false}` is the default. For
+   dashboard filter rows where the trigger sits in a fixed-height table cell,
+   `tagsInside={true}` may be more appropriate as the default — but flipping
+   the default would change behaviour for every existing consumer.
+7. **What combined states do we want for focused + error?** The doc proposes
+   "error wins on border colour, focus ring still shown". Confirm this
+   matches the rest of the form-field stack (TextInput, SelectInput,
+   TextareaInput) — if those resolve combined states differently, we should
+   align.
+8. **Should this replace all form-floating selector usage, or only new flows
+   first?** A blanket replacement is cheaper to maintain but riskier to ship.
+   A flow-by-flow rollout means living with two selectors in the codebase for
+   a period. Engineering should decide which path is preferred.
+
+---
+
+<Canvas of={SearchSelectStories.SingleSelect} />
+<Canvas of={SearchSelectStories.MultiSelect} />
