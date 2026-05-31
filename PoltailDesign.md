@@ -187,6 +187,80 @@ Use multiples of 4px. Common values: `4` `6` `8` `10` `12` `14` `16` `20` `24`
 
 ---
 
+## Item Shape & Callback Contract
+
+Every component that takes an array of selectable things — options, choices, tabs, nav items, breadcrumbs — follows one shared contract. Helpers live in `src/foundation/itemShape.js` (`getItemId`, `getItemLabel`); use them instead of reaching into `item.id` / `item.value` directly so the fallback + deprecation warning stay in one place.
+
+### Item shape
+
+```js
+{ id, label, disabled?, ...componentExtras }
+```
+
+- **`id`** — REQUIRED canonical identity. Emitted by selection callbacks and used for controlled-selection matching. Stable across re-orderings.
+- **`label`** — display text (string or ReactNode).
+- **`disabled?`** — optional; opts the item out of interaction.
+- Component-specific extras stay on the item: `helpText`, `description`, `badge`, `media`, `icon`, `children` (tree nodes), etc.
+
+**`value` is DEPRECATED** as an identity key. It is still honored as a fallback (so legacy call-sites keep working) but logs a one-time console warning per component nudging migration to `id`. New data must use `id`. Note: `value` remains the correct prop for a controlled form field's *current value* (`<TextInput value=… />`) and for DescriptionList-style `{ label, value }` display pairs — the deprecation is only about item *identity* keys inside option arrays.
+
+```jsx
+// ✅ canonical
+options={[{ id: 'morning', label: 'Morning' }, { id: 'evening', label: 'Evening' }]}
+
+// ⚠️ legacy — still works, warns once per component
+options={[{ value: 'morning', label: 'Morning' }]}
+```
+
+Components on this contract: `SelectInput`, `OptionList`, `RadioGroup` / `ChoiceList`, `SearchSelect` / `SearchSelectMulti` / `SearchSelectButton`, `Tabs`, `Breadcrumbs`, `SideNavigation`.
+
+### Callback naming
+
+| Intent | Canonical callback | Fired with |
+|--------|--------------------|------------|
+| Form-value emission (inputs, checkboxes, radios, option lists, selects) | `onChange` | the new value (or DOM event for native inputs) |
+| Navigation / structural selection (tabs, breadcrumbs, side nav) | `onSelect` | `(id, item, index)` |
+
+- **`onSelect(id, item, index)`** is the single navigation/selection signature across the system. `id` is the item's canonical identity (falling back to the string-coerced index when no `id`/`key` is set); `item` is the full item; `index` is its position, for callers that track selection positionally.
+- Legacy aliases have been **removed** (hard rename) — there is no `Tabs.onChange`(index), no `Breadcrumbs.onNavigate`, no `SideNavigation.onItemSelect`. Use `onSelect`.
+
+```jsx
+// Tabs / Breadcrumbs — read the 3rd arg when you track position
+<Tabs activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} tabs={…} />
+<Breadcrumbs items={trail} onSelect={(_id, _item, i) => setTrail(trail.slice(0, i + 1))} />
+
+// SideNavigation — id-based
+<SideNavigation activeItemId={activeId} onSelect={setActiveId} items={…} />
+```
+
+### Navigation sync: one `activeId` drives rail + header + breadcrumbs
+
+SideNavigation, the Page header, and Breadcrumbs are **one navigation system** — they're all driven by a single `activeId` so they can't drift apart. Two helper exports from `SideNavigation.jsx` derive the dependent surfaces from the shared nav `items` tree:
+
+- **`siblingsFor(items, activeId)`** → the Page header's `titleDisclosure` (sibling chevron menu), or `null` to hide it.
+- **`trailFor(items, activeId, { home })`** → the Breadcrumbs `trail`. Returns `[home]` on the home page, `[home, item]` for a top-level page, `[home, group, child]` for a sub-item.
+
+The breadcrumb's "step back as reset" logic then becomes the navigation model for the whole shell:
+
+```jsx
+const [activeId, setActiveId] = useState('coldchain');
+const trail = trailFor(NAV_ITEMS, activeId, { home: HOME_CRUMB });
+
+function onCrumb(id) {
+  if (id === HOME_CRUMB.id) return setActiveId('home');   // Home resets the trail
+  const group = NAV_ITEMS.find((it) => it.id === id && it.children);
+  setActiveId(group ? group.children[0].id : id);         // group crumb → its first child
+}
+
+<SideNavigation items={NAV_ITEMS} activeItemId={activeId} onSelect={setActiveId} … />
+<Page titleDisclosure={siblingsFor(NAV_ITEMS, activeId)} … />
+<Breadcrumbs items={trail} onSelect={onCrumb} />
+```
+
+**Home is a top-level landing surface.** When `activeId === 'home'`, render the shell **without** the side rail — only the breadcrumb (`[Home]`) shows. Picking a section from the Home page calls `setActiveId`, bringing the rail back and growing the breadcrumb to `Home → Section`. See **Application Layout → Sectioned Layout**.
+
+---
+
 ## Component Patterns
 
 ### `Btn` — Button
@@ -217,7 +291,7 @@ Props: `label`, `value`, `onChange`, `type`, `placeholder`, `prefix`, `suffix`, 
 <SelectInput label="Status" required value={v} onChange={fn} options={OPTIONS} placeholder="Select…" />
 <SelectInput label="Status" error="Required." value={v} onChange={fn} options={OPTIONS} />
 ```
-Props: `label`, `options` (string[] or `{value, label}[]`), `placeholder`, `disabled`, `value`, `onChange`, `required`, `error`, `helpText`
+Props: `label`, `options` (string[] or `{id, label}[]`), `placeholder`, `disabled`, `value`, `onChange`, `required`, `error`, `helpText`
 
 ### `SearchSelect` — Searchable Single Select
 ```jsx
@@ -231,7 +305,7 @@ Props: `label`, `options` (string[] or `{value, label}[]`), `placeholder`, `disa
 - Trigger becomes a live `<input>` when open — typing filters the dropdown
 - Options can carry `children` for hierarchical menus (unbounded depth, indented by `level * 20px`, parent labels in weight 600)
 - In single-select, branches are non-selectable — only leaves can be picked
-- Props: `label`, `required`, `placeholder`, `options` (`{value, label, disabled?, children?}[]`), `value`, `onChange`, `disabled`, `error`
+- Props: `label`, `required`, `placeholder`, `options` (`{id, label, disabled?, children?}[]`), `value`, `onChange`, `disabled`, `error`
 
 ### `SearchSelectButton` — Button-trigger Search Select
 ```jsx
@@ -299,8 +373,8 @@ Props: `label`, `options` (string[] or `{value, label}[]`), `placeholder`, `disa
   value={v}
   onChange={setV}
   options={[
-    { value: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
-    { value: 'sms',   label: 'SMS' },
+    { id: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
+    { id: 'sms',   label: 'SMS' },
   ]}
 />
 <RadioGroup title="Plan" required tone="magic" value={v} onChange={setV} options={OPTS} error="Required." />
@@ -427,11 +501,11 @@ Props: `content`, `position` (above/below), `children`
 <OptionList options={OPTIONS} selected={selected} onChange={setSelected} />
 <OptionList options={OPTIONS} selected={selected} onChange={setSelected} allowMultiple />
 <OptionList sections={[
-  { title: 'Actions', options: [{ value: 'edit', label: 'Edit' }] },
-  { title: '', options: [{ value: 'delete', label: 'Delete', tone: 'critical' }] },
+  { title: 'Actions', options: [{ id: 'edit', label: 'Edit' }] },
+  { title: '', options: [{ id: 'delete', label: 'Delete', tone: 'critical' }] },
 ]} onChange={handleChange} />
 ```
-Props: `title`, `options` (`{value, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections`, `error`
+Props: `title`, `options` (`{id, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections`, `error`
 
 ### `IndexTable` — Data Table
 ```jsx
@@ -454,10 +528,10 @@ Props: `title`, `options` (`{value, label, badge, media, disabled, description}[
 
 ### `Tabs` — Tab Bar
 ```jsx
-<Tabs tabs={[{ label: 'Overview' }, { label: 'History', badge: '3' }]} activeIndex={i} onChange={setI} />
-<Tabs tabs={TABS} activeIndex={i} onChange={setI} fitted />
+<Tabs tabs={[{ id: 'overview', label: 'Overview' }, { id: 'history', label: 'History', badge: '3' }]} activeIndex={i} onSelect={(_id, _item, idx) => setI(idx)} />
+<Tabs tabs={TABS} activeIndex={i} onSelect={(_id, _item, idx) => setI(idx)} fitted />
 ```
-Props: `tabs` (`{label, badge, disabled}[]`), `activeIndex`, `onChange`, `fitted`, `moreViews`, `canAddNew`, `mobile`
+Props: `tabs` (`{id, label, badge, disabled}[]`), `activeIndex`, `onSelect` (`(id, item, index)`), `fitted`, `moreViews`, `canAddNew`, `mobile`
 
 ### `Pagination` — Prev / Next
 ```jsx

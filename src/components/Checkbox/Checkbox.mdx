@@ -137,9 +137,9 @@ import { NxCheckboxModule } from 'components/Checkbox/checkbox.module';
   [selected]="val"
   (change)="val = $event"
   [choices]="[
-    { label: 'Morning', value: 'morning' },
-    { label: 'Evening', value: 'evening' },
-    { label: 'Both',    value: 'both', disabled: true }
+    { label: 'Morning', id: 'morning' },
+    { label: 'Evening', id: 'evening' },
+    { label: 'Both',    id: 'both', disabled: true }
   ]"
 />
 ```
@@ -168,9 +168,9 @@ const [checked, setChecked] = useState(false);
   selected={val}
   onChange={setVal}
   choices={[
-    { label: 'Morning', value: 'morning' },
-    { label: 'Evening', value: 'evening' },
-    { label: 'Both',    value: 'both', disabled: true },
+    { label: 'Morning', id: 'morning' },
+    { label: 'Evening', id: 'evening' },
+    { label: 'Both',    id: 'both', disabled: true },
   ]}
 />
 ```

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
 
 const IcoErrorCircle = () => (
   <svg width={16} height={16} viewBox="0 0 20 20" fill="#d92d20" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -11,11 +12,27 @@ const IcoErrorCircle = () => (
 export function TextareaInput({
   label, placeholder, value, onChange, disabled, readOnly,
   required, helpText, error, labelAction, onLabelAction,
-  rows = 4, maxLength,
+  rows = 4, maxLength, skeleton = false,
 }) {
   const [internalVal, setInternalVal] = useState(value || '');
   const [focused,  setFocused]  = useState(false);
   const [hovered,  setHovered]  = useState(false);
+
+  // Skeleton mode short-circuits rendering (hooks above stay called so order is
+  // stable if a parent toggles `skeleton` in place). Block height tracks `rows`
+  // so the placeholder matches the real textarea's footprint (no layout jump).
+  if (skeleton) {
+    const fieldHeight = 16 + rows * 20; // vertical padding + rows × line-height
+    return (
+      <SkeletonGroup label={`Loading ${typeof label === 'string' ? label : 'field'}`}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {label && <Skeleton.Line width={120} height={13} />}
+          <Skeleton width="100%" height={fieldHeight} radius={8} ariaLabel={null} />
+        </div>
+      </SkeletonGroup>
+    );
+  }
+
   const isControlled = onChange !== undefined;
   const val = isControlled ? (value || '') : internalVal;
 

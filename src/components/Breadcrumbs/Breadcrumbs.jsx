@@ -123,7 +123,7 @@ function Crumb({ label, icon, iconOnly, isCurrent, onClick, disabled, maxLabelCh
 }
 
 // ── "..." crumb with hover/click popover showing hidden middle items ──────
-function EllipsisCrumb({ hiddenItems, startIndex, onNavigate, disabled }) {
+function EllipsisCrumb({ hiddenItems, startIndex, onPick, disabled }) {
   const [hov, setHov] = useState(false);
   const [foc, setFoc] = useState(false);
   const [open, setOpen] = useState(false);
@@ -207,10 +207,10 @@ function EllipsisCrumb({ hiddenItems, startIndex, onNavigate, disabled }) {
         >
           <OptionList
             options={hiddenItems.map((it, i) => ({
-              value: startIndex + i,
+              id: startIndex + i,
               label: it.label,
             }))}
-            onChange={(val) => { setOpen(false); onNavigate(val); }}
+            onChange={(val) => { setOpen(false); onPick(val); }}
           />
         </div>
       )}
@@ -265,10 +265,11 @@ function BreadcrumbsSkeleton() {
 //                                       on as aria-label + title tooltip.
 //   }
 //
-// Two navigation callbacks are supported, both fire on click:
-//   • onSelect(id, item)       — preferred, system-standard API.
-//                                 id = item.id ?? item.key ?? String(index).
-//   • onNavigate(index, item)  — legacy. Still supported for back-compat.
+// Navigation callback (fires on click):
+//   • onSelect(id, item, index) — system-standard API.
+//                                  id = item.id ?? item.key ?? String(index).
+//                                  index is provided for callers that track
+//                                  selection by position.
 //
 // Collapse rule: collapseAfter is the threshold. When items.length is
 // greater than collapseAfter (default 3), the trail renders as
@@ -282,7 +283,6 @@ function BreadcrumbsSkeleton() {
 //
 export function Breadcrumbs({
   items = [],
-  onNavigate,
   onSelect,
   collapseAfter = 3,
   disabled = false,
@@ -313,12 +313,11 @@ export function Breadcrumbs({
   function handleNav(i) {
     if (disabled) return;
     const item = items[i];
-    if (onNavigate) onNavigate(i, item);
     if (onSelect) {
       const id = item && item.id != null
         ? item.id
         : (item && item.key != null ? item.key : String(i));
-      onSelect(id, item);
+      onSelect(id, item, i);
     }
   }
 
@@ -348,7 +347,7 @@ export function Breadcrumbs({
                 <EllipsisCrumb
                   hiddenItems={node.hidden}
                   startIndex={node.startIndex}
-                  onNavigate={handleNav}
+                  onPick={handleNav}
                   disabled={disabled}
                 />
               )}

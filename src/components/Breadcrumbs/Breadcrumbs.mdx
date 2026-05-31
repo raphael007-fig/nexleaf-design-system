@@ -23,10 +23,9 @@ Do **not** use Breadcrumbs as the primary nav. They supplement the sidebar/top-n
 
 ## Trail behaviour ("step back as reset")
 
-Breadcrumbs is **stateless** — the consumer owns the trail array. The component renders the trail and fires a navigation callback when a crumb is clicked. Two callbacks are supported (both fire on click — pick one):
+Breadcrumbs is **stateless** — the consumer owns the trail array. The component renders the trail and fires its navigation callback when a crumb is clicked:
 
-- **`onSelect(id, item)`** — preferred, system-standard signature. `id` is `item.id ?? item.key ?? String(index)`.
-- **`onNavigate(index, item)`** — legacy. Still supported for back-compat; new code should use `onSelect`.
+- **`onSelect(id, item, index)`** — system-standard signature. `id` is `item.id ?? item.key ?? String(index)`. The 3rd `index` arg is provided for callers that track selection by position.
 
 The canonical consumer pattern:
 
@@ -38,7 +37,7 @@ function navigate(index) {
   setTrail(trail.slice(0, index + 1));
 }
 
-<Breadcrumbs items={trail} onNavigate={navigate} />
+<Breadcrumbs items={trail} onSelect={(_id, _item, i) => navigate(i)} />
 ```
 
 What this means in practice:
@@ -65,7 +64,7 @@ Going *deeper* is the consumer's responsibility (push a new item onto the trail 
 - **"…" menu** — holds every crumb between the second and the last
 - **last crumb** — the current page (grey pill, not clickable)
 
-Hover or click "…" to open the popover; clicking any item inside it calls `onNavigate` with that item's original index. Raising `collapseAfter` only delays when collapsing kicks in — the rendered layout stays the same once collapsed.
+Hover or click "…" to open the popover; clicking any item inside it calls `onSelect` with that item's original index (as the 3rd arg). Raising `collapseAfter` only delays when collapsing kicks in — the rendered layout stays the same once collapsed.
 
 <table style={{ borderCollapse: 'collapse', fontFamily: 'Inter, sans-serif', fontSize: 14, margin: '12px 0' }}>
   <thead>
@@ -113,8 +112,7 @@ Hover or click "…" to open the popover; clicking any item inside it calls `onN
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `items` | `{ label, id?, key?, icon?, iconOnly? }[]` | `[]` | Ordered trail. The last item is rendered as the current page (grey pill, not clickable). `id` is optional; if omitted, `onSelect` falls back to `item.key ?? String(index)`. `icon` renders before the label; pass `iconOnly: true` to collapse the label and render a 28×28 square pill (label is kept as the accessible name + tooltip). The Home crumb across the project uses `iconOnly` with `PolarisIconImg name="HomeFilledIcon"`. |
-| `onSelect` | `(id: string\|number, item) => void` | — | **Preferred.** Fired when any crumb is clicked. `id` is `item.id ?? item.key ?? String(index)`. Matches the system-standard navigation callback shape. |
-| `onNavigate` | `(index: number, item) => void` | — | **Legacy** (still supported). Fired alongside `onSelect`. New code should use `onSelect`. |
+| `onSelect` | `(id: string\|number, item, index: number) => void` | — | Fired when any crumb is clicked. `id` is `item.id ?? item.key ?? String(index)`. `index` is the crumb's position in the trail. Matches the system-standard navigation callback shape. |
 | `loading` | `boolean` | `false` | When true, renders 3 skeleton chips with skeleton chevrons. The overflow-popover logic is skipped while loading. |
 | `collapseAfter` | `number` | `3` | Render the full trail when `items.length` ≤ this. Otherwise collapse the middle into a "…" menu. |
 | `maxLabelChars` | `number` | `16` | Truncates any crumb label longer than this with a trailing "…". The full label is still exposed via the `title` tooltip and `aria-label`. Set to `0` to disable. |
@@ -163,9 +161,9 @@ Skeletons match the system pulse (`Skeleton` from `components/Skeleton`).
 
 ---
 
-## `onSelect` — preferred callback
+## `onSelect` — navigation callback
 
-Going forward, all navigation-style components in the system fire `onSelect(id, item)`. Breadcrumbs honors that contract while still firing the legacy `onNavigate(index, item)` for back-compat — both fire on click.
+All navigation-style components in the system fire `onSelect(id, item, index)`. Breadcrumbs honors that contract — `id` is the crumb's stable identity, and the 3rd `index` arg gives its position in the trail.
 
 ```jsx
 const trail = [

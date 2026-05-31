@@ -17,7 +17,7 @@ const DEMO_TABS = [
 export const Default = {
   render: () => {
     const [active, setActive] = useState(0);
-    return <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} />;
+    return <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />;
   },
 };
 
@@ -30,21 +30,21 @@ export const WithBadges = {
       { label: 'Draft', badge: '8' },
       { label: 'Archived', badge: '22' },
     ];
-    return <Tabs tabs={tabs} activeIndex={active} onChange={setActive} />;
+    return <Tabs tabs={tabs} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />;
   },
 };
 
 export const WithMoreViews = {
   render: () => {
     const [active, setActive] = useState(0);
-    return <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} moreViews />;
+    return <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} moreViews />;
   },
 };
 
 export const WithAddNew = {
   render: () => {
     const [active, setActive] = useState(0);
-    return <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} canAddNew />;
+    return <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} canAddNew />;
   },
 };
 
@@ -52,7 +52,7 @@ export const WithActions = {
   render: () => {
     const [active, setActive] = useState(0);
     const tabs = DEMO_TABS.map((t, i) => ({ ...t, actions: i === active }));
-    return <Tabs tabs={tabs} activeIndex={active} onChange={setActive} />;
+    return <Tabs tabs={tabs} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />;
   },
 };
 
@@ -61,7 +61,7 @@ export const Fitted = {
     const [active, setActive] = useState(0);
     return (
       <div style={{ width: 400 }}>
-        <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} fitted />
+        <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} fitted />
       </div>
     );
   },
@@ -89,7 +89,7 @@ export const InteractionStates = {
 
     return (
       <div style={{ fontFamily: 'Inter, sans-serif', width: 560 }}>
-        <Tabs tabs={tabs} activeIndex={active} onChange={setActive} />
+        <Tabs tabs={tabs} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />
         <div style={{
           marginTop: 0, padding: '16px 20px',
           background: '#ffffff', border: '1px solid #e0e0e0',
@@ -112,32 +112,32 @@ export const AllStates = {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24, fontFamily: 'Inter, sans-serif' }}>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Default</div>
-          <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} />
+          <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>With badges</div>
-          <Tabs activeIndex={active} onChange={setActive} tabs={[
+          <Tabs activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} tabs={[
             { label: 'All', badge: '42' }, { label: 'Active', badge: '12' },
             { label: 'Draft', badge: '8' }, { label: 'Archived', badge: '22' },
           ]} />
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>With disabled tab</div>
-          <Tabs activeIndex={0} onChange={() => {}} tabs={[
+          <Tabs activeIndex={0} onSelect={() => {}} tabs={[
             { label: 'All' }, { label: 'Active' }, { label: 'Draft', disabled: true }, { label: 'Archived' },
           ]} />
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Fitted (400px container)</div>
           <div style={{ width: 400 }}>
-            <Tabs fitted activeIndex={active2} onChange={setActive2} tabs={[
+            <Tabs fitted activeIndex={active2} onSelect={(_id, _item, i) => setActive2(i)} tabs={[
               { label: 'Morning' }, { label: 'Evening' }, { label: 'Both' },
             ]} />
           </div>
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>More views + Add new</div>
-          <Tabs tabs={DEMO_TABS} activeIndex={active} onChange={setActive} moreViews canAddNew />
+          <Tabs tabs={DEMO_TABS} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} moreViews canAddNew />
         </div>
       </div>
     );
@@ -153,6 +153,6 @@ export const WithDisabled = {
       { label: 'Draft', disabled: true },
       { label: 'Archived' },
     ];
-    return <Tabs tabs={tabs} activeIndex={active} onChange={setActive} />;
+    return <Tabs tabs={tabs} activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} />;
   },
 };

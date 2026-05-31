@@ -7,55 +7,55 @@ export default {
 };
 
 const REGIONS = [
-  { value: 'nairobi',   label: 'Nairobi' },
-  { value: 'mombasa',   label: 'Mombasa' },
-  { value: 'kisumu',    label: 'Kisumu' },
-  { value: 'nakuru',    label: 'Nakuru' },
-  { value: 'eldoret',   label: 'Eldoret' },
-  { value: 'kilimani',  label: 'Kilimani' },
-  { value: 'westlands', label: 'Westlands' },
-  { value: 'karen',     label: 'Karen' },
-  { value: 'langata',   label: "Lang'ata" },
-  { value: 'malindi',   label: 'Malindi' },
-  { value: 'thika',     label: 'Thika' },
-  { value: 'kitale',    label: 'Kitale' },
+  { id: 'nairobi',   label: 'Nairobi' },
+  { id: 'mombasa',   label: 'Mombasa' },
+  { id: 'kisumu',    label: 'Kisumu' },
+  { id: 'nakuru',    label: 'Nakuru' },
+  { id: 'eldoret',   label: 'Eldoret' },
+  { id: 'kilimani',  label: 'Kilimani' },
+  { id: 'westlands', label: 'Westlands' },
+  { id: 'karen',     label: 'Karen' },
+  { id: 'langata',   label: "Lang'ata" },
+  { id: 'malindi',   label: 'Malindi' },
+  { id: 'thika',     label: 'Thika' },
+  { id: 'kitale',    label: 'Kitale' },
 ];
 
 const STATUS_OPTIONS = [
-  { value: 'active',        label: 'Active' },
-  { value: 'inactive',      label: 'Inactive' },
-  { value: 'pending',       label: 'Pending' },
-  { value: 'decommissioned',label: 'Decommissioned' },
-  { value: 'under_maintenance', label: 'Under Maintenance' },
+  { id: 'active',        label: 'Active' },
+  { id: 'inactive',      label: 'Inactive' },
+  { id: 'pending',       label: 'Pending' },
+  { id: 'decommissioned',label: 'Decommissioned' },
+  { id: 'under_maintenance', label: 'Under Maintenance' },
 ];
 
 // ─── Hierarchical (nested) options ────────────────────────────────────────────
 // Two levels: country → city. Used by the "Nested options" stories below.
 const NESTED_REGIONS = [
   {
-    value: 'nairobi', label: 'Nairobi',
+    id: 'nairobi', label: 'Nairobi',
     children: [
-      { value: 'kilimani',  label: 'Kilimani' },
-      { value: 'dagoretti', label: 'Dagoretti' },
-      { value: 'westlands', label: 'Westlands' },
-      { value: 'karen',     label: 'Karen' },
-      { value: 'langata',   label: "Lang'ata" },
+      { id: 'kilimani',  label: 'Kilimani' },
+      { id: 'dagoretti', label: 'Dagoretti' },
+      { id: 'westlands', label: 'Westlands' },
+      { id: 'karen',     label: 'Karen' },
+      { id: 'langata',   label: "Lang'ata" },
     ],
   },
   {
-    value: 'karnataka', label: 'Karnataka',
+    id: 'karnataka', label: 'Karnataka',
     children: [
-      { value: 'bengaluru', label: 'Bengaluru' },
-      { value: 'mysuru',    label: 'Mysuru' },
-      { value: 'mangaluru', label: 'Mangaluru' },
+      { id: 'bengaluru', label: 'Bengaluru' },
+      { id: 'mysuru',    label: 'Mysuru' },
+      { id: 'mangaluru', label: 'Mangaluru' },
     ],
   },
   {
-    value: 'lagos', label: 'Lagos',
+    id: 'lagos', label: 'Lagos',
     children: [
-      { value: 'ikeja',    label: 'Ikeja' },
-      { value: 'lekki',    label: 'Lekki' },
-      { value: 'surulere', label: 'Surulere' },
+      { id: 'ikeja',    label: 'Ikeja' },
+      { id: 'lekki',    label: 'Lekki' },
+      { id: 'surulere', label: 'Surulere' },
     ],
   },
 ];
@@ -63,41 +63,41 @@ const NESTED_REGIONS = [
 // Three levels deep: continent → country → region. Demonstrates indeterminate state cascading.
 const DEEP_TREE = [
   {
-    value: 'africa', label: 'Africa',
+    id: 'africa', label: 'Africa',
     children: [
       {
-        value: 'kenya', label: 'Kenya',
+        id: 'kenya', label: 'Kenya',
         children: [
-          { value: 'nairobi-region', label: 'Nairobi' },
-          { value: 'coast',          label: 'Coast' },
-          { value: 'rift-valley',    label: 'Rift Valley' },
+          { id: 'nairobi-region', label: 'Nairobi' },
+          { id: 'coast',          label: 'Coast' },
+          { id: 'rift-valley',    label: 'Rift Valley' },
         ],
       },
       {
-        value: 'nigeria', label: 'Nigeria',
+        id: 'nigeria', label: 'Nigeria',
         children: [
-          { value: 'lagos-state', label: 'Lagos' },
-          { value: 'abuja',       label: 'Abuja' },
+          { id: 'lagos-state', label: 'Lagos' },
+          { id: 'abuja',       label: 'Abuja' },
         ],
       },
     ],
   },
   {
-    value: 'asia', label: 'Asia',
+    id: 'asia', label: 'Asia',
     children: [
       {
-        value: 'india', label: 'India',
+        id: 'india', label: 'India',
         children: [
-          { value: 'karnataka-state', label: 'Karnataka' },
-          { value: 'maharashtra',     label: 'Maharashtra' },
-          { value: 'tamil-nadu',      label: 'Tamil Nadu' },
+          { id: 'karnataka-state', label: 'Karnataka' },
+          { id: 'maharashtra',     label: 'Maharashtra' },
+          { id: 'tamil-nadu',      label: 'Tamil Nadu' },
         ],
       },
       {
-        value: 'indonesia', label: 'Indonesia',
+        id: 'indonesia', label: 'Indonesia',
         children: [
-          { value: 'jakarta', label: 'Jakarta' },
-          { value: 'bali',    label: 'Bali' },
+          { id: 'jakarta', label: 'Jakarta' },
+          { id: 'bali',    label: 'Bali' },
         ],
       },
     ],
@@ -383,7 +383,7 @@ export const TagsInside = {
             label="Region"
             placeholder="Select regions"
             options={[
-              { value: 'long', label: 'A very long region name that will not fit in fifty percent' },
+              { id: 'long', label: 'A very long region name that will not fit in fifty percent' },
               ...REGIONS,
             ]}
             value={['long', 'mombasa', 'kisumu']}
@@ -416,20 +416,20 @@ export const TagsInside = {
 
 const NESTED_REGIONS_BTN = [
   {
-    value: 'nairobi', label: 'Nairobi',
+    id: 'nairobi', label: 'Nairobi',
     children: [
-      { value: 'dagoretti',     label: 'Dagoretti' },
-      { value: 'embakasi-east', label: 'Embakasi East' },
-      { value: 'embakasi-west', label: 'Embakasi West' },
-      { value: 'kumukunji',     label: 'Kumukunji' },
+      { id: 'dagoretti',     label: 'Dagoretti' },
+      { id: 'embakasi-east', label: 'Embakasi East' },
+      { id: 'embakasi-west', label: 'Embakasi West' },
+      { id: 'kumukunji',     label: 'Kumukunji' },
     ],
   },
   {
-    value: 'karnatika', label: 'Karnatika',
+    id: 'karnatika', label: 'Karnatika',
     children: [
-      { value: 'chamarajanagar', label: 'Chamarajanagar' },
-      { value: 'karuna-trust',   label: 'Karuna Trust' },
-      { value: 'shimoga',        label: 'Shimoga' },
+      { id: 'chamarajanagar', label: 'Chamarajanagar' },
+      { id: 'karuna-trust',   label: 'Karuna Trust' },
+      { id: 'shimoga',        label: 'Shimoga' },
     ],
   },
 ];
@@ -595,10 +595,10 @@ export const ButtonLongLabelOverflow = {
   name: 'Button trigger — long first label keeps "+N Others" visible',
   render: () => {
     const opts = [
-      { value: 'long', label: 'A very long region name that should ellipsise' },
-      { value: 'mombasa', label: 'Mombasa' },
-      { value: 'kisumu',  label: 'Kisumu' },
-      { value: 'nakuru',  label: 'Nakuru' },
+      { id: 'long', label: 'A very long region name that should ellipsise' },
+      { id: 'mombasa', label: 'Mombasa' },
+      { id: 'kisumu',  label: 'Kisumu' },
+      { id: 'nakuru',  label: 'Nakuru' },
     ];
     const [a, setA] = useState(['long']);
     const [b, setB] = useState(['long', 'mombasa', 'kisumu', 'nakuru']);

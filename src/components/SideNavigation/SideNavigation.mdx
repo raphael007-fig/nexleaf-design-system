@@ -89,8 +89,7 @@ This is the case to try in the story below: collapse the rail with the footer bu
 |---|---|---|
 | `items` | `NavItem[]` | Top-level items. `{ id, label, icon?, onClick?, disabled?, children? }`. `children` is `[{ id, label, onClick?, disabled? }]`. |
 | `activeItemId` | `string` | Currently-selected id (top-level OR sub). If it matches a child, its parent auto-expands. |
-| `onSelect` | `(id) => void` | **Preferred.** Fired for any item or sub-item click. |
-| `onItemSelect` | `(id) => void` | Legacy alias of `onSelect`. Both fire when both are provided. New consumers should prefer `onSelect`. |
+| `onSelect` | `(id) => void` | Fired for any item or sub-item click. |
 | `logo` | `ReactNode` | Slot rendered at the top of the panel inside a 44 px-tall flex centre. |
 | `footer` | `ReactNode` | Optional bottom slot (collapse toggle, user chip, etc.). |
 | `collapsed` | `boolean` | Switches to icon-only layout. Default `false`. |
@@ -191,6 +190,53 @@ if (disclosure) disclosure.onSelect = setCurrentPageId;
 ```
 
 The helper deliberately doesn't bake in `onSelect` — the caller wires it after, so navigation stays inside the consumer's state model.
+
+### `trailFor(items, currentId, options?)`
+
+Companion to `siblingsFor`, also a named export from `SideNavigation.jsx`. Walks the same nav `items` tree and returns the ordered **Breadcrumbs trail** for the current page — so SideNavigation, the Page header, and Breadcrumbs all stay driven by one `activeId`:
+
+```js
+import { trailFor } from '…/SideNavigation/SideNavigation.jsx';
+
+const HOME_CRUMB = { id: 'home', label: 'Home', icon: <PolarisIconImg name="HomeFilledIcon" />, iconOnly: true };
+
+trailFor(NAV_ITEMS, 'coldchain', { home: HOME_CRUMB });
+// → [ HOME_CRUMB,
+//     { id: 'inventory', label: 'Inventory' },     // group segment
+//     { id: 'coldchain', label: 'ColdChain Equipment' } ]
+```
+
+The shape of the result depends on where `currentId` lives in the tree:
+
+| `currentId` | Returned trail |
+|---|---|
+| the home id (or `null` / unknown) | `[home]` — the Home landing page |
+| a top-level leaf | `[home, item]` |
+| a child of a group | `[home, group, child]` |
+
+- `options.home` is the crumb object used as the root (pass the same one Breadcrumbs renders — typically `iconOnly` with a Home icon). Omit it and the trail starts at the first matched segment.
+- The **group segment carries the group's own id**, so a click on it maps back to a real destination (a section has no page of its own — land on its first child).
+
+### Keeping the rail, header, and breadcrumbs in sync
+
+`trailFor` + `siblingsFor` let one `activeId` drive all three navigation surfaces. The breadcrumb's "step back as reset" logic then becomes the navigation model for the whole shell:
+
+```jsx
+const [activeId, setActiveId] = useState('coldchain');
+const trail = trailFor(NAV_ITEMS, activeId, { home: HOME_CRUMB });
+
+function onCrumb(id) {
+  if (id === HOME_CRUMB.id) return setActiveId('home');     // Home resets the trail
+  const group = NAV_ITEMS.find((it) => it.id === id && it.children);
+  setActiveId(group ? group.children[0].id : id);           // group → its first child
+}
+
+<SideNavigation items={NAV_ITEMS} activeItemId={activeId} onSelect={setActiveId} … />
+<Page title={…} titleDisclosure={siblingsFor(NAV_ITEMS, activeId)} … />
+<Breadcrumbs items={trail} onSelect={onCrumb} />
+```
+
+**Home is a top-level landing surface.** When `activeId === 'home'`, render the page **without** the side rail — only the breadcrumb (just `[Home]`) shows. Selecting a section from the Home page calls `setActiveId`, which brings the rail back and grows the breadcrumb to `Home → Section`, tracing exactly where the user entered from. See the **Application Layout → Sectioned Layout** story for the full wiring.
 
 ---
 

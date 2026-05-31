@@ -145,8 +145,10 @@
   /* ─────────────────────────────────────────────
    * BORDER RADIUS
    * ───────────────────────────────────────────── */
-  --nx-radius-sm:     8px;   /* Buttons, inputs, banners, list containers */
-  --nx-radius-md:    10px;   /* Accordions */
+  --nx-radius-xs:      4px;   /* Dismiss buttons, tiny chips, inner icon hit-areas */
+  --nx-radius-control: 6px;   /* Compact icon controls (row-action menu, pagination cells) */
+  --nx-radius-sm:      8px;   /* Buttons, inputs, banners, list containers */
+  --nx-radius-md:     10px;   /* Accordions */
   --nx-radius-lg:    12px;   /* Option-card, checkbox containers */
   --nx-radius-xl:    16px;   /* Proto/navigation cards */
   --nx-radius-pill: 100px;   /* Badges, pills */

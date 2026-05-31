@@ -8,10 +8,10 @@ export default {
 };
 
 const LOCATIONS = [
-  { value: 'apple-valley', label: 'Apple Valley' },
-  { value: 'omaha',        label: 'Omaha' },
-  { value: 'duluth',       label: 'Duluth' },
-  { value: 'minneapolis',  label: 'Minneapolis' },
+  { id: 'apple-valley', label: 'Apple Valley' },
+  { id: 'omaha',        label: 'Omaha' },
+  { id: 'duluth',       label: 'Duluth' },
+  { id: 'minneapolis',  label: 'Minneapolis' },
 ];
 
 export const SingleSelect = {
@@ -25,11 +25,11 @@ export const MultiSelect = {
   render: () => {
     const [val, setVal] = useState(['vvm', 'maintenance']);
     const opts = [
-      { value: 'transfer',    label: 'Vaccine Transfer' },
-      { value: 'vvm',         label: 'VVM Check' },
-      { value: 'discarded',   label: 'Frozen Vaccine Discarded' },
-      { value: 'shake',       label: 'Shake Test Conducted' },
-      { value: 'maintenance', label: 'Refrigerator Maintenance' },
+      { id: 'transfer',    label: 'Vaccine Transfer' },
+      { id: 'vvm',         label: 'VVM Check' },
+      { id: 'discarded',   label: 'Frozen Vaccine Discarded' },
+      { id: 'shake',       label: 'Shake Test Conducted' },
+      { id: 'maintenance', label: 'Refrigerator Maintenance' },
     ];
     return <OptionList title="Actions taken" allowMultiple options={opts} selected={val} onChange={setVal} />;
   },
@@ -39,10 +39,10 @@ export const WithBadges = {
   render: () => {
     const [val, setVal] = useState('all');
     const opts = [
-      { value: 'all',      label: 'All',      badge: '12' },
-      { value: 'active',   label: 'Active',   badge: '3' },
-      { value: 'draft',    label: 'Draft',    badge: '7' },
-      { value: 'archived', label: 'Archived', badge: '24' },
+      { id: 'all',      label: 'All',      badge: '12' },
+      { id: 'active',   label: 'Active',   badge: '3' },
+      { id: 'draft',    label: 'Draft',    badge: '7' },
+      { id: 'archived', label: 'Archived', badge: '24' },
     ];
     return <OptionList options={opts} selected={val} onChange={setVal} />;
   },
@@ -61,12 +61,12 @@ export const WithSections = {
     const [val, setVal] = useState([]);
     const sections = [
       { title: 'Refrigerators', options: [
-        { value: 'fridge-a', label: 'Fridge A' },
-        { value: 'fridge-b', label: 'Fridge B' },
+        { id: 'fridge-a', label: 'Fridge A' },
+        { id: 'fridge-b', label: 'Fridge B' },
       ]},
       { title: 'Freezers', options: [
-        { value: 'freezer-a', label: 'Freezer A' },
-        { value: 'freezer-b', label: 'Freezer B' },
+        { id: 'freezer-a', label: 'Freezer A' },
+        { id: 'freezer-b', label: 'Freezer B' },
       ]},
     ];
     return <OptionList allowMultiple sections={sections} selected={val} onChange={setVal} />;
@@ -77,9 +77,9 @@ export const WithDisabled = {
   render: () => {
     const [val, setVal] = useState('a');
     const opts = [
-      { value: 'a', label: 'Available' },
-      { value: 'b', label: 'Unavailable', disabled: true },
-      { value: 'c', label: 'In transit' },
+      { id: 'a', label: 'Available' },
+      { id: 'b', label: 'Unavailable', disabled: true },
+      { id: 'c', label: 'In transit' },
     ];
     return <OptionList options={opts} selected={val} onChange={setVal} />;
   },
@@ -99,11 +99,11 @@ export const InteractionStates = {
           <OptionList
             title="Device location"
             options={[
-              { value: 'apple-valley', label: 'Apple Valley', description: 'Zone North' },
-              { value: 'omaha',        label: 'Omaha',        description: 'Zone Central' },
-              { value: 'duluth',       label: 'Duluth',       description: 'Zone North' },
-              { value: 'minneapolis',  label: 'Minneapolis',  description: 'Zone Central' },
-              { value: 'locked',       label: 'Restricted',   disabled: true },
+              { id: 'apple-valley', label: 'Apple Valley', description: 'Zone North' },
+              { id: 'omaha',        label: 'Omaha',        description: 'Zone Central' },
+              { id: 'duluth',       label: 'Duluth',       description: 'Zone North' },
+              { id: 'minneapolis',  label: 'Minneapolis',  description: 'Zone Central' },
+              { id: 'locked',       label: 'Restricted',   disabled: true },
             ]}
             selected={location}
             onChange={setLocation}
@@ -117,11 +117,11 @@ export const InteractionStates = {
             allowMultiple
             title="Actions taken"
             options={[
-              { value: 'vvm',         label: 'VVM Check',                  badge: 'Today' },
-              { value: 'transfer',    label: 'Vaccine Transfer' },
-              { value: 'shake',       label: 'Shake Test Conducted' },
-              { value: 'maintenance', label: 'Refrigerator Maintenance' },
-              { value: 'discarded',   label: 'Frozen Vaccine Discarded',   disabled: true },
+              { id: 'vvm',         label: 'VVM Check',                  badge: 'Today' },
+              { id: 'transfer',    label: 'Vaccine Transfer' },
+              { id: 'shake',       label: 'Shake Test Conducted' },
+              { id: 'maintenance', label: 'Refrigerator Maintenance' },
+              { id: 'discarded',   label: 'Frozen Vaccine Discarded',   disabled: true },
             ]}
             selected={actions}
             onChange={setActions}
@@ -150,18 +150,18 @@ export const AllStates = {
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Multi-select</div>
           <OptionList allowMultiple title="Actions" selected={multi} onChange={setMulti}
             options={[
-              { value: 'vvm', label: 'VVM Check' },
-              { value: 'transfer', label: 'Vaccine Transfer' },
-              { value: 'discarded', label: 'Frozen Vaccine Discarded', disabled: true },
+              { id: 'vvm', label: 'VVM Check' },
+              { id: 'transfer', label: 'Vaccine Transfer' },
+              { id: 'discarded', label: 'Frozen Vaccine Discarded', disabled: true },
             ]} />
         </div>
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>With badges + descriptions</div>
           <OptionList selected={single} onChange={setSingle}
             options={[
-              { value: 'omaha', label: 'Omaha', badge: '3', description: 'Zone North' },
-              { value: 'duluth', label: 'Duluth', badge: '7', description: 'Zone South' },
-              { value: 'locked', label: 'Locked facility', disabled: true },
+              { id: 'omaha', label: 'Omaha', badge: '3', description: 'Zone North' },
+              { id: 'duluth', label: 'Duluth', badge: '7', description: 'Zone South' },
+              { id: 'locked', label: 'Locked facility', disabled: true },
             ]} />
         </div>
         <div>

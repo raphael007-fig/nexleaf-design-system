@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 const IcoCheckSmall = ({ color = '#fff' }) => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -18,7 +19,7 @@ const IcoAlertCircle = () => (
   </svg>
 );
 
-export function Checkbox({ label, helpText, error, disabled = false, checked = false, onChange, tone = 'default' }) {
+export function Checkbox({ label, helpText, error, disabled = false, checked = false, onChange, tone = 'default', ariaLabel }) {
   const [hov, setHov] = useState(false);
   const [foc, setFoc] = useState(false);
 
@@ -61,6 +62,7 @@ export function Checkbox({ label, helpText, error, disabled = false, checked = f
         <div style={{ ...focusRing, display: 'flex', alignItems: 'flex-start', borderRadius: 4, flexShrink: 0 }}>
           <div
             role="checkbox" aria-checked={isIndet ? 'mixed' : isChecked}
+            aria-label={!label ? ariaLabel : undefined}
             tabIndex={disabled ? -1 : 0}
             onClick={handleToggle} onKeyDown={handleKey}
             onMouseEnter={() => !disabled && setHov(true)} onMouseLeave={() => !disabled && setHov(false)}
@@ -178,17 +180,20 @@ export function ChoiceList({ title, choices = [], selected, onChange, allowMulti
           <span style={{ fontSize: 13, fontWeight: 450, lineHeight: '20px', color: '#303030', fontFamily: 'Inter,sans-serif' }}>{title}</span>
         </div>
       )}
-      {choices.map(choice =>
-        allowMultiple ? (
-          <Checkbox key={choice.value} label={choice.label} helpText={choice.helpText}
-            checked={isSelected(choice.value)} disabled={choice.disabled}
-            onChange={() => handleChange(choice.value)} />
+      {choices.map(choice => {
+        // Canonical identity is `id` (falls back to legacy `value`).
+        const cid = getItemId(choice, 'ChoiceList');
+        const clabel = getItemLabel(choice);
+        return allowMultiple ? (
+          <Checkbox key={cid} label={clabel} helpText={choice.helpText}
+            checked={isSelected(cid)} disabled={choice.disabled}
+            onChange={() => handleChange(cid)} />
         ) : (
-          <RadioButton key={choice.value} label={choice.label} helpText={choice.helpText}
-            checked={isSelected(choice.value)} disabled={choice.disabled}
-            onChange={() => handleChange(choice.value)} />
-        )
-      )}
+          <RadioButton key={cid} label={clabel} helpText={choice.helpText}
+            checked={isSelected(cid)} disabled={choice.disabled}
+            onChange={() => handleChange(cid)} />
+        );
+      })}
       {error && (
         <div style={{ paddingTop: 4, paddingBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
           <IcoAlertCircle />

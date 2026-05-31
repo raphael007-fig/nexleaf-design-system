@@ -35,6 +35,56 @@ export function siblingsFor(items, currentId, { minSiblings = 2 } = {}) {
   return null;
 }
 
+// ─── trailFor: derive the Breadcrumbs trail from the nav tree ────────────────
+//
+// Companion to `siblingsFor`. Given the same `items` array the side rail
+// renders and the currently-active id, returns the ordered crumb trail that
+// keeps SideNavigation, the Page header, and Breadcrumbs in lock-step:
+//
+//   trailFor(EQUIPMENT_ITEMS, 'coldchain', { home: HOME_CRUMB })
+//   // → [ HOME_CRUMB,
+//   //     { id: 'inventory', label: 'Inventory' },
+//   //     { id: 'coldchain', label: 'ColdChain Equipment' } ]
+//
+// Shape of the result, by where `currentId` lives in the tree:
+//   • the home id (or null/unknown) → [home]            — Home landing page
+//   • a top-level leaf              → [home, item]
+//   • a child of a group            → [home, group, child]
+//
+// The group crumb carries the group's own id so a consumer can map a click on
+// it back to a real destination (e.g. its first child — a section has no page
+// of its own). The `home` option is the crumb object to use as the root; pass
+// the same one Breadcrumbs renders (typically `iconOnly` with a Home icon).
+// When omitted, the trail simply starts at the first matched segment.
+export function trailFor(items, currentId, { home } = {}) {
+  const homeCrumb = home || null;
+  const homeId = homeCrumb ? homeCrumb.id : undefined;
+  const root = homeCrumb ? [homeCrumb] : [];
+
+  // On the home page (or nothing / unknown selected) the trail is just Home.
+  if (currentId == null || currentId === homeId) return root;
+
+  for (const item of items || []) {
+    if (item.id === homeId) continue; // the nav's own Home row isn't a segment
+    if (item.id === currentId) {
+      return [...root, { id: item.id, label: item.label }];
+    }
+    if (item.children) {
+      const child = item.children.find((c) => c.id === currentId);
+      if (child) {
+        return [
+          ...root,
+          { id: item.id, label: item.label },
+          { id: child.id, label: child.label },
+        ];
+      }
+    }
+  }
+
+  // currentId isn't anywhere in the tree — fall back to the Home root.
+  return root;
+}
+
 // ─── Tokens used here ────────────────────────────────────────────────────────
 //   bg-page (#f1f1f1)            — sidebar background
 //   bg-input-focus (#fafafa)     — selected sub-item bg
@@ -397,8 +447,7 @@ function NavSkeletonRow({ collapsed, delay }) {
 //   activeItemId      — string. The currently-selected id (top-level OR sub).
 //                       If it matches a sub-item id, that sub-item is
 //                       highlighted; its parent group auto-expands.
-//   onSelect          — fn(id) called for any click. PREFERRED.
-//   onItemSelect      — fn(id) legacy alias of `onSelect`. Both fire when set.
+//   onSelect          — fn(id) called for any click.
 //   logo              — ReactNode shown at the top of the panel.
 //   footer            — ReactNode shown at the bottom (optional).
 //   collapsed         — boolean. When true, sidebar collapses to icon-only.
@@ -424,7 +473,6 @@ export function SideNavigation({
   items = [],
   activeItemId,
   onSelect,
-  onItemSelect,
   logo,
   footer,
   collapsed = false,
@@ -479,11 +527,10 @@ export function SideNavigation({
     });
   };
 
-  // Fire both onSelect (preferred) and onItemSelect (legacy alias).
+  // Canonical selection callback — fn(id).
   const handleSelect = useCallback((id) => {
     if (onSelect) onSelect(id);
-    if (onItemSelect) onItemSelect(id);
-  }, [onSelect, onItemSelect]);
+  }, [onSelect]);
 
   // ── Visible-row registry for keyboard navigation ───────────────────────────
   //

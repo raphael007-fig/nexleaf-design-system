@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
 
 const IcoErrorCircle = () => (
   <svg width="16" height="16" viewBox="0 0 20 20" fill="#d92d20" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -12,11 +13,27 @@ export function TextInput({
   label, placeholder, value, onChange, disabled, readOnly,
   suffix, prefix, required, helpText, error, labelAction, onLabelAction,
   type = 'text', clearButton, borderless = false, tone = 'default', size = 'medium',
-  ariaLabel,
+  ariaLabel, skeleton = false,
 }) {
   const [internalVal, setInternalVal] = useState(value || '');
   const [focused, setFocused] = useState(false);
   const [hovered, setHovered] = useState(false);
+
+  // Skeleton mode short-circuits rendering (hooks above are still called so the
+  // hook order stays stable if a parent toggles `skeleton` in place). Renders a
+  // label placeholder (only when this field has a label) above a field-height
+  // block, so the form keeps its exact layout while data loads.
+  if (skeleton) {
+    const fieldHeight = size === 'slim' ? 28 : 34;
+    return (
+      <SkeletonGroup label={`Loading ${typeof label === 'string' ? label : 'field'}`}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {label && <Skeleton.Line width={120} height={13} />}
+          <Skeleton width="100%" height={fieldHeight} radius={borderless ? 6 : 8} ariaLabel={null} />
+        </div>
+      </SkeletonGroup>
+    );
+  }
   const isControlled = onChange !== undefined;
   const val = isControlled ? (value || '') : internalVal;
 

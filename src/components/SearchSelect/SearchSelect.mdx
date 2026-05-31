@@ -50,18 +50,18 @@ treated as a design escape hatch, not a default.
 ```js
 const NESTED_REGIONS = [
   {
-    value: 'nairobi', label: 'Nairobi',
+    id: 'nairobi', label: 'Nairobi',
     children: [
-      { value: 'kilimani',  label: 'Kilimani' },
-      { value: 'dagoretti', label: 'Dagoretti' },
-      { value: 'westlands', label: 'Westlands' },
+      { id: 'kilimani',  label: 'Kilimani' },
+      { id: 'dagoretti', label: 'Dagoretti' },
+      { id: 'westlands', label: 'Westlands' },
     ],
   },
   {
-    value: 'karnataka', label: 'Karnataka',
+    id: 'karnataka', label: 'Karnataka',
     children: [
-      { value: 'bengaluru', label: 'Bengaluru' },
-      { value: 'mysuru',    label: 'Mysuru' },
+      { id: 'bengaluru', label: 'Bengaluru' },
+      { id: 'mysuru',    label: 'Mysuru' },
     ],
   },
 ];
@@ -646,8 +646,8 @@ import { NxSearchSelectModule } from 'components/SearchSelect/search-select.modu
 import { SearchSelect, SearchSelectMulti } from 'components/SearchSelect/SearchSelect.jsx';
 
 const REGIONS = [
-  { value: 'nairobi', label: 'Nairobi' },
-  { value: 'mombasa', label: 'Mombasa' },
+  { id: 'nairobi', label: 'Nairobi' },
+  { id: 'mombasa', label: 'Mombasa' },
   // ...
 ];
 
@@ -702,13 +702,13 @@ const REGIONS = [
 <SearchSelectMulti
   label="Regions"
   options={[
-    { value: 'nairobi', label: 'Nairobi', children: [
-      { value: 'kilimani',  label: 'Kilimani' },
-      { value: 'dagoretti', label: 'Dagoretti' },
+    { id: 'nairobi', label: 'Nairobi', children: [
+      { id: 'kilimani',  label: 'Kilimani' },
+      { id: 'dagoretti', label: 'Dagoretti' },
     ]},
-    { value: 'karnataka', label: 'Karnataka', children: [
-      { value: 'bengaluru', label: 'Bengaluru' },
-      { value: 'mysuru',    label: 'Mysuru' },
+    { id: 'karnataka', label: 'Karnataka', children: [
+      { id: 'bengaluru', label: 'Bengaluru' },
+      { id: 'mysuru',    label: 'Mysuru' },
     ]},
   ]}
   value={regions}

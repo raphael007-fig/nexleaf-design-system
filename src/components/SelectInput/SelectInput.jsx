@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
+import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 const IcoErrorCircle = () => (
   <svg width={16} height={16} viewBox="0 0 20 20" fill="#d92d20" style={{ flexShrink: 0, marginTop: 2 }}>
@@ -8,10 +10,25 @@ const IcoErrorCircle = () => (
   </svg>
 );
 
-export function SelectInput({ label, options = [], placeholder, disabled, value, onChange, required, error, helpText }) {
+export function SelectInput({ label, options = [], placeholder, disabled, value, onChange, required, error, helpText, skeleton = false }) {
   const [internal,  setInternal]  = useState('');
   const [focused,   setFocused]   = useState(false);
   const [hovered,   setHovered]   = useState(false);
+
+  // Skeleton mode short-circuits rendering (hooks above stay called so order is
+  // stable if a parent toggles `skeleton` in place). Mirrors TextInput: label
+  // placeholder over a field-height block to preserve layout while loading.
+  if (skeleton) {
+    return (
+      <SkeletonGroup label={`Loading ${typeof label === 'string' ? label : 'field'}`}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {label && <Skeleton.Line width={120} height={13} />}
+          <Skeleton width="100%" height={34} radius={8} ariaLabel={null} />
+        </div>
+      </SkeletonGroup>
+    );
+  }
+
   const isControlled = onChange !== undefined;
   const val = isControlled ? (value || '') : internal;
 
@@ -71,9 +88,10 @@ export function SelectInput({ label, options = [], placeholder, disabled, value,
       >
         <option value="" disabled style={{ color: '#9e9e9e' }}>{placeholder || 'Select…'}</option>
         {options.map(o => {
-          const isObj = typeof o === 'object';
-          const v = isObj ? o.value : o;
-          const l = isObj ? o.label : o;
+          // Canonical identity is `id` (falls back to legacy `value`). Plain
+          // string/number options are their own id + label.
+          const v = getItemId(o, 'SelectInput');
+          const l = getItemLabel(o);
           return <option key={v} value={v} style={{ color: '#303030' }}>{l}</option>;
         })}
       </select>

@@ -83,10 +83,10 @@ export const InteractionStates = {
           value={pref}
           onChange={setPref}
           options={[
-            { value: 'email',  label: 'Email',  helpText: 'Daily digest at 8am' },
-            { value: 'sms',    label: 'SMS' },
-            { value: 'push',   label: 'Push notification' },
-            { value: 'none',   label: 'None', disabled: true },
+            { id: 'email',  label: 'Email',  helpText: 'Daily digest at 8am' },
+            { id: 'sms',    label: 'SMS' },
+            { id: 'push',   label: 'Push notification' },
+            { id: 'none',   label: 'None', disabled: true },
           ]}
         />
 
@@ -98,8 +98,8 @@ export const InteractionStates = {
           onChange={setPlan}
           tone="magic"
           options={[
-            { value: 'basic', label: 'Basic' },
-            { value: 'pro',   label: 'Pro' },
+            { id: 'basic', label: 'Basic' },
+            { id: 'pro',   label: 'Pro' },
           ]}
           error={attempted && !plan ? 'Please select a plan.' : undefined}
         />

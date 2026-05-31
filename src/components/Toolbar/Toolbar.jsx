@@ -1,5 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import {
+  useFocusTrap, useScrollLock, useReturnFocus, useEscapeKey, prefersReducedMotion,
+} from '../../foundation/overlay/overlayHooks.js';
 import { Skeleton } from '../Skeleton/Skeleton.jsx';
 import { OptionList } from '../OptionList/OptionList.jsx';
 
@@ -378,7 +381,7 @@ export function ToolbarRegionSelector({
   // `<flag>  <name>` — keeps the picker visually consistent with the pill
   // itself.
   const options = (countries || []).map((c) => ({
-    value: c.code,
+    id: c.code,
     label: (
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
         <FlagGlyph code={c.code} size={18} />
@@ -714,18 +717,22 @@ export function AiChatPanel({
   width = 420,
   children,
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e) => { if (e.key === 'Escape') onClose && onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
+  const panelRef = useRef(null);
+  // The panel declares aria-modal, so it must behave like one: trap focus
+  // inside, lock body scroll, restore focus to the trigger on close, and close
+  // on Escape. Sourced from the shared overlay hooks for parity with <Modal>.
+  useReturnFocus(open);
+  useScrollLock(open);
+  useFocusTrap(open, panelRef);
+  useEscapeKey(open, onClose);
 
   if (!open) return null;
 
+  const reduce = prefersReducedMotion();
+
   return (
     <div
-      onClick={(e) => { if (e.target === e.currentTarget) onClose && onClose(); }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onClose && onClose(); }}
       style={{
         position: 'fixed', inset: 0,
         background: 'rgba(0,0,0,0.35)',
@@ -735,16 +742,18 @@ export function AiChatPanel({
       }}
     >
       <aside
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
         style={{
           width, maxWidth: '100%', height: '100%',
           background: '#ffffff',
           borderLeft: '1px solid #ebebeb',
           boxShadow: '-8px 0 24px rgba(0,0,0,0.08)',
-          display: 'flex', flexDirection: 'column',
-          animation: 'slideInRight 0.22s ease-out',
+          display: 'flex', flexDirection: 'column', outline: 'none',
+          animation: reduce ? 'none' : 'slideInRight 0.22s ease-out',
         }}
       >
         <header style={{

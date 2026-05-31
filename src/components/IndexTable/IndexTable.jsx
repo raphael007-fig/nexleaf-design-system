@@ -5,31 +5,12 @@ import { TextInput } from '../TextInput/TextInput.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 import { OptionList } from '../OptionList/OptionList.jsx';
 import { Skeleton } from '../Skeleton/Skeleton.jsx';
+import { Checkbox } from '../Checkbox/Checkbox.jsx';
+import { useIsMobile } from '../../foundation/useViewport.js';
 
-// ─── Mobile breakpoint hook ───────────────────────────────────────────────────
-//
-// Returns true when the viewport is at or below `breakpoint`. SSR-safe (defaults
-// to false when `window` is undefined). Used by `IndexTable` to switch between
-// the desktop <table> layout and the stacked-card mobile layout.
-
-function useIsMobile(breakpoint = 640) {
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== 'undefined' &&
-    window.matchMedia(`(max-width: ${breakpoint}px)`).matches
-  );
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mq = window.matchMedia(`(max-width: ${breakpoint}px)`);
-    const handler = (e) => setIsMobile(e.matches);
-    if (mq.addEventListener) mq.addEventListener('change', handler);
-    else mq.addListener(handler); // older Safari
-    return () => {
-      if (mq.removeEventListener) mq.removeEventListener('change', handler);
-      else mq.removeListener(handler);
-    };
-  }, [breakpoint]);
-  return isMobile;
-}
+// Mobile breakpoint hook (`useIsMobile`) now lives in the shared foundation —
+// see imports above. IndexTable uses it to switch between the desktop <table>
+// layout and the stacked-card mobile layout.
 
 // Clamps a popover anchored to `rect` so it stays inside the viewport.
 // Returns `{ top, left }` in fixed-position coordinates.
@@ -310,6 +291,7 @@ function RowActionsMenu({ actions, row }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState(null);
   const [hov,  setHov]  = useState(false);
+  const [foc,  setFoc]  = useState(false);
   const btnRef  = useRef(null);
   const menuRef = useRef(null);
 
@@ -340,7 +322,7 @@ function RowActionsMenu({ actions, row }) {
   const normalActions      = resolved.filter(a => !a.destructive);
   const destructiveActions = resolved.filter(a =>  a.destructive);
   const toOptions = (arr) => arr.map((a) => ({
-    value: String(resolved.indexOf(a)),
+    id: String(resolved.indexOf(a)),
     label: a.destructive ? <span style={{ color: '#d92d20' }}>{a.label}</span> : a.label,
   }));
   const sections = [
@@ -361,13 +343,20 @@ function RowActionsMenu({ actions, row }) {
         onClick={toggle}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
+        onFocus={() => setFoc(true)}
+        onBlur={() => setFoc(false)}
         aria-label="More actions"
+        aria-haspopup="menu"
+        aria-expanded={open}
         style={{
           width: 28, height: 28, borderRadius: 6, border: 'none',
           background: open || hov ? 'rgba(0,0,0,0.06)' : 'transparent',
           cursor: 'pointer', display: 'flex', alignItems: 'center',
           justifyContent: 'center', padding: 0, flexShrink: 0,
           transition: 'background 0.12s', outline: 'none',
+          // Visible keyboard focus indicator (WCAG 2.4.7) — the button sets
+          // outline:none, so paint a primary ring via box-shadow instead.
+          boxShadow: foc ? '0 0 0 2px #005bd3' : 'none',
         }}
       >
         <IcoMoreVertical size={16} color="#303030" />
@@ -403,36 +392,6 @@ function RowActionsMenu({ actions, row }) {
   );
 }
 
-// ─── Checkbox (supports indeterminate) ───────────────────────────────────────
-
-function Checkbox({ checked, indeterminate, onChange, disabled, ariaLabel }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.indeterminate = !!indeterminate;
-    }
-  }, [indeterminate]);
-
-  return (
-    <input
-      ref={ref}
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      disabled={disabled}
-      aria-label={ariaLabel}
-      style={{
-        width: 16,
-        height: 16,
-        cursor: disabled ? 'not-allowed' : 'pointer',
-        flexShrink: 0,
-        accentColor: '#005bd3',
-      }}
-    />
-  );
-}
-
 // ─── BulkBar ──────────────────────────────────────────────────────────────────
 
 function BulkBar({ count, bulkActions, onDeselectAll }) {
@@ -462,7 +421,10 @@ function BulkBar({ count, bulkActions, onDeselectAll }) {
 
       <div style={{ flex: 1 }} />
 
-      <Btn variant="ghost" size="medium" onClick={onDeselectAll}>
+      {/* Tertiary (dark text + hover bg) instead of ghost: a blue link on the
+          #f0f7ff selection bar reads as low-contrast and lacks a hit affordance.
+          Tertiary keeps strong contrast and shows a hover background. */}
+      <Btn variant="tertiary" size="medium" onClick={onDeselectAll}>
         Deselect all
       </Btn>
     </div>
@@ -658,7 +620,7 @@ function IndexTableToolbar({
           <Tabs
             tabs={tabs}
             activeIndex={activeTab || 0}
-            onChange={onTabChange}
+            onSelect={(_id, _item, i) => onTabChange && onTabChange(i)}
           />
         )}
       </div>
@@ -749,7 +711,7 @@ function MobileSortMenu({ columns, sortKey, sortDir, onSort }) {
     const labelText = typeof col.label === 'string' ? col.label : (col.mobileLabel || col.key);
     const isActive = sortKey === col.key;
     return {
-      value: col.key,
+      id: col.key,
       label: (
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {labelText}
@@ -855,8 +817,7 @@ function MobileHeader({
           cursor: 'pointer',
         }}>
           <Checkbox
-            checked={allSelected}
-            indeterminate={someSelected}
+            checked={allSelected ? true : (someSelected ? 'indeterminate' : false)}
             onChange={onSelectAll}
             ariaLabel="Select all rows"
           />
@@ -1118,6 +1079,11 @@ function MobileCardList({
  *   searchPlaceholder — string
  *   toolbarActions   — [{ label, icon?, onClick }] secondary buttons in toolbar
  */
+// `bare` — embedded/read-only mode. When true the table renders without its
+// own card chrome (no outer border/background), hides the selection column,
+// the select-all checkbox, and suppresses the bulk-action bar. Use it when the
+// table is nested inside another surface (e.g. a Card or detail panel) that
+// already supplies the frame and where row selection isn't applicable.
 export function IndexTable({
   columns = [],
   rows = [],
@@ -1138,7 +1104,7 @@ export function IndexTable({
   searchPlaceholder,
   toolbarActions,
   rowActions,
-  bare = false,
+  bare = false,  // see note above the component
 }) {
   const showToolbar = (tabs && tabs.length > 0) || onSearchChange !== undefined || (toolbarActions && toolbarActions.length > 0);
   const [hoveredHeader, setHoveredHeader] = useState(null);
@@ -1259,8 +1225,7 @@ export function IndexTable({
                 {!bare && (
                   <th style={{ padding: '8px 12px', width: 40, verticalAlign: 'middle', textAlign: 'left' }}>
                     <Checkbox
-                      checked={allSelected}
-                      indeterminate={someSelected}
+                      checked={allSelected ? true : (someSelected ? 'indeterminate' : false)}
                       onChange={handleSelectAll}
                       ariaLabel="Select all rows"
                     />

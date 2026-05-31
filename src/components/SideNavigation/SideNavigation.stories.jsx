@@ -126,7 +126,7 @@ export const EquipmentManagementExpanded = {
           logo={logoFor(false)}
           items={EQUIPMENT_ITEMS}
           activeItemId={activeId}
-          onItemSelect={setActiveId}
+          onSelect={setActiveId}
           ariaLabel="Equipment Management"
         />
       </Shell>
@@ -153,7 +153,7 @@ export const EquipmentManagementCollapsed = {
           logo={logoFor(collapsed)}
           items={EQUIPMENT_ITEMS}
           activeItemId={activeId}
-          onItemSelect={setActiveId}
+          onSelect={setActiveId}
           ariaLabel="Equipment Management"
         />
       </Shell>
@@ -385,7 +385,7 @@ export const Interactive = {
           logo={logoFor(collapsed)}
           items={EQUIPMENT_ITEMS}
           activeItemId={activeId}
-          onItemSelect={setActiveId}
+          onSelect={setActiveId}
           footer={
             <CollapseToggle
               collapsed={collapsed}

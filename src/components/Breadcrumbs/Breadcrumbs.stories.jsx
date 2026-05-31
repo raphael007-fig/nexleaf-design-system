@@ -48,27 +48,27 @@ const TRAIL_6 = [
 // ── Basic stories ────────────────────────────────────────────────────────
 export const OneLevel = {
   name: '1 level — Home only',
-  render: () => <Breadcrumbs items={TRAIL_1} onNavigate={() => {}} />,
+  render: () => <Breadcrumbs items={TRAIL_1} onSelect={() => {}} />,
 };
 
 export const TwoLevels = {
   name: '2 levels',
-  render: () => <Breadcrumbs items={TRAIL_2} onNavigate={() => {}} />,
+  render: () => <Breadcrumbs items={TRAIL_2} onSelect={() => {}} />,
 };
 
 export const ThreeLevels = {
   name: '3 levels (no collapse)',
-  render: () => <Breadcrumbs items={TRAIL_3} onNavigate={() => {}} />,
+  render: () => <Breadcrumbs items={TRAIL_3} onSelect={() => {}} />,
 };
 
 export const FourLevelsCollapsed = {
   name: '4 levels — collapsed with "…"',
-  render: () => <Breadcrumbs items={TRAIL_4} onNavigate={() => {}} />,
+  render: () => <Breadcrumbs items={TRAIL_4} onSelect={() => {}} />,
 };
 
 export const SixLevelsCollapsed = {
   name: '6 levels — "…" with popover of 3 hidden items',
-  render: () => <Breadcrumbs items={TRAIL_6} onNavigate={() => {}} />,
+  render: () => <Breadcrumbs items={TRAIL_6} onSelect={() => {}} />,
 };
 
 // ── Screenshot reference — all five rows from the spec ───────────────────
@@ -77,11 +77,11 @@ export const ProgressionFromScreenshot = {
   parameters: { layout: 'padded' },
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28, fontFamily: 'Inter, sans-serif' }}>
-      <Breadcrumbs items={TRAIL_1} onNavigate={() => {}} />
-      <Breadcrumbs items={TRAIL_2} onNavigate={() => {}} />
-      <Breadcrumbs items={TRAIL_3} onNavigate={() => {}} />
-      <Breadcrumbs items={TRAIL_4} onNavigate={() => {}} />
-      <Breadcrumbs items={TRAIL_6} onNavigate={() => {}} />
+      <Breadcrumbs items={TRAIL_1} onSelect={() => {}} />
+      <Breadcrumbs items={TRAIL_2} onSelect={() => {}} />
+      <Breadcrumbs items={TRAIL_3} onSelect={() => {}} />
+      <Breadcrumbs items={TRAIL_4} onSelect={() => {}} />
+      <Breadcrumbs items={TRAIL_6} onSelect={() => {}} />
     </div>
   ),
 };
@@ -116,7 +116,7 @@ export const LiveNavigation = {
 
     return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16, fontFamily: 'Inter, sans-serif' }}>
-        <Breadcrumbs items={trail} onNavigate={navigate} />
+        <Breadcrumbs items={trail} onSelect={(_id, _item, i) => navigate(i)} />
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             type="button"
@@ -160,19 +160,19 @@ export const InteractionStates = {
         <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Default
         </div>
-        <Breadcrumbs items={TRAIL_3} onNavigate={() => {}} />
+        <Breadcrumbs items={TRAIL_3} onSelect={() => {}} />
       </div>
       <div>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Collapsed (hover the "…")
         </div>
-        <Breadcrumbs items={TRAIL_6} onNavigate={() => {}} />
+        <Breadcrumbs items={TRAIL_6} onSelect={() => {}} />
       </div>
       <div>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Disabled (whole component)
         </div>
-        <Breadcrumbs items={TRAIL_6} onNavigate={() => {}} disabled />
+        <Breadcrumbs items={TRAIL_6} onSelect={() => {}} disabled />
       </div>
     </div>
   ),
@@ -187,13 +187,13 @@ export const Loading = {
         <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Loading — skeleton placeholders
         </div>
-        <Breadcrumbs items={TRAIL_3} loading onNavigate={() => {}} />
+        <Breadcrumbs items={TRAIL_3} loading onSelect={() => {}} />
       </div>
       <div>
         <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
           Loaded — for comparison
         </div>
-        <Breadcrumbs items={TRAIL_3} onNavigate={() => {}} />
+        <Breadcrumbs items={TRAIL_3} onSelect={() => {}} />
       </div>
     </div>
   ),
@@ -248,11 +248,11 @@ export const CustomCollapseThreshold = {
       <div style={{ fontSize: 12, color: '#616161' }}>
         4 items with <code>collapseAfter=5</code> → no collapse (rendered in full).
       </div>
-      <Breadcrumbs items={TRAIL_4} onNavigate={() => {}} collapseAfter={5} />
+      <Breadcrumbs items={TRAIL_4} onSelect={() => {}} collapseAfter={5} />
       <div style={{ fontSize: 12, color: '#616161', marginTop: 8 }}>
         6 items with <code>collapseAfter=5</code> → collapses.
       </div>
-      <Breadcrumbs items={TRAIL_6} onNavigate={() => {}} collapseAfter={5} />
+      <Breadcrumbs items={TRAIL_6} onSelect={() => {}} collapseAfter={5} />
     </div>
   ),
 };

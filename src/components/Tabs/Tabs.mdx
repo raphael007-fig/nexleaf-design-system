@@ -129,10 +129,10 @@ import { NxTabsModule } from 'components/Tabs/tabs.module';
 
 ### Selection callback API
 
-Two callbacks are supported. **`onSelect(id, item)` is preferred** going forward — it matches the rest of the component library and gives consumers the full item without an index lookup. `onChange(newIndex)` is kept for backward compatibility. Both fire when both are provided.
+The canonical callback is **`onSelect(id, item, index)`** — it matches the rest of the component library and gives consumers the full item plus its index without a lookup. `id` is the tab's `id` (falling back to the string-coerced index when omitted). The 3rd `index` arg is there for callers that track selection by position.
 
 ```jsx
-// Preferred — id-based, matches other components
+// id-based — matches every navigation/structural component
 <Tabs
   activeIndex={active}
   onSelect={(id, item) => navigate(`/orders?status=${id}`)}
@@ -143,11 +143,11 @@ Two callbacks are supported. **`onSelect(id, item)` is preferred** going forward
   ]}
 />
 
-// Legacy — index-based, still supported
-<Tabs activeIndex={active} onChange={setActive} tabs={…} />
+// index-based — read the 3rd arg when you track position
+<Tabs activeIndex={active} onSelect={(_id, _item, i) => setActive(i)} tabs={…} />
 ```
 
-If `item.id` is omitted, `onSelect` falls back to passing the string-coerced index (`'0'`, `'1'`, …).
+If `item.id` is omitted, `onSelect` falls back to passing the string-coerced index (`'0'`, `'1'`, …) as the first argument.
 
 ```jsx
 import { Tabs } from 'components/Tabs/Tabs.jsx';
@@ -156,7 +156,7 @@ const [active, setActive] = useState(0);
 
 <Tabs
   activeIndex={active}
-  onChange={setActive}
+  onSelect={(_id, _item, i) => setActive(i)}
   tabs={[
     { label: 'All', badge: 24 },
     { label: 'Active', badge: 12 },
@@ -165,11 +165,11 @@ const [active, setActive] = useState(0);
 />
 
 // Fitted (equal width)
-<Tabs fitted activeIndex={active} onChange={setActive}
+<Tabs fitted activeIndex={active} onSelect={(_id, _item, i) => setActive(i)}
   tabs={[{ label: 'Morning' }, { label: 'Evening' }]} />
 
 // With "More views" and "Add new" controls
-<Tabs moreViews canAddNew activeIndex={active} onChange={setActive}
+<Tabs moreViews canAddNew activeIndex={active} onSelect={(_id, _item, i) => setActive(i)}
   tabs={[{ label: 'All' }, { label: 'Active' }]} />
 ```
 

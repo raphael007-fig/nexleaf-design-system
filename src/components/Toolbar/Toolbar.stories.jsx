@@ -163,7 +163,7 @@ export const SideNavShell = {
             start={(
               <Breadcrumbs
                 items={trail}
-                onNavigate={(i) => setTrail(trail.slice(0, i + 1))}
+                onSelect={(_id, _item, i) => setTrail(trail.slice(0, i + 1))}
               />
             )}
             center={(
@@ -235,7 +235,7 @@ export const SideNavShellAdmin = {
             start={(
               <Breadcrumbs
                 items={trail}
-                onNavigate={(i) => setTrail(trail.slice(0, i + 1))}
+                onSelect={(_id, _item, i) => setTrail(trail.slice(0, i + 1))}
               />
             )}
             center={(
@@ -295,7 +295,7 @@ export const FullToolbar = {
           start={(
             <>
               <NexleafLogo size={32} />
-              <Breadcrumbs items={trail} onNavigate={(i) => setTrail(trail.slice(0, i + 1))} />
+              <Breadcrumbs items={trail} onSelect={(_id, _item, i) => setTrail(trail.slice(0, i + 1))} />
             </>
           )}
           center={(
@@ -394,7 +394,7 @@ export const MinimalToolbar = {
           start={(
             <>
               <NexleafLogo size={32} />
-              <Breadcrumbs items={trail} onNavigate={(i) => setTrail(trail.slice(0, i + 1))} />
+              <Breadcrumbs items={trail} onSelect={(_id, _item, i) => setTrail(trail.slice(0, i + 1))} />
             </>
           )}
           end={<ToolbarAvatar initials="RO" />}
@@ -462,7 +462,7 @@ export const StickyOnScroll = {
               <NexleafLogo size={32} />
               <Breadcrumbs
                 items={[HOME_CRUMB, { label: 'Reports' }, { label: 'Q3' }]}
-                onNavigate={() => {}}
+                onSelect={() => {}}
               />
             </>
           )}

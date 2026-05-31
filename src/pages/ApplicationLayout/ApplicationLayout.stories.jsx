@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { SideNavigation, siblingsFor } from '../../components/SideNavigation/SideNavigation.jsx';
+import { useState, useMemo } from 'react';
+import { SideNavigation, siblingsFor, trailFor } from '../../components/SideNavigation/SideNavigation.jsx';
 import {
   Toolbar,
   ToolbarAiChatButton,
@@ -15,7 +15,9 @@ import { MetricCard } from '../../components/MetricCard/MetricCard.jsx';
 import { IndexTable, LinkCell } from '../../components/IndexTable/IndexTable.jsx';
 import { Pagination } from '../../components/Pagination/Pagination.jsx';
 import { SearchSelectButton } from '../../components/SearchSelect/SearchSelect.jsx';
+import { StatusBadge } from '../../components/Badge/Badge.jsx';
 import { COUNTRIES } from '../../foundation/emojis/emojiCatalog.js';
+import { useViewport, BP_MD, BP_SM } from '../../foundation/useViewport.js';
 
 export default {
   title: 'Pages/Application Layout',
@@ -28,20 +30,9 @@ export default {
 // keeps enough breathing room. Below `sm` (< 640) the rail is hidden behind
 // an overlay-able backdrop and reveals on demand (future variant — for now we
 // stay collapsed).
-const BP_MD = 768;
-const BP_SM = 640;
-
-function useViewport() {
-  const get = () => (typeof window === 'undefined' ? 1440 : window.innerWidth);
-  const [w, setW] = useState(get);
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const onResize = () => setW(window.innerWidth);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return { width: w, isBelowMd: w < BP_MD, isBelowSm: w < BP_SM };
-}
+//
+// `useViewport`, `BP_MD`, and `BP_SM` are imported from the shared foundation
+// (src/foundation/useViewport.js) so layout and IndexTable agree on breakpoints.
 
 // ─── Shared logos (inline, never external) ───────────────────────────────────
 // Same paths as the SideNavigation stories — duplicated here so the layout
@@ -115,36 +106,9 @@ const IcoAdjust = ({ size = 16, color = '#303030' }) => (
   </svg>
 );
 
-// ─── Status palette + badge component ────────────────────────────────────────
-// Same colour map Equipment Detail uses so an "Active" installation reads
-// identically on both pages.
-
-const STATUS_STYLES = {
-  'Active':            { bg: '#cdfee1',         color: '#0c5132' },
-  'Unknown':           { bg: 'rgba(0,0,0,0.06)', color: '#616161' },
-  'Decommissioned':    { bg: '#ffd6a4',         color: '#5e4200' },
-  'Faulty':            { bg: '#fedad9',         color: '#8e1f0b' },
-  'Under Maintenance': { bg: '#e0f0ff',         color: '#00527c' },
-};
-
-const StatusBadge = ({ status }) => {
-  const s = STATUS_STYLES[status] || STATUS_STYLES['Unknown'];
-  return (
-    <span
-      role="status"
-      aria-label={`Equipment status: ${status}`}
-      style={{
-        background: s.bg, color: s.color,
-        fontSize: 12, fontWeight: 550,
-        fontFamily: 'Inter, sans-serif',
-        padding: '2px 8px', borderRadius: 8,
-        whiteSpace: 'nowrap', display: 'inline-block', lineHeight: '16px',
-      }}
-    >
-      {status}
-    </span>
-  );
-};
+// ─── Status badge ─────────────────────────────────────────────────────────────
+// Uses the canonical StatusBadge from Badge.jsx (imported below) so an "Active"
+// installation reads identically here and on Equipment Detail, from one source.
 
 // Deterministic status distribution so the demo isn't all "Active". Priority
 // is intentional: Decommissioned wins over Faulty wins over Under Maintenance
@@ -231,6 +195,89 @@ function CollapseToggle({ collapsed, onToggle }) {
       <CollapseIcon collapsed={collapsed} color={textColor} />
       {!collapsed && <span>Collapse</span>}
     </button>
+  );
+}
+
+// ─── HomeLanding — the Home page surface ─────────────────────────────────────
+//
+// Rendered when activeId === 'home'. There is intentionally NO side rail here:
+// Home is a top-level landing surface that shows the breadcrumb only. Each
+// section card is an entry point — clicking one calls `onEnter(id)`, which
+// flips activeId into the app shell (rail reappears) and grows the breadcrumb
+// to Home → Section, tracing exactly where the user entered from.
+function HomeCard({ item, onEnter }) {
+  const [hov, setHov] = useState(false);
+  const [foc, setFoc] = useState(false);
+  // A group has no page of its own — enter its first child. A leaf enters itself.
+  const target = item.children && item.children.length ? item.children[0].id : item.id;
+  const active = hov || foc;
+  return (
+    <button
+      type="button"
+      onClick={() => onEnter(target)}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      onFocus={() => setFoc(true)}
+      onBlur={() => setFoc(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        textAlign: 'left', width: '100%',
+        padding: 16,
+        background: '#ffffff',
+        border: `1px solid ${active ? '#005bd3' : '#e0e0e0'}`,
+        borderRadius: 16,
+        cursor: 'pointer',
+        fontFamily: 'Inter, sans-serif',
+        boxShadow: active ? '0 0 0 3px rgba(0,91,211,0.12)' : 'none',
+        outline: 'none',
+        transition: 'border-color 0.15s, box-shadow 0.15s',
+      }}
+    >
+      <span style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: 40, height: 40, flexShrink: 0,
+        background: '#f1f1f1', borderRadius: 12,
+      }}>
+        {item.icon}
+      </span>
+      <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+        <span style={{ fontSize: 14, fontWeight: 600, color: '#303030' }}>{item.label}</span>
+        <span style={{ fontSize: 12, fontWeight: 400, color: '#616161' }}>
+          {item.children && item.children.length
+            ? `${item.children.length} sections`
+            : 'Open'}
+        </span>
+      </span>
+    </button>
+  );
+}
+
+function HomeLanding({ items, homeId, onEnter }) {
+  const { width } = useViewport();
+  const sections = (items || []).filter((it) => it.id !== homeId);
+  const cols = width < BP_SM ? '1fr' : width < BP_MD ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
+  return (
+    <section aria-label="Home" style={{ paddingTop: 24 }}>
+      <div style={{ marginBottom: 24 }}>
+        <h2 style={{
+          margin: 0, fontFamily: 'Inter, sans-serif',
+          fontSize: 20, fontWeight: 700, color: '#303030',
+        }}>
+          Welcome back
+        </h2>
+        <p style={{
+          margin: '4px 0 0', fontFamily: 'Inter, sans-serif',
+          fontSize: 14, fontWeight: 400, color: '#616161',
+        }}>
+          Pick a section to get started. Your trail begins here at Home.
+        </p>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 12 }}>
+        {sections.map((item) => (
+          <HomeCard key={item.id} item={item} onEnter={onEnter} />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -382,49 +429,49 @@ const PAGE_SIZE = 10;
 // them (the SearchSelect component handles that bookkeeping internally).
 const REGION_OPTIONS = [
   {
-    value: 'coast', label: 'Coast',
+    id: 'coast', label: 'Coast',
     children: [
-      { value: 'mombasa-county', label: 'Mombasa County', children: [
-        { value: 'mombasa-island', label: 'Mombasa Island' },
-        { value: 'kisauni',        label: 'Kisauni' },
-        { value: 'likoni',         label: 'Likoni' },
+      { id: 'mombasa-county', label: 'Mombasa County', children: [
+        { id: 'mombasa-island', label: 'Mombasa Island' },
+        { id: 'kisauni',        label: 'Kisauni' },
+        { id: 'likoni',         label: 'Likoni' },
       ] },
-      { value: 'kilifi-county', label: 'Kilifi County', children: [
-        { value: 'malindi',     label: 'Malindi' },
-        { value: 'kilifi-town', label: 'Kilifi Town' },
+      { id: 'kilifi-county', label: 'Kilifi County', children: [
+        { id: 'malindi',     label: 'Malindi' },
+        { id: 'kilifi-town', label: 'Kilifi Town' },
       ] },
     ],
   },
   {
-    value: 'nairobi', label: 'Nairobi',
+    id: 'nairobi', label: 'Nairobi',
     children: [
-      { value: 'nairobi-county', label: 'Nairobi County', children: [
-        { value: 'nairobi-west', label: 'Nairobi West' },
-        { value: 'starehe',      label: 'Starehe' },
-        { value: 'dagoretti',    label: 'Dagoretti' },
-        { value: 'embakasi',     label: 'Embakasi' },
+      { id: 'nairobi-county', label: 'Nairobi County', children: [
+        { id: 'nairobi-west', label: 'Nairobi West' },
+        { id: 'starehe',      label: 'Starehe' },
+        { id: 'dagoretti',    label: 'Dagoretti' },
+        { id: 'embakasi',     label: 'Embakasi' },
       ] },
     ],
   },
   {
-    value: 'rift-valley', label: 'Rift Valley',
+    id: 'rift-valley', label: 'Rift Valley',
     children: [
-      { value: 'nakuru-county', label: 'Nakuru County', children: [
-        { value: 'nakuru-town', label: 'Nakuru Town' },
-        { value: 'naivasha',    label: 'Naivasha' },
+      { id: 'nakuru-county', label: 'Nakuru County', children: [
+        { id: 'nakuru-town', label: 'Nakuru Town' },
+        { id: 'naivasha',    label: 'Naivasha' },
       ] },
-      { value: 'uasin-gishu-county', label: 'Uasin Gishu County', children: [
-        { value: 'eldoret', label: 'Eldoret' },
-        { value: 'turbo',   label: 'Turbo' },
+      { id: 'uasin-gishu-county', label: 'Uasin Gishu County', children: [
+        { id: 'eldoret', label: 'Eldoret' },
+        { id: 'turbo',   label: 'Turbo' },
       ] },
     ],
   },
   {
-    value: 'nyanza', label: 'Nyanza',
+    id: 'nyanza', label: 'Nyanza',
     children: [
-      { value: 'kisumu-county', label: 'Kisumu County', children: [
-        { value: 'kisumu-central', label: 'Kisumu Central' },
-        { value: 'kisumu-east',    label: 'Kisumu East' },
+      { id: 'kisumu-county', label: 'Kisumu County', children: [
+        { id: 'kisumu-central', label: 'Kisumu Central' },
+        { id: 'kisumu-east',    label: 'Kisumu East' },
       ] },
     ],
   },
@@ -459,19 +506,46 @@ export const SectionedLayout = {
     const collapsed = isBelowMd ? true : userCollapsed;
     const navWidth = collapsed ? 56 : 240;
 
+    // `activeId` is the single source of truth for the whole navigation
+    // system: it drives the side rail's selection, the Page header title,
+    // AND the breadcrumb trail. There is no separate `trail` state — keeping
+    // one source means the three can never drift out of sync.
+    //
+    //   • SideNavigation  → activeItemId={activeId}
+    //   • Page header     → siblingsFor(EQUIPMENT_ITEMS, activeId)
+    //   • Breadcrumbs     → trailFor(EQUIPMENT_ITEMS, activeId, { home })
+    //
+    // `activeId === 'home'` is the special landing case: the side rail is
+    // hidden entirely and only the breadcrumb (just "Home") shows.
     const [activeId, setActiveId] = useState('coldchain');
     const [country, setCountry]   = useState(
       COUNTRIES.find((c) => c.code === 'KE') || COUNTRIES[0],
     );
     const [chatOpen, setChatOpen] = useState(false);
 
-    const [trail, setTrail] = useState([
-      HOME_CRUMB,
-      { label: 'Equipment Management' },
-      { label: 'ColdChain Equipment' },
-      { label: 'View Equipment Details' },
-      { label: 'Equipment Details' },
-    ]);
+    const isHome = activeId === 'home';
+
+    // Breadcrumb trail derived from the nav tree. trailFor returns
+    // [Home] on the home page, [Home, item] for a top-level page, and
+    // [Home, group, page] for a sub-item — exactly "where the user
+    // entered from Home" down to the current page.
+    const trail = useMemo(
+      () => trailFor(EQUIPMENT_ITEMS, activeId, { home: HOME_CRUMB }),
+      [activeId],
+    );
+
+    // Map a breadcrumb click back onto activeId so the rail + header follow.
+    // • Home crumb        → land on the Home page (clears the trail to [Home]).
+    // • A group crumb     → that section has no page of its own, so land on
+    //                       its first child (the section's default page).
+    // • Any leaf crumb    → select it directly.
+    // Clicking the last (current) crumb is a no-op inside Breadcrumbs already.
+    function handleCrumbSelect(id) {
+      if (id === HOME_CRUMB.id) { setActiveId('home'); return; }
+      const group = EQUIPMENT_ITEMS.find((it) => it.id === id && it.children);
+      if (group) { setActiveId(group.children[0].id); return; }
+      setActiveId(id);
+    }
     const [selected, setSelected] = useState(new Set());
     // Active metric tile — null = no filter applied. Click toggles; clicking
     // the active tile clears it. Mirrors Equipment Detail Main View so the
@@ -522,35 +596,42 @@ export const SectionedLayout = {
 
         {/* Side navigation — fixed full-height rail at the left edge. The
             rail's own `bg-page` + inset right shadow matches the toolbar's
-            bg, so the visual seam between them disappears. */}
-        <div style={{
-          position: 'fixed', top: 0, left: 0, bottom: 0,
-          zIndex: 10,
-        }}>
-          <SideNavigation
-            collapsed={collapsed}
-            // Locking auto-expand behind the breakpoint: clicking a collapsed
-            // parent below `md` would expand the rail and squeeze the page.
-            onCollapsedChange={isBelowMd ? undefined : setUserCollapsed}
-            logo={collapsed ? <NexleafIconLogo /> : <NexleafFullLogo />}
-            items={EQUIPMENT_ITEMS}
-            activeItemId={activeId}
-            onItemSelect={setActiveId}
-            footer={
-              isBelowMd ? null : (
-                <CollapseToggle
-                  collapsed={userCollapsed}
-                  onToggle={() => setUserCollapsed((c) => !c)}
-                />
-              )
-            }
-            ariaLabel="Equipment Management"
-          />
-        </div>
+            bg, so the visual seam between them disappears.
 
-        {/* Right column: toolbar (sticky) + page content (scrolls under). */}
+            On the Home page (`isHome`) the rail is removed entirely — Home is
+            a top-level landing surface that shows breadcrumbs only, so the
+            right column reclaims the full width. */}
+        {!isHome && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, bottom: 0,
+            zIndex: 10,
+          }}>
+            <SideNavigation
+              collapsed={collapsed}
+              // Locking auto-expand behind the breakpoint: clicking a collapsed
+              // parent below `md` would expand the rail and squeeze the page.
+              onCollapsedChange={isBelowMd ? undefined : setUserCollapsed}
+              logo={collapsed ? <NexleafIconLogo /> : <NexleafFullLogo />}
+              items={EQUIPMENT_ITEMS}
+              activeItemId={activeId}
+              onSelect={setActiveId}
+              footer={
+                isBelowMd ? null : (
+                  <CollapseToggle
+                    collapsed={userCollapsed}
+                    onToggle={() => setUserCollapsed((c) => !c)}
+                  />
+                )
+              }
+              ariaLabel="Equipment Management"
+            />
+          </div>
+        )}
+
+        {/* Right column: toolbar (sticky) + page content (scrolls under).
+            No left margin on Home — the rail isn't rendered there. */}
         <div style={{
-          marginLeft: navWidth,
+          marginLeft: isHome ? 0 : navWidth,
           transition: 'margin-left 0.18s ease',
           minWidth: 0,            // lets the IndexTable inside enable its
                                   // horizontal scroll without pushing the
@@ -565,7 +646,7 @@ export const SectionedLayout = {
               start={(
                 <Breadcrumbs
                   items={trail}
-                  onNavigate={(i) => setTrail(trail.slice(0, i + 1))}
+                  onSelect={(id) => handleCrumbSelect(id)}
                 />
               )}
               center={(
@@ -635,9 +716,17 @@ export const SectionedLayout = {
               position: 'absolute', width: 1, height: 1, padding: 0, margin: -1,
               overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', border: 0,
             }}>
-              ColdChain Equipment
+              {isHome ? 'Home' : (trail[trail.length - 1]?.label ?? 'ColdChain Equipment')}
             </h1>
 
+            {/* Home landing — breadcrumbs-only surface. Picking a section
+                card calls `setActiveId`, which both navigates into the app
+                shell (rail reappears) and grows the breadcrumb to
+                Home → Section, exactly tracing where the user entered from. */}
+            {isHome ? (
+              <HomeLanding items={EQUIPMENT_ITEMS} homeId={HOME_CRUMB.id} onEnter={setActiveId} />
+            ) : (
+            <>
             {/* Sections stack directly — no flex `gap`. The Page primitive's
                 built-in 24 px bottom padding spaces it from the metrics, and
                 the metrics row carries an explicit `marginBottom: 24` so
@@ -776,6 +865,8 @@ export const SectionedLayout = {
                   />
                 }
               />
+            </>
+            )}
           </main>
         </div>
       </div>

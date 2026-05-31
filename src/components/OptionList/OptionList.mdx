@@ -110,9 +110,9 @@ import { NxOptionListModule } from 'components/OptionList/option-list.module';
 // Single select
 <nx-option-list
   [options]="[
-    { label: 'Morning', value: 'morning', description: '07:30 – 12:00' },
-    { label: 'Evening', value: 'evening', description: '18:00 – 22:00' },
-    { label: 'Night',   value: 'night',   disabled: true }
+    { label: 'Morning', id: 'morning', description: '07:30 – 12:00' },
+    { label: 'Evening', id: 'evening', description: '18:00 – 22:00' },
+    { label: 'Night',   id: 'night',   disabled: true }
   ]"
   [selected]="selected"
   (change)="selected = $event"
@@ -136,9 +136,9 @@ import { OptionList } from 'components/OptionList/OptionList.jsx';
 const [selected, setSelected] = useState('morning');
 <OptionList
   options={[
-    { label: 'Morning', value: 'morning', description: '07:30 – 12:00' },
-    { label: 'Evening', value: 'evening', description: '18:00 – 22:00' },
-    { label: 'Night',   value: 'night',   disabled: true },
+    { label: 'Morning', id: 'morning', description: '07:30 – 12:00' },
+    { label: 'Evening', id: 'evening', description: '18:00 – 22:00' },
+    { label: 'Night',   id: 'night',   disabled: true },
   ]}
   selected={selected}
   onChange={setSelected}

@@ -6,6 +6,7 @@ import { Pagination } from '../../components/Pagination/Pagination.jsx';
 import { SearchSelectButton } from '../../components/SearchSelect/SearchSelect.jsx';
 import { PolarisIconImg } from '../../components/PolarisIcon/PolarisIcon.jsx';
 import { siblingsFor } from '../../components/SideNavigation/SideNavigation.jsx';
+import { StatusBadge } from '../../components/Badge/Badge.jsx';
 
 // Same `Inventory` group children used by the Side Navigation's Equipment
 // Management variant. Keeping them defined once here means the Title
@@ -49,28 +50,9 @@ export default {
 };
 
 // ─── Main View data ───────────────────────────────────────────────────────────
-
-const STATUS_STYLES = {
-  'Active':            { bg: '#cdfee1',         color: '#0c5132' },
-  'Unknown':           { bg: 'rgba(0,0,0,0.06)', color: '#616161' },
-  'Decommissioned':    { bg: '#ffd6a4',         color: '#5e4200' },
-  'Faulty':            { bg: '#fedad9',         color: '#8e1f0b' },
-  'Under Maintenance': { bg: '#e0f0ff',         color: '#00527c' },
-};
-
-const StatusBadge = ({ status }) => {
-  const s = STATUS_STYLES[status] || STATUS_STYLES['Unknown'];
-  return (
-    <span
-      role="status"
-      aria-label={`Equipment status: ${status}`}
-      style={{ background: s.bg, color: s.color, fontSize: 12, fontWeight: 550,
-        fontFamily: 'Inter, sans-serif', padding: '2px 8px', borderRadius: 8,
-        whiteSpace: 'nowrap', display: 'inline-block', lineHeight: '16px' }}>
-      {status}
-    </span>
-  );
-};
+// StatusBadge is now the canonical component from Badge.jsx — it maps the
+// equipment statuses (Active / Unknown / Decommissioned / Faulty / Under
+// Maintenance) to the shared Badge tones, so colors stay in one place.
 
 const COMPONENT_ROWS = [
   { id: '1',  installId: 'DCM-2024-001', facility: 'Coast General Hospital',          equipmentType: 'Inverter',    manufacturer: 'Vestfrost',         qty: 3,  status: 'Active',            lastMaintenance: 'Jan 15, 2024' },
@@ -183,66 +165,66 @@ const COLUMNS = [
 // beneath them. Matches the design-system 3-level depth recommendation.
 const REGION_OPTIONS = [
   {
-    value: 'coast', label: 'Coast',
+    id: 'coast', label: 'Coast',
     children: [
       {
-        value: 'mombasa-county', label: 'Mombasa County',
+        id: 'mombasa-county', label: 'Mombasa County',
         children: [
-          { value: 'mombasa-island', label: 'Mombasa Island' },
-          { value: 'kisauni',        label: 'Kisauni' },
-          { value: 'likoni',         label: 'Likoni' },
+          { id: 'mombasa-island', label: 'Mombasa Island' },
+          { id: 'kisauni',        label: 'Kisauni' },
+          { id: 'likoni',         label: 'Likoni' },
         ],
       },
       {
-        value: 'kilifi-county', label: 'Kilifi County',
+        id: 'kilifi-county', label: 'Kilifi County',
         children: [
-          { value: 'malindi',     label: 'Malindi' },
-          { value: 'kilifi-town', label: 'Kilifi Town' },
+          { id: 'malindi',     label: 'Malindi' },
+          { id: 'kilifi-town', label: 'Kilifi Town' },
         ],
       },
     ],
   },
   {
-    value: 'nairobi', label: 'Nairobi',
+    id: 'nairobi', label: 'Nairobi',
     children: [
       {
-        value: 'nairobi-county', label: 'Nairobi County',
+        id: 'nairobi-county', label: 'Nairobi County',
         children: [
-          { value: 'nairobi-west', label: 'Nairobi West' },
-          { value: 'starehe',      label: 'Starehe' },
-          { value: 'dagoretti',    label: 'Dagoretti' },
-          { value: 'embakasi',     label: 'Embakasi' },
+          { id: 'nairobi-west', label: 'Nairobi West' },
+          { id: 'starehe',      label: 'Starehe' },
+          { id: 'dagoretti',    label: 'Dagoretti' },
+          { id: 'embakasi',     label: 'Embakasi' },
         ],
       },
     ],
   },
   {
-    value: 'rift-valley', label: 'Rift Valley',
+    id: 'rift-valley', label: 'Rift Valley',
     children: [
       {
-        value: 'nakuru-county', label: 'Nakuru County',
+        id: 'nakuru-county', label: 'Nakuru County',
         children: [
-          { value: 'nakuru-town', label: 'Nakuru Town' },
-          { value: 'naivasha',    label: 'Naivasha' },
+          { id: 'nakuru-town', label: 'Nakuru Town' },
+          { id: 'naivasha',    label: 'Naivasha' },
         ],
       },
       {
-        value: 'uasin-gishu-county', label: 'Uasin Gishu County',
+        id: 'uasin-gishu-county', label: 'Uasin Gishu County',
         children: [
-          { value: 'eldoret',   label: 'Eldoret' },
-          { value: 'turbo',     label: 'Turbo' },
+          { id: 'eldoret',   label: 'Eldoret' },
+          { id: 'turbo',     label: 'Turbo' },
         ],
       },
     ],
   },
   {
-    value: 'nyanza', label: 'Nyanza',
+    id: 'nyanza', label: 'Nyanza',
     children: [
       {
-        value: 'kisumu-county', label: 'Kisumu County',
+        id: 'kisumu-county', label: 'Kisumu County',
         children: [
-          { value: 'kisumu-central', label: 'Kisumu Central' },
-          { value: 'kisumu-east',    label: 'Kisumu East' },
+          { id: 'kisumu-central', label: 'Kisumu Central' },
+          { id: 'kisumu-east',    label: 'Kisumu East' },
         ],
       },
     ],

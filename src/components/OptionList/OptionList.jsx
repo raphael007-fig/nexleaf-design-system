@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Checkbox } from '../Checkbox/Checkbox.jsx';
+import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 const IcoCheckTick = ({ color = '#303030', size = 20 }) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ flexShrink: 0, display: 'block' }}>
@@ -14,9 +15,14 @@ const IcoMediaPlaceholder = ({ color = '#616161', size = 20 }) => (
   </svg>
 );
 
-export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error }) {
+export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error, ariaLabel }) {
   const [hovKey, setHovKey] = useState(null);
   const [focKey, setFocKey] = useState(null);
+  const baseId = useId();
+  // Single top-level title (no sections) labels the whole listbox; grouped
+  // sections each label their own role="group" instead.
+  const hasSections = sections.length > 0;
+  const listLabelId = (!hasSections && title) ? `${baseId}-label` : undefined;
 
   const resolvedSections = sections.length > 0 ? sections : [{ title, options }];
 
@@ -43,33 +49,47 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
   }
 
   return (
-    <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8,
+    <div role="listbox"
+      aria-multiselectable={allowMultiple || undefined}
+      aria-label={!listLabelId ? ariaLabel : undefined}
+      aria-labelledby={listLabelId}
+      style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8,
       padding: 4, fontFamily: 'Inter,sans-serif',
       display: 'inline-flex', flexDirection: 'column', minWidth: 160 }}>
-      {resolvedSections.map((section, si) => (
-        <div key={si} style={si > 0 ? { borderTop: '1px solid #ebebeb', marginTop: 4, paddingTop: 4 } : {}}>
+      {resolvedSections.map((section, si) => {
+        const sectionTitleId = section.title ? `${baseId}-sec-${si}` : undefined;
+        // A grouped section gets role="group" + aria-labelledby; the single
+        // un-sectioned title instead labels the listbox itself (above).
+        const groupProps = hasSections && section.title
+          ? { role: 'group', 'aria-labelledby': sectionTitleId }
+          : {};
+        return (
+        <div key={si} {...groupProps} style={si > 0 ? { borderTop: '1px solid #ebebeb', marginTop: 4, paddingTop: 4 } : {}}>
           {section.title && (
             <div style={{ padding: '2px 6px 4px', userSelect: 'none' }}>
-              <span style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
+              <span id={sectionTitleId ?? listLabelId} style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
             </div>
           )}
           {(section.options || []).map((opt) => {
-            const key = `${si}-${opt.value}`;
-            const sel = isSelected(opt.value);
+            // Canonical identity is `id` (falls back to legacy `value`).
+            const optId = getItemId(opt, 'OptionList');
+            const optLabel = getItemLabel(opt);
+            const key = `${si}-${optId}`;
+            const sel = isSelected(optId);
             const foc = focKey === key;
             return (
-              <div key={opt.value}
+              <div key={optId}
                 tabIndex={opt.disabled ? -1 : 0}
                 role="option" aria-selected={sel}
-                onClick={() => handleSelect(opt.value, opt.disabled)}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(opt.value, opt.disabled); } }}
+                onClick={() => handleSelect(optId, opt.disabled)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSelect(optId, opt.disabled); } }}
                 onMouseEnter={() => !opt.disabled && setHovKey(key)}
                 onMouseLeave={() => setHovKey(null)}
                 onFocus={() => setFocKey(key)}
                 onBlur={() => setFocKey(null)}
                 style={{ display: 'flex', alignItems: 'center', gap: 8,
                   padding: 6, borderRadius: 8,
-                  background: itemBg(opt.value, opt.disabled, key),
+                  background: itemBg(optId, opt.disabled, key),
                   cursor: opt.disabled ? 'not-allowed' : 'pointer',
                   position: 'relative', outline: 'none',
                   transition: 'background 0.1s', userSelect: 'none' }}>
@@ -80,7 +100,7 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 {allowMultiple && (
                   <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
                     <Checkbox checked={sel} disabled={opt.disabled}
-                      onChange={() => handleSelect(opt.value, opt.disabled)} />
+                      onChange={() => handleSelect(optId, opt.disabled)} />
                   </div>
                 )}
                 {opt.media && (
@@ -97,7 +117,7 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                       lineHeight: '20px',
                       color: opt.disabled ? '#b5b5b5' : '#303030',
                       whiteSpace: 'nowrap' }}>
-                      {opt.label}
+                      {optLabel}
                     </span>
                     {opt.badge && (
                       <div style={{ display: 'inline-flex', alignItems: 'center',
@@ -121,7 +141,8 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
             );
           })}
         </div>
-      ))}
+        );
+      })}
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px 2px' }}>
           <svg width="16" height="16" viewBox="0 0 20 20" fill="#d92d20" style={{ flexShrink: 0 }}>

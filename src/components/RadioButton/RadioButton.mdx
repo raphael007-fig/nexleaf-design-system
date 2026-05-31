@@ -174,9 +174,9 @@ import { RadioButton, RadioGroup } from 'components/RadioButton/RadioButton.jsx'
   value={pref}
   onChange={setPref}
   options={[
-    { value: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
-    { value: 'sms',   label: 'SMS' },
-    { value: 'push',  label: 'Push notification' },
+    { id: 'email', label: 'Email', helpText: 'Daily digest at 8am' },
+    { id: 'sms',   label: 'SMS' },
+    { id: 'push',  label: 'Push notification' },
   ]}
 />
 
@@ -189,8 +189,8 @@ import { RadioButton, RadioGroup } from 'components/RadioButton/RadioButton.jsx'
   onChange={setPlan}
   tone="magic"
   options={[
-    { value: 'basic', label: 'Basic' },
-    { value: 'pro',   label: 'Pro' },
+    { id: 'basic', label: 'Basic' },
+    { id: 'pro',   label: 'Pro' },
   ]}
   error="Please select a plan."
 />

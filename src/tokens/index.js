@@ -90,3 +90,24 @@ export const BTN_SHADOW_ACTIVE   = 'inset 0 2px 1px rgba(26,26,26,0.2), inset 1p
 export const BTN_SHADOW_PRIMARY  = 'inset 0 2px 0 rgba(255,255,255,0.2), inset 2px 0 0 rgba(255,255,255,0.2), inset -2px 0 0 rgba(255,255,255,0.2), inset 0 -1px 0 1px #000, inset 0 1px 0 #000';
 export const BTN_SHADOW_CRITICAL = 'inset 0 1px 0 rgba(255,255,255,0.48), inset -1px 0 0 rgba(255,255,255,0.2), inset 1px 0 0 rgba(255,255,255,0.2), inset 0 -1.5px 0 rgba(0,0,0,0.25)';
 export const FOCUS_RING          = '0 0 0 2px #005bd3';
+
+// Border radius scale (mirrors tokens.css --nx-radius-*).
+export const RADIUS_XS      = 4;    // Dismiss buttons, tiny chips, inner icon hit-areas
+export const RADIUS_CONTROL = 6;    // Compact icon controls (row-action menu, pagination cells)
+export const RADIUS_SM      = 8;    // Buttons, inputs, banners, list containers
+export const RADIUS_MD      = 10;   // Accordions
+export const RADIUS_LG      = 12;   // Option-card, checkbox containers
+export const RADIUS_XL      = 16;   // Proto/navigation cards
+export const RADIUS_PILL    = 100;  // Badges, pills
+
+// ── Status badge / info & success tone notes ──────────────────────────────────
+// Two deliberate value pairs differ from the base semantic tokens; documented
+// here so they aren't "fixed" by mistake:
+//   • Badge `info` fill uses #e0f0ff (a touch deeper than BG_INFO #eaf4ff) for
+//     better contrast of the chip against white surfaces. BG_INFO stays the
+//     banner background.
+//   • Filled green surfaces (success Btn, success-strong Badge) use #29845a,
+//     darker than COLOR_SUCCESS #12b76a, so white text on them clears AA. The
+//     #12b76a token remains the success *icon/indicator* color.
+export const COLOR_SUCCESS_FILLED = '#29845a'; // filled-button / strong-badge green
+export const BG_INFO_BADGE        = '#e0f0ff'; // info Badge chip fill (vs banner BG_INFO)

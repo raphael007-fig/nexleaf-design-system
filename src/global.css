@@ -8,3 +8,52 @@ html, body {
   background: var(--nx-bg-page);
   color: var(--nx-text-default);
 }
+
+/* ─────────────────────────────────────────────
+ * SHARED ANIMATIONS
+ * Single source of truth for keyframes used across components. Prefixed `nx`
+ * so they never collide with a host app's own keyframes. Components reference
+ * these by name (e.g. animation: nxFadeInScale 0.18s ease-out).
+ * ───────────────────────────────────────────── */
+@keyframes nxFadeInScale {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes nxFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes nxSpin {
+  to { transform: rotate(360deg); }
+}
+@keyframes nxScanBeam {
+  from { transform: translateY(-40%); }
+  to   { transform: translateY(40%); }
+}
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+/* Legacy aliases — older stories/components reference the un-prefixed names. */
+@keyframes fadeInScale {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─────────────────────────────────────────────
+ * REDUCED MOTION
+ * Honor the OS-level "reduce motion" preference. Collapse all animations and
+ * transitions to near-instant so vestibular-sensitive users aren't subjected
+ * to entrance scales, spinners, sliding panels, etc. Components that must keep
+ * a tiny transition (e.g. focus ring) are unaffected at 0.01ms.
+ * ───────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -47,9 +47,9 @@ export const ChoiceListSingle = {
     return (
       <ChoiceList title="Location" selected={val} onChange={setVal}
         choices={[
-          { value: 'apple-valley', label: 'Apple Valley' },
-          { value: 'omaha', label: 'Omaha' },
-          { value: 'duluth', label: 'Duluth' },
+          { id: 'apple-valley', label: 'Apple Valley' },
+          { id: 'omaha', label: 'Omaha' },
+          { id: 'duluth', label: 'Duluth' },
         ]} />
     );
   },
@@ -160,9 +160,9 @@ export const ChoiceListMultiple = {
     return (
       <ChoiceList title="Actions taken" allowMultiple selected={val} onChange={setVal}
         choices={[
-          { value: 'vvm', label: 'VVM Check' },
-          { value: 'transfer', label: 'Vaccine Transfer' },
-          { value: 'discarded', label: 'Frozen Vaccine Discarded' },
+          { id: 'vvm', label: 'VVM Check' },
+          { id: 'transfer', label: 'Vaccine Transfer' },
+          { id: 'discarded', label: 'Frozen Vaccine Discarded' },
         ]} />
     );
   },

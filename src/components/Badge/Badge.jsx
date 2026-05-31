@@ -143,19 +143,35 @@ export function Badge({
   );
 }
 
-export function StatusBadge({ status }) {
-  const map = {
-    pending:   'attention',
-    completed: 'success',
-    locked:    'default',
-    critical:  'critical',
-    info:      'info',
-  };
-  const tone = map[status] || 'default';
-  const t = BADGE_TONES[tone];
-  return (
-    <span style={{ background: t.bg, color: t.color, padding: '2px 8px', borderRadius: 8, fontSize: 12, fontWeight: 550, lineHeight: '16px', whiteSpace: 'nowrap', fontFamily: 'Inter, sans-serif' }}>
-      {t.label}
-    </span>
-  );
+// Canonical status→tone map. Covers the generic workflow statuses plus the
+// equipment-domain statuses that pages (EquipmentDetail, ApplicationLayout)
+// previously re-implemented locally. Keys are matched case-insensitively, so a
+// row value of "Under Maintenance" resolves the same as "under-maintenance".
+// Mapping onto BADGE_TONES reproduces the exact same colors those page-local
+// badges used, so there's a single source of truth now.
+export const STATUS_BADGE_MAP = {
+  // generic workflow
+  pending:        { tone: 'attention', label: 'Pending' },
+  completed:      { tone: 'success',   label: 'Completed' },
+  locked:         { tone: 'default',   label: 'Locked' },
+  critical:       { tone: 'critical',  label: 'Critical' },
+  info:           { tone: 'info',      label: 'Info' },
+  // equipment domain
+  active:                { tone: 'success',  label: 'Active' },
+  unknown:               { tone: 'default',  label: 'Unknown' },
+  decommissioned:        { tone: 'warning',  label: 'Decommissioned' },
+  faulty:                { tone: 'critical', label: 'Faulty' },
+  'under maintenance':   { tone: 'info',     label: 'Under Maintenance' },
+  'under-maintenance':   { tone: 'info',     label: 'Under Maintenance' },
+  maintenance:           { tone: 'info',     label: 'Under Maintenance' },
+};
+
+// StatusBadge — semantic wrapper over <Badge>. Accepts a `status` key (any key
+// in STATUS_BADGE_MAP, case-insensitive) and renders the matching tone + label.
+// Unknown keys fall back to the default tone with the raw status as the label,
+// so new domain statuses degrade gracefully instead of disappearing.
+export function StatusBadge({ status, children, size }) {
+  const key = String(status ?? '').toLowerCase();
+  const entry = STATUS_BADGE_MAP[key] || { tone: 'default', label: status || 'Unknown' };
+  return <Badge tone={entry.tone} size={size}>{children || entry.label}</Badge>;
 }

@@ -3,12 +3,25 @@ import {
   BTN_SHADOW_DEFAULT, BTN_SHADOW_HOVER, BTN_SHADOW_ACTIVE,
   BTN_SHADOW_PRIMARY, BTN_SHADOW_CRITICAL, FOCUS_RING,
   COLOR_PRIMARY, COLOR_PRIMARY_HOVER, COLOR_PRIMARY_PRESSED,
+  COLOR_CRITICAL_STRONG, COLOR_SUCCESS_FILLED,
+  TEXT_DEFAULT, TEXT_DISABLED, TEXT_ON_PRIMARY,
+  BG_SURFACE, BG_SURFACE_HOVER, BG_HOVER_SUBTLE, RADIUS_SM,
 } from '../../tokens/index.js';
 
 // Focus ring used on the primary blue button. The default FOCUS_RING is itself
 // blue, so it would disappear against the button background — pair an inset
 // white ring with an outer dark ring to keep the indicator visible.
 const FOCUS_RING_ON_PRIMARY = 'inset 0 0 0 2px #ffffff, 0 0 0 2px #303030';
+
+// Bespoke neutral-control state grays. These intentionally do NOT map to a
+// shared surface token: they are the hover/pressed fills for the *secondary /
+// default / tertiary* button bodies only. They sit between the page and surface
+// grays and are tuned for the inset-shadow button system, so binding them to
+// BG_INPUT_FOCUS / BG_PAGE (which happen to share a value today) would couple
+// button state to unrelated surfaces. Kept local + documented per the palette rule.
+const BTN_BG_NEUTRAL_HOVER   = '#fafafa'; // secondary/default body hover
+const BTN_BG_NEUTRAL_PRESSED = '#cccccc'; // secondary/default body pressed
+const BTN_BG_TERTIARY_PRESSED = '#f1f1f1'; // tertiary body pressed
 import { Skeleton } from '../Skeleton/Skeleton.jsx';
 
 const IcoChevDown = ({ size = 16, color = 'currentColor' }) => (
@@ -73,7 +86,7 @@ export function Btn({
       <Skeleton
         width={fullWidth ? '100%' : (skeletonWidth ?? DEFAULT_SKELETON_WIDTHS[sz] ?? 96)}
         height={SKELETON_HEIGHTS[sz] ?? 28}
-        radius={8}
+        radius={RADIUS_SM}
       />
     );
   }
@@ -110,7 +123,7 @@ export function Btn({
   const s = SIZES[sz] || SIZES.medium;
   const base = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-    borderRadius: 8, fontFamily: 'Inter,sans-serif', border: 'none', outline: 'none',
+    borderRadius: RADIUS_SM, fontFamily: 'Inter,sans-serif', border: 'none', outline: 'none',
     cursor: loading ? 'progress' : disabled ? 'not-allowed' : 'pointer',
     width: fullWidth ? '100%' : undefined, whiteSpace: 'nowrap', ...s, boxSizing: 'border-box',
   };
@@ -137,7 +150,7 @@ export function Btn({
   if (v === 'plain') {
     return (
       <button type={type} disabled={isInert} onClick={isInert ? undefined : onClick} {...evts} {...ariaProps}
-        style={{ ...base, background: 'transparent', color: disabled ? '#b5b5b5' : '#005bd3', fontWeight: 450, fontSize: 13, padding: 0,
+        style={{ ...base, background: 'transparent', color: disabled ? TEXT_DISABLED : COLOR_PRIMARY, fontWeight: 450, fontSize: 13, padding: 0,
           textDecoration: (!isInert && hov) ? 'underline' : 'none',
           boxShadow: foc ? FOCUS_RING : 'none' }}>
         {inner}
@@ -145,10 +158,10 @@ export function Btn({
     );
   }
   if (v === 'tertiary') {
-    const bg = disabled ? 'rgba(0,0,0,0.05)' : act ? '#f1f1f1' : hov ? '#f7f7f7' : 'transparent';
+    const bg = disabled ? BG_HOVER_SUBTLE : act ? BTN_BG_TERTIARY_PRESSED : hov ? BG_SURFACE_HOVER : 'transparent';
     return (
       <button type={type} disabled={isInert} onClick={isInert ? undefined : onClick} {...evts} {...ariaProps}
-        style={{ ...base, background: bg, color: disabled ? '#b5b5b5' : '#303030', fontWeight: 550,
+        style={{ ...base, background: bg, color: disabled ? TEXT_DISABLED : TEXT_DEFAULT, fontWeight: 550,
           boxShadow: foc ? FOCUS_RING : 'none' }}>
         {inner}
       </button>
@@ -159,9 +172,9 @@ export function Btn({
     // Brand-blue path uses discrete hover/pressed colors (not filter:brightness)
     // because darkening a saturated blue with filter looks washed out.
     const isToned = t === 'critical' || t === 'success';
-    const bg = disabled ? 'rgba(0,0,0,0.05)'
-      : t === 'critical' ? '#e51c00'
-        : t === 'success'  ? '#29845a'
+    const bg = disabled ? BG_HOVER_SUBTLE
+      : t === 'critical' ? COLOR_CRITICAL_STRONG
+        : t === 'success'  ? COLOR_SUCCESS_FILLED
           : act ? COLOR_PRIMARY_PRESSED
             : hov ? COLOR_PRIMARY_HOVER
               : COLOR_PRIMARY;
@@ -178,7 +191,7 @@ export function Btn({
     const filterFx = isToned && !isInert && hov && !act ? 'brightness(1.08)' : 'none';
     return (
       <button type={type} disabled={isInert} onClick={isInert ? undefined : onClick} {...evts} {...ariaProps}
-        style={{ ...base, background: bg, color: disabled ? '#b5b5b5' : '#fff', fontWeight: 600, boxShadow: shadow,
+        style={{ ...base, background: bg, color: disabled ? TEXT_DISABLED : TEXT_ON_PRIMARY, fontWeight: 600, boxShadow: shadow,
           filter: filterFx }}>
         {inner}
       </button>
@@ -188,7 +201,7 @@ export function Btn({
     // Dark filled high-emphasis CTA — what the old `primary` used to be.
     // Use when you need more visual weight than the brand-blue primary,
     // e.g. confirmation modals, marketing CTAs.
-    const bg = disabled ? 'rgba(0,0,0,0.05)' : '#303030';
+    const bg = disabled ? BG_HOVER_SUBTLE : TEXT_DEFAULT;
     const baseShadow = BTN_SHADOW_PRIMARY;
     const activeShadow = `inset 0 2px 1px rgba(0,0,0,0.3), ${baseShadow}`;
     const shadow = disabled ? 'none'
@@ -197,14 +210,14 @@ export function Btn({
           : baseShadow;
     return (
       <button type={type} disabled={isInert} onClick={isInert ? undefined : onClick} {...evts} {...ariaProps}
-        style={{ ...base, background: bg, color: disabled ? '#b5b5b5' : '#fff', fontWeight: 600, boxShadow: shadow,
+        style={{ ...base, background: bg, color: disabled ? TEXT_DISABLED : TEXT_ON_PRIMARY, fontWeight: 600, boxShadow: shadow,
           filter: (!isInert && hov && !act) ? 'brightness(1.08)' : 'none' }}>
         {inner}
       </button>
     );
   }
   // default variant
-  const bg = disabled ? 'rgba(0,0,0,0.05)' : act ? '#cccccc' : hov ? '#fafafa' : '#ffffff';
+  const bg = disabled ? BG_HOVER_SUBTLE : act ? BTN_BG_NEUTRAL_PRESSED : hov ? BTN_BG_NEUTRAL_HOVER : BG_SURFACE;
   const shadow = disabled ? 'none'
     : act  ? (foc ? `${FOCUS_RING}, ${BTN_SHADOW_ACTIVE}` : BTN_SHADOW_ACTIVE)
       : hov  ? (foc ? `${FOCUS_RING}, ${BTN_SHADOW_HOVER}`  : BTN_SHADOW_HOVER)
@@ -212,7 +225,7 @@ export function Btn({
           :         BTN_SHADOW_DEFAULT;
   return (
     <button type={type} disabled={isInert} onClick={isInert ? undefined : onClick} {...evts} {...ariaProps}
-      style={{ ...base, background: bg, color: disabled ? '#b5b5b5' : '#303030', fontWeight: 550, boxShadow: shadow }}>
+      style={{ ...base, background: bg, color: disabled ? TEXT_DISABLED : TEXT_DEFAULT, fontWeight: 550, boxShadow: shadow }}>
       {inner}
     </button>
   );
@@ -228,7 +241,7 @@ export function IconBtn({ icon, onClick, disabled, variant = 'default', type = '
     onMouseDown: () => setAct(true),  onMouseUp: () => setAct(false),
     onFocus: () => setFoc(true),      onBlur: () => setFoc(false),
   };
-  const bg = disabled ? 'rgba(0,0,0,0.05)' : isPrimary ? '#303030' : act ? '#cccccc' : hov ? '#fafafa' : '#ffffff';
+  const bg = disabled ? BG_HOVER_SUBTLE : isPrimary ? TEXT_DEFAULT : act ? BTN_BG_NEUTRAL_PRESSED : hov ? BTN_BG_NEUTRAL_HOVER : BG_SURFACE;
   const baseShadow = isPrimary ? BTN_SHADOW_PRIMARY : BTN_SHADOW_DEFAULT;
   const hoverShadow = isPrimary ? BTN_SHADOW_PRIMARY : BTN_SHADOW_HOVER;
   const activeShadow = isPrimary ? `inset 0 2px 1px rgba(0,0,0,0.3), ${BTN_SHADOW_PRIMARY}` : BTN_SHADOW_ACTIVE;
@@ -237,7 +250,7 @@ export function IconBtn({ icon, onClick, disabled, variant = 'default', type = '
       : act ? activeShadow : hov ? hoverShadow : baseShadow;
   return (
     <button type={type} disabled={disabled} onClick={disabled ? undefined : onClick} {...evts}
-      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 4px', borderRadius: 8, border: 'none', outline: 'none', cursor: disabled ? 'not-allowed' : 'pointer', background: bg, boxShadow: shadow,
+      style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 4px', borderRadius: RADIUS_SM, border: 'none', outline: 'none', cursor: disabled ? 'not-allowed' : 'pointer', background: bg, boxShadow: shadow,
         filter: isPrimary && !disabled && hov && !act ? 'brightness(1.08)' : 'none' }}>
       <span style={{ width: 20, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{icon}</span>
     </button>
@@ -262,7 +275,7 @@ function SegmentBtn({ label, icon, onClick, disabled, borderRadius, isLast }) {
     onMouseDown: () => setAct(true),  onMouseUp: () => setAct(false),
     onFocus: () => setFoc(true),      onBlur: () => setFoc(false),
   };
-  const bg = disabled ? 'rgba(0,0,0,0.05)' : act ? '#cccccc' : hov ? '#fafafa' : '#ffffff';
+  const bg = disabled ? BG_HOVER_SUBTLE : act ? BTN_BG_NEUTRAL_PRESSED : hov ? BTN_BG_NEUTRAL_HOVER : BG_SURFACE;
   const shadow = disabled ? 'none'
     : act  ? (foc ? `${FOCUS_RING}, ${BTN_SHADOW_ACTIVE}` : BTN_SHADOW_ACTIVE)
       : hov  ? (foc ? `${FOCUS_RING}, ${BTN_SHADOW_HOVER}`  : BTN_SHADOW_HOVER)
@@ -273,7 +286,7 @@ function SegmentBtn({ label, icon, onClick, disabled, borderRadius, isLast }) {
       style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
         padding: '6px 12px', borderRadius, border: 'none', outline: 'none',
         cursor: disabled ? 'not-allowed' : 'pointer', background: bg, boxShadow: shadow,
-        fontSize: 12, fontWeight: 550, lineHeight: '16px', color: disabled ? '#b5b5b5' : '#303030',
+        fontSize: 12, fontWeight: 550, lineHeight: '16px', color: disabled ? TEXT_DISABLED : TEXT_DEFAULT,
         fontFamily: 'Inter,sans-serif', whiteSpace: 'nowrap',
         marginRight: isLast ? 0 : -1, position: 'relative',
         zIndex: (foc || hov || act) ? 1 : 0, boxSizing: 'border-box' }}>

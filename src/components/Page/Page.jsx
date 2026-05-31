@@ -297,7 +297,7 @@ export function Page({
           <OptionList
             title={titleDisclosure.sectionTitle}
             options={titleDisclosure.items.map(it => ({
-              value: it.id,
+              id: it.id,
               label: it.label,
               disabled: it.disabled,
             }))}

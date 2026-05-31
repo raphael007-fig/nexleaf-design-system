@@ -12,10 +12,15 @@ const TabsPlusIcon = ({ color = '#303030' }) => (
   </svg>
 );
 
+// Stable id helpers so a tab and its panel can reference each other via
+// aria-controls / aria-labelledby. Keyed by the tab's `id` (falling back to its
+// index) so callers that render <TabPanel> can connect with the same key.
+export const tabDomId   = (key) => `nx-tab-${key}`;
+export const tabPanelId = (key) => `nx-tabpanel-${key}`;
+
 export function Tabs({
   tabs = [],
   activeIndex = 0,
-  onChange,
   onSelect,
   fitted = false,
   moreViews = false,
@@ -23,6 +28,7 @@ export function Tabs({
   mobile = false,
   loading = false,
   loadingCount = 3,
+  ariaLabel = 'Tabs',
 }) {
   const [hovIdx, setHovIdx] = useState(null);
   const [focIdx, setFocIdx] = useState(null);
@@ -45,13 +51,14 @@ export function Tabs({
     }
   }, [activeIndex]);
 
-  // Centralised activation — fires both onChange (legacy) and onSelect (new)
-  // so consumers can adopt the new API incrementally.
+  // Centralised activation — canonical callback is onSelect(id, item, index).
+  // `id` is the tab's stable identity (falls back to its index as a string);
+  // `index` is provided as the 3rd arg for callers that track selection by
+  // position rather than id.
   const activate = (i) => {
     const item = tabs[i];
     if (!item || item.disabled) return;
-    if (onChange) onChange(i);
-    if (onSelect) onSelect(item.id ?? String(i), item);
+    if (onSelect) onSelect(item.id ?? String(i), item, i);
   };
 
   // Find the next non-disabled tab in a given direction, wrapping at the
@@ -138,11 +145,12 @@ export function Tabs({
   }
 
   return (
-    <div role="tablist" style={{ display: 'flex', gap: 4, padding: '0 4px', alignItems: 'center', fontFamily: 'Inter,sans-serif' }}>
+    <div role="tablist" aria-label={ariaLabel} style={{ display: 'flex', gap: 4, padding: '0 4px', alignItems: 'center', fontFamily: 'Inter,sans-serif' }}>
       {tabs.map((tab, i) => {
         const isActive = i === activeIndex;
         const isFoc = focIdx === i;
         const rightPad = isActive && tab.actions ? 8 : 12;
+        const key = tab.id ?? i;
         // Roving tabindex: only the active tab is in the tab sequence. Arrow
         // keys move focus + selection between siblings; Tab moves out of the
         // tablist entirely (WAI-ARIA tablist pattern).
@@ -150,7 +158,9 @@ export function Tabs({
         return (
           <div key={i}
             ref={el => { tabRefs.current[i] = el; }}
+            id={tabDomId(key)}
             role="tab" aria-selected={isActive} aria-disabled={tab.disabled || undefined}
+            aria-controls={tab.panel === false ? undefined : tabPanelId(key)}
             tabIndex={rovingTabIndex}
             onClick={() => !tab.disabled && activate(i)}
             onKeyDown={e => onTabKeyDown(e, i)}
@@ -159,7 +169,9 @@ export function Tabs({
             onFocus={() => setFocIdx(i)}
             onBlur={() => setFocIdx(null)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center',
-              height: 28, padding: `6px ${rightPad}px 6px 12px`,
+              // Touch target: tab pills are 28px on desktop; bump to a 44px hit
+              // area on mobile so they clear the WCAG touch-target minimum.
+              height: mobile ? 44 : 28, padding: `6px ${rightPad}px 6px 12px`,
               borderRadius: 8, background: tabBg(i, tab.disabled),
               cursor: tab.disabled ? 'not-allowed' : 'pointer',
               flexShrink: fitted ? undefined : 0,
@@ -203,6 +215,34 @@ export function Tabs({
           <TabsPlusIcon color="#303030" />
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── TabPanel ─────────────────────────────────────────────────────────────────
+// Companion to <Tabs>. Renders the content region a tab controls, wired with
+// role="tabpanel" + aria-labelledby back to its tab so the relationship is
+// announced. Pass the same `id` you used as the tab's `id` (or its index).
+//
+//   <Tabs tabs={[{id:'a',label:'A'},{id:'b',label:'B'}]} activeIndex={idx} … />
+//   <TabPanel id="a" active={idx === 0}>…</TabPanel>
+//   <TabPanel id="b" active={idx === 1}>…</TabPanel>
+//
+// Inactive panels are removed via the `hidden` attribute (kept in the DOM so
+// ids stay valid for aria-controls). tabIndex={0} makes the panel itself
+// focusable per the WAI-ARIA tabs pattern when it has no focusable children.
+export function TabPanel({ id, tabId, active = true, children, style }) {
+  const key = id;
+  return (
+    <div
+      id={tabPanelId(key)}
+      role="tabpanel"
+      aria-labelledby={tabDomId(tabId ?? key)}
+      tabIndex={0}
+      hidden={!active}
+      style={{ outline: 'none', ...style }}
+    >
+      {children}
     </div>
   );
 }

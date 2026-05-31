@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useId, useRef, useEffect, cloneElement, isValidElement } from 'react';
+import { prefersReducedMotion } from '../../foundation/overlay/overlayHooks.js';
 
 // ─── Arrow SVGs ───────────────────────────────────────────────────────────────
 // Using SVG paths so filter:drop-shadow applies to the combined body+arrow shape
@@ -33,6 +34,35 @@ export function Tooltip({
   children,
 }) {
   const [visible, setVisible] = useState(false);
+  const tipId = useId();
+  const wrapRef = useRef(null);
+  const reduce = prefersReducedMotion();
+
+  // Touch + keyboard dismissal: on touch devices the tooltip is shown by a tap
+  // (toggled below) and there's no hover-out, so close it on an outside tap or
+  // Escape. Hover/focus paths still close themselves via onMouseLeave/onBlur.
+  useEffect(() => {
+    if (!visible) return;
+    const onDocPointer = (e) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) setVisible(false);
+    };
+    const onKey = (e) => { if (e.key === 'Escape') setVisible(false); };
+    document.addEventListener('touchstart', onDocPointer, true);
+    document.addEventListener('mousedown', onDocPointer, true);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('touchstart', onDocPointer, true);
+      document.removeEventListener('mousedown', onDocPointer, true);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [visible]);
+
+  // Associate the trigger with the tooltip bubble for screen readers. Clone the
+  // single child to attach aria-describedby; if children isn't a single element
+  // (e.g. raw text) we skip the clone and the wrapper still positions it.
+  const describedChild = isValidElement(children)
+    ? cloneElement(children, { 'aria-describedby': tipId })
+    : children;
 
   // Outer drop-shadow applied to the whole shape (body + arrow merged)
   const DROP_SHADOW = 'drop-shadow(0px 4px 6px rgba(26,26,26,0.2))';
@@ -47,16 +77,19 @@ export function Tooltip({
 
   return (
     <div
+      ref={wrapRef}
       style={{ position: 'relative', display: 'inline-block' }}
       onMouseEnter={() => setVisible(true)}
       onMouseLeave={() => setVisible(false)}
       onFocus={() => setVisible(true)}
       onBlur={() => setVisible(false)}
+      onTouchStart={() => setVisible(v => !v)}
     >
-      {children}
+      {describedChild}
 
       {visible && (
         <div
+          id={tipId}
           role="tooltip"
           style={{
             position: 'absolute',
@@ -68,6 +101,7 @@ export function Tooltip({
             zIndex: 1000,
             pointerEvents: 'none',
             filter: DROP_SHADOW,
+            animation: reduce ? 'none' : 'nxFadeIn 0.12s ease-out',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',

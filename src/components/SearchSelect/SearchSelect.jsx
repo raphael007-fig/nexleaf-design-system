@@ -2,6 +2,10 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Tag, TagGroup } from '../Tag/Tag.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 import { TextInput } from '../TextInput/TextInput.jsx';
+import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
+
+// Canonical identity for any tree node is `id` (falls back to legacy `value`).
+const oid = (o) => getItemId(o, 'SearchSelect');
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -38,14 +42,14 @@ function hasChildren(opt) { return Array.isArray(opt.children) && opt.children.l
 
 // Collect every leaf value beneath a node (or the node itself if it's a leaf)
 function collectLeafValues(opt) {
-  if (!hasChildren(opt)) return [opt.value];
+  if (!hasChildren(opt)) return [oid(opt)];
   return opt.children.flatMap(collectLeafValues);
 }
 
 // Get the visual checked-state for any node given the current selection
 //  → 'checked' | 'indeterminate' | 'unchecked'
 function nodeState(opt, selectedSet) {
-  if (!hasChildren(opt)) return selectedSet.has(opt.value) ? 'checked' : 'unchecked';
+  if (!hasChildren(opt)) return selectedSet.has(oid(opt)) ? 'checked' : 'unchecked';
   const leaves = collectLeafValues(opt);
   const selectedCount = leaves.filter(v => selectedSet.has(v)).length;
   if (selectedCount === 0) return 'unchecked';
@@ -53,10 +57,10 @@ function nodeState(opt, selectedSet) {
   return 'indeterminate';
 }
 
-// Find an option (anywhere in the tree) by value — returns the leaf node
+// Find an option (anywhere in the tree) by id — returns the matching node
 function findOption(opts, value) {
   for (const o of opts) {
-    if (o.value === value) return o;
+    if (oid(o) === value) return o;
     if (hasChildren(o)) {
       const f = findOption(o.children, value);
       if (f) return f;
@@ -75,7 +79,7 @@ function filterTree(opts, query) {
   if (!query) return opts;
   const q = query.toLowerCase();
   const walk = list => list.flatMap(o => {
-    const selfMatch = o.label.toLowerCase().includes(q);
+    const selfMatch = String(getItemLabel(o) ?? '').toLowerCase().includes(q);
     if (hasChildren(o)) {
       const kids = walk(o.children);
       if (selfMatch || kids.length) return [{ ...o, children: selfMatch ? o.children : kids }];
@@ -143,7 +147,7 @@ function Dropdown({ options, query, multiple, selected, onToggle }) {
         ) : (
           filtered.map(opt => (
             <OptionNode
-              key={opt.value}
+              key={oid(opt)}
               opt={opt}
               level={0}
               multiple={multiple}
@@ -161,7 +165,7 @@ function Dropdown({ options, query, multiple, selected, onToggle }) {
 function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
   const [hov, setHov] = useState(false);
   const branch = hasChildren(opt);
-  const state  = multiple ? nodeState(opt, selectedSet) : (selectedSet.has(opt.value) ? 'checked' : 'unchecked');
+  const state  = multiple ? nodeState(opt, selectedSet) : (selectedSet.has(oid(opt)) ? 'checked' : 'unchecked');
   const isSelected = state !== 'unchecked';
 
   function handleClick() {
@@ -198,14 +202,14 @@ function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
           color: opt.disabled ? '#b5b5b5' : '#303030',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
-          {opt.label}
+          {getItemLabel(opt)}
         </span>
         {!multiple && state === 'checked' && <IcoCheck />}
       </div>
 
       {branch && opt.children.map(child => (
         <OptionNode
-          key={child.value}
+          key={oid(child)}
           opt={child}
           level={level + 1}
           multiple={multiple}
@@ -245,7 +249,7 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
   const inputRef = useRef(null);
 
   const selectedSet   = useMemo(() => new Set(value ? [value] : []), [value]);
-  const selectedLabel = value ? (findOption(options, value)?.label || '') : '';
+  const selectedLabel = value ? (getItemLabel(findOption(options, value)) || '') : '';
 
   const { border, bg, textColor, focusShadow } = getFieldStyles({ focused: open, hovered, open, disabled, error });
 
@@ -264,7 +268,7 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
   const handleToggle = (opt) => {
     // Single select: branches are not selectable directly — only leaves
     if (hasChildren(opt)) return;
-    onChange && onChange(opt.value);
+    onChange && onChange(oid(opt));
     setOpen(false);
     setQuery('');
   };
@@ -505,7 +509,7 @@ export function SearchSelectMulti({
             {selected.map(val => {
               const opt = findOption(options, val);
               return opt ? (
-                <Tag key={val} label={opt.label} disabled={disabled} removable
+                <Tag key={val} label={getItemLabel(opt)} disabled={disabled} removable
                   onRemove={() => removeOne(val)} />
               ) : null;
             })}
@@ -529,7 +533,7 @@ export function SearchSelectMulti({
 // stays one line, never wraps). Every remaining selection collapses into a
 // single "+N others" chip. Nothing ever escapes the field.
 function InlineTagSummary({ selected, allLeaves, disabled, onRemove }) {
-  const labelOf  = v => allLeaves.find(o => o.value === v)?.label || v;
+  const labelOf  = v => { const o = allLeaves.find(o => oid(o) === v); return o ? getItemLabel(o) : v; };
   const firstVal = selected[0];
   const firstLab = labelOf(firstVal);
   const extra    = selected.length - 1;
@@ -630,7 +634,7 @@ export function SearchSelectButton({
     if (opt.disabled) return;
     if (!multiple) {
       if (hasChildren(opt)) return; // branches not selectable in single mode
-      onChange && onChange(opt.value);
+      onChange && onChange(oid(opt));
       setOpen(false);
       return;
     }
@@ -653,7 +657,7 @@ export function SearchSelectButton({
   // a cap, not a basis, so short labels stay at natural width and only long
   // labels get ellipsised. The overflow suffix never shrinks.
   const firstLabel = selected.length
-    ? (allLeaves.find(o => o.value === selected[0])?.label || selected[0])
+    ? (getItemLabel(allLeaves.find(o => oid(o) === selected[0])) || selected[0])
     : '';
   const extra = selected.length - 1;
   const isPlaceholder = selected.length === 0;
@@ -755,7 +759,7 @@ export function SearchSelectButton({
               }
               return filtered.map(opt => (
                 <OptionNode
-                  key={opt.value}
+                  key={oid(opt)}
                   opt={opt}
                   level={0}
                   multiple={multiple}

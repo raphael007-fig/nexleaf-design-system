@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 const IcoAlertCircle = () => (
   <svg width={16} height={16} viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
@@ -143,18 +144,22 @@ export function RadioGroup({
           {title}{required && <span style={{ color: '#d92d20', marginLeft: 2 }}>*</span>}
         </span>
       )}
-      {options.map(opt => (
-        <RadioButton
-          key={opt.value}
-          name={name}
-          label={opt.label}
-          helpText={opt.helpText}
-          checked={value === opt.value}
-          disabled={disabled || opt.disabled}
-          tone={tone}
-          onChange={() => onChange && onChange(opt.value)}
-        />
-      ))}
+      {options.map(opt => {
+        // Canonical identity is `id` (falls back to legacy `value`).
+        const optId = getItemId(opt, 'RadioGroup');
+        return (
+          <RadioButton
+            key={optId}
+            name={name}
+            label={getItemLabel(opt)}
+            helpText={opt.helpText}
+            checked={value === optId}
+            disabled={disabled || opt.disabled}
+            tone={tone}
+            onChange={() => onChange && onChange(optId)}
+          />
+        );
+      })}
       {error && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 4 }}>
           <IcoAlertCircle />
