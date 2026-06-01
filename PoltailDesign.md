@@ -6,12 +6,24 @@ This file governs how all UI work in this project should be implemented. Follow 
 
 ## Project Stack
 
-- **Storybook component library** — source of truth lives in `/src/components/`. Always import from there.
+- **Storybook component library** — source of truth lives in `/src/components/`. Always import from there. The Storybook app itself runs **React 19** (see `package.json`).
 - **React 18** via CDN UMD for HTML prototypes (`unpkg.com/react@18/umd/react.production.min.js`)
 - **ReactDOM 18** via CDN UMD
 - **Babel standalone** — JSX is written inside `<script type="text/babel">` tags in HTML prototypes
 - **Inter** font from Google Fonts (weights 400, 500, 600, 700)
 - **Styling** — inline CSS in `<style>` blocks + inline `style={{}}` props in React components. No Tailwind, no CSS modules, no styled-components.
+
+### Multi-framework delivery
+
+Each component is delivered in up to **three parallel layers** so any stack can consume it. They are visually identical because they all resolve to the same design tokens:
+
+| Layer | Where it lives | Consume from |
+|-------|----------------|--------------|
+| **React** | `src/components/<Name>/<Name>.jsx` | React / HTML-prototype work (the default for this project) |
+| **CSS classes** | `src/components/<Name>/<Name>.css` + `src/tokens/tokens.css` | Django, vanilla HTML, server-rendered, or any non-React stack |
+| **Angular** | compilable library source under `angular/projects/nexleaf-angular/src/lib/<name>/` (`.component.ts` + `.module.ts`), published as `@nexleaf/angular` | Angular apps that import the per-component `NxXxxModule` |
+
+Not every component ships all three layers yet — the CSS layer currently covers 11 components (see "CSS Class Structure"). When in doubt, the React `.jsx` is always present and is the canonical reference implementation.
 
 ---
 
@@ -564,6 +576,93 @@ Props: `hasPrevious`, `hasNext`, `onPrevious`, `onNext`, `label`, `type` (page/t
   {/* content */}
 </Page>
 ```
+
+---
+
+## CSS Class Structure (non-React stacks)
+
+For Django / Angular / vanilla-HTML consumers, components ship a hand-written stylesheet using a **BEM-ish, `nx-`-prefixed** convention. Every value is a `var(--nx-*)` token — there are **no hardcoded colors or sizes** in the CSS, so the class layer stays 1:1 with the React layer and the Figma variables.
+
+### Naming convention
+
+| Pattern | Meaning | Example |
+|---------|---------|---------|
+| `.nx-{block}` | Base component (reset + shared shape) | `.nx-btn`, `.nx-badge`, `.nx-banner` |
+| `.nx-{block}--{modifier}` | Variant / size / state modifier | `.nx-btn--primary`, `.nx-btn--sm`, `.nx-badge--critical` |
+| `.nx-{block}__{element}` | Child element inside the block | `.nx-tab__badge` |
+| `.nx-{block}:disabled` / `:focus-visible` | Native pseudo-states | `.nx-btn:disabled`, `.nx-btn:focus-visible` |
+| `.nx-{block}-{subcomponent}` | Related sub-component | `.nx-btn-group`, `.nx-btn-group--segmented` |
+
+### Import order (required)
+
+`tokens.css` defines the `:root` custom properties and **must be imported first**, before any component stylesheet:
+
+```css
+@import 'tokens/tokens.css';            /* defines --nx-* custom properties */
+@import 'components/Btn/Btn.css';       /* consumes them */
+@import 'components/Tabs/Tabs.css';
+```
+
+```html
+<!-- Button -->
+<button class="nx-btn nx-btn--primary">Save</button>
+<button class="nx-btn nx-btn--secondary nx-btn--sm">Cancel</button>
+<button class="nx-btn nx-btn--primary" disabled>Unavailable</button>
+
+<!-- Tabs -->
+<div role="tablist" class="nx-tabs">
+  <button role="tab" aria-selected="true" class="nx-tab nx-tab--active">All<span class="nx-tab__badge">24</span></button>
+  <button role="tab" aria-selected="false" class="nx-tab">Active</button>
+</div>
+```
+
+### Components that ship a `.css` layer
+
+`Accordion`, `Badge`, `Banner`, `Btn`, `Checkbox`, `Divider`, `OptionList`, `Page`, `Pagination`, `Tabs`, `TextInput` — plus `src/global.css` (keyframes, resets) and `src/tokens/tokens.css` (token source of truth). All token names map 1:1 to the JS constants in `src/tokens/index.js`.
+
+---
+
+## Angular Components
+
+Angular ships as **real, compilable library source**, not just doc snippets. It lives in an isolated workspace under `angular/` (kept separate from the React/Vite/Storybook build) and publishes as the `@nexleaf/angular` package.
+
+- **Source:** `angular/projects/nexleaf-angular/src/lib/<name>/` — one `.component.ts` + one `.module.ts` per component, re-exported from `src/public-api.ts`.
+- **Coverage:** all 26 documented components (accordion, badge, banner, btn, card, checkbox, date-picker, divider, index-table, metric-card, number-input, option-list, page, pagination, polaris-icon, radio, search-select, select-input, tabs, tag, text-input, textarea-input, toggle, toolbar, tooltip, upload).
+- **Build:** `cd angular && npm install && npm run build` (Angular 18 + ng-packagr → `angular/dist/nexleaf-angular`).
+- **Architecture:** template-only components — each one emits the same `nx-*` CSS classes + tokens as the React/CSS layers, so styling stays 1:1. No bundled CSS; consumers import `tokens.css` + the per-component stylesheets. Components are `standalone: false` and grouped into per-component `NxXxxModule`s (NgModule pattern). Form controls implement `ControlValueAccessor` for `ngModel`.
+
+### Conventions
+
+| Concern | Convention | Example |
+|---------|------------|---------|
+| Module | `Nx{Name}Module` from `@nexleaf/angular` | `import { NxBtnModule } from '@nexleaf/angular';` |
+| Element selector | `<nx-{name}>` (kebab-case) | `<nx-btn>`, `<nx-tabs>` |
+| String/literal input | plain attribute | `variant="primary"` |
+| Boolean / expression input | property binding `[x]` | `[small]="true"`, `[disabled]="true"`, `[buttons]="[…]"` |
+| Event output | `(event)="handler($event)"` | `(click)="save()"`, `(change)="active = $event"` |
+| Sub-components | nested `nx-*` elements | `<nx-btn-group>`, `<nx-btn-group-segmented [buttons]="[…]" />` |
+
+```ts
+import { NxBtnModule } from '@nexleaf/angular';
+
+// Variants + modifiers
+<nx-btn variant="primary" (click)="save()">Save</nx-btn>
+<nx-btn variant="secondary" [small]="true">Compact</nx-btn>
+<nx-btn variant="primary" [fullWidth]="true">Full width</nx-btn>
+<nx-btn variant="primary" [disabled]="true">Unavailable</nx-btn>
+
+// Tabs — index-driven, two-way via output
+<nx-tabs
+  [activeIndex]="active"
+  (change)="active = $event"
+  [tabs]="[
+    { label: 'All', badge: 24 },
+    { label: 'Active', badge: 12 },
+    { label: 'Archived', disabled: true }
+  ]" />
+```
+
+> Note: Angular `(change)`/`[activeIndex]` is the framework-idiomatic shape for that platform. The React layer uses the system-standard `onSelect(id, item, index)` callback (see "Item Shape & Callback Contract") — the two are intentionally framework-native rather than identical.
 
 ---
 

@@ -1,0 +1,22 @@
+{
+  "name": "nexleaf-angular-workspace",
+  "version": "1.0.0",
+  "description": "Angular delivery layer for the Nexleaf Design System. Components are template-only wrappers that emit the shared nx-* CSS classes (see src/components/**/*.css + src/tokens/tokens.css). Isolated from the React/Vite/Storybook build at the repo root.",
+  "private": true,
+  "scripts": {
+    "build": "ng-packagr -p projects/nexleaf-angular/ng-package.json -c projects/nexleaf-angular/tsconfig.lib.json"
+  },
+  "dependencies": {
+    "@angular/common": "^18.2.0",
+    "@angular/core": "^18.2.0",
+    "@angular/forms": "^18.2.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.6.0"
+  },
+  "devDependencies": {
+    "@angular/compiler": "^18.2.0",
+    "@angular/compiler-cli": "^18.2.0",
+    "ng-packagr": "^18.2.0",
+    "typescript": "~5.5.4"
+  }
+}

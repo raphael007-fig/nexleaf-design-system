@@ -4,3 +4,9 @@ dist/
 .claude/
 storybook-static/
 *.log
+
+# Angular workspace build artifacts
+angular/node_modules/
+angular/dist/
+angular/out-tsc/
+angular/.angular/
