@@ -1,0 +1,38 @@
+/*
+ * Nexleaf Design System — Skeleton (loading placeholder)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first.
+ *
+ * Mirrors the React <Skeleton> primitive: a pulsing block in `bg-skeleton`
+ * (#e8e8e8) on a 1.4s ease-in-out cycle. Component skeletons (Cell, NavCard,
+ * Card) compose `.nx-skeleton` blocks sized via their own `__sk-*` classes.
+ *
+ * .nx-skeleton            — base pulsing block (rectangular, 4px radius)
+ * .nx-skeleton--line      — text-line block (same as base; semantic alias)
+ * .nx-skeleton--circle    — circular block (set width/height + border-radius:50%)
+ */
+
+@keyframes nx-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+.nx-skeleton {
+  display: block;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  background: var(--nx-bg-skeleton);   /* #e8e8e8 */
+  border-radius: 4px;
+  animation: nx-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.nx-skeleton--circle {
+  border-radius: 50%;
+}
+
+/* Respect reduced-motion: hold the block at rest opacity, no pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .nx-skeleton {
+    animation: none;
+  }
+}

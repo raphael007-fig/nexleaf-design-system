@@ -13,13 +13,34 @@
 //   <Modal open={open} onClose={fn} title="Edit reading" footer={<Btn…/>}>
 //     …form…
 //   </Modal>
+//
+// Size variants (structured mode), matching the Figma component:
+//   • size="small"      → 380px wide   (compact confirmations)
+//   • size="large"      → 620px wide   (default)
+//   • size="fullscreen" → fills the viewport, square corners, no backdrop inset
+//                         (reserve for mobile, per the design spec)
+// `maxWidth` still wins if passed explicitly, so existing call-sites are
+// unaffected and one-off widths remain possible.
 
 import { useRef, useId } from 'react';
 import { createPortal } from 'react-dom';
 import {
   useFocusTrap, useScrollLock, useReturnFocus, useEscapeKey, prefersReducedMotion,
 } from '../../foundation/overlay/overlayHooks.js';
-import { BG_SURFACE, BORDER_LIGHT, TEXT_DEFAULT, TEXT_SUBDUED, FOCUS_RING } from '../../tokens/index.js';
+import {
+  BG_SURFACE, BG_SURFACE_ACTIVE, BORDER_DEFAULT, TEXT_DEFAULT, TEXT_SUBDUED,
+  FOCUS_RING, RADIUS_XL,
+} from '../../tokens/index.js';
+
+// Modal surface elevation — Figma `shadow-600`: a soft 20px drop shadow plus a
+// 1px inset hairline so the white card reads crisply against the scrim.
+const MODAL_SHADOW =
+  '0 20px 20px -8px rgba(26,26,26,0.28), ' +
+  'inset 0 1px 0 rgba(204,204,204,0.5), inset 0 -1px 0 rgba(0,0,0,0.17), ' +
+  'inset 1px 0 0 rgba(0,0,0,0.13), inset -1px 0 0 rgba(0,0,0,0.17)';
+
+// Width per size token (px). `fullscreen` is handled separately (fills viewport).
+const SIZE_WIDTHS = { small: 380, large: 620 };
 
 const IcoX = ({ size = 20, color = 'currentColor' }) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -56,7 +77,9 @@ export function Modal({
   children,
   title,
   footer,
-  maxWidth = 620,
+  size = 'large',
+  maxWidth,
+  bodyPadding = 16,
   closeOnBackdrop = true,
   closeOnEscape = true,
   showCloseButton = true,
@@ -79,17 +102,29 @@ export function Modal({
   const labelledBy = ariaLabelledby || titleId;
 
   const structured = title != null || footer != null;
+  const fullscreen = size === 'fullscreen';
+  // Explicit maxWidth wins; otherwise resolve from the size token.
+  const resolvedWidth = maxWidth ?? SIZE_WIDTHS[size] ?? SIZE_WIDTHS.large;
+  const hasHeader = title != null || showCloseButton;
 
   const dialogInner = structured ? (
-    <div style={{ display: 'flex', flexDirection: 'column', maxHeight: 'calc(100vh - 32px)' }}>
-      {(title != null || showCloseButton) && (
+    <div style={{
+      display: 'flex', flexDirection: 'column',
+      height: fullscreen ? '100%' : undefined,
+      maxHeight: fullscreen ? '100%' : 'calc(100vh - 32px)',
+    }}>
+      {hasHeader && (
         <div style={{
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          gap: 16, padding: '20px 24px 16px', borderBottom: `1px solid ${BORDER_LIGHT}`,
+          display: 'flex', alignItems: 'center',
+          justifyContent: title != null ? 'space-between' : 'flex-end',
+          gap: 8, padding: '12px 12px 12px 16px',
+          background: BG_SURFACE_ACTIVE, borderBottom: `1px solid ${BORDER_DEFAULT}`,
+          flexShrink: 0,
         }}>
           {title != null && (
             <h2 id={titleId} style={{
-              margin: 0, fontSize: 18, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT,
+              margin: 0, fontSize: 14, fontWeight: 650, lineHeight: '20px',
+              color: TEXT_DEFAULT, flex: '1 1 auto', minWidth: 0,
             }}>
               {title}
             </h2>
@@ -97,13 +132,14 @@ export function Modal({
           {showCloseButton && <CloseButton onClick={onClose} />}
         </div>
       )}
-      <div style={{ padding: '16px 24px', overflowY: 'auto', flex: '1 1 auto' }}>
+      <div style={{ padding: bodyPadding, overflowY: 'auto', flex: '1 1 auto' }}>
         {children}
       </div>
       {footer != null && (
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12,
-          padding: '16px 24px', borderTop: `1px solid ${BORDER_LIGHT}`,
+          display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8,
+          padding: 16, background: BG_SURFACE, borderTop: `1px solid ${BORDER_DEFAULT}`,
+          flexShrink: 0,
         }}>
           {footer}
         </div>
@@ -111,11 +147,14 @@ export function Modal({
     </div>
   ) : children;
 
-  const surfaceStyle = structured ? {
-    width: '100%', maxWidth, background: BG_SURFACE, borderRadius: 16,
-    boxShadow: '0 8px 28px rgba(0,0,0,0.18)', overflow: 'hidden',
+  const surfaceStyle = fullscreen ? {
+    width: '100%', height: '100%', maxWidth: 'none', background: BG_SURFACE,
+    borderRadius: 0, boxShadow: 'none', overflow: 'hidden',
+  } : structured ? {
+    width: '100%', maxWidth: resolvedWidth, background: BG_SURFACE, borderRadius: RADIUS_XL,
+    boxShadow: MODAL_SHADOW, overflow: 'hidden',
   } : {
-    width: '100%', maxWidth,
+    width: '100%', maxWidth: resolvedWidth,
   };
 
   return createPortal(
@@ -125,7 +164,8 @@ export function Modal({
       }}
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex,
-        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: fullscreen ? 0 : 16,
       }}
     >
       <div

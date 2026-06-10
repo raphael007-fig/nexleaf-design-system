@@ -1,0 +1,187 @@
+/*
+ * Nexleaf Design System — Toolbar (top-bar chrome)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first.
+ *
+ * The React Toolbar/TopBar lay this out with inline styles; this file is the
+ * shared `nx-toolbar*` layer so the Angular `nx-top-bar` (and any class-based
+ * consumer) renders the SAME chrome — bar row, menu / apps / bell icon buttons,
+ * Ask AI pill, region selector, and the avatar. Pairs with TopBar.css, which
+ * owns the progressive show/hide of the breadcrumb / bell / profile.
+ *
+ * Hover / pressed / focus are real CSS states here (React drives them in JS).
+ * Colours mirror the React source 1:1, mapped to tokens where one exists.
+ */
+
+/* ── The bar row ─────────────────────────────────────────────────────────────── */
+.nx-toolbar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 16px;
+  background: var(--nx-bg-page);
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+.nx-toolbar--mobile { gap: 8px; min-height: 48px; padding: 0 12px; }
+
+/* Left cluster (menu · logo · breadcrumb) — shrinks and clips first. */
+.nx-toolbar__start {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 0 1 auto;
+}
+.nx-toolbar--mobile .nx-toolbar__start { gap: 8px; }
+
+/* Centre cluster (Ask AI) — stays centred between start and end. */
+.nx-toolbar__center {
+  display: flex;
+  justify-content: center;
+  flex: 1 1 auto;
+}
+
+/* Right cluster (region · apps · bell · avatar) — pinned right. */
+.nx-toolbar__end {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.nx-toolbar--mobile .nx-toolbar__end { gap: 6px; }
+
+.nx-top-bar__logo { display: inline-flex; align-items: center; flex-shrink: 0; }
+.nx-top-bar__breadcrumb-full,
+.nx-top-bar__breadcrumb-compressed { align-items: center; min-width: 0; overflow: hidden; }
+
+/* ── Icon buttons (menu · apps · bell) ───────────────────────────────────────── */
+.nx-toolbar__icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  flex-shrink: 0;
+  background: var(--nx-bg-surface);
+  border: 1px solid var(--nx-border-light);
+  border-radius: 10px;
+  color: var(--nx-text-default);
+  cursor: pointer;
+  outline: none;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+  transition: background 0.12s, box-shadow 0.12s;
+}
+.nx-toolbar__icon-btn:hover { background: var(--nx-bg-page); }
+.nx-toolbar__icon-btn:active { background: var(--nx-border-light); }
+.nx-toolbar__icon-btn:focus-visible { box-shadow: 0 0 0 2px var(--nx-color-primary); }
+.nx-toolbar__icon-btn:disabled {
+  background: var(--nx-bg-disabled);
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Region selector (country pill) ──────────────────────────────────────────── */
+.nx-toolbar__region {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 8px 12px;
+  background: var(--nx-border-light);
+  border: none;
+  border-radius: 8px;
+  color: var(--nx-text-default);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s, box-shadow 0.12s;
+}
+.nx-toolbar__region:hover { background: var(--nx-border-default); }
+.nx-toolbar__region:active { background: #d2d2d2; } /* breadcrumb/region pressed — system value, not yet tokenized */
+.nx-toolbar__region:focus-visible { box-shadow: 0 0 0 2px var(--nx-color-primary); }
+.nx-top-bar__flag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 18px;
+  line-height: 1;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif;
+}
+
+/* ── Avatar (profile) ────────────────────────────────────────────────────────── */
+.nx-toolbar__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  flex-shrink: 0;
+  background: var(--nx-border-default);
+  border: none;
+  border-radius: 50%;
+  overflow: hidden;
+  color: var(--nx-text-default);
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: box-shadow 0.12s;
+}
+.nx-toolbar__avatar:hover { box-shadow: 0 0 0 2px var(--nx-border-light); }
+.nx-toolbar__avatar:focus-visible { box-shadow: 0 0 0 2px var(--nx-color-primary); }
+
+/* ── Ask AI pill ─────────────────────────────────────────────────────────────── */
+.nx-btn--ask-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+  background: var(--nx-bg-surface);
+  border: 1px solid var(--nx-border-default);
+  border-radius: 100px;
+  color: var(--nx-text-default);
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.nx-btn--ask-ai:hover { background: var(--nx-bg-surface-hover); border-color: var(--nx-border-secondary-btn); }
+.nx-btn--ask-ai:active { background: var(--nx-bg-page); }
+.nx-btn--ask-ai:focus-visible,
+.nx-btn--ask-ai[aria-expanded='true'] {
+  border-color: var(--nx-color-primary);
+  box-shadow: 0 0 0 2px var(--nx-color-primary);
+}
+.nx-btn--ask-ai:disabled {
+  background: var(--nx-bg-disabled);
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+/* The leading AI mark — a small gradient ring (approximates the React AiLogo). */
+.nx-top-bar__ask-ai-mark {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 180deg, var(--nx-color-primary), var(--nx-magic-primary), var(--nx-color-primary));
+  -webkit-mask: radial-gradient(circle 4.5px at center, transparent 96%, #000 100%);
+          mask: radial-gradient(circle 4.5px at center, transparent 96%, #000 100%);
+}

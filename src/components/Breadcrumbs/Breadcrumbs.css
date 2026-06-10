@@ -1,0 +1,61 @@
+/*
+ * Nexleaf Design System — Breadcrumbs
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first. The React Breadcrumbs is inline-styled; this layer
+ * styles the shared `nx-breadcrumbs` markup (the Angular nx-breadcrumbs lives in
+ * the toolbar module + any class-based consumer), mirroring the React crumb pill
+ * (rest / hover / pressed / current).
+ *
+ * .nx-breadcrumbs                  — trail container (row of crumb pills)
+ * .nx-breadcrumbs__item            — a crumb (button); rest / hover / pressed
+ * .nx-breadcrumbs__item--current   — the current page (bold, non-interactive)
+ */
+
+.nx-breadcrumbs {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+  min-width: 0;
+  font-family: var(--nx-font-family);
+}
+
+.nx-breadcrumbs__item {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 2px 8px;
+  background: transparent;
+  border: none;
+  border-radius: var(--nx-radius-sm);                /* 8 */
+  color: var(--nx-text-subdued);
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);              /* 13 */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal);         /* 20px */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s, color 0.1s, box-shadow 0.12s;
+}
+.nx-breadcrumbs__item:hover { background: var(--nx-border-light); color: var(--nx-text-default); }  /* #ebebeb */
+.nx-breadcrumbs__item:active { background: #d2d2d2; }   /* breadcrumb pressed — shared system value, not tokenized */
+.nx-breadcrumbs__item:focus-visible { box-shadow: 0 0 0 2px var(--nx-color-primary); }
+
+/* Current page — bold, no hover affordance. */
+.nx-breadcrumbs__item--current {
+  color: var(--nx-text-default);
+  font-weight: var(--nx-font-weight-semibold);       /* 550 */
+  cursor: default;
+}
+.nx-breadcrumbs__item--current:hover { background: transparent; }
+
+/* Separator between crumbs (drawn in CSS so the markup stays a flat button row). */
+.nx-breadcrumbs__item:not(:first-child)::before {
+  content: '/';
+  margin-right: 8px;
+  color: var(--nx-text-subdued);
+  font-weight: var(--nx-font-weight-regular);
+}

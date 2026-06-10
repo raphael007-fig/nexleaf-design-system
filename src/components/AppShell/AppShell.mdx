@@ -1,0 +1,74 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as AppShellStories from './AppShell.stories.jsx';
+
+<Meta title="Patterns/Responsive/App Shell/Docs" />
+
+# AppShell
+
+The hybrid-responsive chrome for ColdTrace. **One shell** adapts across sizes — same routes and information architecture, different shell behaviour — rather than forking into separate mobile/desktop experiences.
+
+<Canvas of={AppShellStories.ResponsiveApp} />
+
+## Responsive behaviour
+
+AppShell is a **hybrid shell**: on **desktop (≥1024)** it docks the `SideNavigation` rail and the content reserves its width; **below 1024 (iPad/tablet + mobile)** the rail gives way to the `MenuDrawer` the hamburger opens. The **same nav tree, `activeItemId`, and `onNavSelect` drive both** — only the surface swaps, so nav selection ↔ breadcrumb ↔ page title stay in lock-step at every size.
+
+One **progressive `TopBar`** runs across all sizes. When the rail is docked it leads with the breadcrumb (hamburger + logo hidden via `showMenu={false}`, since the rail carries the brand + nav); below 1024 the hamburger returns and the bar collapses by width (see `TopBar`): full → compressed → hidden breadcrumb, then Notification → drawer, then Profile → drawer, then logo dropped. Lower-priority controls are **moved into the drawer, never removed**. On **mobile tertiary** pages the top bar is hidden entirely so the record header leads. No overloaded bottom nav, no platform-specific navigation.
+
+It composes existing components only — `TopBar` (← `Toolbar` + `Breadcrumbs`), `SideNavigation` (docked rail), and `MenuDrawer` (← `SideNavigation` + `SlideOver`).
+
+<Canvas of={AppShellStories.ShellOnly} />
+
+## Interaction states
+
+AppShell is a layout shell, not a control — its interactive surfaces are **mostly delegated** to the components it composes. There are three sources of state:
+
+**Rail collapse toggle (the shell's own control).** The one piece of interactive chrome AppShell owns is the rail footer's collapse/expand button. Its states are token-driven and match the rail's nav rows:
+
+- **rest** — transparent background, `--nx-text-subdued` (`#616161`) label/icon.
+- **hover** — `--nx-bg-hover-subtle` (`rgba(0,0,0,0.05)`) background, label darkens to `--nx-text-default` (`#303030`).
+- **focus** — a 2px `--nx-color-primary` (`#005bd3`) focus ring (`FOCUS_RING`), so it's keyboard-reachable like every nav row.
+
+The toggle renders icon + "Collapse" when the rail is expanded and icon-only when collapsed.
+
+<Canvas of={AppShellStories.States} />
+
+**Rail nav items (owned by `SideNavigation`).** Selecting a row is the shell's primary navigation, but the row states live in `SideNavigation`, not here:
+
+- **rest** — transparent, `--nx-text-default` label (`--nx-text-subdued` for sub-items), weight 550 (450 for sub-items).
+- **hover** — `rgba(0,0,0,0.05)` row background (same overlay as the toggle).
+- **active / selected** — `#fafafa` (`--nx-bg-input-focus`) row background, weight 650, with the L-shaped connector pointing at the active sub-item.
+- **focus** — the same 2px `--nx-color-primary` ring on the row's label button and group caret.
+
+Because these belong to `SideNavigation`, the truthful place to see them **in context** (a selected row + the live toggle in the docked rail) is the "Shell only" and assembled canvases above — resize past 1024px to dock the rail. See the `SideNavigation` docs for the full row matrix.
+
+**Top-bar controls (owned by `Toolbar` / `TopBar`).** The breadcrumb, Ask AI button, region selector, notification bell, app switcher, and avatar all live in `TopBar` (← `Toolbar` + `Breadcrumbs`), and their rest / hover / pressed / focus states are documented there. AppShell only decides *which* controls are visible vs. moved into the `MenuDrawer` at each width — it doesn't restyle them.
+
+> AppShell has **no loading state** of its own — a layout shell doesn't load. The content rendered inside it (and the rail via `SideNavigation`'s skeleton rows) handles its own loading.
+
+## Ask AI placement
+
+Ask AI lives in the top bar (center slot) on Primary and Secondary pages, so it never floats over a bottom sheet, sticky CTA, or bottom nav. On constrained tertiary pages it can move into the record's More menu instead.
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `navItems` | nav tree | `COLDTRACE_NAV_ITEMS` | Shared with `MenuDrawer`. |
+| `activeItemId` | string | — | Highlights the active row; auto-expands its parent. |
+| `onNavSelect` | fn(id) | — | Fired on drawer selection (closes the drawer). |
+| `logo` | node | Nexleaf wordmark | Drawer logo (the TopBar uses the leaf mark). |
+| `breadcrumbs` | `{id,label}[]` | `[]` | Passed to `TopBar`; collapses progressively. |
+| `onBreadcrumbSelect` | fn(id) | — | Crumb click. |
+| `country` | `{code,name}` | Kenya | Region selector. |
+| `onAskAi` / `askAiActive` | fn / bool | — | Ask AI button. |
+| `onApps` / `onNotification` / `onProfile` | fn | — | App switcher / bell / avatar. |
+| `userInitials` / `userAvatar` | string | — | Avatar (top bar + drawer). |
+
+## Angular
+
+`nx-app-shell` is a structural scaffold; compose `nx-top-bar` + `nx-menu-drawer` inside it. `nx-top-bar` drives the same progressive transition (resize-aware), and the menu opens `nx-menu-drawer` where Notification + Profile live.
+
+## Design tokens used
+
+`--nx-bg-page` · `--nx-z-sticky` · `--nx-drawer-width-max` · `--nx-safe-*` (via TopBar) · breakpoints 768 / 900 / 1024.

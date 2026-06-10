@@ -1,0 +1,64 @@
+/*
+ * Nexleaf Design System — BottomSheet (mobile action overflow)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css + SlideOver.css imported first. The sheet is a SlideOver
+ * (placement="bottom"); these classes style the action list / groups inside it.
+ *
+ * .nx-bottom-sheet__list   — role="menu" action list wrapper
+ * .nx-bottom-sheet__group  — a labelled group
+ * .nx-bottom-sheet__group-title  — uppercase caption
+ * .nx-bottom-sheet__action — a tappable action row (48px)
+ * .nx-bottom-sheet__action--destructive — critical-tone row
+ * .nx-bottom-sheet__sep    — divider between groups
+ */
+
+.nx-bottom-sheet__list { padding: var(--nx-space-2); }
+
+.nx-bottom-sheet__group-title {
+  padding: var(--nx-space-3) var(--nx-space-5) var(--nx-space-1);
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption);
+  font-weight: var(--nx-font-weight-bold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--nx-text-subdued);
+}
+
+.nx-bottom-sheet__action {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-3);
+  width: 100%;
+  min-height: 52px;
+  padding: 14px var(--nx-space-4);
+  background: transparent;
+  border: none;
+  border-radius: var(--nx-radius-lg);   /* 12px inset rounded fill */
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--nx-font-family);
+  font-size: 16px;
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-text-default);
+  outline: none;
+  transition: background 0.12s;
+}
+.nx-bottom-sheet__action:hover:not(:disabled),
+.nx-bottom-sheet__action:focus-visible,
+.nx-bottom-sheet__action--hover { background: var(--nx-bg-surface-active); }
+.nx-bottom-sheet__action:active:not(:disabled),
+.nx-bottom-sheet__action--active { background: var(--nx-bg-pressed); }
+.nx-bottom-sheet__action:disabled {
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+.nx-bottom-sheet__action-icon { display: inline-flex; flex-shrink: 0; }
+.nx-bottom-sheet__action-label { flex: 1; min-width: 0; }
+
+.nx-bottom-sheet__action--destructive { color: var(--nx-color-critical); }
+
+.nx-bottom-sheet__sep {
+  height: 1px;
+  background: var(--nx-border-light);
+  margin: var(--nx-space-2) 0;
+}

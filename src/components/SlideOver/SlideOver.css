@@ -1,0 +1,148 @@
+/*
+ * Nexleaf Design System — SlideOver (overlay shell)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css to be imported first. Backs the Right Slider Modal,
+ * Menu Drawer (placement left), and Bottom Sheet (placement bottom).
+ *
+ * .nx-slideover                — fixed full-screen backdrop (scrim) + flex aligner
+ * .nx-slideover--right/left/bottom — edge the panel anchors to
+ * .nx-slideover__panel         — the sliding surface
+ * .nx-slideover__drag-handle   — grab handle (bottom sheet)
+ * .nx-slideover__header        — title row + close button
+ * .nx-slideover__title         — heading
+ * .nx-slideover__body          — scrollable content region
+ * .nx-slideover__footer        — bottom action row
+ * .nx-slideover__close         — 32px close button
+ */
+
+/* ─── Backdrop ─────────────────────────────────────────────────── */
+.nx-slideover {
+  position: fixed;
+  inset: 0;
+  z-index: var(--nx-z-overlay);
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  animation: nxFadeIn 0.2s ease-out;
+}
+.nx-slideover--right  { align-items: stretch; justify-content: flex-end; }
+.nx-slideover--left   { align-items: stretch; justify-content: flex-start; }
+.nx-slideover--bottom { align-items: flex-end; justify-content: center; }
+
+/* ─── Panel ────────────────────────────────────────────────────── */
+.nx-slideover__panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  outline: none;
+  background: var(--nx-bg-surface);
+}
+.nx-slideover--right .nx-slideover__panel,
+.nx-slideover--left .nx-slideover__panel {
+  width: min(480px, 100vw);
+  height: 100%;
+  box-shadow: var(--nx-shadow-overlay);
+}
+.nx-slideover--right .nx-slideover__panel { animation: slideInRight 0.24s ease-out; }
+.nx-slideover--left .nx-slideover__panel  { animation: nxSlideInLeft 0.24s ease-out; }
+
+.nx-slideover--bottom .nx-slideover__panel {
+  width: 100%;
+  max-width: 640px;
+  max-height: var(--nx-sheet-max-h);
+  border-top-left-radius: var(--nx-radius-xl);
+  border-top-right-radius: var(--nx-radius-xl);
+  padding-bottom: var(--nx-safe-bottom);
+  box-shadow: var(--nx-shadow-sheet);
+  animation: nxSlideInUp 0.24s ease-out;
+}
+
+/* ─── Drag handle (bottom sheet) ───────────────────────────────── */
+.nx-slideover__drag-handle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 0 6px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
+.nx-slideover__drag-handle::before {
+  content: '';
+  width: 36px;
+  height: 4px;
+  border-radius: var(--nx-radius-pill);
+  background: #d0d0d0;
+}
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.nx-slideover__header { flex-shrink: 0; }
+.nx-slideover__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+  padding: var(--nx-space-4) var(--nx-space-6);
+}
+.nx-slideover__title {
+  margin: 0;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-heading-md);  /* 20px */
+  font-weight: var(--nx-font-weight-semibold);
+  line-height: var(--nx-line-height-relaxed); /* 24px */
+  letter-spacing: -0.2px;
+  color: var(--nx-text-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Full-bleed divider under the header (not on bottom sheet) */
+.nx-slideover--right .nx-slideover__header::after,
+.nx-slideover--left .nx-slideover__header::after {
+  content: '';
+  display: block;
+  height: 1px;
+  width: 100%;
+  background: var(--nx-border-default);
+}
+
+/* ─── Close button ─────────────────────────────────────────────── */
+.nx-slideover__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--nx-radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--nx-text-subdued);
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  padding: 0;
+}
+.nx-slideover__close:hover { background: var(--nx-bg-hover); }
+.nx-slideover__close:focus-visible { box-shadow: var(--nx-focus-ring); }
+
+/* ─── Body & footer ────────────────────────────────────────────── */
+.nx-slideover__body {
+  padding: var(--nx-space-6);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+.nx-slideover__body--flush { padding: 0; }
+.nx-slideover__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--nx-space-2);
+  padding: var(--nx-space-4);
+  background: var(--nx-bg-surface);
+  border-top: 1px solid var(--nx-border-default);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-slideover, .nx-slideover__panel { animation: none; }
+}

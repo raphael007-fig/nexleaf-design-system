@@ -322,7 +322,7 @@ export const MainView = {
             primaryAction={{ content: 'Add Installation', onAction: () => {} }}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16, marginBottom: 16 }}>
             {[
               { key: 'total',    title: 'Total Installations', metric: '12', badge: { label: '4 High Priority',   tone: 'warning' }, tooltip: 'Total number of active solar installations'   },
               { key: 'offgrid',  title: 'Off-Grid',            metric: '8',  badge: { label: '+2 from last week', tone: 'success' }, tooltip: 'Installations running fully off-grid'         },
@@ -443,9 +443,12 @@ export const ViewDetail = {
             secondaryActions={[{ content: 'Actions', disclosure: true, onAction: () => {} }]}
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16, alignItems: 'start' }}>
+          {/* Main + sidebar — flex-wrap so the sidebar sits at ~320px beside the
+              content when there's room and drops below it when narrow (no JS,
+              never overflows). */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ flex: '3 1 420px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CardLayoutType1
                 images={['', '', '']}
                 fields={FIELDS}
@@ -470,7 +473,7 @@ export const ViewDetail = {
               />
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
               <CardLayoutType3
                 region="North Kenya"
                 facilityName="Lodwar County Hospital"

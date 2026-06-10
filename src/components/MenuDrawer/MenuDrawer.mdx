@@ -1,0 +1,88 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as MenuDrawerStories from './MenuDrawer.stories.jsx';
+
+<Meta title="Patterns/Responsive/MenuDrawer/Docs" />
+
+# MenuDrawer
+
+The **drawer-first** global navigation surface for mobile and iPad/tablet. It opens from the hamburger in the top bar, slides in from the left over a dimmed page, and replaces overloaded bottom navigation — ColdTrace has too many modules for a 4-item bottom bar, so the drawer is the primary mobile nav pattern.
+
+<Canvas of={MenuDrawerStories.Mobile} />
+
+## How it's built (reuse-first)
+
+- **Shell** = `SlideOver` with `placement="left"` — backdrop, focus trap, scroll lock, Escape/back dismissal, and the slide-in animation all come for free.
+- **Nav body** = `SideNavigation` — nested items, **active parent auto-expands**, **active child highlighted**, and full keyboard support are already solved there; MenuDrawer does not re-implement nav logic.
+- **Chrome** = a fixed header (logo + close button) plus a footer (Notification, Profile, optional Privacy/Terms).
+
+## Default navigation tree
+
+`COLDTRACE_NAV_ITEMS` is exported so the drawer, the docked desktop side nav, and the Secondary-page title switcher all share one source of truth:
+
+Home · Health Status · **Inventory** ▸ (ColdChain Equipment, RTMDs, Solar, Passive, Oxygen, Lab, General) · Spare Part · Performance · Electrification.
+
+<Canvas of={MenuDrawerStories.Items} />
+
+## Active state
+
+Pass `activeItemId`. If it's a child (e.g. `coldchain`), the **Inventory** parent expands automatically and the child is highlighted. If it's a top-level item, that row is highlighted directly.
+
+<Canvas of={MenuDrawerStories.TopLevelActive} />
+
+## Responsive width
+
+| Context | Width |
+|---------|-------|
+| Mobile | `min(86vw, 320px)` — 84–88% of screen, capped at 320px (`--nx-drawer-width-max`) |
+| iPad/tablet | pass a wider `width` (e.g. `360`); behaves as a slide-out overlay, not a forced desktop side nav |
+
+<Canvas of={MenuDrawerStories.Tablet} />
+
+## Interaction states
+
+The nav rows are owned by `SideNavigation` — the drawer does not re-implement their states. Each row treatment maps to a token:
+
+| State | Treatment | Token |
+|-------|-----------|-------|
+| Rest (parent) | transparent fill, default text, medium weight | `--nx-text-default` |
+| Rest (child) | transparent fill, subdued text | `--nx-text-subdued` |
+| Hover | subtle black overlay fill | `--nx-bg-hover-subtle` (`rgba(0,0,0,0.05)`) |
+| Active / selected | near-white pill fill, default text, bold (semibold) weight; active child label switches to brand blue | `--nx-bg-input-focus` (`#fafafa`); child label `--nx-color-primary` on `--nx-bg-selected` |
+| Focus | 2px brand-blue keyboard ring | `--nx-color-primary` |
+
+Open the drawer below: `coldchain` is active so **Inventory** auto-expands and the active child carries the selected treatment. Hover or tab through the other rows to see the hover fill and the brand-blue focus ring.
+
+<Canvas of={MenuDrawerStories.States} />
+
+## Loading
+
+Set `loading` to render shape-matching skeleton nav rows — a ~20px leading icon block plus a single text line of varied width — in place of the live navigation. The logo header and footer area stay intact so the panel doesn't reflow when the real nav arrives. The skeleton reuses the shared pulse (`--nx-bg-skeleton` `#e8e8e8`, 1.4s) from the `Skeleton` primitive.
+
+<Canvas of={MenuDrawerStories.Loading} />
+
+## Accessibility
+
+- Focus is trapped inside the drawer; the rest of the page is inert behind the scrim.
+- **Escape / back** closes the drawer (via SlideOver); tapping the scrim closes it.
+- All rows are ≥44px tall (touch target); icon-only controls have aria-labels.
+- Returns focus to the hamburger trigger on close.
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `open` | bool | — | Controls visibility. |
+| `onClose` | fn | — | Escape / backdrop / close button / row select. |
+| `items` | nav tree | `COLDTRACE_NAV_ITEMS` | Same shape as SideNavigation items. |
+| `activeItemId` | string | — | Highlights the row; auto-expands its parent. |
+| `onSelect` | fn(id) | — | Fired on any nav row click. |
+| `logo` | node | `<NexleafBrandLogo />` | Drawer header logo. |
+| `footer` | node | default footer | Override the Notification/Profile/legal footer. |
+| `onNotification` / `onProfile` | fn | — | Default footer row handlers. |
+| `legalLinks` | `{label, href}[]` | Privacy/Terms | Optional legal links. |
+| `width` | number / CSS length | `min(86vw, 320px)` | Panel width; pass wider for tablet. |
+| `loading` | bool | `false` | Render skeleton nav rows in place of the live navigation (chrome stays intact). |
+
+## Design tokens used
+
+`--nx-drawer-width-max` (320px) · `--nx-z-drawer` · `--nx-shadow-overlay` · `--nx-border-light` · `--nx-bg-hover-subtle` (row hover) · `--nx-bg-input-focus` (active row) · `--nx-bg-selected` (active child) · `--nx-color-primary` (focus ring + active child) · `--nx-bg-skeleton` (loading) · `--nx-tap-target` (44px).

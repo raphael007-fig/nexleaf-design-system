@@ -1,0 +1,67 @@
+/*
+ * Nexleaf Design System — TopBar (synchronized responsive top navigation)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css (+ Toolbar / Breadcrumbs / Btn styles) first.
+ *
+ * ONE bar, four progressive states. Apply ONE state modifier (the host computes
+ * it from width, mirroring topBarStateForWidth), or use `--auto` to let the
+ * built-in media queries pick. Control order never changes; collapsing only
+ * hides the breadcrumb, then the profile, then the notification — those live in
+ * the drawer when hidden.
+ *
+ * .nx-top-bar                 — safe-area wrapper (status bar + notches)
+ * .nx-top-bar--wide/medium/compact/mobile — progressive state
+ * .nx-top-bar__bar            — the Toolbar row (start / center / end)
+ * .nx-top-bar__breadcrumb-full / __breadcrumb-compressed — breadcrumb variants
+ * .nx-top-bar__bell / __profile — collapsible end controls
+ */
+
+.nx-top-bar {
+  background: var(--nx-bg-page);
+  padding-top: var(--nx-safe-top);
+  padding-left: var(--nx-safe-left);
+  padding-right: var(--nx-safe-right);
+}
+.nx-top-bar--sticky {
+  position: sticky;
+  top: 0;
+  z-index: var(--nx-z-sticky);
+}
+
+/* ─── Progressive visibility (control order is fixed; only these toggle) ─────── */
+/* Default: hide everything optional; each state re-enables what it keeps. */
+.nx-top-bar__breadcrumb-full,
+.nx-top-bar__breadcrumb-compressed,
+.nx-top-bar__bell,
+.nx-top-bar__profile { display: none; }
+
+.nx-top-bar--wide    .nx-top-bar__breadcrumb-full { display: flex; }
+.nx-top-bar--wide    .nx-top-bar__bell,
+.nx-top-bar--wide    .nx-top-bar__profile { display: inline-flex; }
+
+.nx-top-bar--medium  .nx-top-bar__breadcrumb-compressed { display: flex; }
+.nx-top-bar--medium  .nx-top-bar__bell,
+.nx-top-bar--medium  .nx-top-bar__profile { display: inline-flex; }
+
+.nx-top-bar--compact .nx-top-bar__bell { display: inline-flex; }
+/* compact: no breadcrumb, no profile (profile → drawer) */
+
+/* mobile: no breadcrumb, no bell, no profile (both → drawer) */
+
+/* ─── Auto mode — let media queries drive the same transition ────────────────── */
+.nx-top-bar--auto .nx-top-bar__breadcrumb-full,
+.nx-top-bar--auto .nx-top-bar__breadcrumb-compressed,
+.nx-top-bar--auto .nx-top-bar__bell,
+.nx-top-bar--auto .nx-top-bar__profile { display: none; }
+
+@media (min-width: 768px) { /* compact tablet+ : bell appears */
+  .nx-top-bar--auto .nx-top-bar__bell { display: inline-flex; }
+}
+@media (min-width: 900px) { /* medium tablet+ : compressed breadcrumb + profile */
+  .nx-top-bar--auto .nx-top-bar__breadcrumb-compressed { display: flex; }
+  .nx-top-bar--auto .nx-top-bar__profile { display: inline-flex; }
+}
+@media (min-width: 1024px) { /* wide : full breadcrumb (drop the compressed one) */
+  .nx-top-bar--auto .nx-top-bar__breadcrumb-compressed { display: none; }
+  .nx-top-bar--auto .nx-top-bar__breadcrumb-full { display: flex; }
+}

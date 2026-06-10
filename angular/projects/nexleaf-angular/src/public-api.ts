@@ -22,6 +22,9 @@ export * from './lib/btn/btn.module';
 export * from './lib/card/card.component';
 export * from './lib/card/card.module';
 
+export * from './lib/cell/cell.component';
+export * from './lib/cell/cell.module';
+
 export * from './lib/checkbox/checkbox.component';
 export * from './lib/checkbox/checkbox.module';
 
@@ -36,6 +39,9 @@ export * from './lib/index-table/index-table.module';
 
 export * from './lib/metric-card/metric-card.component';
 export * from './lib/metric-card/metric-card.module';
+
+export * from './lib/nav-card/nav-card.component';
+export * from './lib/nav-card/nav-card.module';
 
 export * from './lib/number-input/number-input.component';
 export * from './lib/number-input/number-input.module';
@@ -84,3 +90,45 @@ export * from './lib/tooltip/tooltip.module';
 
 export * from './lib/upload/upload.component';
 export * from './lib/upload/upload.module';
+
+/* ── Responsive overlay layer (ColdTrace hybrid shell) ───────────────────────── */
+export * from './lib/overlay/focus-trap.directive';
+export * from './lib/overlay/scroll-lock.service';
+export * from './lib/overlay/overlay.module';
+
+export * from './lib/slide-over/slide-over.component';
+export * from './lib/slide-over/slide-over.module';
+
+export * from './lib/menu-drawer/menu-drawer.component';
+export * from './lib/menu-drawer/menu-drawer.module';
+
+export * from './lib/bottom-sheet/bottom-sheet.component';
+export * from './lib/bottom-sheet/bottom-sheet.module';
+
+export * from './lib/equipment-card/equipment-card.component';
+export * from './lib/equipment-card/equipment-card.module';
+
+export * from './lib/tertiary-actions/tertiary-actions.component';
+export * from './lib/tertiary-actions/tertiary-actions.module';
+
+export * from './lib/top-bar/top-bar.component';
+export * from './lib/top-bar/top-bar.module';
+
+export * from './lib/app-shell/app-shell.component';
+export * from './lib/app-shell/app-shell.module';
+
+export * from './lib/side-navigation/side-navigation.component';
+export * from './lib/side-navigation/side-navigation.module';
+
+/* ── Parity layer (ported to match the React set) ────────────────────────────── */
+export * from './lib/skeleton/skeleton.component';
+export * from './lib/skeleton/skeleton.module';
+
+export * from './lib/modal/modal.component';
+export * from './lib/modal/modal.module';
+
+export * from './lib/popover/popover.component';
+export * from './lib/popover/popover.module';
+
+// Navigation-sync helpers (single-source engine for nav + breadcrumb + title switcher)
+export * from './lib/nav-sync/nav-sync';

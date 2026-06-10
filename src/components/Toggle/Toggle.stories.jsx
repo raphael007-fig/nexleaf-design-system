@@ -3,7 +3,7 @@ import { Toggle } from './Toggle.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 
 export default {
-  title: 'Components/Toggle',
+  title: 'Components/Lists/Toggle',
   component: Toggle,
   parameters: { layout: 'padded' },
   decorators: [Story => <div style={{ fontFamily: 'Inter, sans-serif' }}><Story /></div>],

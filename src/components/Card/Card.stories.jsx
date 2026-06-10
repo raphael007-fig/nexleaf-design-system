@@ -11,8 +11,33 @@ import {
   CardLayoutType3,
   CardLayoutType4,
   CardLayoutType5,
+  CardLayoutType6,
 } from './Card.jsx';
+import { Cell } from '../Cell/Cell.jsx';
 import { Pagination } from '../Pagination/Pagination.jsx';
+
+// ─── Demo icons (inline SVG — no icon packages, per design-system rules) ─────
+
+const AlertTriangleIcon = ({ size = 20, color = '#d92d20' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{ display: 'block' }}>
+    <path d="M10 7.5v3M10 13.5h.007M8.27 3.3 2.4 13.5a2 2 0 0 0 1.73 3h11.74a2 2 0 0 0 1.73-3L11.73 3.3a2 2 0 0 0-3.46 0Z"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const GaugeIcon = ({ size = 20, color = '#d92d20' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{ display: 'block' }}>
+    <path d="M10 11.5 13 7M3.5 14a7 7 0 1 1 13 0" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="10" cy="11.5" r="1.25" fill={color} />
+  </svg>
+);
+
+const WrenchIcon = ({ size = 20, color = '#856404' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{ display: 'block' }}>
+    <path d="M12.7 5.3a3 3 0 0 0-3.9 3.9l-5 5a1.5 1.5 0 0 0 2.1 2.1l5-5a3 3 0 0 0 3.9-3.9l-1.8 1.8-1.6-.4-.4-1.6 1.7-1.7Z"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
 export default {
   title: 'Components/Card',
@@ -95,6 +120,45 @@ export const AllLayouts = {
           title="QR Code"
           onAssign={() => {}}
         />
+      </div>
+
+      <div>
+        <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+          Layout Type 6 — Header / Action Card
+        </p>
+        <CardLayoutType6
+          tone="critical"
+          icon={<AlertTriangleIcon />}
+          title="Action Required"
+          badge="5 Urgent Issues"
+          actionLabel="View All Issues"
+          onAction={() => {}}
+        >
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Cell
+                icon={<GaugeIcon />}
+                iconTone="critical"
+                title="Temperature exceeds threshold"
+                description="Incubator HC 1501-2023-001 · Main Laboratory"
+                hasChevron
+                onClick={() => {}}
+                ariaLabel="Temperature exceeds threshold"
+              />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Cell
+                icon={<WrenchIcon />}
+                iconTone="warning"
+                title="Maintenance due"
+                description="Generator GEN-2023-005 · Power Room"
+                hasChevron
+                onClick={() => {}}
+                ariaLabel="Maintenance due"
+              />
+            </div>
+          </div>
+        </CardLayoutType6>
       </div>
 
     </div>
@@ -354,6 +418,166 @@ export const LayoutType5 = {
           onView={() => {}}
         />
         <CardLayoutType5 title="QR Code" loading />
+      </div>
+    );
+  },
+};
+
+// ─── LayoutType6 ──────────────────────────────────────────────────────────────
+
+export const LayoutType6 = {
+  name: 'Layout Type 6 — Header / Action Card',
+  parameters: { layout: 'padded' },
+  render: () => {
+    const tempCell = (
+      <Cell
+        icon={<GaugeIcon />}
+        iconTone="critical"
+        title="Temperature exceeds threshold"
+        description="Incubator HC 1501-2023-001 · Main Laboratory"
+        hasChevron
+        onClick={() => {}}
+        ariaLabel="Temperature exceeds threshold"
+      />
+    );
+    const maintCell = (
+      <Cell
+        icon={<WrenchIcon />}
+        iconTone="warning"
+        title="Maintenance due"
+        description="Generator GEN-2023-005 · Power Room"
+        hasChevron
+        onClick={() => {}}
+        ariaLabel="Maintenance due"
+      />
+    );
+
+    return (
+      <div style={{ fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column', gap: 32 }}>
+        {/* Web — two cells side by side */}
+        <div style={{ maxWidth: 720 }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+            Web — body cells in a row
+          </p>
+          <CardLayoutType6
+            tone="critical"
+            icon={<AlertTriangleIcon />}
+            title="Action Required"
+            badge="5 Urgent Issues"
+            actionLabel="View All Issues"
+            onAction={() => {}}
+          >
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>{tempCell}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>{maintCell}</div>
+            </div>
+          </CardLayoutType6>
+        </div>
+
+        {/* Mobile — cells stacked */}
+        <div style={{ maxWidth: 380 }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+            Mobile — body cells stacked
+          </p>
+          <CardLayoutType6
+            tone="critical"
+            icon={<AlertTriangleIcon />}
+            title="Action Required"
+            badge="5 Urgent Issues"
+            actionLabel="View All Issues"
+            onAction={() => {}}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {tempCell}
+              {maintCell}
+            </div>
+          </CardLayoutType6>
+        </div>
+
+        {/* Loading skeleton */}
+        <div style={{ maxWidth: 720 }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+            Loading skeleton
+          </p>
+          <CardLayoutType6 tone="critical" loading loadingRows={2} />
+        </div>
+
+        {/* Default tone — neutral header / action card */}
+        <div style={{ maxWidth: 380 }}>
+          <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+            Default tone
+          </p>
+          <CardLayoutType6
+            icon={<AlertTriangleIcon color="#616161" />}
+            title="Recent Activity"
+            badge="3 New"
+            actionLabel="View All"
+            onAction={() => {}}
+          >
+            <Cell
+              icon={<WrenchIcon color="#12B76A" />}
+              title="Calibration completed"
+              description="ColdTrace G3 · Field technician James Omondi"
+              hasChevron
+              onClick={() => {}}
+              ariaLabel="Calibration completed"
+            />
+          </CardLayoutType6>
+        </div>
+      </div>
+    );
+  },
+};
+
+// ─── Layout Type 6 — automatic mobile stacking ──────────────────────────────────
+
+export const LayoutType6Responsive = {
+  name: 'Layout Type 6 — stackOnMobile (auto reflow)',
+  parameters: { layout: 'padded' },
+  render: () => {
+    const tempCell = (
+      <Cell
+        icon={<GaugeIcon />}
+        iconTone="critical"
+        title="Temperature exceeds threshold"
+        description="Incubator HC 1501-2023-001 · Main Laboratory"
+        hasChevron
+        onClick={() => {}}
+        ariaLabel="Temperature exceeds threshold"
+      />
+    );
+    const maintCell = (
+      <Cell
+        icon={<WrenchIcon />}
+        iconTone="warning"
+        title="Maintenance due"
+        description="Generator GEN-2023-005 · Power Room"
+        hasChevron
+        onClick={() => {}}
+        ariaLabel="Maintenance due"
+      />
+    );
+
+    return (
+      <div style={{ fontFamily: 'Inter, sans-serif', display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 8, fontFamily: 'Inter, sans-serif' }}>
+          Body cells passed directly — no manual wrapper. They sit in a row on
+          wide screens and stack full-width at/below the <code>sm</code> breakpoint
+          (640px). Resize the Storybook canvas or use the viewport addon to see
+          the reflow.
+        </p>
+        <CardLayoutType6
+          tone="critical"
+          icon={<AlertTriangleIcon />}
+          title="Action Required"
+          badge="5 Urgent Issues"
+          actionLabel="View All Issues"
+          onAction={() => {}}
+          stackOnMobile
+        >
+          {tempCell}
+          {maintCell}
+        </CardLayoutType6>
       </div>
     );
   },

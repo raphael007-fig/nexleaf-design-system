@@ -1,14 +1,7 @@
 import { useState, useMemo } from 'react';
-import { SideNavigation, siblingsFor, trailFor } from '../../components/SideNavigation/SideNavigation.jsx';
-import {
-  Toolbar,
-  ToolbarAiChatButton,
-  ToolbarRegionSelector,
-  ToolbarIconButton,
-  ToolbarAvatar,
-  AiChatPanel,
-} from '../../components/Toolbar/Toolbar.jsx';
-import { Breadcrumbs } from '../../components/Breadcrumbs/Breadcrumbs.jsx';
+import { siblingsFor, trailFor } from '../../components/SideNavigation/SideNavigation.jsx';
+import { AppShell } from '../../components/AppShell/AppShell.jsx';
+import { AiChatPanel } from '../../components/Toolbar/Toolbar.jsx';
 import { Page } from '../../components/Page/Page.jsx';
 import { PolarisIconImg } from '../../components/PolarisIcon/PolarisIcon.jsx';
 import { MetricCard } from '../../components/MetricCard/MetricCard.jsx';
@@ -16,8 +9,24 @@ import { IndexTable, LinkCell } from '../../components/IndexTable/IndexTable.jsx
 import { Pagination } from '../../components/Pagination/Pagination.jsx';
 import { SearchSelectButton } from '../../components/SearchSelect/SearchSelect.jsx';
 import { StatusBadge } from '../../components/Badge/Badge.jsx';
+import { CardLayoutType6 } from '../../components/Card/Card.jsx';
+import { Cell } from '../../components/Cell/Cell.jsx';
+import { NavCard } from '../../components/NavCard/NavCard.jsx';
 import { COUNTRIES } from '../../foundation/emojis/emojiCatalog.js';
-import { useViewport, BP_MD, BP_SM } from '../../foundation/useViewport.js';
+import { useViewport, BP_SM } from '../../foundation/useViewport.js';
+
+// Home grid illustrations — imported raw so they render as true inline SVG
+// (no <img>, no icon package). Each artwork is a 100×100 illustration that
+// already carries its own circular tinted backdrop.
+import illoEquipment from './home-illustrations/equipment-management.svg?raw';
+import illoMonitoring from './home-illustrations/monitoring.svg?raw';
+import illoTraining from './home-illustrations/training.svg?raw';
+import illoReports from './home-illustrations/reports-hub.svg?raw';
+import illoFacility from './home-illustrations/facility-management.svg?raw';
+import illoForecasting from './home-illustrations/forecasting.svg?raw';
+import illoEvents from './home-illustrations/events.svg?raw';
+import illoTransport from './home-illustrations/coldtrace-transport.svg?raw';
+import illoHealthHub from './home-illustrations/health-tech-hub.svg?raw';
 
 export default {
   title: 'Pages/Application Layout',
@@ -31,8 +40,10 @@ export default {
 // an overlay-able backdrop and reveals on demand (future variant — for now we
 // stay collapsed).
 //
-// `useViewport`, `BP_MD`, and `BP_SM` are imported from the shared foundation
+// `useViewport` and `BP_SM` are imported from the shared foundation
 // (src/foundation/useViewport.js) so layout and IndexTable agree on breakpoints.
+// Content grids reflow in pure CSS (auto-fit / flex-wrap), so they no longer
+// depend on JS width measurement — `width` is only used for edge padding now.
 
 // ─── Shared logos (inline, never external) ───────────────────────────────────
 // Same paths as the SideNavigation stories — duplicated here so the layout
@@ -122,81 +133,12 @@ function statusFor(i) {
   return 'Active';
 }
 
-// ─── Inline icons used by the toolbar action cluster ─────────────────────────
-
-const IcoGrid = ({ size = 20, color = '#303030' }) => (
-  <PolarisIconImg name="AppsIcon" size={size} color={color} />
-);
-const IcoBell = ({ size = 20, color = '#303030' }) => (
-  <PolarisIconImg name="NotificationIcon" size={size} color={color} />
-);
-const IcoTranslate = ({ size = 18, color = 'currentColor' }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path d="M2.5 5h7M5.5 3v2M4 5c0 3 2.5 5.5 5.5 5.5M9.5 5c0 2-3.5 5-7 5.5"
-      stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10.5 17l3-7 3 7M11.5 15h4"
-      stroke={color} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
 const HOME_CRUMB = {
   id: 'home',
   label: 'Home',
   icon: <PolarisIconImg name="HomeFilledIcon" size={20} color="#303030" />,
   iconOnly: true,
 };
-
-const SAMPLE_AVATAR =
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=80&h=80&fit=crop&crop=faces';
-
-// ─── Collapse toggle (footer slot of the side nav) ───────────────────────────
-// Stateful little button with the same hover/focus treatment as the NavItem
-// rows above it. Shared across both stories below.
-
-const CollapseIcon = ({ collapsed, color = '#303030' }) => (
-  <svg width={20} height={20} viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path
-      d={collapsed ? 'M7.5 5l5 5-5 5' : 'M12.5 5l-5 5 5 5'}
-      stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-    />
-  </svg>
-);
-
-function CollapseToggle({ collapsed, onToggle }) {
-  const [hov, setHov] = useState(false);
-  const [act, setAct] = useState(false);
-  const [foc, setFoc] = useState(false);
-  const bg = act ? 'rgba(0,0,0,0.08)' : hov ? 'rgba(0,0,0,0.05)' : 'transparent';
-  const textColor = hov || act ? '#303030' : '#616161';
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      onMouseEnter={() => setHov(true)}
-      onMouseLeave={() => { setHov(false); setAct(false); }}
-      onMouseDown={() => setAct(true)}
-      onMouseUp={() => setAct(false)}
-      onFocus={() => setFoc(true)}
-      onBlur={() => setFoc(false)}
-      aria-label={collapsed ? 'Expand navigation' : 'Collapse navigation'}
-      aria-expanded={!collapsed}
-      style={{
-        width: '100%', padding: collapsed ? 6 : '6px 10px',
-        display: 'flex', alignItems: 'center', gap: 8,
-        background: bg, border: 'none', borderRadius: 8,
-        cursor: 'pointer', color: textColor,
-        fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 500,
-        justifyContent: collapsed ? 'center' : 'flex-start',
-        outline: 'none',
-        boxShadow: foc ? '0 0 0 2px #005bd3' : 'none',
-        transition: 'background 0.12s, color 0.12s, box-shadow 0.12s',
-      }}
-    >
-      <CollapseIcon collapsed={collapsed} color={textColor} />
-      {!collapsed && <span>Collapse</span>}
-    </button>
-  );
-}
 
 // ─── HomeLanding — the Home page surface ─────────────────────────────────────
 //
@@ -253,9 +195,7 @@ function HomeCard({ item, onEnter }) {
 }
 
 function HomeLanding({ items, homeId, onEnter }) {
-  const { width } = useViewport();
   const sections = (items || []).filter((it) => it.id !== homeId);
-  const cols = width < BP_SM ? '1fr' : width < BP_MD ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)';
   return (
     <section aria-label="Home" style={{ paddingTop: 24 }}>
       <div style={{ marginBottom: 24 }}>
@@ -272,7 +212,7 @@ function HomeLanding({ items, homeId, onEnter }) {
           Pick a section to get started. Your trail begins here at Home.
         </p>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: cols, gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 12 }}>
         {sections.map((item) => (
           <HomeCard key={item.id} item={item} onEnter={onEnter} />
         ))}
@@ -493,18 +433,9 @@ const REGION_OPTIONS = [
 // `marginLeft` equal to the current nav width and an `min-width: 0` so the
 // IndexTable inside can horizontally scroll without affecting the rail.
 
-export const SectionedLayout = {
-  name: 'Sectioned Layout',
-  render: () => {
-    const { width, isBelowMd } = useViewport();
-
-    // Side-nav state. Below `md` the user can't expand — we lock it
-    // collapsed so the content doesn't get squeezed. Above `md` the user
-    // owns it. Initial state on first paint is collapsed (matches the Figma
-    // shell screenshot).
-    const [userCollapsed, setUserCollapsed] = useState(true);
-    const collapsed = isBelowMd ? true : userCollapsed;
-    const navWidth = collapsed ? 56 : 240;
+function SectionedView({ onGoHome, initialActiveId = 'coldchain' }) {
+    const { width } = useViewport();
+    // The shell (rail dock / drawer / collapse) is now owned by AppShell.
 
     // `activeId` is the single source of truth for the whole navigation
     // system: it drives the side rail's selection, the Page header title,
@@ -517,7 +448,7 @@ export const SectionedLayout = {
     //
     // `activeId === 'home'` is the special landing case: the side rail is
     // hidden entirely and only the breadcrumb (just "Home") shows.
-    const [activeId, setActiveId] = useState('coldchain');
+    const [activeId, setActiveId] = useState(initialActiveId);
     const [country, setCountry]   = useState(
       COUNTRIES.find((c) => c.code === 'KE') || COUNTRIES[0],
     );
@@ -541,9 +472,17 @@ export const SectionedLayout = {
     // • Any leaf crumb    → select it directly.
     // Clicking the last (current) crumb is a no-op inside Breadcrumbs already.
     function handleCrumbSelect(id) {
-      if (id === HOME_CRUMB.id) { setActiveId('home'); return; }
+      // The Home crumb leaves the app shell entirely and returns to the
+      // standalone Home Layout surface.
+      if (id === HOME_CRUMB.id) { onGoHome(); return; }
       const group = EQUIPMENT_ITEMS.find((it) => it.id === id && it.children);
       if (group) { setActiveId(group.children[0].id); return; }
+      setActiveId(id);
+    }
+    // Side-rail selection. The "Home" rail item also leaves the shell for the
+    // Home Layout; everything else just moves the active page.
+    function handleNavSelect(id) {
+      if (id === HOME_CRUMB.id) { onGoHome(); return; }
       setActiveId(id);
     }
     const [selected, setSelected] = useState(new Set());
@@ -592,97 +531,27 @@ export const SectionedLayout = {
     }
 
     return (
-      <div style={{ background: '#f1f1f1', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      // Unified hybrid shell: docked rail on desktop, MenuDrawer below — same
+      // nav tree + activeId drive both, with the breadcrumb/title in sync.
+      <AppShell
+        navItems={EQUIPMENT_ITEMS}
+        activeItemId={activeId}
+        onNavSelect={handleNavSelect}
+        breadcrumbs={trail}
+        onBreadcrumbSelect={handleCrumbSelect}
+        level={isHome ? 'primary' : 'secondary'}
+        contentWidth="full"
+        country={country}
+        onAskAi={() => setChatOpen((o) => !o)}
+        askAiActive={chatOpen}
+      >
 
-        {/* Side navigation — fixed full-height rail at the left edge. The
-            rail's own `bg-page` + inset right shadow matches the toolbar's
-            bg, so the visual seam between them disappears.
-
-            On the Home page (`isHome`) the rail is removed entirely — Home is
-            a top-level landing surface that shows breadcrumbs only, so the
-            right column reclaims the full width. */}
-        {!isHome && (
-          <div style={{
-            position: 'fixed', top: 0, left: 0, bottom: 0,
-            zIndex: 10,
-          }}>
-            <SideNavigation
-              collapsed={collapsed}
-              // Locking auto-expand behind the breakpoint: clicking a collapsed
-              // parent below `md` would expand the rail and squeeze the page.
-              onCollapsedChange={isBelowMd ? undefined : setUserCollapsed}
-              logo={collapsed ? <NexleafIconLogo /> : <NexleafFullLogo />}
-              items={EQUIPMENT_ITEMS}
-              activeItemId={activeId}
-              onSelect={setActiveId}
-              footer={
-                isBelowMd ? null : (
-                  <CollapseToggle
-                    collapsed={userCollapsed}
-                    onToggle={() => setUserCollapsed((c) => !c)}
-                  />
-                )
-              }
-              ariaLabel="Equipment Management"
-            />
+        {/* AI Chat panel (kept extra) — toggled by the TopBar's Ask AI button. */}
+        <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
+          <div style={{ padding: 24, fontSize: 13, color: '#616161' }}>
+            AI chat panel content lives here.
           </div>
-        )}
-
-        {/* Right column: toolbar (sticky) + page content (scrolls under).
-            No left margin on Home — the rail isn't rendered there. */}
-        <div style={{
-          marginLeft: isHome ? 0 : navWidth,
-          transition: 'margin-left 0.18s ease',
-          minWidth: 0,            // lets the IndexTable inside enable its
-                                  // horizontal scroll without pushing the
-                                  // whole column wider.
-        }}>
-          {/* Toolbar — sticky, full width of the right column. `sideNavWidth`
-              is 0 here because the rail is rendered as a sibling (fixed
-              positioned), not "inside" the toolbar's reserved slot. */}
-          <div style={{ position: 'sticky', top: 0, zIndex: 5 }}>
-            <Toolbar
-              sideNavWidth={0}
-              start={(
-                <Breadcrumbs
-                  items={trail}
-                  onSelect={(id) => handleCrumbSelect(id)}
-                />
-              )}
-              center={(
-                <ToolbarAiChatButton
-                  label="AI Chat Bot"
-                  beta
-                  trailingIcon={<IcoTranslate />}
-                  trailingAriaLabel="Translate"
-                  onTrailingClick={() => {}}
-                  onClick={() => setChatOpen(true)}
-                  active={chatOpen}
-                />
-              )}
-              end={(
-                <>
-                  {/* Region pill — read-only for normal users. Switch to
-                      `pickable + countries + onCountryChange` for admin
-                      sessions (see Toolbar's "Side-nav shell — admin"
-                      story). */}
-                  <ToolbarRegionSelector
-                    countryCode={country.code}
-                    value={country.name}
-                  />
-                  <ToolbarIconButton icon={<IcoGrid />} ariaLabel="Apps" onClick={() => {}} />
-                  <ToolbarIconButton icon={<IcoBell />} ariaLabel="Notifications" onClick={() => {}} />
-                  <ToolbarAvatar src={SAMPLE_AVATAR} alt="Profile" onClick={() => {}} />
-                </>
-              )}
-            />
-          </div>
-
-          <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
-            <div style={{ padding: 24, fontSize: 13, color: '#616161' }}>
-              AI chat panel content lives here.
-            </div>
-          </AiChatPanel>
+        </AiChatPanel>
 
           {/* Page content — three sections matching the Figma frame:
                 1. Page header (48 px tall sliver in the design).
@@ -690,7 +559,7 @@ export const SectionedLayout = {
                 3. IndexTable (taller — fills remaining viewport).
               Wrapped at `contentMaxWidth` so wider screens don't stretch the
               table to readability-killer lengths. */}
-          <main
+          <div
             aria-labelledby="sectioned-layout-title"
             style={{
               // Top padding is 0 here on purpose. The <Page> primitive has
@@ -767,7 +636,6 @@ export const SectionedLayout = {
                         value={region}
                         onChange={setRegion}
                         multiple
-                        size="large"
                       />
                     ),
                   }]}
@@ -785,11 +653,7 @@ export const SectionedLayout = {
                 that toggles selection. Clicking the active tile clears it. */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: width < BP_SM
-                ? '1fr'
-                : width < 1024
-                  ? 'repeat(2, 1fr)'
-                  : 'repeat(4, 1fr)',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
               gap: 12,
               marginBottom: 24,
             }}>
@@ -867,9 +731,247 @@ export const SectionedLayout = {
               />
             </>
             )}
-          </main>
-        </div>
-      </div>
+          </div>
+      </AppShell>
     );
-  },
+}
+
+// ─── Home Layout ──────────────────────────────────────────────────────────────
+//
+// The top-level landing surface (Figma "Home / Desktop"). No side rail — the
+// top bar shows only the Home breadcrumb. The body is composed entirely from
+// existing design-system primitives:
+//
+//   • CardLayoutType6 — the two header/action cards:
+//       – "Quick Action"    (default tone, single Cell entry point)
+//       – "Action Required" (critical tone, badge + "View All Issues",
+//                             two alert Cells)
+//   • Cell      — the rows inside both action cards (icon tile + title +
+//                 description + chevron), tinted via `iconTone`.
+//   • NavCard   — the 3-column grid of section tiles (layout="home":
+//                 centered illustration + title, no description/button).
+//   • Toolbar / Breadcrumbs — the same top bar the Sectioned Layout uses.
+
+// Header / cell glyphs — inline SVG (never an icon font, per system rule).
+const IcoScanRows = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M4 6h2M4 10h2M4 14h2M8 6h8M8 10h8M8 14h5"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+// Alert circle — symmetric, optically balanced next to the small title (the
+// triangle read bottom-heavy/lopsided at this size).
+const IcoAlertCircle = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <circle cx="10" cy="10" r="7" stroke={color} strokeWidth="1.5" />
+    <path d="M10 6.3v4.4M10 13.4h.01"
+      stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+  </svg>
+);
+
+const IcoGauge = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M3 14a7 7 0 1 1 14 0" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <path d="m10 14 3.2-4" stroke={color} strokeWidth="1.6" strokeLinecap="round" />
+    <circle cx="10" cy="14" r="1.4" fill={color} />
+  </svg>
+);
+
+const IcoGear = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <circle cx="10" cy="10" r="2.4" stroke={color} strokeWidth="1.5" />
+    <path d="M10 2.5v2M10 15.5v2M2.5 10h2M15.5 10h2M4.7 4.7l1.4 1.4M13.9 13.9l1.4 1.4M15.3 4.7l-1.4 1.4M6.1 13.9l-1.4 1.4"
+      stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+
+const IcoQr = ({ size = 20, color = '#616161' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <rect x="3" y="3" width="5" height="5" rx="1" stroke={color} strokeWidth="1.4" />
+    <rect x="12" y="3" width="5" height="5" rx="1" stroke={color} strokeWidth="1.4" />
+    <rect x="3" y="12" width="5" height="5" rx="1" stroke={color} strokeWidth="1.4" />
+    <path d="M12 12h2v2M16 12v5M12 16h2" stroke={color} strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+);
+
+// ─── Home grid illustrations ─────────────────────────────────────────────────
+// Each NavCard's media is the section's full-colour illustration. The artwork
+// already includes its own circular tinted backdrop, so there is no separate
+// tinted-disc wrapper — the raw SVG is dropped in and scaled to 80×80.
+
+const HomeMedia = ({ svg }) => (
+  <span
+    aria-hidden="true"
+    style={{
+      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+      width: 80, height: 80, flexShrink: 0,
+    }}
+    // The illustration's own width/height attrs are overridden to 80×80 by the
+    // wrapper's CSS so every tile renders at the same size.
+    ref={(node) => {
+      if (!node) return;
+      const el = node.querySelector('svg');
+      if (el) { el.setAttribute('width', '80'); el.setAttribute('height', '80'); el.style.display = 'block'; }
+    }}
+    dangerouslySetInnerHTML={{ __html: svg }}
+  />
+);
+
+// Section tiles. Each maps to one of the provided home illustrations.
+const HOME_SECTIONS = [
+  // `target` wires this tile into the Sectioned Layout shell (opens at the
+  // ColdChain Equipment page). Tiles without a target are inert for now.
+  { id: 'inventory',   title: 'Inventory Management',   svg: illoEquipment, target: 'coldchain' },
+  { id: 'temperature', title: 'Temperature Monitoring', svg: illoMonitoring },
+  { id: 'learning',    title: 'Learning Hub',           svg: illoTraining },
+  { id: 'reports',     title: 'Reports',                svg: illoReports },
+  { id: 'facility',    title: 'Facility Registry',      svg: illoFacility },
+  { id: 'forecasting', title: 'Forecasting',            svg: illoForecasting },
+  { id: 'events',      title: 'Events',                 svg: illoEvents },
+  { id: 'transport',   title: 'ColdChain Transport',    svg: illoTransport },
+  { id: 'service',     title: 'Service Requests',       svg: illoHealthHub },
+];
+
+function HomeView({ onOpenSection }) {
+    const { width } = useViewport();
+    const [country] = useState(COUNTRIES.find((c) => c.code === 'KE') || COUNTRIES[0]);
+    const [chatOpen, setChatOpen] = useState(false);
+
+    // Grids reflow in pure CSS (flex-wrap + auto-fit) — keyed off the actual
+    // available width, so no JS measurement, no resize lag, never overflow.
+
+    return (
+      <AppShell
+        navItems={EQUIPMENT_ITEMS}
+        activeItemId="home"
+        onNavSelect={(id) => { if (id !== 'home') onOpenSection(id); }}
+        breadcrumbs={[HOME_CRUMB]}
+        level="primary"
+        contentWidth="full"
+        country={country}
+        onAskAi={() => setChatOpen((o) => !o)}
+        askAiActive={chatOpen}
+      >
+        <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
+          <div style={{ padding: 24, fontSize: 13, color: '#616161' }}>
+            AI chat panel content lives here.
+          </div>
+        </AiChatPanel>
+
+        <div
+          aria-labelledby="home-layout-title"
+          style={{ padding: width < BP_SM ? '24px 12px 32px' : '24px 16px 32px', boxSizing: 'border-box' }}
+        >
+          {/* Greeting */}
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 450, color: '#616161' }}>Hey there 😊,</p>
+            <h1 id="home-layout-title" style={{
+              margin: '4px 0 0', fontSize: 24, fontWeight: 700, lineHeight: '32px',
+              letterSpacing: '-0.2px', color: '#303030',
+            }}>
+              What would you like to do today?
+            </h1>
+          </div>
+
+          {/* Action row — Quick Action (~1fr) + Action Required (~2fr), wrapping
+              to a stack when they no longer fit (pure-CSS flex, no JS width). */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
+            <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+              <CardLayoutType6 icon={<IcoScanRows />} title="Quick Action">
+                <Cell
+                  icon={<IcoQr />}
+                  iconTone="neutral"
+                  title="Scan QR Code or Enter Serial No."
+                  onClick={() => {}}
+                  ariaLabel="Scan QR Code or Enter Serial No."
+                />
+              </CardLayoutType6>
+            </div>
+
+            <div style={{ flex: '2 1 460px', minWidth: 0 }}>
+              <CardLayoutType6
+                tone="critical"
+                icon={<IcoAlertCircle />}
+                title="Action Required"
+                badge="5 Urgent Issues"
+                actionLabel="View All"
+                onAction={() => {}}
+              >
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12 }}>
+                  <Cell
+                    icon={<IcoGauge />}
+                    iconTone="neutral"
+                    title="Temperature exceeds threshold"
+                    description="Incubator HC 1501-2023-001 | Main Laboratory"
+                    hasChevron
+                    onClick={() => {}}
+                    ariaLabel="Temperature exceeds threshold — Incubator HC 1501-2023-001"
+                  />
+                  <Cell
+                    icon={<IcoGear />}
+                    iconTone="neutral"
+                    title="Maintenance due"
+                    description="Generator GEN-2023-005 | Power Room"
+                    hasChevron
+                    onClick={() => {}}
+                    ariaLabel="Maintenance due — Generator GEN-2023-005"
+                  />
+                </div>
+              </CardLayoutType6>
+            </div>
+          </div>
+
+          {/* Section grid — NavCard home tiles. Capped at 3 columns on desktop,
+              stepping 3 → 2 → 1 via container queries (.nx-home-grid in
+              global.css): container-relative, pure CSS, no overflow/resize lag. */}
+          <div className="nx-home-grid">
+            <div className="nx-home-grid__tiles">
+            {HOME_SECTIONS.map(({ id, title, svg, target }) => (
+              <NavCard
+                key={id}
+                layout="home"
+                title={title}
+                media={<HomeMedia svg={svg} />}
+                onClick={target ? () => onOpenSection(target) : () => {}}
+                ariaLabel={title}
+              />
+            ))}
+            </div>
+          </div>
+        </div>
+      </AppShell>
+    );
+}
+
+// ─── Application shell ────────────────────────────────────────────────────────
+// Single stateful host shared by both stories. `view` flips between the
+// standalone Home Layout and the Sectioned Layout app shell so the two can
+// navigate to each other within one Storybook frame:
+//   • Home → Sectioned : the "Inventory Management" tile (target 'coldchain').
+//   • Sectioned → Home : the side-rail "Home" item and the "Home" breadcrumb.
+function ApplicationShell({ initialView = 'home' }) {
+  const [view, setView] = useState(initialView);
+  const [targetId, setTargetId] = useState('coldchain');
+
+  if (view === 'home') {
+    return (
+      <HomeView
+        onOpenSection={(id) => { if (id) setTargetId(id); setView('sectioned'); }}
+      />
+    );
+  }
+  return (
+    <SectionedView initialActiveId={targetId} onGoHome={() => setView('home')} />
+  );
+}
+
+export const SectionedLayout = {
+  name: 'Sectioned Layout',
+  render: () => <ApplicationShell initialView="sectioned" />,
+};
+
+export const HomeLayout = {
+  name: 'Home Layout',
+  render: () => <ApplicationShell initialView="home" />,
 };

@@ -1,0 +1,184 @@
+/*
+ * Nexleaf Design System — MenuDrawer (global navigation)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css + SlideOver.css + SideNavigation styles imported first.
+ * The drawer is a SlideOver (placement="left") whose body hosts the nested nav;
+ * these classes layer the drawer-specific chrome on top.
+ *
+ * .nx-menu-drawer__logo    — brand logo in the fixed header
+ * .nx-menu-drawer__footer  — Notification / Profile / legal footer block
+ * .nx-menu-drawer__footer-row    — a tappable footer row
+ * .nx-menu-drawer__legal   — wrap of legal links
+ * .nx-menu-drawer__legal-link    — an individual legal link
+ */
+
+.nx-menu-drawer__logo {
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Fixed header (logo + close) — used by the Angular template; transparent so it
+   sits on the page-gray panel. The React drawer renders the logo inside
+   SideNavigation's own logo slot with an absolutely-positioned close button. */
+.nx-menu-drawer__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);
+  padding: var(--nx-space-4);
+  flex-shrink: 0;
+}
+
+/* ─── Nested nav (Angular template; React reuses SideNavigation) ─────────────── */
+.nx-menu-drawer__nav { display: flex; flex-direction: column; padding: var(--nx-space-2) 0; }
+.nx-menu-drawer__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--nx-tap-target);
+  padding: var(--nx-space-2) var(--nx-space-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-text-default);
+}
+.nx-menu-drawer__item:hover { background: var(--nx-bg-hover); }
+/* Active uses the same near-white pill as the React SideNavigation (not a blue
+   tint), with bolder text — keeps the two stacks in visual parity. */
+.nx-menu-drawer__item--active { background: var(--nx-bg-input-focus); }
+.nx-menu-drawer__item--active .nx-menu-drawer__item-label { font-weight: var(--nx-font-weight-semibold); color: var(--nx-text-default); }
+.nx-menu-drawer__caret { color: var(--nx-text-subdued); transition: transform 0.15s ease; flex-shrink: 0; }
+.nx-menu-drawer__item--open .nx-menu-drawer__caret { transform: rotate(180deg); }
+
+/* ─── Loading skeleton row (icon block + text line) ─────────────────────────── */
+/* Sized + padded like a 44px touch nav row so the panel doesn't reflow when the
+   live nav arrives. The blocks themselves use the shared .nx-skeleton pulse. */
+.nx-menu-drawer__sk-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--nx-tap-target);
+  padding: 0 var(--nx-space-4);
+}
+
+/* ─── Model 2 split parent row: label (navigates) + caret (toggles) ─────────── */
+.nx-menu-drawer__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.nx-menu-drawer__row:hover { background: var(--nx-bg-hover); }
+.nx-menu-drawer__item--label { flex: 1 1 auto; min-width: 0; }
+.nx-menu-drawer__row .nx-menu-drawer__item:hover { background: transparent; }   /* row owns hover */
+.nx-menu-drawer__caret-btn {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; width: var(--nx-tap-target); align-self: stretch;
+  border: none; background: transparent; color: var(--nx-text-subdued);
+  cursor: pointer;
+}
+
+.nx-menu-drawer__children { display: flex; flex-direction: column; }
+.nx-menu-drawer__child {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--nx-tap-target);
+  padding: var(--nx-space-2) var(--nx-space-4) var(--nx-space-2) 36px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);
+  font-weight: var(--nx-font-weight-regular);
+  color: var(--nx-text-subdued);
+}
+.nx-menu-drawer__child:hover { background: var(--nx-bg-hover); }
+.nx-menu-drawer__child--active {
+  background: var(--nx-bg-selected);
+  color: var(--nx-color-primary);
+  font-weight: var(--nx-font-weight-medium);
+}
+
+/* SlideOver gives the panel its width; cap it for the drawer use-case.
+   The drawer is a single page-gray surface (matches SideNavigation) — no white
+   panel or header card; the header/nav/footer sit transparently on top. */
+.nx-slideover--left.nx-menu-drawer .nx-slideover__panel {
+  width: min(86vw, var(--nx-drawer-width-max));
+  background: var(--nx-bg-page);
+  /* Round the right edge so the curve reads against the scrim (panel clips its
+     content via overflow:hidden) — matches the SideNavigation corner. */
+  border-top-right-radius: 24px;
+  border-bottom-right-radius: 24px;
+}
+
+/* Sticky-footer layout: logo/header stays at the TOP, the primary nav scrolls
+   in the middle, and the Secondary/Tertiary tiers stay pinned to the BOTTOM —
+   regardless of how long the nav tree is. The body itself stops scrolling; the
+   nav region becomes the scroller. */
+.nx-slideover--left.nx-menu-drawer .nx-slideover__body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.nx-menu-drawer__header { flex-shrink: 0; }
+.nx-menu-drawer__nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+.nx-menu-drawer__footer { flex-shrink: 0; }
+
+/* Footer holds the Secondary (Notification/Profile) and Tertiary (legal) tiers,
+   each introduced by its own divider so the three tiers read as distinct. */
+.nx-menu-drawer__footer {
+  margin-top: var(--nx-space-2);
+}
+
+/* Tier divider above the Secondary block (Notification / Profile). */
+.nx-menu-drawer__tier-divider {
+  height: 1px;
+  background: var(--nx-border-default);
+  margin: var(--nx-space-2) var(--nx-space-4);
+}
+
+.nx-menu-drawer__footer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: var(--nx-tap-target);   /* 44px touch target */
+  padding: var(--nx-space-2) var(--nx-space-4);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-text-default);
+}
+.nx-menu-drawer__footer-row:hover { background: var(--nx-bg-hover); }
+
+.nx-menu-drawer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--nx-space-4);
+  margin-top: var(--nx-space-1);
+  /* Left padding trimmed (8px) so the legal links align with the nav-row icons
+     above (the footer wrapper already contributes its own left inset). */
+  padding: var(--nx-space-3) var(--nx-space-4) var(--nx-space-1) var(--nx-space-2);
+}
+.nx-menu-drawer__legal-link {
+  font-size: var(--nx-font-size-caption);
+  font-weight: var(--nx-font-weight-regular);
+  color: var(--nx-color-primary);
+  text-decoration: none;
+  font-family: var(--nx-font-family);
+}

@@ -1,0 +1,119 @@
+/*
+ * Nexleaf Design System — Modal (centered dialog)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css to be imported first.
+ *
+ * The React Modal (Modal.jsx) lays this out with inline styles; this file is the
+ * shared `nx-modal*` layer so the Angular `nx-modal` (and any class-based
+ * consumer) renders the SAME dialog — scrim, centered white card, header (title +
+ * close), scrollable body, footer action row. Built on the same overlay
+ * foundation (focus trap + scroll lock) as SlideOver.
+ *
+ * .nx-modal            — fixed full-screen backdrop (scrim) + flex centerer
+ * .nx-modal__panel     — the centered white card surface
+ * .nx-modal__header    — title row + close button
+ * .nx-modal__title     — heading
+ * .nx-modal__close     — 32px close button
+ * .nx-modal__body      — scrollable content region
+ * .nx-modal__footer    — bottom action row
+ *
+ * Hover / pressed / focus are real CSS states here (React drives them in JS).
+ * Colours mirror the React source 1:1, mapped to tokens where one exists.
+ */
+
+/* ─── Backdrop ─────────────────────────────────────────────────── */
+.nx-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--nx-z-overlay);
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nx-space-4);
+  animation: nxFadeIn 0.2s ease-out;
+}
+
+/* ─── Panel ────────────────────────────────────────────────────── */
+.nx-modal__panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 620px;
+  max-height: calc(100vh - 32px);
+  overflow: hidden;
+  outline: none;
+  background: var(--nx-bg-surface);
+  border-radius: var(--nx-radius-xl);
+  box-shadow: var(--nx-shadow-overlay);
+  animation: nxFadeInScale 0.18s ease-out;
+}
+
+/* ─── Header ───────────────────────────────────────────────────── */
+.nx-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-2);
+  padding: var(--nx-space-3) var(--nx-space-3) var(--nx-space-3) var(--nx-space-4);
+  background: var(--nx-bg-surface-active);
+  border-bottom: 1px solid var(--nx-border-default);
+  flex-shrink: 0;
+}
+/* Header with no title (close button only) pins the close to the right. */
+.nx-modal__header--close-only { justify-content: flex-end; }
+
+.nx-modal__title {
+  margin: 0;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);          /* 14px */
+  font-weight: var(--nx-font-weight-bold);      /* 600 */
+  line-height: var(--nx-line-height-normal);    /* 20px */
+  color: var(--nx-text-default);
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ─── Close button ─────────────────────────────────────────────── */
+.nx-modal__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--nx-radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--nx-text-subdued);
+  cursor: pointer;
+  outline: none;
+  flex-shrink: 0;
+  padding: 0;
+}
+.nx-modal__close:hover { background: var(--nx-bg-hover); }
+.nx-modal__close:focus-visible { box-shadow: var(--nx-focus-ring); }
+
+/* ─── Body & footer ────────────────────────────────────────────── */
+.nx-modal__body {
+  padding: var(--nx-space-4);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+.nx-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--nx-space-2);
+  padding: var(--nx-space-4);
+  background: var(--nx-bg-surface);
+  border-top: 1px solid var(--nx-border-default);
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-modal, .nx-modal__panel { animation: none; }
+}

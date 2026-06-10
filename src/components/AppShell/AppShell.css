@@ -1,0 +1,54 @@
+/*
+ * Nexleaf Design System — AppShell (responsive application shell)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css (+ Toolbar / SideNavigation / MenuDrawer styles) first.
+ *
+ * Desktop (≥1024): docked rail + sticky top bar + content (margin-left = rail).
+ * Tablet / mobile (<1024): top bar with hamburger + MenuDrawer overlay; content
+ * is full width. Toggle the layout by adding `.nx-app-shell--docked` at ≥1024.
+ *
+ * .nx-app-shell            — page background wrapper (min-height 100vh)
+ * .nx-app-shell__rail      — fixed full-height SideNavigation (desktop only)
+ * .nx-app-shell__main      — right column (top bar + content)
+ * .nx-app-shell__topbar    — sticky top-bar wrapper
+ * .nx-app-shell__content   — page content region
+ */
+
+.nx-app-shell {
+  background: var(--nx-bg-page);
+  min-height: 100vh;
+  font-family: var(--nx-font-family);
+}
+
+.nx-app-shell__rail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: var(--nx-z-sticky);
+  display: none;   /* shown only when docked */
+}
+
+.nx-app-shell__main {
+  margin-left: 0;
+  min-width: 0;
+  transition: margin-left 0.18s ease;
+}
+
+.nx-app-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--nx-z-sticky);
+}
+
+.nx-app-shell__content { min-width: 0; }
+
+/* Desktop dock — apply the modifier (or use a container/media query) at ≥1024. */
+.nx-app-shell--docked .nx-app-shell__rail { display: block; }
+.nx-app-shell--docked .nx-app-shell__main { margin-left: var(--nx-app-shell-rail-width, 240px); }
+
+@media (min-width: 1024px) {
+  .nx-app-shell--auto .nx-app-shell__rail { display: block; }
+  .nx-app-shell--auto .nx-app-shell__main { margin-left: var(--nx-app-shell-rail-width, 240px); }
+  .nx-app-shell--auto .nx-app-shell__hamburger { display: none; }
+}

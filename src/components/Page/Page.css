@@ -103,3 +103,54 @@
   align-items: center;
   flex-shrink: 0;
 }
+
+/* ─── Record variant — tertiary record header ──────────────────────────────────
+ * Page variant="record": focused header for record/detail pages. The name is
+ * dominant; the health chip sits beside it (never dropped — title clamps to 2
+ * lines); the serial is a muted subtitle. Mobile compacts the title and stacks
+ * the action row below.
+ */
+.nx-page--record {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  /* Transparent — sits on the page background (no white card). Vertical padding
+     only; the page provides the horizontal padding. */
+  padding: var(--nx-space-5) 0;
+  padding-top: calc(var(--nx-space-5) + var(--nx-safe-top));
+  background: transparent;
+  font-family: var(--nx-font-family);
+}
+.nx-page--record-mobile {
+  gap: var(--nx-space-3);
+  padding: var(--nx-space-3) 0;
+  padding-top: calc(var(--nx-space-3) + var(--nx-safe-top));
+}
+.nx-page__record-top { display: flex; align-items: flex-start; gap: var(--nx-space-2); }
+.nx-record-back {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: var(--nx-radius-sm); border: none;
+  background: transparent; color: var(--nx-text-default); cursor: pointer;
+  flex-shrink: 0; padding: 0; margin-top: 1px;
+}
+.nx-record-back:hover { background: var(--nx-bg-hover); }
+.nx-page__record-titles { flex: 1 1 auto; min-width: 0; }
+.nx-page__record-title-row { display: flex; align-items: flex-start; gap: var(--nx-space-2); flex-wrap: wrap; }
+.nx-page__record-title {
+  margin: 0;
+  /* Fluid — reduced up to ~20% from 24px (down to 19px) for legibility + hierarchy. */
+  font-size: clamp(19px, 1.1rem + 0.6vw, 24px);
+  font-weight: var(--nx-font-weight-semibold);
+  line-height: 1.2; letter-spacing: -0.2px; color: var(--nx-text-default); min-width: 0;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.nx-page__record-chip { flex-shrink: 0; margin-top: 4px; }
+.nx-page--record-mobile .nx-page__record-chip { margin-top: 2px; }
+.nx-page__record-serial {
+  margin-top: 2px; font-size: 15px; font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); color: var(--nx-text-subdued);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.nx-page--record-mobile .nx-page__record-serial { font-size: 14px; }
+.nx-page__record-actions { display: flex; align-items: center; gap: var(--nx-space-2); }
+.nx-page--record:not(.nx-page--record-mobile) .nx-page__record-top { align-items: flex-start; }

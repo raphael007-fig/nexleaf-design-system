@@ -115,7 +115,7 @@ export function MetricCard({
           flexDirection: 'column',
           gap: 12,
           padding: 16,
-          borderRadius: 12,
+          borderRadius: 8,
           background: bg,
           boxShadow,
           cursor: isClickable ? 'pointer' : 'default',

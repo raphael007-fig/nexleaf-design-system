@@ -111,3 +111,30 @@ export const RADIUS_PILL    = 100;  // Badges, pills
 //     #12b76a token remains the success *icon/indicator* color.
 export const COLOR_SUCCESS_FILLED = '#29845a'; // filled-button / strong-badge green
 export const BG_INFO_BADGE        = '#e0f0ff'; // info Badge chip fill (vs banner BG_INFO)
+
+// ── Elevation — overlay surfaces ──────────────────────────────────────────────
+// Drop shadows for floating surfaces (slide-over, drawer, bottom sheet). Mirror
+// --nx-shadow-overlay / --nx-shadow-sheet in tokens.css.
+export const SHADOW_OVERLAY = '0 20px 25px -5px rgba(0,0,0,0.10), 0 10px 10px -5px rgba(0,0,0,0.04)';
+export const SHADOW_SHEET   = '0 -8px 24px -6px rgba(0,0,0,0.18)'; // bottom sheet casts upward
+
+// ── Z-index scale ─────────────────────────────────────────────────────────────
+export const Z_STICKY  = 100;
+export const Z_DRAWER  = 1000;
+export const Z_OVERLAY = 1000;
+export const Z_SHEET   = 1100;
+export const Z_TOAST   = 1200;
+
+// ── Responsive shell rules ────────────────────────────────────────────────────
+export const TOPBAR_H_MOBILE  = 48;
+export const TOPBAR_H_DESKTOP = 56;
+export const DRAWER_WIDTH_MAX  = 320;
+export const SHEET_MAX_H        = '88vh';
+export const TAP_TARGET             = 44; // WCAG minimum
+export const TAP_TARGET_COMFORTABLE = 48; // preferred
+
+// ── Safe-area insets (mobile / wrapped app) ───────────────────────────────────
+export const SAFE_TOP    = 'env(safe-area-inset-top, 0px)';
+export const SAFE_RIGHT  = 'env(safe-area-inset-right, 0px)';
+export const SAFE_BOTTOM = 'env(safe-area-inset-bottom, 0px)';
+export const SAFE_LEFT   = 'env(safe-area-inset-left, 0px)';

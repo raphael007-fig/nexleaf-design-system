@@ -23,7 +23,7 @@ Each component is delivered in up to **three parallel layers** so any stack can 
 | **CSS classes** | `src/components/<Name>/<Name>.css` + `src/tokens/tokens.css` | Django, vanilla HTML, server-rendered, or any non-React stack |
 | **Angular** | compilable library source under `angular/projects/nexleaf-angular/src/lib/<name>/` (`.component.ts` + `.module.ts`), published as `@nexleaf/angular` | Angular apps that import the per-component `NxXxxModule` |
 
-Not every component ships all three layers yet — the CSS layer currently covers 11 components (see "CSS Class Structure"). When in doubt, the React `.jsx` is always present and is the canonical reference implementation.
+Coverage is now at **functional parity**: every React component has an Angular equivalent, and the shared CSS layer covers ~28 components. When in doubt, the React `.jsx` is the canonical reference implementation. The Angular package ships a single bundled stylesheet (`@nexleaf/angular/styles.css`). A few mappings aren't 1:1 by name: `Card` → `nx-card-layout-type1…6`, `Breadcrumbs` lives in the toolbar module (`nx-breadcrumbs`), and React's `Overlay` is a legacy thin wrapper over `Modal` (Angular uses `nx-modal`).
 
 ---
 
@@ -91,8 +91,8 @@ Translucent black overlays for hover/pressed states on neutral surfaces, plus th
 | Token | Value | Usage |
 |-------|-------|-------|
 | `text-default` | `#303030` | Body text, labels, headings |
-| `text-subdued` | `#616161` | Secondary text, input icons |
-| `text-placeholder` | `#9e9e9e` | Placeholders, tertiary text, chevron icons |
+| `text-subdued` | `#616161` | Secondary text, input icons, **chevron / disclosure / list-affordance icons** (Cell, EquipmentCard, SideNavigation caret, Btn disclosure) |
+| `text-placeholder` | `#9e9e9e` | Placeholders, tertiary text (**not** chevrons — those use `text-subdued`) |
 | `text-disabled` | `#b5b5b5` | Disabled text and disabled icon strokes |
 | `text-on-primary` | `#ffffff` | Text/icons on primary blue backgrounds |
 
@@ -142,6 +142,23 @@ Optional purple variant for emphasis or marketing-style tones. Used by Tag (`ton
 |-------|-------|-------|
 | `color-morning` | `#F59E0B` | Morning/day session indicators |
 | `color-evening` | `#6366F1` | Evening/night session indicators |
+
+### Responsive / Shell (hybrid AppShell)
+Added for the responsive shell + overlays. Use the tokens — don't hardcode z-index, shadow, or shell dimensions inside components.
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `z-sticky` | `100` | Sticky TopBar |
+| `z-drawer` / `z-overlay` | `1000` | MenuDrawer / SlideOver scrim |
+| `z-sheet` | `1100` | BottomSheet (above drawer) |
+| `z-toast` | `1200` | Toasts |
+| `shadow-overlay` | (elevation) | SlideOver / MenuDrawer panel |
+| `shadow-sheet` | (upward) | BottomSheet panel |
+| `topbar-h-mobile` / `topbar-h-desktop` | `48px` / `56px` | TopBar min-height |
+| `drawer-width-max` | `320px` | MenuDrawer max width (mobile) |
+| `sheet-max-h` | `88vh` | BottomSheet max height |
+| `tap-target` / `tap-target-comfortable` | `44px` / `48px` | Minimum touch targets |
+| `safe-top/right/bottom/left` | `env(safe-area-inset-*)` | Notch / status-bar spacing (web + wrapped app) |
 
 ---
 
@@ -270,6 +287,64 @@ function onCrumb(id) {
 ```
 
 **Home is a top-level landing surface.** When `activeId === 'home'`, render the shell **without** the side rail — only the breadcrumb (`[Home]`) shows. Picking a section from the Home page calls `setActiveId`, bringing the rail back and growing the breadcrumb to `Home → Section`. See **Application Layout → Sectioned Layout**.
+
+---
+
+## Responsive System (Hybrid Shell)
+
+One route/IA at every size — only the *shell* adapts. Works in responsive web and iOS/Android/iPad containers. Built from `AppShell` + the progressive `TopBar` + the `MenuDrawer`, all driven by `useViewport` (`src/foundation/useViewport.js`).
+
+### Breakpoints
+
+| Token | Value | What changes |
+|-------|-------|--------------|
+| `BP_SM` | `640` | Below: side padding tightens 16 → 12px |
+| `BP_MD` | `768` | Below: TopBar = **mobile**; a **tertiary/record page hides the global top bar** (record header leads) |
+| `BP_LG` | `1024` | At/above: **SideNavigation rail docks** (240px / 60px collapsed); below it's the hamburger → MenuDrawer |
+
+### Content width
+
+`AppShell` wraps every page in one shared container so Primary / Secondary / Tertiary line up identically (no jump when navigating):
+
+- **`max-width: 1080px`**, centered, padding `24px` top / `16px` sides (12px < 640) / `32px` bottom (`box-sizing: border-box`).
+- Content column = `viewport − 240px (docked rail)`, capped at 1080 (the cap engages ≈ ≥ 1320px viewport).
+- `contentWidth` prop overrides it; `contentWidth="full"` opts a page out to full-bleed (e.g. the IndexTable Sectioned Layout).
+
+### Progressive TopBar
+
+ONE bar that collapses by width — controls are never deleted, they move into the drawer. `nxTopBarStateForWidth`:
+
+| State | Width | Shows |
+|-------|-------|-------|
+| `wide` | ≥ 1024 | full breadcrumb + bell + profile |
+| `medium` | ≥ 900 | compressed breadcrumb + bell + profile |
+| `compact` | ≥ 768 | no breadcrumb, bell in bar, profile → drawer |
+| `mobile` | < 768 | logo dropped, bell + profile → drawer |
+
+The drawer's "Secondary" tier (Notification / Profile) stays in sync with whatever overflowed out of the bar (`topBarOverflowForWidth`).
+
+### Navigation — Model 2 (split control)
+
+Parent rows are **pages AND groups**. The row splits into two hit areas: the **label** navigates (`onSelect`, closes the drawer), the **caret** toggles expand/collapse (no navigation). Implemented identically in the docked rail (`SideNavigation`) and the `MenuDrawer`, and mirrored in `nx-menu-drawer` (Angular).
+
+### Home module-tile grid
+
+The NavCard dashboard tiles use a **container query** utility (`.nx-home-grid` / `.nx-home-grid__tiles` in `global.css`), so they key off the content column (correct whether the rail is docked) in pure CSS — no JS, no resize lag, capped at 3:
+
+- container ≥ **720px → 3 columns** · ≥ **460px → 2** · else **1**
+
+> **Responsive grids rule:** content grids reflow in pure CSS (`repeat(auto-fit, minmax(min(100%, N), 1fr))` or `flex-wrap`, or container queries when a hard column cap is needed) — **not** JS-width-driven `gridTemplateColumns`, which lags a frame on resize and can overflow.
+
+---
+
+## Loading & Interaction States
+
+Every interactive/data component documents two state families (shown as dedicated Storybook stories + an MDX section):
+
+- **Loading** — a shape-matching skeleton via the shared `Skeleton` primitive (`src/components/Skeleton/Skeleton.jsx`; CSS class `.nx-skeleton` / `--circle` for non-React stacks). Same footprint as the loaded content so the list never reflows. Pulse: `bg-skeleton` `#e8e8e8`, 1.4s. Components with a `loading` prop: Cell, NavCard, MetricCard, EquipmentCard, MenuDrawer, BottomSheet, TopBar, IndexTable.
+- **Interaction states** — rest / hover / pressed / focus / disabled (+ selected/active/open where relevant). Components that own their look expose a forced **`state="hover"`** (or per-row `state`) so docs can show the look without live input; focus rings use `--nx-color-primary`. Components built on `Btn` / `SideNavigation` inherit those states.
+
+`Cell` truncates its description to a single line by default (`descriptionLines={1}` → ellipsis); pass `2`+ to clamp to N lines, or `0`/`null` to wrap freely.
 
 ---
 
@@ -575,6 +650,49 @@ Props: `hasPrevious`, `hasNext`, `onPrevious`, `onNext`, `label`, `type` (page/t
 >
   {/* content */}
 </Page>
+
+// Record (tertiary) variant — back + title + health chip + serial, actions stack below on mobile
+<Page variant="record" backAction={{ onAction: goBack }} title="Hairer-HBC-80 (IOM)"
+  status="functional" subtitle="BE0G91EAS0 00EJ8 S0003"
+  actions={<TertiaryActions state="functional" onAction={fn} />} />
+```
+
+### Responsive / shell & list components
+
+These compose the hybrid shell and the mobile list/record surfaces. Each ships React + CSS-class + Angular layers (see those sections) and the Loading / Interaction-state stories described above.
+
+```jsx
+// SideNavigation — docked rail; Model 2 split (label navigates, caret expands)
+<SideNavigation items={NAV_ITEMS} activeItemId={id} onSelect={setId} collapsed={c} onCollapsedChange={setC} />
+
+// AppShell — hybrid shell: docks the rail ≥1024, drawer below; one TopBar; shared 1080 content container
+<AppShell activeItemId={id} onNavSelect={go} breadcrumbs={trail} level="secondary" /* contentWidth=1080|'full' */>{page}</AppShell>
+
+// TopBar — progressive top bar (wide→medium→compact→mobile); loading swaps breadcrumb/region/avatar for skeletons
+<TopBar breadcrumbs={trail} onMenu={openDrawer} country={{code:'KE',name:'Kenya'}} onAskAi={fn} />
+
+// MenuDrawer — left drawer (SlideOver) the hamburger opens; nested nav + Notification/Profile + legal tiers; loading nav skeleton
+<MenuDrawer open={open} onClose={close} items={NAV_ITEMS} activeItemId={id} onSelect={go} loading={false} />
+
+// BottomSheet — mobile sheet (More actions / filter / selector); drag handle; loading content skeleton
+<BottomSheet open={open} onClose={close} title="Equipment actions">{rows}</BottomSheet>
+
+// SlideOver — the overlay primitive behind MenuDrawer/BottomSheet; placement 'right' | 'left' | 'bottom'
+<SlideOver open={open} onClose={close} placement="right">{content}</SlideOver>
+
+// EquipmentCard — mobile list card (Health/Maintenance/Lifecycle badges); loading + state="hover"
+<EquipmentCard name="Vestfrost MK 144" type="Vaccine Freezer" serial="DCM-2024-001" facility="Mombasa" health="functional" onClick={open} />
+
+// TertiaryActions — state-driven [primary][More] for a record (functional/faulty/unknown/decommissioning)
+<TertiaryActions state="faulty" mobile onAction={fn} />
+
+// Cell — composable 64px list row (icon · title/desc · trailing control); descriptionLines=1 default
+<Cell icon={<Ico/>} title="Temperature exceeds threshold" description="Incubator HC 1501 | Main Lab" hasChevron onClick={fn} />
+
+// NavCard — home/sub navigation tile (illustration + title); loading skeleton
+<NavCard layout="home" title="Inventory Management" media={<Media/>} onClick={open} />
+
+// MetricCard — KPI tile (see above); loading skeleton + selected state
 ```
 
 ---
@@ -618,7 +736,9 @@ For Django / Angular / vanilla-HTML consumers, components ship a hand-written st
 
 ### Components that ship a `.css` layer
 
-`Accordion`, `Badge`, `Banner`, `Btn`, `Checkbox`, `Divider`, `OptionList`, `Page`, `Pagination`, `Tabs`, `TextInput` — plus `src/global.css` (keyframes, resets) and `src/tokens/tokens.css` (token source of truth). All token names map 1:1 to the JS constants in `src/tokens/index.js`.
+Foundational: `Accordion`, `Badge`, `Banner`, `Btn`, `Breadcrumbs`, `Checkbox`, `Divider`, `Modal`, `OptionList`, `Page`, `Pagination`, `Popover`, `Tabs`, `TextInput`. Responsive / shell + list: `Cell`, `NavCard`, `Skeleton`, `EquipmentCard`, `TertiaryActions`, `MenuDrawer`, `BottomSheet`, `SlideOver`, `SideNavigation`, `TopBar`, `Toolbar`. Plus `src/global.css` (keyframes, resets, `.nx-home-grid`) and `src/tokens/tokens.css` (token source of truth). All token names map 1:1 to the JS constants in `src/tokens/index.js`.
+
+The Angular package bundles tokens + every component stylesheet into one file at build time (`angular/scripts/bundle-styles.mjs`), shipped as **`@nexleaf/angular/styles.css`** (and a tokens-only `@nexleaf/angular/tokens.css`) — so an Angular app imports one stylesheet instead of each `nx-*.css`.
 
 ---
 
@@ -627,9 +747,9 @@ For Django / Angular / vanilla-HTML consumers, components ship a hand-written st
 Angular ships as **real, compilable library source**, not just doc snippets. It lives in an isolated workspace under `angular/` (kept separate from the React/Vite/Storybook build) and publishes as the `@nexleaf/angular` package.
 
 - **Source:** `angular/projects/nexleaf-angular/src/lib/<name>/` — one `.component.ts` + one `.module.ts` per component, re-exported from `src/public-api.ts`.
-- **Coverage:** all 26 documented components (accordion, badge, banner, btn, card, checkbox, date-picker, divider, index-table, metric-card, number-input, option-list, page, pagination, polaris-icon, radio, search-select, select-input, tabs, tag, text-input, textarea-input, toggle, toolbar, tooltip, upload).
-- **Build:** `cd angular && npm install && npm run build` (Angular 18 + ng-packagr → `angular/dist/nexleaf-angular`).
-- **Architecture:** template-only components — each one emits the same `nx-*` CSS classes + tokens as the React/CSS layers, so styling stays 1:1. No bundled CSS; consumers import `tokens.css` + the per-component stylesheets. Components are `standalone: false` and grouped into per-component `NxXxxModule`s (NgModule pattern). Form controls implement `ControlValueAccessor` for `ngModel`.
+- **Coverage:** functional parity with React — every React component has an Angular equivalent. The foundational set (accordion, badge, banner, btn, card → `nx-card-layout-type1…6`, checkbox, date-picker, divider, index-table, metric-card, number-input, option-list, page, pagination, polaris-icon, radio, search-select, select-input, tabs, tag, text-input, textarea-input, toggle, toolbar incl. `nx-breadcrumbs`, tooltip, upload, **modal**, **popover**, **skeleton**), the responsive/shell layer (app-shell, **side-navigation**, top-bar, menu-drawer, bottom-sheet, slide-over, overlay foundation, equipment-card, tertiary-actions, cell, nav-card), and the `nav-sync` helpers.
+- **Build:** `cd angular && npm install && npm run build` (Angular 18 + ng-packagr → `angular/dist/nexleaf-angular`), which also runs `scripts/bundle-styles.mjs`.
+- **Architecture:** template-only components — each one emits the same `nx-*` CSS classes + tokens as the React/CSS layers, so styling stays 1:1. **Styling ships as one bundled `@nexleaf/angular/styles.css`** (tokens + every component stylesheet; also `@nexleaf/angular/tokens.css` for just the vars) — import it once. Components are `standalone: false` and grouped into per-component `NxXxxModule`s (NgModule pattern). Form controls implement `ControlValueAccessor` for `ngModel`.
 
 ### Conventions
 
@@ -670,12 +790,16 @@ import { NxBtnModule } from '@nexleaf/angular';
 
 | Group | Components |
 |-------|-----------|
+| `Foundation/` | Colors, Typography, Spacing, Shadows, PolarisIcon, Emojis |
 | `Components/Inputs` | TextInput, NumberInput, TextareaInput, SelectInput, SearchSelect |
-| `Components/Navigation` | Tabs, Pagination |
-| `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, OptionList, Tooltip, Divider, Page |
-| `Foundation/` | PolarisIcon |
+| `Components/Navigation` | SideNavigation, TopBar, Breadcrumbs, Tabs, Pagination, Toolbar, Header Page |
+| `Components/Overlays` | Modal, Popover, SlideOver |
+| `Components/Lists` | Cell, OptionList |
+| `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, NavCard, Skeleton, Tooltip, Divider, Page |
+| `Patterns/Responsive` | AppShell, MenuDrawer, BottomSheet, EquipmentCard, TertiaryActions |
+| `Pages/` | Application Layout, Equipment Detail |
 
-MDX docs pages use `Components/[Group]/[Name]/Docs` as the `<Meta title>`.
+MDX docs pages use `[Group]/[Name]/Docs` as the `<Meta title>`. Sidebar order is Foundation → Components → Patterns → Pages (see `.storybook/preview.js` `storySort`).
 
 ---
 
@@ -701,7 +825,7 @@ Inline SVG only — never icon font or external image. Do not install icon packa
 
 ## Layout Conventions
 
-- Mobile-first. Max content width: 480–620px centered.
+- Mobile-first; one IA at every size (see **Responsive System**). App pages render inside the `AppShell` content container (**1080px** max, centered); standalone forms/modals stay narrower (480–620px).
 - Cards and modals: `padding: 24px`
 - Form sections: `display: flex; flexDirection: column; gap: 20px`
 - Button rows: `display: flex; gap: 12px`

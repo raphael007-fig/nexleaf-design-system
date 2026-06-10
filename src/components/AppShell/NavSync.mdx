@@ -1,0 +1,117 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as AppShellStories from './AppShell.stories.jsx';
+
+<Meta title="Patterns/Responsive/Navigation Sync" />
+
+# Navigation Sync
+
+One navigation system, one source of truth. The **side navigation / menu drawer**,
+the **breadcrumb trail**, and the **Secondary page title switcher** are never
+stored separately — they are all **pure projections of a single `activeId`** over
+the nav tree. Every entry point writes back through one writer, so they can never
+drift, at any screen size or in a wrapped native app.
+
+<Canvas of={AppShellStories.ResponsiveApp} />
+
+## The model
+
+| Surface | Projection of `activeId` |
+|---|---|
+| SideNavigation / MenuDrawer | `activeItemId={activeId}` — highlights the item, auto-expands its group |
+| Breadcrumbs | `trailFor(items, activeId, { home })` → `[Home]`, `[Home, item]`, or `[Home, group, child]` |
+| Secondary title switcher | `siblingsFor(items, activeId)` → the active item's siblings (chevron dropdown) |
+
+Two rules keep it robust:
+
+- A **group / parent resolves to its first child by default** (`resolveNavTarget`).
+  When the parent is itself a page, pass `groupsArePages` to `useNavSync` (and
+  `resolveNavTarget`) so the parent id passes through unchanged and syncs fully —
+  active state, breadcrumb, page title — like any leaf.
+- `activeId === home.id` is the landing case: the rail is hidden and the trail is
+  just `[Home]`.
+
+### Parent-as-page in the drawer (tap to open the section, tap again to go)
+
+When a parent is a page, the MenuDrawer behaves as: **first tap** = navigate to
+the parent + expand its children, **drawer stays open** so the sub-items are
+reachable in place; **tapping the already-active parent again closes the drawer**
+to reveal its page. Leaves always close. (`AppShell` decides this from
+`activeItemId` — no timed double-tap gesture, so there's no input lag and it's
+keyboard/screen-reader friendly.) In Angular the `nx-menu-drawer` emits
+`selected` for parents too, and the host applies the same "close when the tapped
+parent is already active" rule.
+
+## The hook (React)
+
+`useNavSync` packages the engine. One state, one writer (`go`), three derived
+outputs:
+
+```jsx
+import { useNavSync } from '../../foundation/useNavSync.js';
+
+const nav = useNavSync(NAV_ITEMS, { home: HOME_CRUMB, initialId: 'home' });
+
+<AppShell
+  activeItemId={nav.activeId}
+  onNavSelect={nav.go}
+  breadcrumbs={nav.breadcrumbs}
+  onBreadcrumbSelect={nav.go}
+>
+  <Page
+    title={nav.labelFor(nav.activeId)}
+    titleDisclosure={nav.titleDisclosureFor()}   // popover on desktop, BottomSheet on mobile
+  />
+</AppShell>
+```
+
+The **title switcher is responsive for free**: `Page` renders `titleDisclosure`
+as an OptionList popover on desktop and a **BottomSheet** on mobile — both feed
+the same `go`, so picking a category from the sheet updates the rail, the
+breadcrumb, and the sheet's own checked row together.
+
+### Tertiary detail
+
+A record (detail page) has no nav id — it is a separate dimension the caller
+owns. Append its crumb to the derived trail and clear it on any nav jump:
+
+```jsx
+const breadcrumbs = record ? [...nav.breadcrumbs, { id: record.id, label: record.name }] : nav.breadcrumbs;
+const navigate = (id) => { setRecord(null); nav.go(id); };
+```
+
+## AppShell convenience
+
+`AppShell` can derive the breadcrumb trail itself — pass `homeCrumb` (and the
+`navItems` + `activeItemId` it already takes) and omit `breadcrumbs`:
+
+```jsx
+<AppShell navItems={NAV_ITEMS} activeItemId={activeId} homeCrumb={HOME_CRUMB} onNavSelect={go}>…</AppShell>
+```
+
+An explicit `breadcrumbs` array always wins (back-compatible).
+
+## Responsive & native
+
+Nothing in the sync is breakpoint-specific. Only the **surface** that renders
+each projection swaps:
+
+- nav: docked SideNavigation (desktop) ↔ MenuDrawer (tablet / mobile)
+- title switcher: popover (desktop) ↔ BottomSheet (mobile)
+- breadcrumb: full ↔ compressed ↔ hidden (the TopBar's measured progressive
+  collapse)
+
+Same `activeId` drives them all on web, iPad, mobile browser, and wrapped apps.
+
+## Angular parity
+
+The pure helpers ship in the Angular package too:
+
+```ts
+import { trailFor, siblingsFor, resolveNavTarget } from '@nexleaf/angular';
+
+const trail = trailFor(NAV_ITEMS, activeId, { home: HOME_CRUMB });
+const switcher = siblingsFor(NAV_ITEMS, activeId); // null → no chevron
+```
+
+Keep one `activeId` in the host component and bind `nx-menu-drawer`,
+`nx-top-bar`, and the page title switcher to these derivations.

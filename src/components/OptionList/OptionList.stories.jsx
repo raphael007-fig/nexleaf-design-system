@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { OptionList } from './OptionList.jsx';
 
 export default {
-  title: 'Components/OptionList',
+  title: 'Components/Lists/OptionList',
   component: OptionList,
   parameters: { layout: 'centered' },
 };

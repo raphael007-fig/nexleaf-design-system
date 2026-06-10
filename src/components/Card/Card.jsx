@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, Children } from 'react';
+import { useIsMobile } from '../../foundation/useViewport.js';
 import { IndexTable } from '../IndexTable/IndexTable.jsx';
 import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
 import { Btn } from '../Btn/Btn.jsx';
+import { Badge } from '../Badge/Badge.jsx';
+import { Cell } from '../Cell/Cell.jsx';
 import { Overlay } from '../Overlay/Overlay.jsx';
 
 // Inline close icon — same SVG used by the Page image-preview modal so both
@@ -72,6 +75,17 @@ const CARD_SHADOW = [
   'inset 0 1px 0 rgba(204,204,204,0.5)',
 ].join(', ');
 
+// Critical-tinted edge — same bevel recipe as CARD_SHADOW but the neutral grays
+// are swapped for a red tint, flagging an alert / action-required card
+// (Figma "Immediate Action"). Raw rgba tints mirror the CARD_SHADOW pattern.
+const CARD_SHADOW_CRITICAL = [
+  '0 1px 0 rgba(235,27,27,0.07)',
+  'inset 1px 0 0 rgba(235,27,27,0.13)',
+  'inset -1px 0 0 rgba(235,27,27,0.13)',
+  'inset 0 -1px 0 rgba(235,27,27,0.17)',
+  'inset 0 1px 0 rgba(255,182,182,0.5)',
+].join(', ');
+
 // ─── Card Container ───────────────────────────────────────────────────────────
 
 /**
@@ -90,7 +104,7 @@ export function Card({ children, loading = false, loadingContent, loadingLabel =
   return (
     <div style={{
       background: '#ffffff',
-      borderRadius: 12,
+      borderRadius: 8,
       padding: 12,
       display: 'flex',
       flexDirection: 'column',
@@ -257,16 +271,20 @@ export function CardDivider() {
  */
 export function CardImages({ images = [] }) {
   return (
-    <div style={{ display: 'flex', gap: 16 }}>
+    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
       {images.map((src, i) => (
         <div
           key={i}
           style={{
-            width: 120,
-            height: 120,
+            // Square thumbnails that cap at 120px on wide layouts but shrink
+            // proportionally on narrow screens so a 3-up row never overflows
+            // the viewport (3 × 120 + gaps = 392px would force h-scroll on a phone).
+            flex: '1 1 0',
+            minWidth: 0,
+            maxWidth: 120,
+            aspectRatio: '1 / 1',
             borderRadius: 8,
             overflow: 'hidden',
-            flexShrink: 0,
             background: '#f1f1f1',
           }}
         >
@@ -485,7 +503,7 @@ export function CardLayoutType2({
   return (
     <div style={{
       background: '#ffffff',
-      borderRadius: 12,
+      borderRadius: 8,
       boxShadow: CARD_SHADOW,
       fontFamily: 'Inter, sans-serif',
       boxSizing: 'border-box',
@@ -864,5 +882,163 @@ export function CardLayoutType5({
         </Overlay>
       )}
     </Card>
+  );
+}
+
+// ─── CardLayoutType6 — Header / action card ──────────────────────────────────
+
+/**
+ * CardLayoutType6
+ *
+ * A card with a header strip and a free-form body. The header pairs a leading
+ * icon + title + optional badge on the left with an optional action button on
+ * the top right. An optional `tone` tints the card's edge (e.g. `critical` for
+ * an alert / action-required card, matching the Figma "Immediate Action").
+ *
+ * The body is whatever you pass as `children` — typically a row (web) or stack
+ * (mobile) of `Cell` rows. By default you arrange them yourself; set
+ * `stackOnMobile` to let the card own that reflow — each child becomes an equal
+ * column on wide screens and a full-width stacked row at/below the `sm`
+ * breakpoint (via the shared `useIsMobile` hook), so consumers don't have to
+ * re-implement the responsive switch.
+ *
+ * Props:
+ *   icon          — React element (20×20 SVG) shown before the title
+ *   title         — string (body-sm/medium, 12px/550)
+ *   badge         — string | ReactNode — string renders a <Badge>; tone follows
+ *                   `badgeTone` (defaults to the card tone)
+ *   badgeTone     — any Badge tone key (default: 'critical' when tone='critical',
+ *                   else 'default')
+ *   actionLabel   — string — renders a top-right ghost (plain) button when set
+ *   onAction      — fn — action button click
+ *   tone          — 'default' | 'critical' — tints the card edge
+ *   loading       — boolean — render a header + Cell-row skeleton
+ *   loadingRows   — number — Cell skeleton rows to show when loading (default 2)
+ *   stackOnMobile — boolean — when true, lay children out as equal columns on
+ *                   wide screens and stack them full-width on mobile (default false)
+ *   bodyGap       — number — gap between body children when `stackOnMobile` (default 12)
+ *   children      — body content (e.g. a flex row/column of <Cell>s)
+ */
+export function CardLayoutType6({
+  icon,
+  title,
+  badge,
+  badgeTone,
+  actionLabel,
+  onAction,
+  tone = 'default',
+  loading = false,
+  loadingRows = 2,
+  stackOnMobile = false,
+  bodyGap = 12,
+  children,
+}) {
+  // Called unconditionally (before the loading early-return) to satisfy the
+  // rules of hooks. Only consulted when `stackOnMobile` is set.
+  const isMobile = useIsMobile();
+  const isCritical = tone === 'critical';
+  const resolvedBadgeTone = badgeTone || (isCritical ? 'critical' : 'default');
+
+  const surface = {
+    background: '#ffffff',
+    borderRadius: 8,
+    padding: 12,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
+    boxShadow: isCritical ? CARD_SHADOW_CRITICAL : CARD_SHADOW,
+    fontFamily: 'Inter, sans-serif',
+    boxSizing: 'border-box',
+  };
+
+  // ─── Loading skeleton ──────────────────────────────────────────────────
+  // Header placeholder (icon + title + badge + action) over a stack of Cell
+  // skeletons. Keeps the same tinted surface so the card doesn't reflow.
+  if (loading) {
+    return (
+      <div style={surface}>
+        <SkeletonGroup label="Loading card">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            width: '100%',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <Skeleton width={20} height={20} radius={4} ariaLabel={null} />
+              <Skeleton width={110} height={12} radius={4} delay={0.04} ariaLabel={null} />
+              <Skeleton width={84} height={20} radius={100} delay={0.08} ariaLabel={null} />
+            </div>
+            <Skeleton width={96} height={16} radius={4} delay={0.12} ariaLabel={null} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {Array.from({ length: loadingRows }).map((_, i) => (
+              <Cell key={i} loading />
+            ))}
+          </div>
+        </SkeletonGroup>
+      </div>
+    );
+  }
+
+  return (
+    <div style={surface}>
+      {/* Header */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 12,
+        width: '100%',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+            {icon && <span style={{ display: 'flex', flexShrink: 0 }}>{icon}</span>}
+            {title != null && (
+              <span style={{
+                fontSize: 12,
+                fontWeight: 550,
+                lineHeight: '16px',
+                color: '#303030',
+                fontFamily: 'Inter, sans-serif',
+                whiteSpace: 'nowrap',
+              }}>
+                {title}
+              </span>
+            )}
+          </div>
+          {badge != null && (
+            typeof badge === 'string'
+              ? <Badge tone={resolvedBadgeTone}>{badge}</Badge>
+              : badge
+          )}
+        </div>
+
+        {actionLabel != null && (
+          <Btn variant="ghost" onClick={onAction}>{actionLabel}</Btn>
+        )}
+      </div>
+
+      {/* Body */}
+      {stackOnMobile ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: bodyGap,
+          width: '100%',
+        }}>
+          {Children.map(children, (child) => (
+            child == null ? null : (
+              // flex:1 1 0 gives equal-width columns on desktop; on mobile the
+              // column direction makes each child fill the row.
+              <div style={{ flex: isMobile ? '1 1 auto' : '1 1 0', minWidth: 0 }}>
+                {child}
+              </div>
+            )
+          ))}
+        </div>
+      ) : children}
+    </div>
   );
 }

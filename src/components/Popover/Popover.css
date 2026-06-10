@@ -1,0 +1,53 @@
+/*
+ * Nexleaf Design System — Popover (non-modal floating layer)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first; the panel entrance reuses the @keyframes nxFadeInScale
+ * defined in global.css.
+ *
+ * The React Popover (src/components/Popover/Popover.jsx) lays the floating panel
+ * out with inline styles and a portal; this file is the shared `nx-popover*` layer
+ * so the Angular `nx-popover` (and any class-based consumer) renders the SAME
+ * surface — white panel, 1px border, 12px radius, soft drop shadow, scrollable
+ * body. Open/close, outside-click + Escape dismissal, and viewport positioning
+ * stay in JS (the host sets top/left on the panel); this layer owns only chrome.
+ *
+ * The React popover is non-modal: it does NOT trap focus or scroll-lock — it only
+ * moves focus to the first item on open. The Angular component matches that, so
+ * there is no scrim element here.
+ */
+
+/* ── Trigger (the anchor element) ─────────────────────────────────────────────── */
+/* Display wrapper only — the projected trigger keeps its own button styling. */
+.nx-popover__trigger {
+  display: inline-flex;
+}
+
+/* ── Floating panel (portaled, position set in JS) ───────────────────────────── */
+.nx-popover__panel {
+  position: fixed;
+  z-index: var(--nx-z-sheet); /* 1100 — matches React `zIndex: 1100` default */
+  min-width: 200px;
+  max-width: 100vw;
+  max-height: min(60vh, 360px);
+  overflow-y: auto;
+  background: var(--nx-bg-surface);
+  border: 1px solid var(--nx-border-default);
+  border-radius: var(--nx-radius-lg); /* 12px */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12); /* popover elevation — distinct from --nx-shadow-overlay, not yet tokenized */
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+  animation: nxFadeInScale 0.14s ease-out;
+}
+
+/* Surface-less variant: host owns the chrome (matches React `surface={false}`). */
+.nx-popover__panel--flush {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-popover__panel { animation: none; }
+}
