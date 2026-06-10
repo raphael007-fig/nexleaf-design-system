@@ -24,6 +24,7 @@
     "@angular/compiler-cli": "^18.2.0",
     "@angular/platform-browser": "^18.2.14",
     "@angular/platform-browser-dynamic": "^18.2.14",
+    "@storybook/addon-docs": "^8.6.18",
     "@storybook/angular": "^8.6.18",
     "ng-packagr": "^18.2.0",
     "storybook": "^8.6.18",

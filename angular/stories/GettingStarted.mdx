@@ -1,0 +1,66 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundation/Getting Started" />
+
+# Nexleaf Design System — Angular
+
+This is the **production surface** of the Nexleaf/ColdTrace design system: every
+component here is the real `@nexleaf/angular` artifact, rendered against the
+exact bundled stylesheet the package ships. What you see is what your app gets.
+
+> The React Storybook (port 6006) is the design/reference environment with the
+> full written docs. Visual decisions live in **tokens + the shared `nx-*` CSS**
+> — both surfaces render the same source of truth, locked by the visual gate.
+
+## Install
+
+```bash
+npm install @nexleaf/angular   # built from angular/dist/nexleaf-angular
+```
+
+## Styles — one import
+
+```css
+/* styles.css (or angular.json → "styles") */
+@import '@nexleaf/angular/styles.css';   /* tokens + every nx-* component style */
+/* or tokens only: */
+@import '@nexleaf/angular/tokens.css';
+```
+
+## Use a component
+
+```ts
+import { NxBtnModule, NxEquipmentCardModule } from '@nexleaf/angular';
+
+@NgModule({ imports: [NxBtnModule, NxEquipmentCardModule] })
+export class EquipmentModule {}
+```
+
+```html
+<nx-btn variant="primary" (click)="save()">Save</nx-btn>
+
+<nx-equipment-card
+  name="Vestfrost MK 144" type="Vaccine Freezer"
+  serial="DCM-2024-001" facility="Mombasa"
+  health="functional" maintenance="upcoming"
+  (cardClick)="open()"></nx-equipment-card>
+```
+
+## Conventions
+
+| Concern | Convention | Example |
+|---------|------------|---------|
+| Module | `Nx{Name}Module` | `NxBtnModule` |
+| Selector | `<nx-{name}>` (kebab-case) | `<nx-btn>`, `<nx-top-bar>` |
+| String input | plain attribute | `variant="primary"` |
+| Boolean/expression input | property binding | `[disabled]="true"` |
+| Event output | `(event)` | `(selected)="go($event)"` |
+
+## Rules that keep the system consistent
+
+- **Never hardcode colors** — every color is a `--nx-*` token (see Foundation → Colors).
+- **Inline SVG only** — no icon packages.
+- Navigation components share one `activeItemId` (see the nav-sync helpers) so
+  the rail, drawer, breadcrumb, and page title can never drift apart.
+- After any visual change, run `npm run test:visual` from the repo root — 106
+  baseline screenshots across both surfaces.

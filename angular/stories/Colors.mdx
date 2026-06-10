@@ -1,0 +1,60 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Foundation/Colors" />
+
+# Color Tokens
+
+Every color in the system maps to a `--nx-*` custom property from `tokens.css`
+(shipped inside `@nexleaf/angular/styles.css` and standalone as
+`@nexleaf/angular/tokens.css`). **Never hardcode hex values** — reference the
+token. Swatches below render from the live CSS variables, so they are always
+exactly what your app gets.
+
+export const Swatch = ({ token, note }) => (
+  <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0' }}>
+    <div style={{ width: 44, height: 32, borderRadius: 6, border: '1px solid #e0e0e0', background: `var(${token})`, flexShrink: 0 }} />
+    <code style={{ fontSize: 13, minWidth: 260 }}>{token}</code>
+    <span style={{ fontSize: 13, color: '#616161' }}>{note}</span>
+  </div>
+);
+
+## Surface & background
+
+<Swatch token="--nx-bg-page" note="App/page background" />
+<Swatch token="--nx-bg-surface" note="Cards, modals, panels" />
+<Swatch token="--nx-bg-input" note="Inputs at rest" />
+<Swatch token="--nx-bg-input-focus" note="Input hover/focus" />
+<Swatch token="--nx-bg-selected" note="Selected row highlight" />
+<Swatch token="--nx-bg-skeleton" note="Loading skeleton fill" />
+
+## Primary (interactive)
+
+<Swatch token="--nx-color-primary" note="Buttons, links, focus rings" />
+<Swatch token="--nx-color-primary-hover" note="Primary hover" />
+<Swatch token="--nx-color-primary-pressed" note="Primary pressed" />
+
+## Text
+
+<Swatch token="--nx-text-default" note="Body, labels, headings" />
+<Swatch token="--nx-text-subdued" note="Secondary text, chevrons/disclosure icons" />
+<Swatch token="--nx-text-placeholder" note="Placeholders (not chevrons)" />
+<Swatch token="--nx-text-disabled" note="Disabled text/icons" />
+
+## Borders
+
+<Swatch token="--nx-border-default" note="Card borders, dividers" />
+<Swatch token="--nx-border-light" note="Subtle dividers" />
+<Swatch token="--nx-border-secondary-btn" note="Secondary button border" />
+
+## Semantic states
+
+<Swatch token="--nx-color-critical" note="Errors, destructive" />
+<Swatch token="--nx-bg-success" note="Success badge/banner bg" />
+<Swatch token="--nx-text-success" note="Success text" />
+<Swatch token="--nx-bg-warning" note="Warning badge/banner bg" />
+<Swatch token="--nx-text-warning" note="Warning text" />
+<Swatch token="--nx-bg-info" note="Info banner bg" />
+<Swatch token="--nx-text-info" note="Info text" />
+
+> Full palette (111 tokens incl. magic tone, overlays, z-index, shell + safe-area)
+> lives in `src/tokens/tokens.css` and the PoltailDesign.md rulebook.

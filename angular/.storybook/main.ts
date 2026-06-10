@@ -12,13 +12,13 @@ import type { StorybookConfig } from '@storybook/angular';
  * dist/nexleaf-angular/styles.css exists.
  */
 const config: StorybookConfig = {
-  stories: ['../stories/**/*.stories.ts'],
-  addons: [],
+  stories: ['../stories/**/*.mdx', '../stories/**/*.stories.ts'],
+  addons: ['@storybook/addon-docs'],
   framework: {
     name: '@storybook/angular',
     options: {},
   },
-  docs: { autodocs: false },
+  docs: { autodocs: true, defaultName: 'Docs' },
 };
 
 export default config;
