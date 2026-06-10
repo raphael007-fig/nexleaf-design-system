@@ -125,7 +125,7 @@ export function Page({
     return (
       <div style={{ width: '100%' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          paddingTop: 24, paddingBottom: 24 }}>
+          paddingTop: 0, paddingBottom: 24 }}>
           <SkeletonGroup label="Loading page header">
             {/* Left: back chip + title block (matches paddingTop: 2 used by real header) */}
             <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start', flex: '1 0 0', minWidth: 0 }}>
@@ -171,8 +171,11 @@ export function Page({
         display: 'flex', flexDirection: 'column', gap: isMobileRecord ? 12 : 0,
         // Transparent — sits on the page background like the default Header Page
         // (no white card). Vertical padding only; the page provides horizontal.
-        padding: isMobileRecord ? '12px 0' : '20px 0',
-        paddingTop: `calc(${isMobileRecord ? '12px' : '20px'} + var(--nx-safe-top, 0px))`,
+        // Top padding: the shell's content container owns the top rhythm, so the
+        // header adds none on desktop. On mobile the global top bar is hidden and
+        // this header leads at the screen edge — it pads itself (+ safe area).
+        padding: isMobileRecord ? '12px 0' : '0 0 20px',
+        paddingTop: isMobileRecord ? 'calc(12px + var(--nx-safe-top, 0px))' : 0,
         background: 'transparent', fontFamily: 'Inter,sans-serif', width: '100%',
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
@@ -230,7 +233,9 @@ export function Page({
         alignItems: autoMobile ? 'stretch' : 'flex-start',
         justifyContent: 'space-between',
         gap: autoMobile ? 12 : 0,
-        paddingTop: autoMobile ? 16 : 24, paddingBottom: autoMobile ? 16 : 24 }}>
+        // No top padding — the shell's content container owns the top rhythm, so
+        // the header starts exactly where plain (Primary) page content starts.
+        paddingTop: 0, paddingBottom: autoMobile ? 16 : 24 }}>
         {/* Left: back + title */}
         <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start', flex: autoMobile ? '0 0 auto' : '1 0 0', minWidth: 0 }}>
           {backAction && (

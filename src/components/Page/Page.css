@@ -23,8 +23,10 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  padding-top: var(--nx-space-6);               /* 24px */
-  padding-bottom: var(--nx-space-6);
+  /* No top padding — the shell's content container owns the top rhythm, so the
+     header starts exactly where plain page content starts. */
+  padding-top: 0;
+  padding-bottom: var(--nx-space-6);            /* 24px */
 }
 
 /* ─── Left side ─────────────────────────────────────────────────── */
@@ -115,14 +117,16 @@
   flex-direction: column;
   width: 100%;
   /* Transparent — sits on the page background (no white card). Vertical padding
-     only; the page provides the horizontal padding. */
-  padding: var(--nx-space-5) 0;
-  padding-top: calc(var(--nx-space-5) + var(--nx-safe-top));
+     only; the page provides the horizontal padding. Desktop adds no top padding
+     (the shell's content container owns the top rhythm). */
+  padding: 0 0 var(--nx-space-5);
   background: transparent;
   font-family: var(--nx-font-family);
 }
 .nx-page--record-mobile {
   gap: var(--nx-space-3);
+  /* Mobile hides the global top bar — this header leads at the screen edge, so
+     it pads itself (+ safe area). */
   padding: var(--nx-space-3) 0;
   padding-top: calc(var(--nx-space-3) + var(--nx-safe-top));
 }
