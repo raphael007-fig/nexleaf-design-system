@@ -35,7 +35,7 @@ export interface NxBannerAction {
         </button>
       </div>
       <div class="nx-banner__body">
-        <p class="nx-banner__message"><ng-content></ng-content></p>
+        <p class="nx-banner__message"><ng-container *ngTemplateOutlet="messageContent"></ng-container></p>
         <div class="nx-banner__actions" *ngIf="actions.length">
           <button *ngFor="let a of actions" type="button" class="nx-banner__action-btn" (click)="a.onClick && a.onClick()">{{ a.label }}</button>
         </div>
@@ -48,7 +48,7 @@ export interface NxBannerAction {
         <span class="nx-banner__icon">
           <ng-container *ngTemplateOutlet="toneIcon; context: { $implicit: 20 }"></ng-container>
         </span>
-        <p class="nx-banner__message"><ng-content></ng-content></p>
+        <p class="nx-banner__message"><ng-container *ngTemplateOutlet="messageContent"></ng-container></p>
         <button *ngIf="dismissable" type="button" class="nx-banner__dismiss" aria-label="Dismiss" (click)="dismiss.emit()">
           <ng-container *ngTemplateOutlet="xIcon"></ng-container>
         </button>
@@ -61,7 +61,7 @@ export interface NxBannerAction {
         <span class="nx-banner__icon-pill">
           <ng-container *ngTemplateOutlet="toneIcon; context: { $implicit: 20 }"></ng-container>
         </span>
-        <p class="nx-banner__message"><ng-content></ng-content></p>
+        <p class="nx-banner__message"><ng-container *ngTemplateOutlet="messageContent"></ng-container></p>
         <div class="nx-banner__actions" *ngIf="actions.length">
           <button *ngFor="let a of actions" type="button" class="nx-banner__action-btn" (click)="a.onClick && a.onClick()">{{ a.label }}</button>
         </div>
@@ -70,6 +70,12 @@ export interface NxBannerAction {
         </button>
       </div>
     </ng-template>
+
+    <!-- Projected message, captured ONCE. <ng-content> can only project into a
+         single slot — with one per variant branch, only the first ever receives
+         the host content (the in-card/simple branches rendered empty). Capturing
+         it in a template and outletting it into the active branch fixes that. -->
+    <ng-template #messageContent><ng-content></ng-content></ng-template>
 
     <!-- Tone icons — paths from Banner.jsx (Nexleaf Icons V2); currentColor follows the tone text -->
     <ng-template #toneIcon let-size>
