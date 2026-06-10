@@ -134,11 +134,16 @@ export function AppShell({
   // One content container for every level — same centered max-width + the same
   // top/side/bottom rhythm — so Primary/Secondary/Tertiary don't shift size or
   // vertical offset as you navigate. `contentWidth='full'` opts a page out.
+  // When the top bar is suppressed (mobile tertiary), the 24px top gap that
+  // normally separates content from the bar would float the record header below
+  // the screen edge — drop it and let the record header's own safe-area-aware
+  // padding lead from the very top.
   const fullBleed = contentWidth === 'full' || contentWidth == null;
   const sidePad = width < BP_SM ? 12 : 16;
+  const topPad = hideTopBar ? 0 : 24;
   const contentStyle = fullBleed
     ? { minWidth: 0 }
-    : { maxWidth: contentWidth, margin: '0 auto', padding: `24px ${sidePad}px 32px`, boxSizing: 'border-box', minWidth: 0 };
+    : { maxWidth: contentWidth, margin: '0 auto', padding: `${topPad}px ${sidePad}px 32px`, boxSizing: 'border-box', minWidth: 0 };
 
   return (
     <div style={{ background: BG_PAGE, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
