@@ -1,134 +1,212 @@
 /*
- * Nexleaf Design System — Banner
- * Requires tokens.css.
+ * Nexleaf Design System — Banner (contextual banner)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first. Mirrors Banner.jsx 1:1 (Figma node 109293:4284).
  *
- * Two visual forms:
- *   Simple  — single row with icon + text + optional dismiss
- *   Titled  — header bar (colored) + white body area
+ * Three visual forms:
+ *   Simple   — white card row: 28px tone icon pill + message (+ actions + dismiss)
+ *   Titled   — white card: colored tone header (icon + title + dismiss) + white body
+ *   In-card  — compact tinted row used inside cards (no shadow)
  *
- * .nx-banner                        — simple form base
- * .nx-banner--info/success/warning/critical — tone modifiers
- * .nx-banner--titled                — titled form wrapper
- * .nx-banner__header                — colored header bar
- * .nx-banner__header--info/etc      — header tone bg
- * .nx-banner__body                  — white body area (titled only)
- * .nx-banner__dismiss               — dismiss × button
- * .nx-banner__actions               — action button row
+ * .nx-banner                         — simple form base (white card)
+ * .nx-banner--info/success/warning/critical — tone (sets the custom props below)
+ * .nx-banner--titled                 — titled form
+ * .nx-banner--in-card                — tinted in-card form
+ * .nx-banner__icon-pill              — 28px colored icon tile (simple form)
+ * .nx-banner__header / __header-icon / __title — titled header pieces
+ * .nx-banner__body                   — titled white body
+ * .nx-banner__icon                   — 20px icon (in-card form)
+ * .nx-banner__message                — message text
+ * .nx-banner__actions / __action-btn — action button row
+ * .nx-banner__dismiss                — dismiss × button
+ *
+ * Tone values are the exact Figma banner palette — bespoke to Banner (only the
+ * in-card tints overlap the semantic tokens), kept as literals with the React
+ * source as reference.
  */
 
-/* ─── Simple banner ────────────────────────────────────────────── */
+/* ─── Tone custom properties ───────────────────────────────────── */
+.nx-banner--info {
+  --nx-banner-header-bg: #91d0ff;
+  --nx-banner-header-text: #002133;
+  --nx-banner-card-bg: var(--nx-bg-info);        /* #eaf4ff */
+  --nx-banner-card-text: var(--nx-text-info);    /* #00527c */
+}
+.nx-banner--success {
+  --nx-banner-header-bg: #29845a;
+  --nx-banner-header-text: #f8fffb;
+  --nx-banner-card-bg: var(--nx-bg-success);     /* #cdfee1 */
+  --nx-banner-card-text: var(--nx-text-success); /* #0c5132 */
+}
+.nx-banner--warning {
+  --nx-banner-header-bg: #ffb800;
+  --nx-banner-header-text: #332e00;
+  --nx-banner-card-bg: #fff1e3;                  /* banner warning tint (≠ --nx-bg-warning) */
+  --nx-banner-card-text: #5e4200;                /* banner warning text */
+}
+.nx-banner--critical {
+  --nx-banner-header-bg: #e51c00;                /* --nx-color-critical-strong */
+  --nx-banner-header-text: #fffbfb;
+  --nx-banner-card-bg: var(--nx-bg-error);       /* #fee9e8 */
+  --nx-banner-card-text: #8e1f0b;                /* error border red (matches React) */
+}
+
+/* ─── Simple form (default) ────────────────────────────────────── */
 .nx-banner {
   display: flex;
   align-items: center;
-  gap: 10px;
-  border-radius: var(--nx-radius-sm);            /* 8px */
-  padding: 12px 14px 12px 16px;
+  gap: var(--nx-space-2);                        /* 8 */
+  background: var(--nx-bg-surface);
+  border-radius: var(--nx-radius-lg);            /* 12 */
+  padding: var(--nx-space-3);                    /* 12 */
+  /* Figma shadow-200 card bevel — not tokenized; matches Banner.jsx */
+  box-shadow: 0 3px 1px -1px rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13), inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17), inset 0 1px 0 rgba(204, 204, 204, 0.5);
   font-family: var(--nx-font-family);
-  font-size: var(--nx-font-size-label);          /* 13px */
-  line-height: var(--nx-line-height-normal);     /* 20px */
 }
 
-.nx-banner--info {
-  background: #dbeafe;
-  color: #003d6b;
-}
-
-.nx-banner--success {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.nx-banner--warning {
-  background: #fff1e3;
-  color: #78350f;
-}
-
-.nx-banner--critical {
-  background: var(--nx-bg-critical);             /* #fee9e8 */
-  color: #991b1b;
-}
-
-.nx-banner__text {
-  flex: 1;
-}
-
-.nx-banner__dismiss {
-  width: 24px;
-  height: 24px;
+.nx-banner__icon-pill {
+  box-sizing: border-box;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: none;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
   flex-shrink: 0;
-  margin-left: 4px;
-  padding: 0;
+  padding: 4px;
+  border-radius: var(--nx-radius-sm);            /* 8 */
+  background: var(--nx-banner-header-bg);
+  color: var(--nx-banner-header-text);
 }
 
-.nx-banner__actions {
-  display: flex;
-  gap: var(--nx-space-2);                        /* 8px */
-  margin-left: var(--nx-space-2);
+.nx-banner__message {
+  margin: 0;
+  flex: 1;
+  font-size: var(--nx-font-size-label);          /* 13 */
+  font-weight: 450;                              /* Inter intermediate — no token */
+  line-height: var(--nx-line-height-normal);     /* 20 */
+  color: var(--nx-text-default);
 }
 
-/* ─── Titled banner ────────────────────────────────────────────── */
+/* ─── Titled form ──────────────────────────────────────────────── */
 .nx-banner--titled {
-  border-radius: var(--nx-radius-sm);
+  display: block;
+  padding: 0;
   overflow: hidden;
-  box-shadow:
-    0 3px 1px -1px rgba(26,26,26,0.07),
-    inset 1px 0 0 rgba(0,0,0,0.13),
-    inset -1px 0 0 rgba(0,0,0,0.13),
-    inset 0 -1px 0 rgba(0,0,0,0.17),
-    inset 0 1px 0 rgba(204,204,204,0.5);
 }
 
 .nx-banner__header {
-  padding: 10px 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--nx-font-size-label);          /* 13px */
-  font-weight: var(--nx-font-weight-bold);       /* 600 */
-  line-height: var(--nx-line-height-normal);
+  gap: var(--nx-space-1);                        /* 4 */
+  padding-left: var(--nx-space-3);               /* 12 */
+  padding-right: var(--nx-space-2);              /* 8 */
+  background: var(--nx-banner-header-bg);
+  color: var(--nx-banner-header-text);
 }
 
-.nx-banner__header--info {
-  background: #91d0ff;
-  color: #002133;
+.nx-banner__header-icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.nx-banner__header--success {
-  background: #29845a;
-  color: #f8fffb;
-}
-
-.nx-banner__header--warning {
-  background: #ffb800;
-  color: #251a00;
-}
-
-.nx-banner__header--critical {
-  background: #e51c00;
-  color: #fffbfb;
+.nx-banner__title {
+  flex: 1;
+  padding-top: var(--nx-space-3);                /* 12 */
+  padding-bottom: var(--nx-space-3);
+  font-size: var(--nx-font-size-label);          /* 13 */
+  font-weight: 650;                              /* Inter intermediate — no token */
+  line-height: var(--nx-line-height-normal);     /* 20 */
 }
 
 .nx-banner__body {
-  background: var(--nx-bg-surface);             /* #ffffff */
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-2);                        /* 8 */
+  background: var(--nx-bg-surface);
   padding: 12px 16px 16px;
 }
+.nx-banner__body .nx-banner__message { flex: none; }
 
-.nx-banner__body p {
-  margin: 0;
-  font-size: var(--nx-font-size-label);
-  color: var(--nx-text-default);
-  line-height: var(--nx-line-height-normal);
-  font-family: var(--nx-font-family);
+/* ─── In-card form ─────────────────────────────────────────────── */
+.nx-banner--in-card {
+  position: relative;
+  align-items: flex-start;
+  background: var(--nx-banner-card-bg);
+  border-radius: var(--nx-radius-sm);            /* 8 */
+  padding: var(--nx-space-2);                    /* 8 */
+  box-shadow: none;
 }
 
-.nx-banner__body .nx-banner__actions {
-  margin-left: 0;
-  margin-top: var(--nx-space-3);                 /* 12px */
+.nx-banner__icon {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: flex-start;
+  flex-shrink: 0;
+  color: var(--nx-banner-card-text);
+}
+
+.nx-banner--in-card .nx-banner__message { color: var(--nx-banner-card-text); }
+
+/* ─── Actions ──────────────────────────────────────────────────── */
+.nx-banner__actions {
+  display: flex;
+  gap: var(--nx-space-2);                        /* 8 */
+  flex-shrink: 0;
+}
+
+.nx-banner__action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  background: var(--nx-bg-surface);
+  border: none;
+  border-radius: var(--nx-radius-sm);            /* 8 */
+  /* Secondary mini-button bevel — matches Banner.jsx BannerBtn */
+  box-shadow: inset 0 -1px 0 #b5b5b5, inset -1px 0 0 #e3e3e3,
+    inset 1px 0 0 #e3e3e3, inset 0 1px 0 #e3e3e3;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption);        /* 12 */
+  font-weight: 550;                              /* Inter intermediate — no token */
+  line-height: 16px;
+  color: var(--nx-text-default);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* ─── Dismiss ──────────────────────────────────────────────────── */
+.nx-banner__dismiss {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 4px;
+  background: none;
+  border: none;
+  border-radius: var(--nx-radius-xs);            /* 4 */
+  color: inherit;
+  cursor: pointer;
+}
+.nx-banner__header .nx-banner__dismiss { color: var(--nx-banner-header-text); }
+.nx-banner--in-card .nx-banner__dismiss {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--nx-banner-card-text);
+}
+.nx-banner__dismiss:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--nx-color-primary);
 }

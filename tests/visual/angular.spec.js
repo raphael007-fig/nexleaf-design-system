@@ -9,6 +9,8 @@ const STORIES = [
   'components-btn--full-width',
   'components-badge--tones',
   'components-banner--types',
+  'components-banner--with-title',
+  'components-banner--in-card',
   'components-tag--states',
   // Form controls
   'components-inputs-textinput--states',
