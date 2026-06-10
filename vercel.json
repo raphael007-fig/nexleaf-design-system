@@ -1,8 +1,5 @@
 {
   "buildCommand": "npm run build-storybook",
   "outputDirectory": "storybook-static",
-  "installCommand": "npm install",
-  "engines": {
-    "node": "20.x"
-  }
+  "installCommand": "npm install"
 }
