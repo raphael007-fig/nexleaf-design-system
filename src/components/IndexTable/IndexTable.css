@@ -8,15 +8,25 @@
  * .nx-index-table                 — card surface (white, radius 12, bevel shadow)
  * .nx-index-table--loading        — loading state (interaction suppressed;
  *                                   render .nx-skeleton blocks inside cells)
- * .nx-index-table__bulk           — bulk-action bar (selected-blue strip)
+ * .nx-index-table__bulk           — bulk-selection bar (selected-blue strip,
+ *                                   shown while rows are selected)
+ * .nx-index-table__bulk-count     — "N selected" label in the bulk bar
+ * .nx-index-table__bulk-actions   — bulk-action button group
  * .nx-index-table__bulk-action    — bulk-action button (secondary-button recipe)
+ * .nx-index-table__bulk-deselect  — "Deselect all" button (tertiary recipe,
+ *                                   pushed to the right edge)
+ * .nx-index-table__scroll         — horizontal-overflow wrapper around the table
  * .nx-index-table__table          — the <table> element
  * .nx-index-table__th             — header cell (+ --sorted active state)
- * .nx-index-table__sort-dir       — sort-direction indicator inside a th
- * .nx-index-table__select-col     — checkbox column (th + td)
+ * .nx-index-table__th-content     — label + sort-icon flex wrapper inside a th
+ * .nx-index-table__sort-icon      — 12px sort chevron slot (active column only)
+ * .nx-index-table__select-col     — checkbox column (th + td); hosts the
+ *                                   .nx-checkbox__control visuals (Checkbox.css)
  * .nx-index-table__actions-col    — row-actions column (th + td)
- * .nx-index-table__row            — body row (hover bg; .is-selected forced state)
- * .nx-index-table__td             — body data cell (links render primary blue)
+ * .nx-index-table__row            — body row (hover bg; --selected / .is-selected
+ *                                   selected tint)
+ * .nx-index-table__td             — body data cell (links render primary blue;
+ *                                   status cells host .nx-badge pills — Badge.css)
  * .nx-index-table__empty          — empty-state block
  * .nx-index-table__empty-heading  — empty-state heading
  * .nx-index-table__empty-desc     — empty-state description
@@ -46,7 +56,9 @@
   pointer-events: none;
 }
 
-/* ─── Bulk-action bar ──────────────────────────────────────────── */
+/* ─── Bulk-selection bar ───────────────────────────────────────── */
+/* Shown above the header while rows are selected (React BulkBar):
+   count · action buttons · spacer · "Deselect all". */
 .nx-index-table__bulk {
   display: flex;
   align-items: center;
@@ -54,6 +66,20 @@
   padding: var(--nx-space-2) var(--nx-space-3); /* 8px 12px */
   background: var(--nx-bg-selected);      /* #f0f7ff */
   border-bottom: 1px solid #e3e3e3;       /* toolbar divider — no token at this value */
+  font-family: var(--nx-font-family);
+}
+
+.nx-index-table__bulk-count {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-medium); /* 500 */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+  margin-right: var(--nx-space-1);        /* 4px */
+}
+
+.nx-index-table__bulk-actions {
+  display: flex;
+  gap: 6px;                               /* button gap — matches React BulkBar (no 6px token) */
 }
 
 /* Secondary-button recipe (mirrors .nx-btn--secondary, medium). */
@@ -92,7 +118,50 @@
   box-shadow: var(--nx-focus-ring), var(--nx-shadow-btn-rest);
 }
 
+/* "Deselect all" — tertiary-button recipe (mirrors .nx-btn--tertiary, medium).
+   Tertiary (dark text + hover bg) instead of a link: a blue link on the
+   #f0f7ff selection bar reads as low-contrast (matches React BulkBar). */
+.nx-index-table__bulk-deselect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 var(--nx-space-3);           /* 12px */
+  margin-left: auto;                      /* push to the right edge */
+  border: none;
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  color: var(--nx-text-default);          /* #303030 */
+  transition: background 0.12s;
+}
+
+.nx-index-table__bulk-deselect:hover {
+  background: var(--nx-bg-surface-hover); /* #f7f7f7 — tertiary button hover */
+}
+
+.nx-index-table__bulk-deselect:active {
+  background: #f1f1f1;                    /* tertiary pressed — matches .nx-btn--tertiary:active */
+}
+
+.nx-index-table__bulk-deselect:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
 /* ─── Table ────────────────────────────────────────────────────── */
+/* Horizontal-overflow wrapper (React's overflowX:auto div). */
+.nx-index-table__scroll {
+  overflow-x: auto;
+}
+
 .nx-index-table__table {
   width: 100%;
   border-collapse: collapse;
@@ -124,12 +193,22 @@
   color: var(--nx-text-default);          /* #303030 — active sort column */
 }
 
-.nx-index-table__sort-dir {
-  margin-left: var(--nx-space-1);         /* 4px */
-  font-size: var(--nx-font-size-caption); /* 12px */
-  font-weight: var(--nx-font-weight-medium);
-  color: var(--nx-text-default);          /* #303030 */
-  text-transform: lowercase;
+/* Label + sort-icon wrapper inside a th (React's inline-flex span). */
+.nx-index-table__th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-1);                 /* 4px */
+}
+
+/* 12px chevron slot — rendered on the active sort column only. */
+.nx-index-table__sort-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  color: var(--nx-text-default);          /* #303030 chevron stroke */
 }
 
 /* ─── Selection column ─────────────────────────────────────────── */
@@ -144,13 +223,16 @@ th.nx-index-table__select-col {
 }
 
 td.nx-index-table__select-col {
-  padding: var(--nx-space-3);             /* 12px */
+  padding: var(--nx-space-3);             /* 12px 12px — checkbox cell */
   border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
 }
 
-.nx-index-table__select-col input[type='checkbox'] {
-  accent-color: var(--nx-color-primary);  /* #005bd3 */
-  cursor: pointer;
+/* The selection column hosts the design-system checkbox visuals
+   (.nx-checkbox__control — Checkbox.css). The check/dash glyph is an inline
+   SVG stroked with currentColor; paint it like the React Checkbox icon. */
+.nx-index-table__select-col .nx-checkbox__control svg {
+  color: var(--nx-text-on-primary);       /* #ffffff check/dash on the dark box */
+  pointer-events: none;
 }
 
 /* ─── Body rows ────────────────────────────────────────────────── */
@@ -163,8 +245,10 @@ td.nx-index-table__select-col {
   background: #fafafa;                    /* row hover — no neutral token at this value */
 }
 
-/* Forced selected state — the template does not bind a selected class yet;
-   hosts apply .is-selected (same convention as .nx-cell.is-hover). */
+/* Selected tint — bound by the template (--selected); .is-selected kept as the
+   forced-state hook for docs/hosts (same convention as .nx-cell.is-hover). */
+.nx-index-table__row--selected,
+.nx-index-table__row--selected:hover,
 .nx-index-table__row.is-selected {
   background: var(--nx-bg-selected);      /* #f0f7ff */
 }
@@ -173,7 +257,7 @@ td.nx-index-table__select-col {
   padding: var(--nx-space-3) var(--nx-space-2); /* 12px 8px */
   border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
   font-size: var(--nx-font-size-label);   /* 13px */
-  font-weight: var(--nx-font-weight-regular);
+  font-weight: 450;                       /* between regular and medium — matches React DataRow (no token) */
   line-height: var(--nx-line-height-normal); /* 20px */
   color: var(--nx-text-default);          /* #303030 */
   text-align: left;
