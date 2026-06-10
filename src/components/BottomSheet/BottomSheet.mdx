@@ -1,0 +1,84 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as BottomSheetStories from './BottomSheet.stories.jsx';
+
+<Meta title="Patterns/Responsive/BottomSheet/Docs" />
+
+# BottomSheet
+
+The **mobile-only** action-overflow pattern. It opens when the user taps **More** on a tertiary/detail page, and also hosts mobile **filters, sort, selectors, and grouped secondary actions**. On desktop/wide tablet, use a dropdown/Popover for "More" instead — never a bottom sheet.
+
+<Canvas of={BottomSheetStories.MoreActions} />
+
+## How it's built (reuse-first)
+
+Composes `SlideOver` with `placement="bottom"`, which provides: a **drag handle**, slide-up animation, **drag-down to close**, **tap-outside / Escape to close**, focus trap, scroll lock, top-rounded corners, safe-area bottom padding, and height clamped to `--nx-sheet-max-h` (~88vh). BottomSheet layers the action-list / content chrome on top.
+
+## Variants
+
+### More actions (flat list)
+Pass `actions` — a flat array. Each row is a ≥48px tap target with an icon + label.
+
+<Canvas of={BottomSheetStories.MoreActions} />
+
+### Grouped actions
+Pass `groups` to organize by purpose — **Record / Monitoring / Issues / Lifecycle**. Groups are separated by dividers. **Destructive actions** are visually separated (critical color) and never sit beside common safe actions.
+
+<Canvas of={BottomSheetStories.GroupedActions} />
+
+### Filter / sort
+Pass arbitrary `children` (e.g. an `OptionList` + Apply button).
+
+<Canvas of={BottomSheetStories.FilterSort} />
+
+### Selector
+A single-select list that closes on choice.
+
+<Canvas of={BottomSheetStories.Selector} />
+
+## Interaction states
+
+Each action row is a ≥52px tap target with an **inset, rounded fill** (not full-bleed), matching the Figma sheet:
+
+| State | Treatment | Token |
+|-------|-----------|-------|
+| Rest | Transparent background, `--nx-text-default` label | `--nx-text-default` |
+| Hover / focus-visible | Inset fill | `--nx-bg-surface-active` (`#f3f3f3`) |
+| Pressed (`:active`) | Deeper inset fill | `--nx-bg-pressed` (`rgba(0,0,0,0.08)`) |
+| Disabled | Muted label, `not-allowed` cursor, no fill | `--nx-text-disabled` |
+| Destructive | Critical-tone label | `--nx-color-critical` |
+
+Hover/press is handled with real CSS `:hover` / `:active` / `:focus-visible` (injected once) rather than JS handlers — JS `mouseenter` is unreliable on portaled content. For documentation, force a row's look with the action `state` field (`'hover'` | `'active'`), which applies the `--nx-sheet-action--hover` / `--active` modifier (mirrored as `.nx-bottom-sheet__action--hover` / `--active` in the Angular CSS).
+
+<Canvas of={BottomSheetStories.States} />
+
+## Loading
+
+Set `loading` to render **shape-matching skeleton rows** (~5 short icon + label lines at the same 52px row height) in place of the action/option list, while the sheet chrome (drag handle + title) stays intact — so the sheet doesn't reflow when data arrives. The skeleton reuses the shared pulse (`--nx-bg-skeleton` `#e8e8e8`, 1.4s) from the `Skeleton` primitive.
+
+<Canvas of={BottomSheetStories.Loading} />
+
+## Behaviour
+
+- Slides up from the bottom with a **drag handle**; **swipe/drag down** past ~80px to dismiss.
+- **Tap outside** the sheet or press **Escape / back** to close.
+- Content-based height, capped at `--nx-sheet-max-h` (~88vh); the body scrolls if taller.
+- Focus is trapped; the page behind is inert. Tap targets are ≥44px (action rows use 48px).
+- `closeAfterAction` (default `true`) closes the sheet after an action row fires.
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `open` | bool | — | Visibility. |
+| `onClose` | fn | — | Drag-down / tap-outside / Escape / action. |
+| `title` | string | — | Optional sheet heading. |
+| `actions` | `Action[]` | — | Flat action list. `{ id, label, icon?, destructive?, disabled?, hasChevron?, onClick }`. |
+| `groups` | `{title?, actions}[]` | — | Grouped actions (wins over `actions`). |
+| `children` | node | — | Arbitrary content (filter/sort/selector) when no actions/groups. |
+| `showCloseButton` | bool | `false` | Show a header close button (sheets usually rely on drag/tap-out). |
+| `closeAfterAction` | bool | `true` | Auto-close after an action row fires. |
+| `loading` | bool | `false` | Render shape-matching skeleton rows in place of the list (chrome stays). |
+
+## Design tokens used
+
+`--nx-sheet-max-h` (88vh) · `--nx-shadow-sheet` (upward) · `--nx-z-sheet` (above drawer) · `--nx-safe-bottom` · `--nx-radius-xl` (top corners) · `--nx-tap-target-comfortable` (48px) · `--nx-color-critical` (destructive) · `--nx-bg-surface-active` (row hover/focus) · `--nx-bg-pressed` (row pressed) · `--nx-bg-skeleton` (loading rows).

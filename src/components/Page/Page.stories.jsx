@@ -206,3 +206,46 @@ export const Full = {
     ],
   },
 };
+
+// ─── Record variant — responsive tertiary record header ───────────────────────
+// variant="record" turns Header Page into the focused record/detail header:
+// back arrow + dominant name + health status chip beside the title + serial.
+// On mobile the title compacts and the action row stacks below.
+
+import { TertiaryActions } from '../TertiaryActions/TertiaryActions.jsx';
+
+const recordFrame = (w, node) => (
+  <div style={{ width: w, maxWidth: '100%', background: '#f1f1f1', border: '1px solid #e0e0e0', borderRadius: 8, overflow: 'hidden', margin: '0 0 16px', padding: '0 16px' }}>
+    {node}
+  </div>
+);
+
+export const RecordVariant = {
+  name: 'Record variant — health states',
+  render: () => (
+    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+      {recordFrame(420, <Page variant="record" mobile backAction={{ onClick: () => {} }} title="Hairer-HBC-80 (IOM)" status="functional" subtitle="BE0G91EAS0 00EJ8 S0003" actions={<TertiaryActions state="functional" mobile onAction={() => {}} />} />)}
+      {recordFrame(420, <Page variant="record" mobile backAction={{ onClick: () => {} }} title="Hairer-HBC-80 (IOM)" status="faulty" subtitle="BE0G91EAS0 00EJ8 S0003" actions={<TertiaryActions state="faulty" mobile onAction={() => {}} />} />)}
+      {recordFrame(420, <Page variant="record" mobile backAction={{ onClick: () => {} }} title="Hairer-HBC-80 (IOM)" status="unknown" subtitle="BE0G91EAS0 00EJ8 S0003" actions={<TertiaryActions state="unknown" mobile onAction={() => {}} />} />)}
+      {recordFrame(420, <Page variant="record" mobile backAction={{ onClick: () => {} }} title="Hairer-HBC-80 (IOM)" status="decommissioned" subtitle="BE0G91EAS0 00EJ8 S0003" actions={<TertiaryActions state="decommissioning" mobile onAction={() => {}} />} />)}
+    </div>
+  ),
+};
+
+export const RecordLongTitle = {
+  name: 'Record variant — long title (chip preserved)',
+  render: () => (
+    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+      {recordFrame(360, <Page variant="record" mobile backAction={{ onClick: () => {} }} title="Haier Biomedical HBC-80 Vaccine Refrigerator (IOM Field Unit)" status="functional" subtitle="BE0G91EAS0 00EJ8 S0003" />)}
+    </div>
+  ),
+};
+
+export const RecordDesktop = {
+  name: 'Record variant — desktop (actions inline)',
+  render: () => (
+    <div style={{ fontFamily: 'Inter, sans-serif' }}>
+      {recordFrame('100%', <Page variant="record" mobile={false} backAction={{ onClick: () => {} }} title="Hairer-HBC-80 (IOM)" status="functional" subtitle="BE0G91EAS0 00EJ8 S0003" actions={<TertiaryActions state="functional" mobile={false} onAction={() => {}} />} />)}
+    </div>
+  ),
+};

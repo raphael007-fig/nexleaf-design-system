@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { Tag, TagGroup } from '../Tag/Tag.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 import { TextInput } from '../TextInput/TextInput.jsx';
+import { BottomSheet } from '../BottomSheet/BottomSheet.jsx';
+import { useIsMobile } from '../../foundation/useViewport.js';
 import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 // Canonical identity for any tree node is `id` (falls back to legacy `value`).
@@ -599,6 +601,9 @@ export function SearchSelectButton({
   const [align, setAlign] = useState('left'); // 'left' | 'right' — auto-set from trigger position
   const wrapRef    = useRef(null);
   const popoverRef = useRef(null);
+  // On mobile the picker opens a full BottomSheet (more room for the search +
+  // tree) instead of a cramped anchored popover.
+  const isMobile = useIsMobile();
 
   const selected    = multiple ? (value || []) : (value ? [value] : []);
   const selectedSet = useMemo(() => new Set(selected), [selected]);
@@ -606,6 +611,9 @@ export function SearchSelectButton({
 
   useEffect(() => {
     if (!open) { setQuery(''); return; }
+    // On mobile the BottomSheet owns focus + dismissal (backdrop / Escape /
+    // swipe), so skip the popover's anchoring + outside-click wiring.
+    if (isMobile) return;
     // Decide which edge the popover anchors to. If the trigger's center sits
     // in the right half of the viewport, anchor right so the dropdown opens
     // leftward and doesn't get clipped off-screen. Otherwise anchor left.
@@ -628,7 +636,7 @@ export function SearchSelectButton({
       document.removeEventListener('mousedown', close);
       document.removeEventListener('keydown', esc);
     };
-  }, [open]);
+  }, [open, isMobile]);
 
   const handleToggle = (opt, state) => {
     if (opt.disabled) return;
@@ -675,8 +683,11 @@ export function SearchSelectButton({
           axe's "nested-interactive" rule stays clean. */}
         <Btn
           variant="secondary"
-          small={size === 'small'}
-          size={size === 'large' ? 'large' : 'medium'}
+          // On mobile the trigger takes the large (44→40px touch) size so it
+          // lines up with the other stacked page-header actions; on desktop it
+          // honours the passed `size` (default medium).
+          small={!isMobile && size === 'small'}
+          size={isMobile ? 'large' : (size === 'large' ? 'large' : 'medium')}
           disclosure
           // `Btn`'s `icon` slot renders a 16-px wrapper before the label;
           // passing the leadingIcon through here keeps the icon, label,
@@ -717,60 +728,75 @@ export function SearchSelectButton({
           </span>
         </Btn>
 
-      {open && (
-        <div ref={popoverRef} style={{
-          position: 'absolute', top: '100%',
-          left: align === 'left' ? 0 : 'auto',
-          right: align === 'right' ? 0 : 'auto',
-          zIndex: 999,
-          marginTop: 6,
-          width: dropdownWidth, maxWidth: '90vw',
-          background: '#fff',
-          border: '1px solid #e0e0e0', borderRadius: 12,
-          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-          overflow: 'hidden',
-        }}>
-          {/* Search row — uses the design-system <TextInput> so the field
-              matches every other input in the system (same border, padding,
-              focus ring, disabled state, etc.). No separator line below — the
-              padding alone separates it from the option list. */}
-          <div style={{ padding: 12 }}>
-            <TextInput
-              placeholder="Search"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              clearButton
-              ariaLabel="Search options"
-            />
-          </div>
+      {/* Shared content — search field + option tree. Rendered in an anchored
+          popover on desktop and a BottomSheet on mobile. */}
+      {open && (() => {
+        const list = (
+          <>
+            <div style={{ padding: isMobile ? '0 0 8px' : 12 }}>
+              <TextInput
+                placeholder="Search"
+                value={query}
+                onChange={e => setQuery(e.target.value)}
+                clearButton
+                ariaLabel="Search options"
+              />
+            </div>
+            <div role="listbox" style={{ maxHeight: isMobile ? '60vh' : 320, overflowY: 'auto', padding: isMobile ? 0 : '0 6px 6px' }}>
+              {(() => {
+                const filtered = filterTree(options, query);
+                if (filtered.length === 0) {
+                  return (
+                    <div style={{
+                      padding: '12px 14px', fontSize: 13, color: '#9e9e9e',
+                      fontFamily: 'Inter, sans-serif', textAlign: 'center',
+                    }}>
+                      No results for "{query}"
+                    </div>
+                  );
+                }
+                return filtered.map(opt => (
+                  <OptionNode
+                    key={oid(opt)}
+                    opt={opt}
+                    level={0}
+                    multiple={multiple}
+                    selectedSet={selectedSet}
+                    onToggle={handleToggle}
+                  />
+                ));
+              })()}
+            </div>
+          </>
+        );
 
-          <div role="listbox" style={{ maxHeight: 320, overflowY: 'auto', padding: '0 6px 6px' }}>
-            {(() => {
-              const filtered = filterTree(options, query);
-              if (filtered.length === 0) {
-                return (
-                  <div style={{
-                    padding: '12px 14px', fontSize: 13, color: '#9e9e9e',
-                    fontFamily: 'Inter, sans-serif', textAlign: 'center',
-                  }}>
-                    No results for "{query}"
-                  </div>
-                );
-              }
-              return filtered.map(opt => (
-                <OptionNode
-                  key={oid(opt)}
-                  opt={opt}
-                  level={0}
-                  multiple={multiple}
-                  selectedSet={selectedSet}
-                  onToggle={handleToggle}
-                />
-              ));
-            })()}
+        // Mobile: full BottomSheet (manages focus/scrim/escape/swipe).
+        if (isMobile) {
+          return (
+            <BottomSheet open onClose={() => setOpen(false)} title={label} showCloseButton>
+              {list}
+            </BottomSheet>
+          );
+        }
+
+        // Desktop: anchored popover.
+        return (
+          <div ref={popoverRef} style={{
+            position: 'absolute', top: '100%',
+            left: align === 'left' ? 0 : 'auto',
+            right: align === 'right' ? 0 : 'auto',
+            zIndex: 999,
+            marginTop: 6,
+            width: dropdownWidth, maxWidth: '90vw',
+            background: '#fff',
+            border: '1px solid #e0e0e0', borderRadius: 12,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            overflow: 'hidden',
+          }}>
+            {list}
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

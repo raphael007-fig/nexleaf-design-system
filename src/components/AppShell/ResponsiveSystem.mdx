@@ -1,0 +1,111 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Patterns/Responsive/Overview" />
+
+# ColdTrace Responsive System
+
+ColdTrace is a **hybrid responsive** product — one codebase across desktop web, iPad/tablet, mobile browser, and the wrapped mobile app. The core rule:
+
+> **Keep the same route and information architecture across desktop, tablet, and mobile; adapt the shell and component behaviour responsively.** Do not create separate experiences — define responsive variants of the same components.
+
+## Breakpoints
+
+| Name | Range | Used for |
+|------|-------|----------|
+| Mobile small | 320–374px | tightest phone layout |
+| Mobile standard | 375–430px | default phone |
+| Mobile large / foldable | 431–767px | large phones |
+| Tablet portrait | 768–1023px | iPad portrait — drawer-first |
+| Tablet landscape | 1024–1199px | iPad landscape — rail can dock |
+| Desktop | 1200px+ | full docked layout |
+
+Hooks (`src/foundation/useViewport.js`): `useIsMobile()`, `useViewport()`, with `BP_SM=640 / BP_MD=768 / BP_LG=1024`. The shell **docks the side rail at ≥1024** and is **drawer-first below that**.
+
+## Page levels
+
+| Level | What | Component(s) |
+|-------|------|--------------|
+| **Primary** | Home / dashboard — quick actions, urgent issues, module cards | `AppShell` + `NavCard` + `CardLayoutType6` |
+| **Secondary** | Module / list workspace (e.g. ColdChain Equipment) | `AppShell` + `Page` (title + switcher + Add New) + `EquipmentCard` / `IndexTable` |
+| **Tertiary** | Record / detail (e.g. Hairer-HBC-80) | `Page` `variant="record"` + `TertiaryActions` |
+| **Menu Drawer** | Global navigation (mobile / tablet) | `MenuDrawer` (← `SideNavigation` + `SlideOver`) |
+| **Bottom Sheet** | Mobile action overflow / filters / selectors | `BottomSheet` (← `SlideOver` placement bottom) |
+
+## Responsive behaviour
+
+| Surface | Mobile | Tablet | Desktop |
+|---------|--------|--------|---------|
+| **Primary (Home)** | Global top bar; single-column; Action Required stacked; 1–2 module cards/row | Two-column module grid; larger Action Required | Full dashboard grid; docked rail |
+| **Secondary (List)** | Global top bar; page title (+ switcher); Add New; search; **cards** (`EquipmentCard`); filter/sort via bottom sheet | Metrics 2-col; table/list w/ reduced columns; drawer overlay | Full metric cards + full `IndexTable`; docked rail |
+| **Tertiary (Record)** | **No global top bar** — focused record-confirmation page led by the record header (back + name + health chip + serial); **primary + More**; More → bottom sheet; stacked detail cards | **Keeps the global top bar** (more room for context); wider detail; primary + More; drawer overlay | Global top bar + breadcrumb; record header; multiple actions; full detail |
+| **Menu Drawer** | Slides from left, 84–88vw (max 320px), page dimmed | Slide-out overlay, wider (~360px) — not a forced desktop rail | Replaced by the **docked** SideNavigation rail |
+| **Bottom Sheet** | Slide-up, drag handle, ≤88vh, swipe/tap-out close | Same (or popover for non-blocking menus) | Use a **dropdown / popover** for "More" — not a bottom sheet |
+
+### Mobile tertiary = record-first (no global top bar)
+
+On **phones only** (`< md`, 768px), a tertiary/detail page is a focused
+record-confirmation surface, so the **global top bar is hidden** — the record
+header (back · name · health chip · serial) leads, and the user confirms details
+and takes the next action without Menu / Logo / Ask AI / Country / App-switcher
+competing for space. **iPad/tablet and desktop keep the global top bar** (there's
+room to preserve global context), and Primary/Secondary keep it at every size.
+
+Enable it by telling the shell the page level — the suppression is internal and
+width-gated, so nothing else changes:
+
+```jsx
+<AppShell level="tertiary" /* 'primary' | 'secondary' | 'tertiary' */ …>
+  <Page variant="record" backAction={…} title={name} status={health} subtitle={serial}
+        actions={<TertiaryActions state={health} onAction={…} />} />
+</AppShell>
+```
+
+(Angular: `nx-app-shell` projects the top bar, so the consumer simply omits the
+`[topbar]` projection on mobile tertiary — same outcome.)
+
+## Tertiary action map (state-driven)
+
+The primary action is **never hardcoded** to Edit Information — it follows equipment state; the rest overflow into More.
+
+| State | Primary | More |
+|-------|---------|------|
+| Functional | Edit Information | View Summary · Create Service Request · View Plot · View Daily Summary · Assign QR Code |
+| Faulty | Create Service Request | Edit Information · View Open Issues · View Plot · View Daily Summary · Assign QR Code |
+| Unknown | View Monitoring Issue | Edit Information · Create Service Request · View Plot · View Daily Summary · Assign QR Code |
+| Decommissioning | Review Decommissioning | Edit Information · Create Service Request · View History · Export Record |
+
+## Status dimensions — keep them distinct
+
+Never conflate the four status dimensions; label them clearly and don't let them contradict each other (if the header says **Functional**, a body section must not imply otherwise).
+
+| Dimension | Example values | Tone |
+|-----------|----------------|------|
+| **Health** | Functional / Faulty / Unknown / Decommissioned | success / critical / default / warning |
+| **Monitoring** | Unknown / OK | default / success |
+| **Maintenance** | Upcoming / Overdue / Under Maintenance | attention / critical / info |
+| **Lifecycle** | Approaching Decommissioning | warning |
+
+All resolve through the canonical `STATUS_BADGE_MAP`; chips always carry a **text label** (never color alone).
+
+## Design tokens & rules
+
+| Rule | Token | Value |
+|------|-------|-------|
+| Top bar height (mobile / desktop) | `--nx-topbar-h-mobile` / `--nx-topbar-h-desktop` | 48px / 56px |
+| Tertiary title (mobile / desktop) | — | 20px / 24px, semibold |
+| Status chip | — | 13–14px |
+| Serial / reference text | — | 14–15px, subdued |
+| Drawer width | `--nx-drawer-width-max` | 84–88vw, max 320px |
+| Bottom sheet max height | `--nx-sheet-max-h` | ~88vh |
+| Tap target (min / preferred) | `--nx-tap-target` / `--nx-tap-target-comfortable` | 44px / 48px |
+| Safe-area insets | `--nx-safe-top/right/bottom/left` | `env(safe-area-inset-*)` |
+| Content padding | `--nx-space-4` / `--nx-space-6` | 16px (mobile) / 24px (desktop) |
+| Overlay / sheet elevation | `--nx-shadow-overlay` / `--nx-shadow-sheet` | — |
+| Stacking | `--nx-z-sticky` / `--nx-z-drawer` / `--nx-z-sheet` | 100 / 1000 / 1100 |
+
+## Accessibility
+
+- Tap targets ≥44px (prefer 48px); all icon buttons have accessible labels.
+- Status chips use **text + color**, never color alone.
+- Drawer and bottom sheet **trap focus**; Escape / back and tap-outside close them; the page behind is inert.
+- Focus returns to the trigger on close; safe-area spacing is preserved on devices with notches.

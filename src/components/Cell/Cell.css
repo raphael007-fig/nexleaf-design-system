@@ -1,0 +1,174 @@
+/*
+ * Nexleaf Design System — Cell (composable list row)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first. Reuses .nx-badge / .nx-btn for the
+ * trailing badge and button, and .nx-toggle / .nx-radio for the controls.
+ *
+ * .nx-cell                 — row surface (64px tall, shadow-bevel-100 edge)
+ * .nx-cell--interactive    — whole-row clickable (hover background)
+ * .nx-cell__icon           — 32px green icon tile
+ * .nx-cell__body           — title + description column (grows to fill)
+ * .nx-cell__title-row      — title + optional title badge
+ * .nx-cell__title          — title text
+ * .nx-cell__description     — supporting description text
+ * .nx-cell__trailing        — wrapper around trailing badge/button/control/chevron
+ * .nx-cell__chevron         — trailing forward chevron
+ */
+
+/* ─── Surface ──────────────────────────────────────────────────── */
+.nx-cell {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                 /* 8px */
+
+  padding: var(--nx-space-3);             /* 12px */
+  background: var(--nx-bg-surface);       /* #ffffff */
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+
+  font-family: var(--nx-font-family);
+  transition: background-color 0.15s ease;
+}
+
+/* Multi-line rows (with a description) top-align the icon tile + trailing
+   control to the title; single-line rows stay vertically centered. */
+.nx-cell--multiline {
+  align-items: flex-start;
+}
+
+/* ─── Interactive (whole row is a button) ──────────────────────── */
+.nx-cell--interactive {
+  cursor: pointer;
+}
+
+.nx-cell--interactive:hover,
+.nx-cell--interactive:focus-visible,
+.nx-cell.is-hover {
+  outline: none;
+  background: var(--nx-bg-surface-hover); /* #f7f7f7 */
+}
+
+/* ─── Icon tile ────────────────────────────────────────────────── */
+.nx-cell__icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--nx-radius-control); /* 6px */
+  background: var(--nx-bg-success);        /* #cdfee1 (success — default) */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Icon-tile tones — soft tint signalling row context. */
+.nx-cell__icon--critical { background: var(--nx-bg-critical-soft); } /* #fde2e1 */
+.nx-cell__icon--warning  { background: var(--nx-bg-warning); }       /* #fff3cd */
+.nx-cell__icon--info     { background: var(--nx-bg-info); }          /* #eaf4ff */
+.nx-cell__icon--neutral  { background: var(--nx-bg-hover); }         /* rgba(0,0,0,0.06) */
+
+/* ─── Body (title + description) ───────────────────────────────── */
+.nx-cell__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.nx-cell__title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nx-cell__title {
+  font-size: var(--nx-font-size-body);   /* 14px */
+  font-weight: 650;
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nx-cell__description {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular); /* 450/400 */
+  line-height: var(--nx-line-height-normal);  /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+  /* Default: single line + ellipsis (keeps dense rows from wrapping). */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Clamp to N lines — host sets `--nx-cell-desc-lines` (defaults to 2). */
+.nx-cell__description--clamp {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: var(--nx-cell-desc-lines, 2);
+}
+/* Wrap freely (no truncation). */
+.nx-cell__description--wrap {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+/* ─── Trailing controls ────────────────────────────────────────── */
+.nx-cell__trailing {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                 /* 8px */
+}
+
+.nx-cell__chevron {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ─── Loading skeleton ─────────────────────────────────────────── */
+/* Requires Skeleton.css (shared .nx-skeleton pulse block). The loading
+ * branch renders skeleton blocks inside the same 64px row so the row
+ * doesn't reflow when content arrives. */
+.nx-cell--loading {
+  cursor: default;
+  background: var(--nx-bg-surface);
+}
+
+.nx-cell__sk-icon {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--nx-radius-control); /* 6px */
+}
+
+.nx-cell__sk-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.nx-cell__sk-title       { width: 50%; height: 14px; }
+.nx-cell__sk-description { width: 72%; height: 13px; }
+
+.nx-cell__sk-trailing {
+  width: 20px;
+  height: 20px;
+  margin-left: auto;
+  flex-shrink: 0;
+}

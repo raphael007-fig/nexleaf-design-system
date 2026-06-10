@@ -64,7 +64,7 @@ function BtnSpinner() {
 // Heights mirror padding + line-height so the skeleton occupies the same box
 // the real button would (preserves layout — no jump when content arrives).
 
-const SKELETON_HEIGHTS = { micro: 24, medium: 28, large: 32 };
+const SKELETON_HEIGHTS = { micro: 24, medium: 28, large: 40 };
 const DEFAULT_SKELETON_WIDTHS = { micro: 64, medium: 96, large: 120 };
 
 export function Btn({
@@ -116,9 +116,10 @@ export function Btn({
   const isInert = disabled || loading;
 
   const SIZES = {
-    micro:  { padding: '4px 8px',  fontSize: 12, lineHeight: '16px' },
-    medium: { padding: '6px 12px', fontSize: 12, lineHeight: '16px' },
-    large:  { padding: '6px 12px', fontSize: 13, lineHeight: '20px' },
+    micro:  { padding: '4px 8px',   fontSize: 12, lineHeight: '16px' },
+    medium: { padding: '6px 12px',  fontSize: 12, lineHeight: '16px' },
+    // Comfortable touch size (~40px tall) — used on responsive surfaces.
+    large:  { padding: '10px 16px', fontSize: 14, lineHeight: '20px' },
   };
   const s = SIZES[sz] || SIZES.medium;
   const base = {

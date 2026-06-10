@@ -5,7 +5,7 @@ import * as CardStories from './Card.stories.jsx';
 
 # Card
 
-Structured content containers for displaying equipment details, location context, contact information, and associated component lists. Cards use the shadow-100 border treatment and a `12px` border radius throughout.
+Structured content containers for displaying equipment details, location context, contact information, and associated component lists. Cards use the shadow-100 border treatment and an `8px` border radius throughout.
 
 <Canvas of={CardStories.AllLayouts} />
 
@@ -91,6 +91,89 @@ All copy is overridable via `emptyText`, `emptyActionLabel`, and `assignedAction
 
 ---
 
+## Layout Type 6 — Header / Action Card
+
+<Canvas of={CardStories.LayoutType6} />
+
+A card with a header strip and a free-form body. The header pairs a leading **icon + title + badge** on the left with an optional **action button** on the top right; the body is whatever you pass as `children` — typically a row (web) or stack (mobile) of [`Cell`](/docs/components-lists-cell-docs--docs) rows.
+
+Set `tone="critical"` to tint the card edge red (the Figma "Immediate Action" alert card). The header badge defaults to the card tone — `critical` → critical badge, otherwise a default-tone badge — and can be overridden with `badgeTone`.
+
+```jsx
+// Critical alert card — web (cells in a row), mobile (cells stacked)
+<CardLayoutType6
+  tone="critical"
+  icon={<AlertTriangleIcon />}
+  title="Action Required"
+  badge="5 Urgent Issues"
+  actionLabel="View All Issues"
+  onAction={() => goTo('/issues')}
+>
+  <div style={{ display: 'flex', gap: 12 }}>{/* flexDirection: 'column' on mobile */}
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <Cell icon={<GaugeIcon />} iconTone="critical"
+        title="Temperature exceeds threshold"
+        description="Incubator HC 1501-2023-001 · Main Laboratory"
+        hasChevron onClick={() => goTo('/equipment/HC-1501')} />
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <Cell icon={<WrenchIcon />} iconTone="warning"
+        title="Maintenance due"
+        description="Generator GEN-2023-005 · Power Room"
+        hasChevron onClick={() => goTo('/equipment/GEN-2005')} />
+    </div>
+  </div>
+</CardLayoutType6>
+```
+
+The web/mobile arrangement can be handled for you. Set **`stackOnMobile`** and pass the cells directly — the card lays them out as equal-width columns on wide screens and stacks them full-width at/below the `sm` breakpoint (640px), via the shared `useIsMobile` hook. No manual flex wrapper needed:
+
+```jsx
+<CardLayoutType6
+  tone="critical"
+  icon={<AlertTriangleIcon />}
+  title="Action Required"
+  badge="5 Urgent Issues"
+  actionLabel="View All Issues"
+  onAction={() => goTo('/issues')}
+  stackOnMobile
+>
+  <Cell icon={<GaugeIcon />} iconTone="critical"
+    title="Temperature exceeds threshold"
+    description="Incubator HC 1501-2023-001 · Main Laboratory"
+    hasChevron onClick={() => goTo('/equipment/HC-1501')} />
+  <Cell icon={<WrenchIcon />} iconTone="warning"
+    title="Maintenance due"
+    description="Generator GEN-2023-005 · Power Room"
+    hasChevron onClick={() => goTo('/equipment/GEN-2005')} />
+</CardLayoutType6>
+```
+
+<Canvas of={CardStories.LayoutType6Responsive} />
+
+Leave `stackOnMobile` off (the default) when you need full control over the body arrangement — then wrap the children yourself, switching `flexDirection` from `row` (web) to `column` (mobile).
+
+### Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `icon` | node | — | 20×20 SVG before the title. |
+| `title` | string | — | Header title (12px / 550). |
+| `badge` | node / string | — | Header badge. String → `<Badge>` using `badgeTone`. |
+| `badgeTone` | Badge tone key | `'critical'` when `tone='critical'`, else `'default'` | Tint of the string badge. |
+| `actionLabel` | string | — | Renders a top-right ghost (plain) button when set. |
+| `onAction` | fn | — | Action button click. |
+| `tone` | `'default' \| 'critical'` | `'default'` | Tints the card edge (critical = red bevel). |
+| `loading` | bool | `false` | Render a header + `Cell`-row skeleton instead of content. |
+| `loadingRows` | number | `2` | `Cell` skeleton rows to show when `loading`. |
+| `stackOnMobile` | bool | `false` | When set, lays children out as equal columns on wide screens and stacks them full-width at/below `sm` (640px). |
+| `bodyGap` | number | `12` | Gap between body children when `stackOnMobile` is set. |
+| `children` | node | — | Body content — e.g. a flex row/column of `Cell`s. |
+
+When `loading`, the card keeps its tinted surface and renders a header placeholder (icon + title + badge + action) over `loadingRows` stacked `Cell` skeletons — so the alert card holds its shape until the issues data arrives.
+
+---
+
 ## Primitives
 
 <Canvas of={CardStories.Primitives} />
@@ -103,7 +186,7 @@ All copy is overridable via `emptyText`, `emptyActionLabel`, and `assignedAction
 | Property | Value |
 |----------|-------|
 | Background | `#ffffff` |
-| Border radius | `12px` |
+| Border radius | `8px` |
 | Padding | `12px` |
 | Gap (children) | `12px` |
 | Shadow | shadow-100 (see below) |
@@ -188,6 +271,24 @@ import { NxCardModule } from 'components/Card/card.module';
   addedBy="Grace Mwangi"
   contactNumber="+254 712 345 678"
 />
+
+// Layout Type 6 — Header / action card (project the icon + body cells)
+<nx-card-layout-type6
+  tone="critical"
+  title="Action Required"
+  badge="5 Urgent Issues"
+  actionLabel="View All Issues"
+  [hasIcon]="true"
+  (action)="goTo('/issues')"
+>
+  <svg icon><!-- 20px alert icon --></svg>
+  <nx-cell iconTone="critical" title="Temperature exceeds threshold"
+    description="Incubator HC 1501-2023-001 · Main Laboratory"
+    [hasIcon]="true" [hasChevron]="true" [interactive]="true"></nx-cell>
+  <nx-cell iconTone="warning" title="Maintenance due"
+    description="Generator GEN-2023-005 · Power Room"
+    [hasIcon]="true" [hasChevron]="true" [interactive]="true"></nx-cell>
+</nx-card-layout-type6>
 ```
 
 ---
@@ -206,7 +307,10 @@ import {
   CardLayoutType2,
   CardLayoutType3,
   CardLayoutType4,
+  CardLayoutType5,
+  CardLayoutType6,
 } from 'components/Card/Card.jsx';
+import { Cell } from 'components/Cell/Cell.jsx';
 
 // Layout Type 1 — Detail card
 <CardLayoutType1

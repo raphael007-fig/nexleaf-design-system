@@ -11,6 +11,9 @@ const KEYFRAME_CSS = `
     0%, 100% { opacity: 1; }
     50%       { opacity: 0.45; }
   }
+  @media (prefers-reduced-motion: reduce) {
+    .nx-skeleton-block { animation: none !important; }
+  }
 `;
 
 function useSkeletonKeyframe() {
@@ -57,6 +60,7 @@ export function Skeleton({
   useSkeletonKeyframe();
   return (
     <div
+      className="nx-skeleton-block"
       role={ariaLabel ? 'status' : undefined}
       aria-label={ariaLabel || undefined}
       aria-live={ariaLabel ? 'polite' : undefined}

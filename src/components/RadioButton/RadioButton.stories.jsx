@@ -3,7 +3,7 @@ import { RadioButton, RadioGroup } from './RadioButton.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 
 export default {
-  title: 'Components/RadioButton',
+  title: 'Components/Lists/RadioButton',
   component: RadioButton,
   parameters: { layout: 'padded' },
   decorators: [Story => <div style={{ fontFamily: 'Inter, sans-serif' }}><Story /></div>],

@@ -1,0 +1,126 @@
+/*
+ * Nexleaf Design System — NavCard (Home / Sub-Home navigation card)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first. Reuses .nx-btn for the action.
+ *
+ * .nx-nav-card                 — card surface (defaults to the centered Home layout)
+ * .nx-nav-card--sub            — left-aligned Sub-Home layout (icon top-left)
+ * .nx-nav-card--interactive    — whole-card clickable (adds the blue hover ring)
+ * .nx-nav-card__media          — illustration (Home) / icon (Sub) slot
+ * .nx-nav-card__title          — title text
+ * .nx-nav-card__description     — supporting description text
+ * .nx-nav-card__action         — wrapper around the View button (.nx-btn)
+ * .nx-nav-card__action-icon     — trailing forward chevron inside the button
+ */
+
+/* ─── Surface ──────────────────────────────────────────────────── */
+.nx-nav-card {
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;   /* Home layout: centered */
+  text-align: center;
+
+  padding: var(--nx-space-6);              /* 24px */
+  background: var(--nx-bg-surface);        /* #ffffff */
+  border-radius: var(--nx-radius-sm);      /* 8px */
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+
+  font-family: var(--nx-font-family);
+  transition: box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+/* ─── Sub-Home layout (left-aligned, icon top-left) ────────────── */
+.nx-nav-card--sub {
+  align-items: flex-start;
+  text-align: left;
+}
+
+/* ─── Interactive (whole card is a button) ─────────────────────── */
+.nx-nav-card--interactive {
+  cursor: pointer;
+}
+
+.nx-nav-card--interactive:hover,
+.nx-nav-card--interactive:focus-visible {
+  outline: none;
+  background: var(--nx-bg-selected);               /* #f0f7ff tint */
+  box-shadow:
+    inset 0 0 0 1px var(--nx-color-primary),       /* #005bd3 ring */
+    0 2px 6px var(--nx-color-primary-hover-shadow); /* rgba(0,91,211,0.12) */
+}
+
+/* ─── Media slot ───────────────────────────────────────────────── */
+.nx-nav-card__media {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nx-nav-card--sub .nx-nav-card__media {
+  justify-content: flex-start;
+}
+
+/* ─── Title ────────────────────────────────────────────────────── */
+.nx-nav-card__title {
+  font-size: var(--nx-font-size-body);   /* 14px */
+  font-weight: 650;                       /* heading-md weight */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+/* Title gets a top gap only when media precedes it. */
+.nx-nav-card__media + .nx-nav-card__title {
+  margin-top: var(--nx-space-4);          /* 16px (Home) */
+}
+
+.nx-nav-card--sub .nx-nav-card__media + .nx-nav-card__title {
+  margin-top: var(--nx-space-3);          /* 12px (Sub) */
+}
+
+/* ─── Description ──────────────────────────────────────────────── */
+.nx-nav-card__description {
+  margin-top: 2px;                        /* space-050 */
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular); /* 450/400 */
+  line-height: var(--nx-line-height-normal);  /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+/* ─── Action button wrapper ────────────────────────────────────── */
+.nx-nav-card__action {
+  margin-top: var(--nx-space-3);          /* 12px */
+}
+
+/* Trailing forward chevron inside the View button. */
+.nx-nav-card__action-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
+/* ─── Loading skeleton ─────────────────────────────────────────── */
+/* Requires Skeleton.css (shared .nx-skeleton pulse block). The loading
+ * branch honours the layout alignment (home centers, sub left-aligns). */
+.nx-nav-card--loading {
+  cursor: default;
+}
+
+.nx-nav-card__sk-media   { width: 48px; height: 48px; border-radius: 50%; }
+.nx-nav-card--sub .nx-nav-card__sk-media { width: 40px; height: 40px; border-radius: var(--nx-radius-sm); }
+
+.nx-nav-card__sk-title       { height: 14px; margin-top: var(--nx-space-4); }
+.nx-nav-card__sk-description { height: 13px; margin-top: 6px; }
+.nx-nav-card__sk-action      { width: 120px; height: 32px; margin-top: var(--nx-space-3); border-radius: var(--nx-radius-sm); }
+
+/* Home centers the text blocks at fixed widths; sub stretches to a percentage. */
+.nx-nav-card__sk-title       { width: 140px; }
+.nx-nav-card__sk-description { width: 200px; }
+.nx-nav-card--sub .nx-nav-card__sk-title       { width: 60%; }
+.nx-nav-card--sub .nx-nav-card__sk-description { width: 85%; }
+.nx-nav-card--sub .nx-nav-card__sk-title       { margin-top: var(--nx-space-3); }

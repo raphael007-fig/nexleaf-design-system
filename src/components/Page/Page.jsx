@@ -1,12 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { Btn } from '../Btn/Btn.jsx';
-import { Badge } from '../Badge/Badge.jsx';
+import { Badge, StatusBadge } from '../Badge/Badge.jsx';
+import { useIsMobile } from '../../foundation/useViewport.js';
 import { PolarisIconImg } from '../PolarisIcon/PolarisIcon.jsx';
 import { Pagination } from '../Pagination/Pagination.jsx';
 import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
 import { Overlay } from '../Overlay/Overlay.jsx';
 import { OptionList } from '../OptionList/OptionList.jsx';
+import { BottomSheet } from '../BottomSheet/BottomSheet.jsx';
 
 // ─── Modal close icon (inline) ───────────────────────────────────────────────
 const IcoXMark = ({ size = 16, color = '#303030' }) => (
@@ -44,8 +46,24 @@ export function Page({
   pagination,
   loading = false,
   titleDisclosure,
+  // ── Record variant (responsive tertiary record header) ──────────────────────
+  // variant="record" renders the focused record header used on tertiary/detail
+  // pages: back arrow + dominant name + health status chip beside the title +
+  // serial subtitle. Responsive — on mobile the title compacts and the action
+  // row (e.g. <TertiaryActions/>) stacks full-width below the title.
+  variant = 'default',
+  status,            // health status string → StatusBadge (record variant)
+  statusChip,        // node override for the chip (record variant)
+  actions,           // node — record-variant action row (e.g. <TertiaryActions/>)
+  mobile,            // override useIsMobile() for the record variant
+  // Drop the header's own top padding when the Page sits inside a shell that
+  // already provides the top rhythm (e.g. AppShell's content container). Keeps
+  // the header's start point flush with non-Page content (Home) at the same level.
+  flushTop = false,
   children,
 }) {
+  const autoMobile = useIsMobile();
+  const isMobileRecord = mobile ?? autoMobile;
   const [hovBack, setHovBack] = useState(false);
   const [hovImage, setHovImage] = useState(false);
   const [imageOpen, setImageOpen] = useState(false);
@@ -85,7 +103,9 @@ export function Page({
   // Close the popover on Escape / outside click. Effect only attaches listeners
   // while the popover is open, so we don't pay the cost on every render.
   useEffect(() => {
-    if (!discOpen) return;
+    // On mobile the switcher is a BottomSheet, which manages its own dismissal —
+    // skip the desktop popover's outside-click/Escape handling there.
+    if (!discOpen || autoMobile) return;
     const onKey = (e) => { if (e.key === 'Escape') setDiscOpen(false); };
     const onClick = (e) => {
       if (
@@ -133,12 +153,92 @@ export function Page({
       </div>
     );
   }
+  // ── Record variant — focused, responsive tertiary record header ─────────────
+  if (variant === 'record') {
+    const chip = statusChip ?? (status != null ? <StatusBadge status={status} /> : null);
+    // Title scales fluidly with the viewport — reduced up to ~20% from the
+    // 24px desktop size (down to 19px) so it stays legible and keeps hierarchy.
+    const titleSize = 'clamp(19px, 1.1rem + 0.6vw, 24px)';
+    const actionRow = actions ?? ((primaryAction || secondaryActions.length > 0) ? (
+      <>
+        {secondaryActions.map((action, i) => (
+          action.node
+            ? <span key={i} style={{ display: 'inline-flex' }}>{action.node}</span>
+            : <Btn key={i} variant="secondary" size={isMobileRecord ? 'large' : 'medium'} onClick={handleSecondary(action)} disclosure={action.disclosure}>{action.content}</Btn>
+        ))}
+        {primaryAction && <Btn variant="primary" size={isMobileRecord ? 'large' : 'medium'} onClick={handlePrimary}>{primaryAction.content}</Btn>}
+      </>
+    ) : null);
+
+    return (
+      <header style={{
+        display: 'flex', flexDirection: 'column', gap: isMobileRecord ? 12 : 0,
+        // Transparent — sits on the page background like the default Header Page
+        // (no white card). Vertical padding only; the page provides horizontal.
+        padding: isMobileRecord ? '12px 0' : '20px 0',
+        paddingTop: flushTop
+          ? 'var(--nx-safe-top, 0px)'
+          : `calc(${isMobileRecord ? '12px' : '20px'} + var(--nx-safe-top, 0px))`,
+        background: 'transparent', fontFamily: 'Inter,sans-serif', width: '100%',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+          {backAction && (
+            <button
+              type="button" aria-label="Back" onClick={handleBack}
+              onMouseEnter={() => setHovBack(true)} onMouseLeave={() => setHovBack(false)}
+              onFocus={() => setFocused('back')} onBlur={() => setFocused(null)}
+              style={{
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                width: 36, height: 36, borderRadius: 8, border: 'none', flexShrink: 0, padding: 0,
+                marginTop: 1, cursor: 'pointer', outline: 'none',
+                background: hovBack ? 'rgba(0,0,0,0.06)' : 'transparent',
+                boxShadow: focused === 'back' ? '0 0 0 2px #005bd3' : undefined,
+                transition: 'background 0.12s, box-shadow 0.12s',
+              }}>
+              <PolarisIconImg name="ArrowLeftIcon" size={20} color="#303030" />
+            </button>
+          )}
+          <div style={{ flex: '1 1 auto', minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, flexWrap: 'wrap' }}>
+              <h1 style={{
+                margin: 0, fontSize: titleSize, fontWeight: 650, lineHeight: '1.2',
+                letterSpacing: '-0.2px', color: '#303030', minWidth: 0,
+                display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+              }}>
+                {title}
+              </h1>
+              {chip && <span style={{ flexShrink: 0, marginTop: isMobileRecord ? 2 : 4 }}>{chip}</span>}
+            </div>
+            {subtitle && (
+              <div style={{
+                marginTop: 2, fontSize: isMobileRecord ? 14 : 15, fontWeight: 450,
+                lineHeight: '20px', color: '#616161',
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}>
+                {subtitle}
+              </div>
+            )}
+          </div>
+          {!isMobileRecord && actionRow && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>{actionRow}</div>
+          )}
+        </div>
+        {isMobileRecord && actionRow && <div style={{ display: 'flex', gap: 8 }}>{actionRow}</div>}
+        {children}
+      </header>
+    );
+  }
+
   return (
     <div style={{ width: '100%' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        paddingTop: 24, paddingBottom: 24 }}>
+      <div style={{ display: 'flex',
+        flexDirection: autoMobile ? 'column' : 'row',
+        alignItems: autoMobile ? 'stretch' : 'flex-start',
+        justifyContent: 'space-between',
+        gap: autoMobile ? 12 : 0,
+        paddingTop: flushTop ? 0 : (autoMobile ? 16 : 24), paddingBottom: autoMobile ? 16 : 24 }}>
         {/* Left: back + title */}
-        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start', flex: '1 0 0', minWidth: 0 }}>
+        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-start', flex: autoMobile ? '0 0 auto' : '1 0 0', minWidth: 0 }}>
           {backAction && (
             <button onClick={handleBack}
               onMouseEnter={() => setHovBack(true)}
@@ -255,22 +355,24 @@ export function Page({
             )}
           </div>
         </div>
-        {/* Right: actions */}
+        {/* Right (desktop) / below the title (mobile): actions. On mobile the row
+            sits under the text and uses the large (touch) button size. */}
         {(secondaryActions.length > 0 || primaryAction || pagination) && (
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0,
+            flexWrap: autoMobile ? 'wrap' : 'nowrap' }}>
             {secondaryActions.map((action, i) => (
               action.node ? (
                 <span key={i} style={{ display: 'inline-flex', alignItems: 'center' }}>
                   {action.node}
                 </span>
               ) : (
-                <Btn key={i} variant="secondary" size="medium" onClick={handleSecondary(action)} disclosure={action.disclosure}>
+                <Btn key={i} variant="secondary" size={autoMobile ? 'large' : 'medium'} onClick={handleSecondary(action)} disclosure={action.disclosure}>
                   {action.content}
                 </Btn>
               )
             ))}
             {primaryAction && (
-              <Btn variant="primary" size="medium" onClick={handlePrimary}>
+              <Btn variant="primary" size={autoMobile ? 'large' : 'medium'} onClick={handlePrimary}>
                 {primaryAction.content}
               </Btn>
             )}
@@ -280,38 +382,39 @@ export function Page({
       </div>
       {children}
 
-      {/* Title Disclosure popover — sibling-page switcher, opens under the chevron */}
-      {titleDisclosure && discOpen && discRect && createPortal(
-        <div
-          ref={discPopRef}
-          role="menu"
-          style={{
-            position: 'fixed',
-            top: discRect.bottom + 4,
-            left: discRect.left,
-            zIndex: 100,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
-            borderRadius: 8,
-          }}
-        >
-          <OptionList
-            title={titleDisclosure.sectionTitle}
-            options={titleDisclosure.items.map(it => ({
-              id: it.id,
-              label: it.label,
-              disabled: it.disabled,
-            }))}
-            selected={titleDisclosure.activeItemId}
-            onChange={(id) => {
-              setDiscOpen(false);
-              const item = titleDisclosure.items.find(i => i.id === id);
-              if (item?.onClick) item.onClick();
-              if (titleDisclosure.onSelect) titleDisclosure.onSelect(id);
-            }}
-          />
-        </div>,
-        document.body
-      )}
+      {/* Title Disclosure — sibling-page switcher. Desktop: OptionList popover
+          under the chevron. Mobile: the SAME options in a BottomSheet (pulled
+          from the nav), matching the "More → bottom sheet" pattern. */}
+      {(() => {
+        if (!titleDisclosure || !titleDisclosure.items || titleDisclosure.items.length === 0) return null;
+        const options = titleDisclosure.items.map((it) => ({ id: it.id, label: it.label, disabled: it.disabled }));
+        const handleChange = (id) => {
+          setDiscOpen(false);
+          const item = titleDisclosure.items.find((i) => i.id === id);
+          if (item?.onClick) item.onClick();
+          if (titleDisclosure.onSelect) titleDisclosure.onSelect(id);
+        };
+        // Mobile → bottom sheet (selector), same logic as the desktop dropdown.
+        if (autoMobile) {
+          return (
+            <BottomSheet open={discOpen} onClose={() => setDiscOpen(false)} title={titleDisclosure.sectionTitle} showCloseButton>
+              <OptionList flush options={options} selected={titleDisclosure.activeItemId} onChange={handleChange} />
+            </BottomSheet>
+          );
+        }
+        // Desktop → popover under the chevron.
+        if (!discOpen || !discRect) return null;
+        return createPortal(
+          <div
+            ref={discPopRef}
+            role="menu"
+            style={{ position: 'fixed', top: discRect.bottom + 4, left: discRect.left, zIndex: 100, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', borderRadius: 8 }}
+          >
+            <OptionList title={titleDisclosure.sectionTitle} options={options} selected={titleDisclosure.activeItemId} onChange={handleChange} />
+          </div>,
+          document.body
+        );
+      })()}
 
       {/* Image preview modal — opens when the header thumbnail is clicked */}
       {img && imageOpen && (

@@ -34,6 +34,14 @@ html, body {
   from { transform: translateX(100%); }
   to   { transform: translateX(0); }
 }
+@keyframes nxSlideInLeft {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+@keyframes nxSlideInUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
 
 /* Legacy aliases — older stories/components reference the un-prefixed names. */
 @keyframes fadeInScale {
@@ -56,4 +64,26 @@ html, body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─────────────────────────────────────────────
+ * HOME MODULE-TILE GRID
+ * The home dashboard's NavCard tiles: 1 → 2 → 3 columns, CAPPED at 3 on desktop
+ * (per product), stepping down 3 → 2 → 1 responsively. Driven by CONTAINER-size
+ * queries (not the window), so it's correct whether the desktop rail is docked
+ * or not, in pure CSS — no JS measurement, no resize lag, and it can never spill
+ * past the column.
+ *   <div class="nx-home-grid"><div class="nx-home-grid__tiles"> …tiles… </div></div>
+ * ───────────────────────────────────────────── */
+.nx-home-grid { container-type: inline-size; }
+.nx-home-grid__tiles {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;               /* phones: 1 column */
+}
+@container (min-width: 460px) {
+  .nx-home-grid__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* 2 columns */
+}
+@container (min-width: 720px) {
+  .nx-home-grid__tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }   /* 3 columns (cap) */
 }

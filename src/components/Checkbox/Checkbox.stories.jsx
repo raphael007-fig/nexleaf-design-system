@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Checkbox, RadioButton, ChoiceList } from './Checkbox.jsx';
 
 export default {
-  title: 'Components/Checkbox',
+  title: 'Components/Lists/Checkbox',
   component: Checkbox,
   parameters: { layout: 'centered' },
   argTypes: {

@@ -1,0 +1,203 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as NavCardStories from './NavCard.stories.jsx';
+
+<Meta title="Components/Navigation/NavCard/Docs" />
+
+# NavCard
+
+Navigation cards for home and sub-home landing screens. Each card pairs an illustration (or icon) with a title, a short description, and an optional **View** button. Cards use the shadow-100 border treatment and an `8px` border radius (`radius-sm`).
+
+<Canvas of={NavCardStories.AllStates} />
+
+---
+
+## When to use
+
+- **Home landing grids** — feature tiles (Training, Reports, Equipment) that route to a section.
+- **Sub-home / category grids** — a deeper list of destinations under a section, with a compact left-aligned icon.
+- Anywhere a card needs a single primary action (**View**) or acts as a whole-card link.
+
+---
+
+## Variants
+
+NavCard is one component with two `layout` values, each rendering with or without the action button:
+
+| Variant | `layout` | Button | Alignment | Media |
+|---------|----------|--------|-----------|-------|
+| Home — with button | `home` | `buttonLabel` set | centered | large illustration (80px) |
+| Home — without button | `home` | omit `buttonLabel` | centered | large illustration (80px) |
+| Sub-Home — with button | `sub` | `buttonLabel` set | left | small icon (40px), top-left |
+| Sub-Home — without button | `sub` | omit `buttonLabel` | left | small icon (40px), top-left |
+
+---
+
+## Interaction states
+
+<Canvas of={NavCardStories.Interactive} />
+
+Pass `onClick` (React) / set `interactive` + handle `cardClick` (Angular) to make the whole card a button. On hover/focus the edge switches to the brand-blue ring (`#005bd3`) with a tinted shadow (`rgba(0,91,211,0.12)`), matching the design-system interactive-card rule. The inner **View** button stops propagation, so clicking it never double-fires the card click.
+
+---
+
+## Loading
+
+<Canvas of={NavCardStories.Loading} />
+
+Set `loading` to render a shape-matching skeleton that honours each layout's alignment: **home** centers a circular media block + two text lines + the button; **sub** left-aligns a rounded icon block + text + button. The skeleton reuses the shared pulse (`bg-skeleton` `#e8e8e8`, 1.4s) from the `Skeleton` primitive.
+
+Pass `hasButton={false}` (React) / `[hasButton]="false"` (Angular) to drop the button block for the no-button variants.
+
+```jsx
+{loading
+  ? <NavCard layout="sub" loading />
+  : <NavCard layout="sub" media={<Icon />} title="…" description="…" buttonLabel="View" />}
+```
+
+---
+
+## Anatomy
+
+### Card container
+| Property | Value | Token |
+|----------|-------|-------|
+| Background | `#ffffff` | `bg-surface` |
+| Border radius | `8px` | `radius-sm` |
+| Padding | `24px` | `space-6` |
+| Shadow | shadow-100 | — |
+
+### Text
+| Part | Size | Weight | Color | Token |
+|------|------|--------|-------|-------|
+| Title | 14px | 650 | `#303030` | `text-default` |
+| Description | 13px | 450 | `#616161` | `text-subdued` |
+
+### Spacing
+| Gap | Home | Sub |
+|-----|------|-----|
+| Media → title | `16px` | `12px` |
+| Title → description | `2px` | `2px` |
+| Description → button | `12px` | `12px` |
+
+The **View** button reuses the secondary, small `Btn` (`.nx-btn--secondary .nx-btn--sm`) with a trailing forward chevron.
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `layout` | `'home' \| 'sub'` | `'home'` | Centered vs. left-aligned. |
+| `title` | node / string | — | Card title. |
+| `description` | node / string | — | Supporting text. |
+| `media` | node | — | Illustration (home) or icon (sub). In Angular, project with `[media]`. |
+| `buttonLabel` | string | — | Renders the View button when set. |
+| `onButtonClick` / `viewClick` | fn | — | View button click. |
+| `onClick` / `cardClick` | fn | — | Whole-card click (adds interactive hover ring). |
+| `loading` | bool | `false` | Render a shape-matching skeleton instead of the card content. |
+| `hasButton` | bool | `true` (skeleton) | When `loading`, controls whether the button block shows. |
+| `ariaLabel` | string | — | Accessible name when the card is interactive. |
+
+---
+
+## React
+
+```jsx
+import { NavCard } from 'components/NavCard/NavCard.jsx';
+
+// Home — with button
+<NavCard
+  layout="home"
+  media={<TrainingIllustration />}
+  title="Training"
+  description="Your go-to hub for training materials and resources"
+  buttonLabel="View"
+  onButtonClick={() => goTo('/training')}
+/>
+
+// Sub-Home — without button, whole card clickable
+<NavCard
+  layout="sub"
+  media={<ColdChainIcon />}
+  title="ColdChain Equipment"
+  description="See all the training manuals for your cold chain gear, in one place!"
+  onClick={() => goTo('/equipment/coldchain')}
+  ariaLabel="ColdChain Equipment"
+/>
+```
+
+---
+
+## CSS classes (non-React stacks)
+
+```html
+<!-- Home — with button -->
+<div class="nx-nav-card">
+  <div class="nx-nav-card__media"><!-- illustration --></div>
+  <div class="nx-nav-card__title">Training</div>
+  <div class="nx-nav-card__description">Your go-to hub for training materials and resources</div>
+  <div class="nx-nav-card__action">
+    <button class="nx-btn nx-btn--secondary nx-btn--sm">View
+      <svg class="nx-nav-card__action-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<!-- Sub-Home layout -->
+<div class="nx-nav-card nx-nav-card--sub"> … </div>
+
+<!-- Interactive whole-card -->
+<div class="nx-nav-card nx-nav-card--interactive" role="button" tabindex="0"> … </div>
+```
+
+Requires `tokens.css` + `Btn.css` (for the action button) + `NavCard.css`. Add `Skeleton.css` when using the `loading` state.
+
+---
+
+## Angular
+
+```ts
+import { NxNavCardModule } from '@nexleaf/angular';
+```
+
+```html
+<!-- Home — with button -->
+<nx-nav-card
+  layout="home"
+  title="Training"
+  description="Your go-to hub for training materials and resources"
+  buttonLabel="View"
+  (viewClick)="goTo('/training')"
+>
+  <svg media><!-- illustration --></svg>
+</nx-nav-card>
+
+<!-- Sub-Home — whole card clickable -->
+<nx-nav-card
+  layout="sub"
+  title="ColdChain Equipment"
+  description="See all the training manuals for your cold chain gear, in one place!"
+  [interactive]="true"
+  ariaLabel="ColdChain Equipment"
+  (cardClick)="goTo('/equipment/coldchain')"
+>
+  <svg media><!-- icon --></svg>
+</nx-nav-card>
+```
+
+---
+
+## Design tokens used
+
+| Token | Where |
+|-------|-------|
+| `bg-surface` `#ffffff` | Card background |
+| `text-default` `#303030` | Title |
+| `text-subdued` `#616161` | Description |
+| `radius-sm` `8px` | Card corners |
+| `space-6` `24px` | Card padding |
+| `color-primary` `#005bd3` | Interactive hover ring |
+| `color-primary-hover-shadow` `rgba(0,91,211,0.12)` | Interactive hover shadow |
+| `.nx-btn--secondary` / `.nx-btn--sm` | View button |

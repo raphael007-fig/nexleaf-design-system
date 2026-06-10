@@ -15,7 +15,7 @@ const IcoMediaPlaceholder = ({ color = '#616161', size = 20 }) => (
   </svg>
 );
 
-export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error, ariaLabel }) {
+export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error, ariaLabel, flush = false }) {
   const [hovKey, setHovKey] = useState(null);
   const [focKey, setFocKey] = useState(null);
   const baseId = useId();
@@ -53,9 +53,12 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
       aria-multiselectable={allowMultiple || undefined}
       aria-label={!listLabelId ? ariaLabel : undefined}
       aria-labelledby={listLabelId}
-      style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8,
-      padding: 4, fontFamily: 'Inter,sans-serif',
-      display: 'inline-flex', flexDirection: 'column', minWidth: 160 }}>
+      style={flush
+        ? { background: 'transparent', border: 'none', borderRadius: 0, padding: 0,
+            fontFamily: 'Inter,sans-serif', display: 'flex', flexDirection: 'column', width: '100%', minWidth: 0 }
+        : { background: '#fff', border: '1px solid #e0e0e0', borderRadius: 8,
+            padding: 4, fontFamily: 'Inter,sans-serif',
+            display: 'inline-flex', flexDirection: 'column', minWidth: 160 }}>
       {resolvedSections.map((section, si) => {
         const sectionTitleId = section.title ? `${baseId}-sec-${si}` : undefined;
         // A grouped section gets role="group" + aria-labelledby; the single
@@ -88,7 +91,9 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 onFocus={() => setFocKey(key)}
                 onBlur={() => setFocKey(null)}
                 style={{ display: 'flex', alignItems: 'center', gap: 8,
-                  padding: 6, borderRadius: 8,
+                  padding: flush ? '12px 14px' : 6,
+                  minHeight: flush ? 48 : undefined,
+                  borderRadius: flush ? 12 : 8,
                   background: itemBg(optId, opt.disabled, key),
                   cursor: opt.disabled ? 'not-allowed' : 'pointer',
                   position: 'relative', outline: 'none',
@@ -112,11 +117,11 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: 13,
-                      fontWeight: (!allowMultiple && sel) ? 650 : 450,
+                    <span style={{ fontSize: flush ? 15 : 13,
+                      fontWeight: (!allowMultiple && sel) ? 650 : (flush ? 500 : 450),
                       lineHeight: '20px',
                       color: opt.disabled ? '#b5b5b5' : '#303030',
-                      whiteSpace: 'nowrap' }}>
+                      whiteSpace: flush ? 'normal' : 'nowrap' }}>
                       {optLabel}
                     </span>
                     {opt.badge && (

@@ -1,0 +1,147 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SlideOverStories from './SlideOver.stories.jsx';
+
+<Meta title="Components/Overlays/SlideOver/Docs" />
+
+# SlideOver
+
+A right-anchored, full-height drawer (a.k.a. the **Right Slider Modal**) that slides in over a dimmed scrim. Use it for contextual side panels — an "Action Required" feed, a detail/edit panel, a filter tray — anywhere a task should sit *beside* the page rather than block it center-screen like `Modal`.
+
+It shares all of `Modal`'s accessible plumbing (focus trap, scroll lock, return focus, Escape, portal) through the same overlay hooks, so behavior stays consistent across every floating surface. The only difference is layout: a page-header title row (20px) with a full-bleed divider, a scrollable body, and an optional footer.
+
+<Canvas of={SlideOverStories.Example} />
+
+---
+
+## Placements — one shell, three edges
+
+SlideOver anchors to an edge via `placement`. The right placement is the Right Slider Modal; the left and bottom placements are the shells behind the **Menu Drawer** and **Bottom Sheet**.
+
+<Canvas of={SlideOverStories.Placements} />
+
+| `placement` | Anchors | Sizing | Backs |
+|-------------|---------|--------|-------|
+| `right` (default) | right edge, full height | `min(width, 100vw)` | Right Slider Modal |
+| `left` | left edge, full height | `min(width, 100vw)` | Menu Drawer |
+| `bottom` | bottom edge | full width, height clamps to `maxHeight` (~88vh) | Bottom Sheet |
+
+The bottom placement renders a **drag handle** (auto-on for `placement="bottom"`, or force with `dragHandle`), rounds its top corners, respects the safe-area inset, and supports **drag-down-to-close**.
+
+---
+
+## When to use
+
+- **Contextual feeds** — alerts, activity, "Action Required" lists tied to the current page.
+- **Detail / edit panels** — inspect or edit a record without navigating away.
+- **Filter & settings trays** — adjust the view, then Apply via a footer.
+
+Reach for `Modal` instead when the task is a short, blocking decision that belongs center-screen (confirmations, terms). Reach for `Popover` for lightweight, non-blocking surfaces anchored to a trigger.
+
+---
+
+## Anatomy
+
+The panel is pinned to the right edge and fills the viewport height. Top to bottom:
+
+1. **Header** — title row, `16px 24px` padding. `title` renders at 20px / 650 (heading-lg); `titleAccessory` sits beside it (e.g. a `Badge`); `actions` and the close button align right.
+2. **Divider** — a full-bleed `1px` `border-default` line separating header from body.
+3. **Body** — scrollable content region, `24px` padding (`bodyPadding`), grows to fill remaining height.
+4. **Footer** *(optional)* — right-aligned action row with a top border, mirroring `Modal`'s footer.
+
+<Canvas of={SlideOverStories.Default} />
+
+---
+
+## Title accessory & header actions
+
+<Canvas of={SlideOverStories.WithTitleAccessory} />
+
+`titleAccessory` renders inline after the title — typically a `Badge` summarizing state ("3 urgent issues"). `actions` renders before the close button for header-level buttons (e.g. a primary **Save**).
+
+<Canvas of={SlideOverStories.WithActions} />
+
+---
+
+## Footer
+
+<Canvas of={SlideOverStories.WithFooter} />
+
+Like `Modal`, the footer is a slot — the consumer supplies the buttons (typically a secondary + primary pair). Pass `footer` to render the bordered action row; omit it for a footer-less panel.
+
+---
+
+## Widths & responsiveness
+
+<Canvas of={SlideOverStories.Widths} />
+
+Set `width` (number = px, or any CSS length) to size the panel; default is `480px`. The width is internally clamped with `min(width, 100vw)`, so on phones the panel fills the screen edge-to-edge and never overflows — no separate mobile variant needed.
+
+---
+
+## Interaction states
+
+- **Open** — the panel slides in from the right via the shared `slideInRight` keyframe (`0.24s ease-out`) while the scrim fades in (`nxFadeIn`); both are skipped when the user prefers reduced motion.
+- **Focus** — focus is trapped inside the panel (`useFocusTrap`); `Tab`/`Shift+Tab` cycle within it. On close, focus returns to the trigger (`useReturnFocus`).
+- **Escape** — closes by default (`closeOnEscape`). The close button shows the brand focus ring (`#005bd3`) when keyboard-focused.
+- **Backdrop** — clicking the scrim closes by default (`closeOnBackdrop`); the check fires on `mousedown` against the backdrop itself, so a drag starting inside the panel won't dismiss it.
+- **Scroll** — background scroll is locked while open (`useScrollLock`); the body region scrolls internally on overflow.
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `open` | bool | — | Controls visibility. Renders nothing when `false`. |
+| `onClose` | fn | — | Called on Escape, backdrop click, and close button. |
+| `children` | node | — | Body content. |
+| `title` | node | — | Header title (20px / 650). |
+| `titleAccessory` | node | — | Rendered inline after the title (e.g. a `Badge`). |
+| `actions` | node | — | Header-level controls, rendered before the close button. |
+| `footer` | node | — | Footer action row; renders the bordered footer when set. |
+| `width` | number / string | `480` | Panel width. Numbers are px; clamped to `100vw`. |
+| `bodyPadding` | number | `24` | Padding of the scrollable body region. |
+| `closeOnBackdrop` | bool | `true` | Dismiss on scrim click. |
+| `closeOnEscape` | bool | `true` | Dismiss on Escape. |
+| `showCloseButton` | bool | `true` | Render the header close button. |
+| `ariaLabel` | string | — | Accessible name when there's no `title`. |
+| `ariaLabelledby` | string | — | ID of an external label element. |
+| `zIndex` | number | `1000` | Stacking order of the portal layer. |
+
+---
+
+## React
+
+```jsx
+import { SlideOver } from 'components/SlideOver/SlideOver.jsx';
+import { Btn } from 'components/Btn/Btn.jsx';
+import { Badge } from 'components/Badge/Badge.jsx';
+
+function ActionRequired({ open, onClose }) {
+  return (
+    <SlideOver
+      open={open}
+      onClose={onClose}
+      title="Action Required"
+      titleAccessory={<Badge tone="critical">3 urgent issues</Badge>}
+    >
+      …feed rows…
+    </SlideOver>
+  );
+}
+```
+
+---
+
+## Design tokens used
+
+| Token | Where |
+|-------|-------|
+| `bg-surface` `#ffffff` | Panel + footer background |
+| `border-default` `#e0e0e0` | Header divider + footer top border |
+| `text-default` `#303030` | Title |
+| `text-subdued` `#616161` | Close button icon |
+| `color-primary` `#005bd3` | Close-button focus ring |
+| `radius-sm` `8px` | Close button hit-area |
+
+The panel elevation uses Figma `shadow-xl` (`0 20px 25px -5px rgba(0,0,0,0.1)`, `0 10px 10px -5px rgba(0,0,0,0.04)`), defined locally like `Modal`'s shadow since drop-shadows aren't color tokens.

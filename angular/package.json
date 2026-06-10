@@ -4,7 +4,8 @@
   "description": "Angular delivery layer for the Nexleaf Design System. Components are template-only wrappers that emit the shared nx-* CSS classes (see src/components/**/*.css + src/tokens/tokens.css). Isolated from the React/Vite/Storybook build at the repo root.",
   "private": true,
   "scripts": {
-    "build": "ng-packagr -p projects/nexleaf-angular/ng-package.json -c projects/nexleaf-angular/tsconfig.lib.json"
+    "build": "ng-packagr -p projects/nexleaf-angular/ng-package.json -c projects/nexleaf-angular/tsconfig.lib.json && node scripts/bundle-styles.mjs",
+    "bundle:styles": "node scripts/bundle-styles.mjs"
   },
   "dependencies": {
     "@angular/common": "^18.2.0",

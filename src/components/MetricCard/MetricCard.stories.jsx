@@ -30,7 +30,7 @@ export const AllStates = {
       <div>
         <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Hover (interactive — see Interaction States)</p>
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 12,
+          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 8,
           background: '#f7f7f7',
           boxShadow: '0 1px 0 rgba(26,26,26,0.07), inset 1px 0 0 rgba(0,0,0,0.13), inset -1px 0 0 rgba(0,0,0,0.13), inset 0 -1px 0 rgba(0,0,0,0.17), inset 0 1px 0 rgba(204,204,204,0.5)',
         }}>
@@ -49,7 +49,7 @@ export const AllStates = {
       <div>
         <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Active / Pressed</p>
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 12,
+          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 8,
           background: '#f3f3f3',
           boxShadow: 'inset -1px 0 1px rgba(26,26,26,0.12), inset 1px 0 1px rgba(26,26,26,0.12), inset 0 2px 1px rgba(26,26,26,0.2)',
         }}>
@@ -80,7 +80,7 @@ export const AllStates = {
       <div>
         <p style={{ fontSize: 11, fontWeight: 500, color: '#9e9e9e', marginBottom: 6, fontFamily: 'Inter, sans-serif' }}>Focus</p>
         <div style={{
-          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 12,
+          display: 'flex', flexDirection: 'column', gap: 12, padding: 16, borderRadius: 8,
           background: '#ffffff',
           boxShadow: '0 0 0 2px #005bd3, inset 1px 0 0 rgba(0,0,0,0.13), inset -1px 0 0 rgba(0,0,0,0.13), inset 0 -1px 0 rgba(0,0,0,0.17), inset 0 1px 0 rgba(204,204,204,0.5)',
         }}>
@@ -136,7 +136,7 @@ export const InteractionStates = {
         <p style={{ fontSize: 13, color: '#616161', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>
           Click a card to filter — only one can be active at a time.
         </p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
           {CARDS.map(card => (
             <MetricCard
               key={card.id}
@@ -166,7 +166,7 @@ export const BadgeTones = {
   name: 'Badge tones',
   parameters: { layout: 'padded' },
   render: () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, maxWidth: 900, fontFamily: 'Inter, sans-serif' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12, maxWidth: 900, fontFamily: 'Inter, sans-serif' }}>
       <MetricCard title="Total Installations" metric="247" badge={{ label: '3 Info',          tone: 'info'      }} />
       <MetricCard title="Active Systems"       metric="231" badge={{ label: '231 Healthy',    tone: 'success'   }} />
       <MetricCard title="Devices Offline"      metric="12"  badge={{ label: '12 Offline',     tone: 'attention' }} />
@@ -183,7 +183,7 @@ export const Loading = {
   name: 'Loading skeleton',
   parameters: { layout: 'padded' },
   render: () => (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, maxWidth: 900 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12, maxWidth: 900 }}>
       <MetricCard loading />
       <MetricCard loading />
       <MetricCard loading />

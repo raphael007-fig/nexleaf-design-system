@@ -66,9 +66,16 @@ export function useScrollLock(active) {
 }
 
 // Trap Tab focus inside containerRef while active, and move focus into the
-// container on open (preferring [data-autofocus], else the first focusable,
-// else the container itself).
-export function useFocusTrap(active, containerRef) {
+// container on open. Targeting order:
+//   • [data-autofocus] descendant, if present (always wins)
+//   • otherwise, when initialFocus === 'container', the container itself —
+//     used by surfaces like the nav drawer where auto-focusing the first item
+//     would flash a "pressed" focus ring on a nav row the moment it opens;
+//     focusing the dialog (role=dialog, tabIndex -1, no visible ring) is the
+//     correct pattern and leaves the list visually at rest.
+//   • otherwise the first focusable (default — Modal/Popover form surfaces)
+//   • finally the container as a last resort.
+export function useFocusTrap(active, containerRef, { initialFocus = 'auto' } = {}) {
   useEffect(() => {
     if (!active) return;
     const container = containerRef.current;
@@ -77,7 +84,9 @@ export function useFocusTrap(active, containerRef) {
     // Move focus inside on the next frame so portal children are mounted.
     const raf = requestAnimationFrame(() => {
       const preferred = container.querySelector('[data-autofocus]');
-      const target = preferred || getFocusable(container)[0] || container;
+      const target = preferred
+        || (initialFocus === 'container' ? container : getFocusable(container)[0])
+        || container;
       if (target) target.focus();
     });
 
@@ -110,7 +119,7 @@ export function useFocusTrap(active, containerRef) {
       cancelAnimationFrame(raf);
       container.removeEventListener('keydown', onKeyDown);
     };
-  }, [active, containerRef]);
+  }, [active, containerRef, initialFocus]);
 }
 
 // Fire `onEscape` on the Escape key while active. Document-level so it works

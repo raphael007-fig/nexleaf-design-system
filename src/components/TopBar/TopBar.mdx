@@ -1,0 +1,104 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TopBarStories from './TopBar.stories.jsx';
+
+<Meta title="Components/Navigation/TopBar/Docs" />
+
+# TopBar
+
+**One** synchronized top-navigation system that progressively transitions desktop → tablet → mobile. It never jumps between unrelated headers — it collapses by available width, control priority, and page context, and it moves lower-priority controls **into the Menu drawer** instead of deleting them. Same icon set/sizes, same control order, same interaction states, and the same drawer destination across every breakpoint and container (web, iOS/Android, iPad).
+
+<Canvas of={TopBarStories.ProgressiveTransition} />
+
+## Control priority
+
+**Always kept:** Menu · Logo · Ask AI · Country · App switcher.
+
+**Collapse order** (as width shrinks):
+
+1. Breadcrumb collapses (Breadcrumbs default: `first · second · … · last`, with the … dropdown)
+2. Breadcrumb: **hidden**
+3. **Notification → drawer**
+4. **Profile → drawer**
+5. Final mobile bar
+
+## States
+
+| State | Width | Bar |
+|-------|-------|-----|
+| **Wide** | ≥1024 | Menu · Logo · **breadcrumb** · Ask AI · Country · Apps · Bell · Profile |
+| **Medium** | 900–1023 | Menu · Logo · **breadcrumb** · Ask AI · Country · Apps · Bell · Profile |
+| **Compact** | 768–899 | Menu · Logo · Ask AI · Country · Apps · Bell *(Profile → drawer)* |
+| **Mobile** | below 768 | Menu · Logo · Ask AI · Country · Apps *(Bell + Profile → drawer)* |
+
+The breadcrumb is the design-system **`Breadcrumbs`** component used **as-is** — its default collapse (`first · second · … · last`), default icons, and layout. The home crumb's icon comes from the trail data (same convention as the docked side-nav `trailFor` + `home`). It's hidden on compact + mobile (the page title carries context).
+
+`topBarStateForWidth(width)` is the single source of truth for the transition; `<TopBar state="…">` overrides it for docs.
+
+<Canvas of={TopBarStories.Responsive} />
+
+## Synchronization rules
+
+- **Same control order** at every breakpoint: Menu · Logo · Breadcrumb · Ask AI · Country · Apps · Bell · Profile.
+- **Same icon set & sizes**, and the **same hover / pressed / active / focused / disabled** states (inherited from the shared Toolbar controls).
+- **Ask AI** keeps the same pill identity across breakpoints.
+- **Country selector** keeps the same meaning/behaviour; **App switcher** stays in the same relative right-side position.
+- **Menu** always opens the same global navigation drawer (`MenuDrawer`).
+- Items that drop out (**Notification, Profile**) are never removed from the product — they live in the drawer, so the bar and drawer share one destination.
+
+## Breadcrumb rules
+
+- Renders the real **`Breadcrumbs`** component with **no overrides** — its default collapse, icons, and layout.
+- Default collapse: when the trail exceeds the threshold it shows `first · second · … · last`, with the **…** dropdown holding the hidden pages. Icons (e.g. the home crumb) come from the trail data.
+- A long breadcrumb is clipped inside the start region (overflow guard) so it can never overlap the centered Ask AI.
+- Breadcrumb collapses **first** (it's contextual and space-heavy); it shows on desktop / tablet and is **hidden on compact tablet and mobile**.
+- When the breadcrumb is hidden, the **page title carries the context** (Secondary `Page` title; Tertiary uses the record header).
+
+## Interaction states
+
+Every control in the bar is a **shared Toolbar subcomponent**, so they all carry the same `hover` / `pressed` / `focused` / `disabled` look at every breakpoint. The React subcomponents drive these in JS state; the Angular `nx-top-bar` reuses the same `nx-*` classes from `Toolbar.css`, where the states are real `:hover` / `:active` / `:focus-visible` / `:disabled` pseudo-classes. The bar itself doesn't restyle them — it only lays them out.
+
+<Canvas of={TopBarStories.States} />
+
+| Control | Rest | Hover | Pressed | Focused | Disabled |
+|---------|------|-------|---------|---------|----------|
+| **Menu / Apps / Bell** (`ToolbarIconButton`) | `--nx-bg-surface` + `--nx-border-light` | `--nx-bg-page` | `--nx-border-light` | `0 0 0 2px --nx-color-primary` ring | `--nx-bg-disabled` bg, `--nx-text-disabled`, `not-allowed` |
+| **Ask AI** (`ToolbarAskAiButton`) | `--nx-bg-surface` + `--nx-border-default` | `--nx-bg-surface-hover` + `--nx-border-secondary-btn` | `--nx-bg-page` | `--nx-color-primary` border + ring (also when panel `active`) | `--nx-bg-disabled` bg, `--nx-text-disabled`, `not-allowed` |
+| **Region pill** (`ToolbarRegionSelector`) | `--nx-border-light` | `--nx-border-default` | `#d2d2d2` (pressed — system value, not yet tokenized) | `0 0 0 2px --nx-color-primary` ring | transparent bg, `--nx-text-disabled`, `not-allowed` |
+| **Avatar** (`ToolbarAvatar`) | bare | `0 0 0 2px --nx-border-light` ring | — | `0 0 0 2px --nx-color-primary` ring | — |
+
+`hover` and `pressed` are live in the canvas above (point at / press a control). The **Active** column shows the persistent "open" look — the Ask AI pill keeps the focus border + ring while its panel is open (`aria-expanded`), and the menu button reflects `expanded` when its drawer is open. The `#d2d2d2` region-pressed value is the documented exception in `Toolbar.css` (no token yet); everything else maps to a token.
+
+## Loading
+
+Set `loading` to swap the **data-bearing** bits — the **breadcrumb**, the **region / country pill**, and the **avatar** — for shape-matching skeletons while the page data resolves. The menu button, logo, Ask AI button, and app switcher are static chrome, so they stay as-is. Skeletons reuse the shared `Skeleton` primitive (`--nx-bg-skeleton` `#e8e8e8`, 1.4s pulse): a ~200px breadcrumb line, an ~80px region pill (8px radius), and a 36px circular avatar — sized so the bar keeps its height and doesn't reflow when data lands. The header carries `aria-busy` while loading.
+
+<Canvas of={TopBarStories.Loading} />
+
+## Page context
+
+- **Primary / Secondary** pages use this global TopBar.
+- **Tertiary / detail** pages use the focused **record header** (`Page variant="record"`) instead of the global bar. On wider tablet/desktop a tertiary page may also show breadcrumb + record context if space allows.
+
+## Hybrid / native-safe
+
+The same bar works in mobile web, iOS/Android containers, and iPad (web or app). It pads for the **status bar and landscape notches** via `--nx-safe-top/left/right`, so controls never sit under a notch or at the device edge. No platform-specific navigation is introduced — only responsive variants of this one system.
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `onMenu` | fn | — | Opens the global drawer (menu always present). |
+| `logo` | node | leaf mark | Top-bar uses the compact leaf mark (wordmark stays in the drawer/rail). |
+| `breadcrumbs` | `{id,label}[]` | `[]` | Progressive: full → compressed → hidden. |
+| `onBreadcrumbSelect` | fn(id) | — | Crumb click. |
+| `country` | `{code,name}` | Kenya | Region selector (consistent across breakpoints). |
+| `onAskAi` / `askAiActive` | fn / bool | — | Ask AI. |
+| `onApps` / `onNotification` / `onProfile` | fn | — | App switcher / bell / avatar. |
+| `state` | `'wide' \| 'medium' \| 'compact' \| 'mobile'` | width-derived | Override for docs. |
+| `loading` | bool | `false` | Swap breadcrumb / region pill / avatar for skeletons (chrome stays). |
+| `safeArea` | bool | `true` | Status-bar / notch padding. |
+| `sticky` | bool | `false` | Stick to top. |
+
+## Design tokens used
+
+`--nx-safe-top/left/right` (native-safe) · `--nx-z-sticky` · breakpoints 768 / 900 / 1024 (`topBarStateForWidth`). Controls inherit Toolbar/Btn tokens for identical states. Loading skeletons use the `Skeleton` primitive (`--nx-bg-skeleton`).

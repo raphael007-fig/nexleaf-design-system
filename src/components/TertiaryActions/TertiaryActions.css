@@ -1,0 +1,50 @@
+/*
+ * Nexleaf Design System — TertiaryActions (state-driven record actions)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css + Btn.css (+ BottomSheet.css for the mobile sheet,
+ * + a popover for desktop) imported first.
+ *
+ * .nx-tertiary-actions          — the [Primary][More] row
+ * .nx-tertiary-actions--full    — stretch both buttons (mobile)
+ * .nx-tertiary-actions__menu    — desktop popover menu list
+ * .nx-tertiary-actions__menu-item        — a menu row
+ * .nx-tertiary-actions__menu-item--destructive — critical-tone row
+ *
+ * Interaction states: the [Primary][More] buttons are .nx-btn, so they inherit
+ * the full rest/hover/active/focus-visible/disabled set from Btn.css — nothing
+ * is restyled here. Only the desktop menu rows below carry their own
+ * hover / focus-visible states.
+ */
+
+.nx-tertiary-actions {
+  display: flex;
+  gap: var(--nx-space-2);
+}
+.nx-tertiary-actions--full { width: 100%; }
+.nx-tertiary-actions--full > .nx-btn { flex: 1 1 0; }
+
+.nx-tertiary-actions__menu { padding: var(--nx-space-1); min-width: 220px; }
+
+.nx-tertiary-actions__menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding: var(--nx-space-2) var(--nx-space-3);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-body);
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-text-default);
+  border-radius: var(--nx-radius-control);
+}
+.nx-tertiary-actions__menu-item:hover { background: var(--nx-bg-hover); }
+.nx-tertiary-actions__menu-item:focus-visible {
+  outline: none;
+  background: var(--nx-bg-hover);
+  box-shadow: var(--nx-focus-ring);
+}
+.nx-tertiary-actions__menu-item--destructive { color: var(--nx-color-critical); }

@@ -103,6 +103,8 @@ const TEXT_DEFAULT        = '#303030';
 const TEXT_SUBDUED        = '#616161';
 const TEXT_DISABLED       = '#b5b5b5';
 const GUIDE_LINE          = '#b5b5b5';
+const BORDER_LIGHT        = '#ebebeb';   // subtle tier divider (border-light token)
+const BORDER_DEFAULT      = '#e0e0e0';   // stronger divider (border-default token)
 const RIGHT_EDGE_SHADOW   = 'inset -1px 0 0 0 rgba(0,0,0,0.13)';
 const FOCUS_RING          = '0 0 0 2px #005bd3';
 const CORNER_RADIUS       = 24;
@@ -126,39 +128,40 @@ const GUIDE_COL_WIDTH = 1.5;
 // of the row, soft curve to horizontal, then a chevron arrow pointing at the
 // active label. The arrow tip lands at SVG x=17 (≈ screen x=34.25), just left
 // of the 36 px label indent so the arrow visually points AT the active text.
-const ActiveSubIndicator = () => (
-  <svg
-    width="20"
-    height="19"
-    viewBox="0 0 20 19"
-    fill="none"
-    aria-hidden="true"
-    style={{
-      position: 'absolute',
-      left: GUIDE_COL_LEFT,
-      top: 0,
-      pointerEvents: 'none',
-    }}
-  >
-    {/* L-shape: vertical from top → quadratic curve → horizontal to the arrow */}
-    <path
-      d="M0.75 0 V10 Q0.75 13.5, 4.25 13.5 H17"
-      stroke={GUIDE_LINE}
-      strokeWidth="1.5"
-      strokeLinecap="butt"
-      strokeLinejoin="round"
-    />
-    {/* Chevron arrowhead pointing right, tip at (17, 13.5) — overlapping the
-        end of the horizontal stroke so the join reads as one continuous line. */}
-    <path
-      d="M14.5 11 L17 13.5 L14.5 16"
-      stroke={GUIDE_LINE}
-      strokeWidth="1.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
+// `cy` is the vertical center of the row the arrow points at — so the tip lands
+// on the label's centerline regardless of row height (22 for the 44px touch
+// rows, 13.5 for the compact 28px rows).
+const ActiveSubIndicator = ({ touch = false }) => {
+  const cy = touch ? 22 : 13.5;
+  const h = cy + 3; // leave room for the chevron's lower arm
+  return (
+    <svg
+      width="20"
+      height={h}
+      viewBox={`0 0 20 ${h}`}
+      fill="none"
+      aria-hidden="true"
+      style={{ position: 'absolute', left: GUIDE_COL_LEFT, top: 0, pointerEvents: 'none' }}
+    >
+      {/* L-shape: vertical from top → quadratic curve → horizontal to the arrow */}
+      <path
+        d={`M0.75 0 V${cy - 3.5} Q0.75 ${cy}, 4.25 ${cy} H17`}
+        stroke={GUIDE_LINE}
+        strokeWidth="1.5"
+        strokeLinecap="butt"
+        strokeLinejoin="round"
+      />
+      {/* Chevron arrowhead pointing right, tip at (17, cy). */}
+      <path
+        d={`M14.5 ${cy - 2.5} L17 ${cy} L14.5 ${cy + 2.5}`}
+        stroke={GUIDE_LINE}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+};
 
 // Full-height vertical line rendered on every rest sub-item that sits BETWEEN
 // the expanded parent and the active sub-item — without these, selecting a
@@ -185,7 +188,7 @@ const SubItemPassthroughLine = () => (
 // (`GUIDE_COL_LEFT` / `GUIDE_COL_WIDTH`) as the pass-through line and the
 // L-curve's vertical — declared as constants on the indicator below so they
 // can't drift apart.
-const ParentExpandedStub = () => (
+const ParentExpandedStub = ({ touch = false }) => (
   <span
     aria-hidden="true"
     style={{
@@ -193,7 +196,9 @@ const ParentExpandedStub = () => (
       left: GUIDE_COL_LEFT,
       bottom: 0,
       width: GUIDE_COL_WIDTH,
-      height: 4,
+      // Reaches from the bottom of the parent's icon to the row bottom so the
+      // line stays continuous on the taller 44px touch rows.
+      height: touch ? 12 : 4,
       background: GUIDE_LINE,
       borderTopLeftRadius: 1,
       borderTopRightRadius: 1,
@@ -201,12 +206,22 @@ const ParentExpandedStub = () => (
   />
 );
 
+// Disclosure caret for a split parent row (Model 2). The label half of the row
+// navigates to the parent's page; this caret is the dedicated control that
+// expands/collapses the group WITHOUT navigating.
+const IcoCaret = ({ expanded }) => (
+  <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true"
+    style={{ transition: 'transform 0.18s ease', transform: expanded ? 'rotate(180deg)' : 'none' }}>
+    <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 // ─── NavItem (top-level) ─────────────────────────────────────────────────────
 //
-// Renders one top-level row. If `children` is provided the parent is treated
-// as a group: clicking it expands/collapses, and the children render directly
-// below. In collapsed sidebar mode only the icon is shown and children are
-// hidden — clicking the icon falls through to `onSelect` (or just expands
+// Renders one top-level row. Model 2 (split control): the label navigates to
+// the item's page; a parent's children are toggled by a separate caret button,
+// so a parent is a first-class page AND a group. In collapsed sidebar mode only
+// the icon shows; clicking it navigates (expand the whole rail to browse children).
 // behavior is suppressed since the labels aren't visible anyway).
 
 function NavItem({
@@ -220,114 +235,131 @@ function NavItem({
   onCollapsedChange,
   rowIndex,
   registerRow,
+  touch = false,
 }) {
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [caretFocused, setCaretFocused] = useState(false);
   const hasChildren = !!(item.children && item.children.length > 0);
 
-  const handleClick = (e) => {
-    e.preventDefault();
-    if (hasChildren) {
-      if (collapsed) {
-        // Clicking a parent-with-children in collapsed mode auto-expands the
-        // entire sidebar AND ensures the group itself is open — so the user
-        // immediately sees the sub-items they came to look for. We only call
-        // `onToggleExpand` when the group is currently closed; if it was
-        // already open (from a previous expanded session) we leave it alone
-        // so toggle doesn't accidentally close it.
-        if (onCollapsedChange) onCollapsedChange(false);
-        if (!expanded) onToggleExpand(item.id);
-      } else {
-        onToggleExpand(item.id);
-      }
-    }
+  // Model 2: the label always navigates (a parent is a page too). The caret —
+  // a separate control rendered only for expanded parents — toggles children
+  // without navigating, so the drawer stays open while browsing.
+  const navigate = (e) => {
+    if (e) e.preventDefault();
     if (item.onClick) item.onClick();
     if (onSelect) onSelect(item.id);
   };
 
-  // Parents (with children) and leaves both get the selected pill when active.
-  // When a sub-item is the active one, `activeItemId` !== `item.id` for the
-  // parent so `isActive` is false and the parent stays unhighlighted — which
-  // is correct: the visual emphasis moves down to the sub-item. The parent
-  // only "wins" the highlight when it itself is the active id (e.g. after a
-  // collapsed-icon click that selects the parent as the landing destination).
   const isSelected = isActive;
+  const isSplitParent = hasChildren && !collapsed;      // expanded parent → label + caret
   const showStub = hasChildren && expanded && !collapsed;
+  const rowBg = isSelected ? ITEM_BG_SELECTED : hover ? ITEM_BG_HOVER : 'transparent';
 
   return (
     <li style={{ listStyle: 'none', position: 'relative' }}>
       <div style={{ padding: '0 12px' }}>
-        <button
-          type="button"
-          ref={(el) => registerRow(rowIndex, el)}
-          data-nav-row-index={rowIndex}
-          onClick={handleClick}
+        <div
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          aria-current={isSelected ? 'page' : undefined}
-          aria-expanded={hasChildren && !collapsed ? expanded : undefined}
-          title={collapsed ? item.label : undefined}
           style={{
             position: 'relative',
             display: 'flex',
             alignItems: 'center',
-            gap: collapsed ? 0 : 8,
-            width: '100%',
-            // Vertical padding is identical in both states (4 top / 4 bottom)
-            // so each row is exactly 28 px tall whether the rail is collapsed
-            // or expanded. Without this, the +6 collapsed padding adds 4 px
-            // per row and the whole stack shifts down on collapse, breaking
-            // the visual continuity between the two layouts.
-            padding: collapsed ? '4px' : '4px 4px 4px 8px',
             borderRadius: ITEM_RADIUS,
-            border: 'none',
-            background: isSelected
-              ? ITEM_BG_SELECTED
-              : hover ? ITEM_BG_HOVER : 'transparent',
-            color: TEXT_DEFAULT,
-            cursor: 'pointer',
-            fontFamily: 'Inter, sans-serif',
-            fontSize: 13,
-            fontWeight: isSelected ? 650 : 550,
-            letterSpacing: isSelected ? '-0.065px' : 0,
-            lineHeight: '20px',
-            textAlign: 'left',
-            outline: 'none',
-            boxShadow: focused ? FOCUS_RING : undefined,
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            transition: 'background 0.12s, box-shadow 0.12s',
+            background: rowBg,
+            minHeight: touch ? 44 : undefined,
+            transition: 'background 0.12s',
           }}
         >
-          {item.icon && (
-            <span
-              aria-hidden="true"
+          {/* Label — navigates to the item's page (parent or leaf). */}
+          <button
+            type="button"
+            ref={(el) => registerRow(rowIndex, el)}
+            data-nav-row-index={rowIndex}
+            onClick={navigate}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            aria-current={isSelected ? 'page' : undefined}
+            title={collapsed ? item.label : undefined}
+            style={{
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              gap: collapsed ? 0 : 8,
+              flex: '1 1 auto',
+              minWidth: 0,
+              padding: collapsed ? '4px' : (touch ? '0 8px' : '4px 4px 4px 8px'),
+              minHeight: touch ? 44 : undefined,
+              borderRadius: ITEM_RADIUS,
+              border: 'none',
+              background: 'transparent',
+              color: TEXT_DEFAULT,
+              cursor: 'pointer',
+              fontFamily: 'Inter, sans-serif',
+              fontSize: 13,
+              fontWeight: isSelected ? 650 : 550,
+              letterSpacing: isSelected ? '-0.065px' : 0,
+              lineHeight: '20px',
+              textAlign: 'left',
+              outline: 'none',
+              boxShadow: focused ? FOCUS_RING : undefined,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              transition: 'box-shadow 0.12s',
+            }}
+          >
+            {item.icon && (
+              <span
+                aria-hidden="true"
+                style={{
+                  width: 20, height: 20,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                  color: TEXT_DEFAULT,
+                }}
+              >
+                {item.icon}
+              </span>
+            )}
+            {!collapsed && (
+              <span
+                style={{
+                  flex: '1 0 0',
+                  minWidth: 0,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {item.label}
+              </span>
+            )}
+            {showStub && <ParentExpandedStub touch={touch} />}
+          </button>
+
+          {/* Caret — expands/collapses the group without navigating. */}
+          {isSplitParent && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onToggleExpand(item.id); }}
+              onFocus={() => setCaretFocused(true)}
+              onBlur={() => setCaretFocused(false)}
+              aria-label={`${expanded ? 'Collapse' : 'Expand'} ${typeof item.label === 'string' ? item.label : 'section'}`}
+              aria-expanded={expanded}
               style={{
-                width: 20, height: 20,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                flexShrink: 0,
-                color: TEXT_DEFAULT,
+                flexShrink: 0, width: touch ? 44 : 28, alignSelf: 'stretch',
+                minHeight: touch ? 44 : 28,
+                border: 'none', background: 'transparent', color: TEXT_SUBDUED,
+                cursor: 'pointer', borderRadius: ITEM_RADIUS, outline: 'none', marginRight: 2,
+                boxShadow: caretFocused ? FOCUS_RING : undefined,
+                transition: 'box-shadow 0.12s',
               }}
             >
-              {item.icon}
-            </span>
+              <IcoCaret expanded={expanded} />
+            </button>
           )}
-          {!collapsed && (
-            <span
-              style={{
-                flex: '1 0 0',
-                minWidth: 0,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {item.label}
-            </span>
-          )}
-          {showStub && <ParentExpandedStub />}
-        </button>
+        </div>
       </div>
     </li>
   );
@@ -337,7 +369,7 @@ function NavItem({
 
 function NavSubItem({
   child, isActive, isOnPathToActive = false, onSelect,
-  rowIndex, registerRow,
+  rowIndex, registerRow, touch = false,
 }) {
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -370,8 +402,9 @@ function NavSubItem({
             width: '100%',
             paddingLeft: 36,
             paddingRight: 4,
-            paddingTop: 4,
-            paddingBottom: 4,
+            paddingTop: touch ? 0 : 4,
+            paddingBottom: touch ? 0 : 4,
+            minHeight: touch ? 44 : undefined,
             borderRadius: ITEM_RADIUS,
             border: 'none',
             background: isActive
@@ -403,7 +436,7 @@ function NavSubItem({
           >
             {child.label}
           </span>
-          {isActive && <ActiveSubIndicator />}
+          {isActive && <ActiveSubIndicator touch={touch} />}
           {!isActive && isOnPathToActive && <SubItemPassthroughLine />}
         </button>
       </div>
@@ -485,6 +518,18 @@ export function SideNavigation({
   ariaLabel = 'Main navigation',
   loading = false,
   skeletonRows = 6,
+  // Comfortable, even 44px rows for touch surfaces (drawer on mobile / tablet).
+  // The docked desktop rail leaves this off (compact 28px rows).
+  touch = false,
+  // Items pinned at the bottom (e.g. Notification, Profile) — rendered with the
+  // SAME NavItem rows/states as the main list, above the `footer` slot.
+  footerItems = [],
+  // When true, the primary list scrolls in the available space while the logo
+  // stays at the top and footerItems + footer stay pinned to the BOTTOM. Used by
+  // the MenuDrawer so the Secondary/Tertiary tiers are always anchored at the
+  // bottom regardless of how long the nav tree is. The docked rail leaves this
+  // off (the whole rail scrolls as one).
+  stickyFooter = false,
 }) {
   // Compute which group(s) contain the active sub-item — these auto-expand.
   // A group whose child is currently active can't be "hidden" by the user;
@@ -494,7 +539,10 @@ export function SideNavigation({
     if (!activeItemId) return [];
     const hits = [];
     for (const it of items) {
-      if (it.children && it.children.some(c => c.id === activeItemId)) {
+      if (!it.children) continue;
+      // Expand when a CHILD is active OR when the PARENT itself is the active
+      // page (parents are pages too — show their sub-items on their own page).
+      if (it.id === activeItemId || it.children.some(c => c.id === activeItemId)) {
         hits.push(it.id);
       }
     }
@@ -681,7 +729,8 @@ export function SideNavigation({
       onKeyDown={handleKeyDown}
       style={{
         width: currentWidth,
-        minHeight: '100%',
+        minHeight: stickyFooter ? undefined : '100%',
+        height: stickyFooter ? '100%' : undefined,
         background: SIDEBAR_BG,
         borderTopRightRadius: collapsed ? 0 : CORNER_RADIUS,
         borderBottomRightRadius: collapsed ? 0 : CORNER_RADIUS,
@@ -696,7 +745,7 @@ export function SideNavigation({
         overflow: 'hidden',
       }}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, ...(stickyFooter ? { flex: '1 1 auto', minHeight: 0 } : null) }}>
         {(logo || loading) && (
           <div
             style={{
@@ -738,7 +787,7 @@ export function SideNavigation({
             ))}
           </ul>
         ) : (
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, ...(stickyFooter ? { overflowY: 'auto', flex: '1 1 auto', minHeight: 0 } : null) }}>
             {(() => {
               // Walk items + (when expanded) children, assigning each row a
               // stable rowIndex matching the `visibleRows` registry above.
@@ -761,6 +810,7 @@ export function SideNavigation({
                     onCollapsedChange={onCollapsedChange}
                     rowIndex={myIndex}
                     registerRow={registerRow}
+                    touch={touch}
                   />
                 );
                 if (isExpandedHere) {
@@ -781,6 +831,7 @@ export function SideNavigation({
                               onSelect={handleSelect}
                               rowIndex={childIndex}
                               registerRow={registerRow}
+                              touch={touch}
                             />
                           );
                         })}
@@ -795,9 +846,36 @@ export function SideNavigation({
         )}
       </div>
 
-      {footer && (
-        <div style={{ padding: collapsed ? '0 12px' : '0 12px' }}>
-          {footer}
+      {(footerItems.length > 0 || footer) && (
+        <div style={stickyFooter ? { flexShrink: 0 } : undefined}>
+          {footerItems.length > 0 && (
+            <>
+              {/* Tier divider: pinned footer items (e.g. Notification / Profile)
+                  are a Secondary tier, visually separated from the primary nav. */}
+              {items.length > 0 && (
+                <div aria-hidden="true" style={{ height: 1, background: BORDER_DEFAULT, margin: '8px 16px' }} />
+              )}
+              <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {footerItems.map((item) => (
+                <NavItem
+                  key={item.id}
+                  item={item}
+                  collapsed={collapsed}
+                  isActive={activeItemId === item.id}
+                  activeItemId={activeItemId}
+                  expanded={false}
+                  onToggleExpand={() => {}}
+                  onSelect={handleSelect}
+                  onCollapsedChange={onCollapsedChange}
+                  rowIndex={-1}
+                  registerRow={() => {}}
+                  touch={touch}
+                />
+              ))}
+              </ul>
+            </>
+          )}
+          {footer && <div style={{ padding: '0 12px' }}>{footer}</div>}
         </div>
       )}
     </nav>

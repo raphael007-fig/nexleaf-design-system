@@ -1,0 +1,90 @@
+/*
+ * Nexleaf Design System — EquipmentCard (mobile list card)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css (+ Badge styles for the status chips) imported first.
+ *
+ * .nx-equipment-card            — card surface (whole-card tappable)
+ * .nx-equipment-card--interactive — adds the brand hover ring + pointer
+ * .nx-equipment-card__thumb     — 48px image/icon tile
+ * .nx-equipment-card__body      — content column
+ * .nx-equipment-card__name      — model/name (truncates)
+ * .nx-equipment-card__meta      — type · serial line
+ * .nx-equipment-card__facility  — facility/location line (with pin)
+ * .nx-equipment-card__statuses  — wrap of Health / Maintenance / Lifecycle badges
+ * .nx-equipment-card__chevron   — trailing chevron (interactive only)
+ */
+
+.nx-equipment-card {
+  box-sizing: border-box;
+  display: flex;
+  gap: var(--nx-space-3);
+  align-items: flex-start;
+  width: 100%;
+  padding: var(--nx-space-3);
+  background: var(--nx-bg-surface);
+  border: 1px solid var(--nx-border-default);
+  border-radius: var(--nx-radius-sm);
+  text-align: left;
+  font-family: var(--nx-font-family);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.nx-equipment-card--interactive { cursor: pointer; }
+.nx-equipment-card--interactive:hover,
+.nx-equipment-card--interactive:focus-visible,
+.nx-equipment-card--hover {
+  border-color: var(--nx-color-primary);
+  box-shadow: 0 0 0 1px var(--nx-color-primary-hover-shadow);
+  outline: none;
+}
+
+.nx-equipment-card__thumb {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--nx-radius-sm);
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--nx-bg-surface-active);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nx-equipment-card__thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.nx-equipment-card__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);
+}
+
+.nx-equipment-card__name-row { display: flex; align-items: flex-start; gap: var(--nx-space-2); }
+.nx-equipment-card__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--nx-font-size-body);
+  font-weight: 650;
+  color: var(--nx-text-default);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nx-equipment-card__chevron { flex-shrink: 0; margin-top: 1px; color: var(--nx-text-subdued); }
+
+.nx-equipment-card__meta,
+.nx-equipment-card__facility {
+  font-size: var(--nx-font-size-label);
+  font-weight: var(--nx-font-weight-regular);
+  color: var(--nx-text-subdued);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nx-equipment-card__facility { display: inline-flex; align-items: center; gap: var(--nx-space-1); }
+
+.nx-equipment-card__statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--nx-space-1);
+}

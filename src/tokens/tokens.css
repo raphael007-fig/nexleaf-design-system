@@ -193,4 +193,47 @@
 
   /* Focus ring — applied as an additional box-shadow layer */
   --nx-focus-ring: 0 0 0 2px #005bd3;
+
+  /* ─────────────────────────────────────────────
+   * ELEVATION — OVERLAY SURFACES
+   * Drop shadows for floating surfaces (slide-over, drawer, bottom sheet).
+   * Previously inlined inside Modal/SlideOver; promoted to tokens so every
+   * overlay reads identically.
+   * ───────────────────────────────────────────── */
+  --nx-shadow-overlay: 0 20px 25px -5px rgba(0, 0, 0, 0.10),
+                       0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  /* Bottom sheet rises from the bottom edge, so the shadow casts upward. */
+  --nx-shadow-sheet:   0 -8px 24px -6px rgba(0, 0, 0, 0.18);
+
+  /* ─────────────────────────────────────────────
+   * Z-INDEX SCALE
+   * Single source of truth for stacking. Drawer & overlay share a layer;
+   * the bottom sheet sits above the drawer; toasts top everything.
+   * ───────────────────────────────────────────── */
+  --nx-z-sticky:  100;   /* Sticky top bars / sticky CTAs */
+  --nx-z-drawer:  1000;  /* Menu drawer + its scrim */
+  --nx-z-overlay: 1000;  /* Modal / slide-over + scrim */
+  --nx-z-sheet:   1100;  /* Bottom sheet (above drawer) */
+  --nx-z-toast:   1200;  /* Toasts / snackbars (top-most) */
+
+  /* ─────────────────────────────────────────────
+   * RESPONSIVE SHELL RULES
+   * Header heights, drawer width, sheet height, and tap targets used by the
+   * responsive shell, top bar, drawer, and bottom sheet.
+   * ───────────────────────────────────────────── */
+  --nx-topbar-h-mobile:  48px;   /* Global top bar on phones */
+  --nx-topbar-h-desktop: 56px;   /* Global top bar on tablet/desktop */
+  --nx-drawer-width-max:  320px; /* Menu drawer max width (mobile 84–88vw, capped here) */
+  --nx-sheet-max-h:       88vh;  /* Bottom sheet max height */
+  --nx-tap-target:        44px;  /* WCAG minimum interactive target */
+  --nx-tap-target-comfortable: 48px; /* Preferred interactive target */
+
+  /* ─────────────────────────────────────────────
+   * SAFE AREA (mobile / wrapped-app insets)
+   * Fall back to 0px on browsers/devices without notches.
+   * ───────────────────────────────────────────── */
+  --nx-safe-top:    env(safe-area-inset-top, 0px);
+  --nx-safe-right:  env(safe-area-inset-right, 0px);
+  --nx-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --nx-safe-left:   env(safe-area-inset-left, 0px);
 }

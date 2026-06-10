@@ -1,0 +1,238 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as CellStories from './Cell.stories.jsx';
+
+<Meta title="Components/Lists/Cell/Docs" />
+
+# Cell
+
+A composable list row for list and table-of-contents surfaces. Each cell pairs an optional icon tile with a title, an optional title badge, and a short description, then ends with a single trailing affordance — a badge, a **View** button, a radio, a toggle, or a forward chevron. Cells are `64px` tall, use the shadow-100 border treatment, and an `8px` border radius (`radius-sm`).
+
+<Canvas of={CellStories.AllStates} />
+
+---
+
+## When to use
+
+- **Selectable lists** — a radio per row for single-select pickers (region, facility).
+- **Settings rows** — a toggle per row for on/off preferences.
+- **Navigable lists** — a chevron (or whole-row click) routing to a detail screen.
+- **Summary rows** — a trailing badge count or a **View** button for a sub-resource.
+
+Every slot is optional, so one component covers icon-only, title-only, and rich rows.
+
+---
+
+## Interaction states
+
+<Canvas of={CellStories.Hover} />
+
+Pass `onClick` (React) / set `interactive` + handle `cellClick` (Angular) to make the whole row a button. On hover/focus the background switches to `#f7f7f7` (`bg-surface-hover`). A trailing button, toggle, or radio stops propagation, so activating it never double-fires the row click. Force the hover look in docs with `state="hover"`.
+
+---
+
+## Loading
+
+<Canvas of={CellStories.LoadingList} />
+
+Set `loading` to render a shape-matching skeleton in place of the row content: a 32px icon-tile block, two text lines (title + description), and a trailing block — all inside the same `64px` row so the list doesn't reflow when data arrives. The skeleton reuses the shared pulse (`bg-skeleton` `#e8e8e8`, 1.4s) from the `Skeleton` primitive.
+
+Pass `hasIcon={false}` (React) / `[hasIcon]="false"` (Angular) to drop the icon-tile block for icon-less rows. Stack several `loading` cells to placeholder a whole list.
+
+```jsx
+// Placeholder a 3-row list while data loads
+{loading
+  ? [0, 1, 2].map((i) => <Cell key={i} loading />)
+  : rows.map((r) => <Cell key={r.id} {...r} />)}
+```
+
+---
+
+## Anatomy
+
+### Row container
+| Property | Value | Token |
+|----------|-------|-------|
+| Background | `#ffffff` | `bg-surface` |
+| Background (hover) | `#f7f7f7` | `bg-surface-hover` |
+| Border radius | `8px` | `radius-sm` |
+| Padding | `12px` | `space-3` |
+| Gap (slots) | `8px` | `space-2` |
+| Min height | `64px` | — |
+| Shadow | shadow-100 | — |
+
+### Icon tile
+| Property | Value | Token |
+|----------|-------|-------|
+| Size | `32×32px` | — |
+| Background | `#cdfee1` | `bg-success` |
+| Border radius | `6px` | `radius-control` |
+| Inner icon | `20×20px` | — |
+
+### Text
+| Part | Size | Weight | Color | Token |
+|------|------|--------|-------|-------|
+| Title | 14px | 650 | `#303030` | `text-default` |
+| Description | 13px | 450 | `#616161` | `text-subdued` |
+
+The title block grows to fill the row, pushing the trailing control to the far edge. The title truncates with an ellipsis; the description wraps. Title → description gap is `2px`; title → title-badge gap is `10px`.
+
+The trailing **View** button reuses the secondary, small `Btn`; the trailing badge reuses the default-tone `Badge`; the controls reuse `Toggle` and `RadioButton` (both label-less).
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `icon` | node | — | Glyph rendered inside the 32px tile. In Angular, project with `[icon]`. |
+| `iconTone` | `'success' \| 'critical' \| 'warning' \| 'info' \| 'neutral'` | `'success'` | Soft tint of the icon tile. |
+| `title` | node / string | — | Row title. |
+| `titleBadge` | node / string | — | Small badge beside the title. String → default-tone `Badge`. |
+| `description` | node / string | — | Supporting text. |
+| `badge` | node / string | — | Trailing badge. String → default-tone `Badge`. |
+| `buttonLabel` | string | — | Renders a trailing secondary button when set. |
+| `onButtonClick` / `buttonClick` | fn | — | Trailing button click. |
+| `hasRadioButton` | bool | `false` | Renders a trailing radio (React). |
+| `radioChecked` / `onRadioChange` | bool / fn | — | Radio state (React). |
+| `hasToggle` | bool | `false` | Renders a trailing toggle (React). |
+| `toggleChecked` / `onToggleChange` | bool / fn | — | Toggle state (React). |
+| `hasChevron` | bool | `false` | Renders a trailing forward chevron. |
+| `onClick` / `cellClick` | fn | — | Whole-row click (adds interactive hover). |
+| `state` | `'default' \| 'hover'` | `'default'` | Force the hover background. |
+| `loading` | bool | `false` | Render a shape-matching skeleton instead of the row content. |
+| `hasIcon` | bool | `true` (skeleton) | When `loading`, controls whether the icon-tile skeleton shows. |
+| `ariaLabel` | string | — | Accessible name when the row is interactive. |
+
+> In Angular, project a toggle / radio / custom control into the `trailing` slot and set `hasTrailing` (the convenience `hasRadioButton` / `hasToggle` inputs are React-only).
+
+---
+
+## React
+
+```jsx
+import { Cell } from 'components/Cell/Cell.jsx';
+
+// Navigable row — whole card clickable, trailing chevron
+<Cell
+  icon={<ClipboardIcon />}
+  title="Equipment Manual"
+  description="Cold chain handling & storage"
+  hasChevron
+  onClick={() => goTo('/manuals/coldchain')}
+  ariaLabel="Equipment Manual"
+/>
+
+// Selectable row — radio
+<Cell
+  title="North Kenya"
+  description="Lodwar County Hospital"
+  hasRadioButton
+  radioChecked={selected === 'north'}
+  onRadioChange={() => setSelected('north')}
+/>
+
+// Settings row — toggle
+<Cell
+  icon={<BellIcon />}
+  title="Email notifications"
+  description="Alerts when a reading breaches range"
+  hasToggle
+  toggleChecked={enabled}
+  onToggleChange={setEnabled}
+/>
+
+// Summary row — trailing button
+<Cell
+  icon={<LoggerIcon />}
+  title="Associated Component"
+  description="Data Logger · ColdTrace G3"
+  buttonLabel="View"
+  onButtonClick={() => openComponent('EQ-10021')}
+/>
+```
+
+---
+
+## CSS classes (non-React stacks)
+
+```html
+<!-- Navigable row with icon + chevron -->
+<div class="nx-cell">
+  <div class="nx-cell__icon"><!-- 20px icon --></div>
+  <div class="nx-cell__body">
+    <div class="nx-cell__title-row">
+      <span class="nx-cell__title">Equipment Manual</span>
+      <span class="nx-badge nx-badge--default">New</span>
+    </div>
+    <span class="nx-cell__description">Cold chain handling &amp; storage</span>
+  </div>
+  <div class="nx-cell__trailing">
+    <svg class="nx-cell__chevron" width="20" height="20" viewBox="0 0 20 20" fill="none">
+      <path d="M7.5 5l5 5-5 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+</div>
+
+<!-- Interactive whole-row -->
+<div class="nx-cell nx-cell--interactive" role="button" tabindex="0"> … </div>
+```
+
+Requires `tokens.css` + `Badge.css` + `Btn.css` (for the trailing badge / button) + `Cell.css`. Add `Skeleton.css` when using the `loading` state.
+
+---
+
+## Angular
+
+```ts
+import { NxCellModule } from '@nexleaf/angular';
+```
+
+```html
+<!-- Navigable row — whole row clickable -->
+<nx-cell
+  title="Equipment Manual"
+  description="Cold chain handling & storage"
+  [hasIcon]="true"
+  [hasChevron]="true"
+  [interactive]="true"
+  ariaLabel="Equipment Manual"
+  (cellClick)="goTo('/manuals/coldchain')"
+>
+  <svg icon><!-- 20px icon --></svg>
+</nx-cell>
+
+<!-- Summary row — trailing button -->
+<nx-cell
+  title="Associated Component"
+  description="Data Logger · ColdTrace G3"
+  [hasIcon]="true"
+  buttonLabel="View"
+  (buttonClick)="openComponent('EQ-10021')"
+>
+  <svg icon><!-- icon --></svg>
+</nx-cell>
+
+<!-- Settings row — project the toggle into the trailing slot -->
+<nx-cell title="Email notifications" description="Alerts on breach" [hasTrailing]="true">
+  <nx-toggle trailing [checked]="enabled" (change)="enabled = $event"></nx-toggle>
+</nx-cell>
+```
+
+---
+
+## Design tokens used
+
+| Token | Where |
+|-------|-------|
+| `bg-surface` `#ffffff` | Row background |
+| `bg-surface-hover` `#f7f7f7` | Interactive hover background |
+| `bg-success` `#cdfee1` | Icon tile background |
+| `color-success` `#12b76a` | Icon glyph (demo) |
+| `text-default` `#303030` | Title |
+| `text-subdued` `#616161` | Description, chevron |
+| `radius-sm` `8px` | Row corners |
+| `radius-control` `6px` | Icon tile corners |
+| `space-3` `12px` | Row padding |
+| `space-2` `8px` | Slot gap |
+| `.nx-badge--default` | Trailing / title badge |
+| `.nx-btn--secondary` / `.nx-btn--sm` | View button |

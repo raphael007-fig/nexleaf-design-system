@@ -1,0 +1,78 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TertiaryActionsStories from './TertiaryActions.stories.jsx';
+
+<Meta title="Patterns/Responsive/TertiaryActions/Docs" />
+
+# TertiaryActions
+
+The action pattern for a tertiary (record/detail) page. It always renders **exactly two controls** — a contextual **primary** action + a **More** button — and the primary action is **driven by equipment state**, never hardcoded to Edit Information. When the equipment has an issue, the primary action guides the user toward resolving or understanding it.
+
+<Canvas of={TertiaryActionsStories.Mobile} />
+
+## State → primary action
+
+| State | Primary action | More |
+|-------|----------------|------|
+| **Functional** | Edit Information | View Summary · Create Service Request · View Plot · View Daily Summary · Assign QR Code |
+| **Faulty** | Create Service Request | Edit Information · View Open Issues · View Plot · View Daily Summary · Assign QR Code |
+| **Unknown** | View Monitoring Issue | Edit Information · Create Service Request · View Plot · View Daily Summary · Assign QR Code |
+| **Decommissioning** | Review Decommissioning | Edit Information · Create Service Request · View History · Export Record |
+
+`Edit Information` is primary **only** when the equipment is functional (or no more urgent operational action is needed). Otherwise the primary leads to the issue.
+
+<Canvas of={TertiaryActionsStories.Map} />
+
+## Responsive More
+
+- **Mobile** → More opens a `BottomSheet` (drag handle, tap-out/Escape, 48px rows).
+- **Desktop / wide tablet** → More opens a `Popover` menu.
+
+The two-button pattern (primary + More) is preserved on mobile regardless of how many actions exist; overflow goes into the sheet.
+
+<Canvas of={TertiaryActionsStories.Desktop} />
+
+## Interaction states
+
+Both controls are plain `Btn` instances, so they don't define their own interaction states — they **inherit** the full rest / hover / pressed / focus / disabled set from the shared button. There's no bespoke styling on the row itself.
+
+| State | Primary action (`variant="primary"`) | More (`variant="secondary"`, disclosure) |
+|-------|---------------------------------------|-------------------------------------------|
+| **Rest** | Brand-blue fill `--nx-color-primary`, `--nx-text-on-primary` label | White `--nx-bg-surface`, `--nx-text-default` label + caret, rest inset border |
+| **Hover** | `--nx-color-primary-hover` fill | `--nx-bg-input-focus` fill, raised inset border |
+| **Pressed** | `--nx-color-primary-pressed` fill + inset top shadow | Pressed `#cccccc` fill + inset top shadow |
+| **Focus** | Inset-white + outer-dark ring (visible against blue) over the rest shadow | `--nx-focus-ring` over the rest inset border |
+| **Disabled** | `--nx-bg-disabled` fill, `--nx-text-disabled` label, `cursor: not-allowed` | Same disabled treatment |
+
+Hover, pressed, and focus are **live-only** — they appear on real pointer/keyboard input and aren't forced via a prop (the component intentionally exposes no forced-state knob, matching `Btn`). The story below pins the rest pattern (interact with it to see the live states) alongside the one static state worth documenting, **disabled**.
+
+<Canvas of={TertiaryActionsStories.States} />
+
+The desktop More menu rows (`Popover`) highlight on hover with `--nx-bg-hover` and use `--nx-color-critical` for destructive rows; in the shared CSS layer they also take `--nx-focus-ring` on keyboard focus.
+
+## Grouped overflow
+
+If the action list grows, pass `groups` to organize the mobile sheet by purpose — **Record / Monitoring / Issues / Lifecycle** — with destructive actions visually separated (see BottomSheet).
+
+## API
+
+| Export | Notes |
+|--------|-------|
+| `TertiaryActions` | The `[Primary][More]` renderer. |
+| `TERTIARY_ACTION_MAP` | The canonical state → `{ primary, more }` map. |
+| `getTertiaryActions(state)` | Returns `{ primary, more }` for a state (no rendering). |
+
+### Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `state` | `'functional' \| 'faulty' \| 'unknown' \| 'decommissioning'` | — | Equipment state (aliases: `active`→functional, `decommissioned`/`approaching decommissioning`→decommissioning). |
+| `onAction` | fn(id) | — | Fired with the action id for primary and More items. |
+| `mobile` | bool | `useIsMobile()` | Override the responsive switch. |
+| `groups` | `{title?, actions}[]` | — | Grouped overflow for the mobile sheet. |
+| `moreLabel` | string | `'More'` | Label for the More button. |
+| `primaryVariant` | Btn variant | `'primary'` | Primary button variant. |
+| `fullWidth` | bool | `mobile` | Stretch both buttons to fill (mobile). |
+
+## Design tokens used
+
+Buttons via `Btn` — primary states `--nx-color-primary` / `--nx-color-primary-hover` / `--nx-color-primary-pressed`, secondary states `--nx-bg-surface` / `--nx-bg-input-focus`, disabled `--nx-bg-disabled` + `--nx-text-disabled`, focus `--nx-focus-ring` · sheet via `BottomSheet` · popover via `Popover` · menu rows `--nx-bg-hover` (hover) + `--nx-focus-ring` (focus) + `--nx-color-critical` (destructive rows).

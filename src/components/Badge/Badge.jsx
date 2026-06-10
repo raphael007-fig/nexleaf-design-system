@@ -156,14 +156,21 @@ export const STATUS_BADGE_MAP = {
   locked:         { tone: 'default',   label: 'Locked' },
   critical:       { tone: 'critical',  label: 'Critical' },
   info:           { tone: 'info',      label: 'Info' },
-  // equipment domain
+  // equipment domain — health
   active:                { tone: 'success',  label: 'Active' },
+  functional:            { tone: 'success',  label: 'Functional' },
   unknown:               { tone: 'default',  label: 'Unknown' },
   decommissioned:        { tone: 'warning',  label: 'Decommissioned' },
   faulty:                { tone: 'critical', label: 'Faulty' },
+  // equipment domain — maintenance
   'under maintenance':   { tone: 'info',     label: 'Under Maintenance' },
   'under-maintenance':   { tone: 'info',     label: 'Under Maintenance' },
   maintenance:           { tone: 'info',     label: 'Under Maintenance' },
+  upcoming:              { tone: 'attention',label: 'Upcoming' },
+  overdue:               { tone: 'critical', label: 'Overdue' },
+  // equipment domain — lifecycle
+  'approaching decommissioning': { tone: 'warning', label: 'Approaching Decommissioning' },
+  'approaching-decommissioning': { tone: 'warning', label: 'Approaching Decommissioning' },
 };
 
 // StatusBadge — semantic wrapper over <Badge>. Accepts a `status` key (any key

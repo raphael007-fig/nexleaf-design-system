@@ -1,11 +1,11 @@
 {
   "name": "@nexleaf/angular",
   "version": "1.0.0",
-  "description": "Angular components for the Nexleaf Design System. Render the shared nx-* CSS classes; import tokens.css + the component stylesheets from @nexleaf/design-system in your app for styling.",
+  "description": "Angular components for the Nexleaf Design System. Self-contained styling — import the bundled stylesheet once: `@nexleaf/angular/styles.css` (tokens + all nx-* component CSS), or `@nexleaf/angular/tokens.css` for just the design tokens.",
   "peerDependencies": {
     "@angular/common": "^18.2.0",
     "@angular/core": "^18.2.0",
     "@angular/forms": "^18.2.0"
   },
-  "sideEffects": false
+  "sideEffects": ["*.css"]
 }

@@ -117,3 +117,106 @@ export class NxCardLayoutType4Component {
   @Input() addedBy?: string;
   @Input() contactNumber?: string;
 }
+
+export type NxCardTone = 'default' | 'critical';
+
+/**
+ * nx-card-layout-type6 — header / action card.
+ *
+ * Header strip with a leading icon + title + optional badge on the left and an
+ * optional action button on the top right; the body is projected content
+ * (typically a row/stack of <nx-cell>s). Set `tone="critical"` to tint the card
+ * edge red (the "Immediate Action" alert card). Project the header icon into the
+ * `icon` slot and the body into the default slot:
+ *
+ *   <nx-card-layout-type6 tone="critical" title="Action Required"
+ *     badge="5 Urgent Issues" actionLabel="View All Issues"
+ *     (action)="goTo('/issues')">
+ *     <svg icon>…</svg>
+ *     <nx-cell …></nx-cell>
+ *     <nx-cell …></nx-cell>
+ *   </nx-card-layout-type6>
+ */
+@Component({
+  selector: 'nx-card-layout-type6',
+  standalone: false,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <!-- Loading skeleton — header + Cell-row placeholders (requires Skeleton.css). -->
+    <div
+      class="nx-card nx-card--type6 nx-card--loading"
+      [class.nx-card--critical]="tone === 'critical'"
+      *ngIf="loading; else content"
+      aria-busy="true"
+      aria-label="Loading card"
+    >
+      <div class="nx-card__head nx-card__head--action">
+        <div class="nx-card__head-lead">
+          <span class="nx-skeleton nx-card__sk-head-icon"></span>
+          <span class="nx-skeleton nx-card__sk-head-title"></span>
+          <span class="nx-skeleton nx-card__sk-head-badge"></span>
+        </div>
+        <span class="nx-skeleton nx-card__sk-head-action"></span>
+      </div>
+      <div class="nx-card__body">
+        <nx-cell *ngFor="let r of loadingRowArray" [loading]="true"></nx-cell>
+      </div>
+    </div>
+
+    <ng-template #content>
+    <div
+      class="nx-card nx-card--type6"
+      [class.nx-card--critical]="tone === 'critical'"
+    >
+      <div class="nx-card__head nx-card__head--action">
+        <div class="nx-card__head-lead">
+          <span class="nx-card__head-icon" *ngIf="hasIcon">
+            <ng-content select="[icon]"></ng-content>
+          </span>
+          <span class="nx-card__head-title" *ngIf="title">{{ title }}</span>
+          <span
+            class="nx-badge"
+            [class.nx-badge--critical]="resolvedBadgeTone === 'critical'"
+            [class.nx-badge--default]="resolvedBadgeTone === 'default'"
+            *ngIf="badge"
+          >{{ badge }}</span>
+        </div>
+        <button
+          type="button"
+          class="nx-btn nx-btn--plain"
+          *ngIf="actionLabel"
+          (click)="action.emit()"
+        >{{ actionLabel }}</button>
+      </div>
+      <div class="nx-card__body">
+        <ng-content></ng-content>
+      </div>
+    </div>
+    </ng-template>
+  `,
+})
+export class NxCardLayoutType6Component {
+  /** Render the leading header icon (project the glyph into the `icon` slot). */
+  @Input() hasIcon = false;
+  @Input() title?: string;
+  @Input() badge?: string;
+  /** Badge tone; defaults to the card tone (critical when tone='critical'). */
+  @Input() badgeTone?: 'default' | 'critical';
+  @Input() actionLabel?: string;
+  @Input() tone: NxCardTone = 'default';
+  /** Render a header + Cell-row skeleton instead of content. */
+  @Input() loading = false;
+  /** Cell skeleton rows to show when loading. */
+  @Input() loadingRows = 2;
+
+  /** Fires when the top-right action button is clicked. */
+  @Output() action = new EventEmitter<void>();
+
+  get resolvedBadgeTone(): 'default' | 'critical' {
+    return this.badgeTone || (this.tone === 'critical' ? 'critical' : 'default');
+  }
+
+  get loadingRowArray(): number[] {
+    return Array.from({ length: Math.max(0, this.loadingRows) });
+  }
+}

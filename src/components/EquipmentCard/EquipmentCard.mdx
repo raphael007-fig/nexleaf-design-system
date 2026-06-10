@@ -1,0 +1,68 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as EquipmentCardStories from './EquipmentCard.stories.jsx';
+
+<Meta title="Patterns/Responsive/EquipmentCard/Docs" />
+
+# EquipmentCard
+
+On mobile, table-heavy equipment lists become **cards**. Each card shows only the decision-critical fields and keeps the distinct status dimensions clearly separated — never a copy of every desktop column. The whole card is tappable and routes to the record (tertiary) page.
+
+<Canvas of={EquipmentCardStories.List} />
+
+## What to show (and what to leave out)
+
+Show only decision-critical information so the list stays scannable:
+
+- Equipment **image / icon**
+- **Model / name**
+- **Type**
+- **Serial number**
+- **Facility / location**
+- **Health** + **Maintenance** + **Lifecycle** status badges (only those that apply)
+
+Avoid copying every desktop table column into the card.
+
+## Status dimensions are kept separate
+
+The card renders Health, Maintenance, and Lifecycle as **distinct** badges, each with a text label (never color alone). Don't merge them into one ambiguous chip, and don't let them contradict each other.
+
+<Canvas of={EquipmentCardStories.AllStatuses} />
+
+| Dimension | Example values | Tone (via `StatusBadge`) |
+|-----------|----------------|--------------------------|
+| Health | Functional / Faulty / Unknown / Decommissioned | success / critical / default / warning |
+| Maintenance | Upcoming / Overdue / Under Maintenance | attention / critical / info |
+| Lifecycle | Approaching Decommissioning | warning |
+
+These keys resolve through the canonical `STATUS_BADGE_MAP` (extended for the equipment domain), so colors stay consistent with the rest of the system.
+
+## Interaction states
+
+Pass `onClick` to make the whole card a button (chevron + brand-blue hover ring, `Enter`/`Space` activate). On hover/focus the border switches to `--nx-color-primary` with a tinted `--nx-color-primary-hover-shadow` ring. Force the hover look in docs with `state="hover"`. Omit `onClick` for a static card (no chevron, no ring).
+
+<Canvas of={EquipmentCardStories.States} />
+<Canvas of={EquipmentCardStories.Static} />
+
+## Loading
+
+Set `loading` to render a shape-matching skeleton — a 48px thumbnail block, three text lines (name + meta + facility), and two status pills — inside the same card shell, so the list doesn't reflow when data arrives. The skeleton reuses the shared pulse (`--nx-bg-skeleton` `#e8e8e8`, 1.4s) from the `Skeleton` primitive.
+
+<Canvas of={EquipmentCardStories.Loading} />
+
+## Props
+
+| Prop | Type | Notes |
+|------|------|-------|
+| `name` | string | Model / name (dominant, truncates). |
+| `type` | string | Equipment type. |
+| `serial` | string | Serial / reference. |
+| `facility` | string | Facility / location (with pin icon). |
+| `image` | string | Thumbnail URL (falls back to `icon`, then a default fridge glyph). |
+| `icon` | node | Custom icon when no image. |
+| `health` / `maintenance` / `lifecycle` | string | Status keys → `StatusBadge`. |
+| `onClick` | fn | Whole-card tap → record page (adds chevron + hover ring). |
+| `ariaLabel` | string | Accessible name (defaults to `name`). |
+
+## Design tokens used
+
+`--nx-bg-surface` · `--nx-bg-surface-active` (thumbnail) · `--nx-border-default` · `--nx-color-primary` + `--nx-color-primary-hover-shadow` (hover ring) · `--nx-text-default` / `--nx-text-subdued` / `--nx-text-placeholder` · status tones via `StatusBadge`.
