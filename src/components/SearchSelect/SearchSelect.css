@@ -1,0 +1,249 @@
+/*
+ * Nexleaf Design System — SearchSelect (single + multi)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css to be imported first. The shared field classes
+ * (.nx-field__error and the span-based .nx-field__label) come from
+ * TextInput.css — import that alongside this file.
+ *
+ * Scope notes
+ * — The Angular templates (nx-search-select / nx-search-select-multi) render
+ *   the label text as a DIRECT child of .nx-field__label (no inner <span>),
+ *   so TextInput.css's `.nx-field__label > span` typography never applies.
+ *   This file re-states the label typography + required asterisk scoped under
+ *   .nx-search-select only.
+ * — The templates render .nx-search-select__options unconditionally (there is
+ *   no open/close binding), so the panel is laid out IN FLOW below the field
+ *   wearing the popover chrome (surface, border-default, radius 8, shadow).
+ *   A host that wants a floating dropdown positions/toggles it itself
+ *   (same philosophy as Popover.css: chrome here, positioning in JS).
+ *   `:empty` collapses the panel when no options are rendered.
+ * — Option rows carry no selected/disabled/level bindings in the template, so
+ *   those states are exposed as host-applied hooks: the modifiers
+ *   `--selected`, `--disabled`, `--parent` and the `--nx-option-level`
+ *   custom property (indentation = level × 20px, per the React tree).
+ *
+ * Selector structure:
+ *   .nx-search-select                    — root wrapper (label + field + panel + error)
+ *   .nx-search-select--multi            — multi-select variant (tags + taller field)
+ *   .nx-search-select--error            — error state (red field chrome)
+ *   .nx-search-select .nx-field__label  — label typography (direct-text variant)
+ *   .nx-search-select__input            — search/display input (Input Field Style)
+ *   .nx-search-select__options          — option panel (popover chrome, in flow)
+ *   .nx-search-select__option           — one option row
+ *   .nx-search-select__option--selected — host-applied selected state
+ *   .nx-search-select__option--disabled — host-applied disabled state
+ *   .nx-search-select__option--parent   — host-applied branch/parent label row
+ *   .nx-search-select__tags             — selected-tag row (multi)
+ *   .nx-search-select__tag              — one tag chip (multi); inner <button> = remove
+ */
+
+/* ─── Root wrapper ─────────────────────────────────────────────── */
+.nx-search-select {
+  position: relative;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);                      /* 4px */
+  font-family: var(--nx-font-family);
+  box-sizing: border-box;
+}
+
+/* ─── Label (text is a direct child here — no inner span) ─────── */
+.nx-search-select .nx-field__label {
+  font-size: var(--nx-font-size-label);        /* 13px */
+  font-weight: var(--nx-font-weight-medium);   /* 500 */
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);   /* 20px */
+}
+
+.nx-search-select .nx-field__label--required::after {
+  content: ' *';
+  color: var(--nx-color-critical);             /* #d92d20 */
+}
+
+/* ─── Field input (canonical Input Field Style) ────────────────── */
+.nx-search-select__input {
+  width: 100%;
+  min-width: 0;
+  border: 0.66px solid var(--nx-border-input); /* #8a8a8a */
+  background: var(--nx-bg-input);              /* #fdfdfd */
+  border-radius: var(--nx-radius-sm);          /* 8px */
+  padding: 6px 12px;                           /* field padding — matches .nx-input-wrap (no 6px token) */
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);        /* 13px */
+  font-weight: 450;                            /* field text weight per React — between regular/medium tokens */
+  line-height: var(--nx-line-height-normal);   /* 20px */
+  color: var(--nx-text-default);
+  outline: none;
+  box-sizing: border-box;
+  cursor: text;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+.nx-search-select__input::placeholder {
+  color: var(--nx-text-placeholder);           /* #9e9e9e */
+}
+
+/* Rest → Hover (React getFieldStyles: border darkens AND bg tints) */
+.nx-search-select__input:hover:not(:disabled) {
+  border-color: var(--nx-border-input-focus);  /* #616161 */
+  background: var(--nx-bg-input-focus);        /* #fafafa */
+}
+
+/* Rest → Focus */
+.nx-search-select__input:focus-visible {
+  border-color: var(--nx-border-input-focus);
+  background: var(--nx-bg-input-focus);
+  box-shadow: var(--nx-focus-ring);            /* 0 0 0 2px #005bd3 */
+}
+
+/* Error state (forced via root modifier — beats hover/focus chrome) */
+.nx-search-select--error .nx-search-select__input,
+.nx-search-select--error .nx-search-select__input:hover,
+.nx-search-select--error .nx-search-select__input:focus-visible {
+  border-color: var(--nx-border-input-error);  /* #8e1f0b */
+  background: var(--nx-bg-critical);           /* #fee9e8 */
+  box-shadow: none;                            /* React: no focus ring in error */
+}
+
+/* Disabled */
+.nx-search-select__input:disabled {
+  border-color: transparent;                   /* keep box size; React drops the border */
+  background: var(--nx-bg-control-disabled);   /* rgba(0,0,0,0.08) */
+  color: var(--nx-text-disabled);              /* #b5b5b5 */
+  cursor: not-allowed;
+}
+
+/* Multi field is slightly taller to fit chip content (React minHeight 36) */
+.nx-search-select--multi .nx-search-select__input {
+  min-height: 36px;                            /* matches React multi field — no token */
+}
+
+/* ─── Option panel (popover chrome, in flow) ───────────────────── */
+.nx-search-select__options {
+  list-style: none;
+  margin: 0;
+  padding: var(--nx-space-1);                  /* 4px — inner gutter around rows */
+  background: var(--nx-bg-surface);            /* #ffffff */
+  border: 1px solid var(--nx-border-default);  /* #e0e0e0 */
+  border-radius: var(--nx-radius-sm);          /* 8px */
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.10);  /* dropdown elevation per React — not yet tokenized */
+  max-height: 280px;                           /* matches React dropdown scroll cap — no token */
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+/* Collapse entirely when the host renders no option rows */
+.nx-search-select__options:empty {
+  display: none;
+}
+
+/* ─── Option row ───────────────────────────────────────────────── */
+.nx-search-select__option {
+  display: flex;
+  align-items: center;
+  gap: 10px;                                   /* row icon/label gap per React — no token */
+  padding: var(--nx-space-2) 10px;             /* 8px 10px — 10px has no token */
+  /* Tree indentation: host sets --nx-option-level (0,1,2,…) per row;
+     indentation = level × 20px, mirroring the React OptionNode. */
+  padding-left: calc(10px + var(--nx-option-level, 0) * var(--nx-space-5));
+  border-radius: var(--nx-radius-control);     /* 6px */
+  font-size: var(--nx-font-size-label);        /* 13px */
+  font-weight: 450;                            /* leaf label weight per React — between regular/medium tokens */
+  line-height: var(--nx-line-height-normal);   /* 20px */
+  color: var(--nx-text-default);
+  cursor: pointer;
+  user-select: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  outline: none;
+  transition: background 0.1s;
+}
+
+.nx-search-select__option:hover {
+  background: #f5f5f5;                         /* row hover per React — no opaque token for this gray */
+}
+
+.nx-search-select__option:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+/* Host-applied states (templates expose no selection/disabled bindings) */
+.nx-search-select__option--selected {
+  background: var(--nx-bg-selected);           /* #f0f7ff — selected option highlight */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+}
+
+.nx-search-select__option--parent {
+  font-weight: var(--nx-font-weight-bold);     /* 600 — branch/parent labels */
+}
+
+.nx-search-select__option--disabled,
+.nx-search-select__option--disabled:hover {
+  background: transparent;
+  color: var(--nx-text-disabled);              /* #b5b5b5 */
+  cursor: not-allowed;
+}
+
+/* ─── Selected-tag row (multi) ─────────────────────────────────── */
+.nx-search-select__tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;                                    /* chip gap per React TagGroup usage — no token */
+}
+
+/* Collapse when nothing is selected */
+.nx-search-select__tags:empty {
+  display: none;
+}
+
+/* Tag chip — mirrors the design-system <Tag> (removable form) */
+.nx-search-select__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-1);                      /* 4px */
+  background: #ebebeb;                         /* Tag rest fill per Tag.jsx — only token with this value is --nx-border-light (semantic mismatch) */
+  color: var(--nx-text-default);
+  border-radius: var(--nx-radius-pill);        /* 100px */
+  padding: 3px 4px 3px 10px;                   /* removable-chip padding per Tag.jsx — no tokens */
+  font-size: var(--nx-font-size-label);        /* 13px */
+  font-weight: 450;                            /* chip label weight per Tag.jsx */
+  line-height: 18px;                           /* chip line-height per Tag.jsx — between tight/normal tokens */
+  white-space: nowrap;
+  transition: background 0.1s, box-shadow 0.12s;
+}
+
+.nx-search-select__tag:hover {
+  background: #e0e0e0;                         /* Tag hover fill per Tag.jsx — matches --nx-border-default value, border token not reused */
+}
+
+/* Remove (×) button inside the chip — template emits it without a class */
+.nx-search-select__tag button {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  border-radius: var(--nx-radius-circle);      /* 50% */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);
+  line-height: 1;
+  color: var(--nx-text-subdued);               /* #616161 */
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.nx-search-select__tag button:hover {
+  background: var(--nx-text-default);          /* #303030 */
+  color: var(--nx-text-on-primary);            /* #ffffff */
+}
+
+.nx-search-select__tag button:focus-visible {
+  outline: none;
+  box-shadow: var(--nx-focus-ring);
+}

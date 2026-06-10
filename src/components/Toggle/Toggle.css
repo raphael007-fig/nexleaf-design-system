@@ -1,0 +1,176 @@
+/*
+ * Nexleaf Design System — Toggle (switch)
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Sibling of Checkbox.css (canonical small-control styling).
+ * Track: 36×20px pill. Thumb: 14×14px circle, 3px inset, drawn as the
+ * track's ::after. The real <input type="checkbox"> is visually hidden;
+ * states come from :checked / :disabled / :focus-visible on the input
+ * PLUS the forced --checked / --disabled track modifiers the Angular
+ * template binds.
+ *
+ * Selector structure:
+ *   .nx-toggle                  — wrapper (row + help/error)
+ *   .nx-toggle--error           — error tone: tints the track red
+ *   .nx-toggle__row             — <label> row: input + track + label text
+ *   .nx-toggle__input           — visually-hidden native checkbox
+ *   .nx-toggle__track           — the 36×20 pill (thumb = ::after)
+ *   .nx-toggle__track--checked  — on state (forced modifier)
+ *   .nx-toggle__track--disabled — disabled state (forced modifier)
+ *   .nx-toggle__label           — label text
+ *   .nx-toggle__help            — help text below the row
+ *   .nx-toggle__error           — error message row
+ */
+
+/* ─── Wrapper ───────────────────────────────────────────────────── */
+.nx-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--nx-space-1);                        /* 4px */
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Row ───────────────────────────────────────────────────────── */
+.nx-toggle__row {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                        /* 8px */
+  cursor: pointer;
+}
+
+.nx-toggle__row:has(.nx-toggle__input:disabled) {
+  cursor: not-allowed;
+}
+
+/* ─── Hidden native input ───────────────────────────────────────── */
+.nx-toggle__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ─── Track ─────────────────────────────────────────────────────── */
+.nx-toggle__track {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--nx-radius-pill);          /* 100px */
+  background: #ebebeb; /* off track — no surface token (—nx-border-light is a border colour) */
+  box-sizing: border-box;
+  flex-shrink: 0;
+  cursor: inherit;
+  transition: background 0.18s, box-shadow 0.15s;
+}
+
+/* Thumb */
+.nx-toggle__track::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  border-radius: var(--nx-radius-circle);        /* 50% */
+  background: var(--nx-bg-surface);              /* #ffffff */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.20);     /* thumb lift — no token */
+  transition: left 0.18s;
+}
+
+/* Hover (off) */
+.nx-toggle__row:hover .nx-toggle__track:not(.nx-toggle__track--disabled):not(.nx-toggle__track--checked) {
+  background: #e0e0e0; /* off-hover track — no surface token */
+}
+
+/* Keyboard focus ring (from the hidden input) */
+.nx-toggle__input:focus-visible + .nx-toggle__track {
+  box-shadow: var(--nx-focus-ring);              /* 0 0 0 2px #005bd3 */
+}
+
+/* ─── On state ──────────────────────────────────────────────────── */
+.nx-toggle__input:checked + .nx-toggle__track,
+.nx-toggle__track--checked {
+  background: #303030; /* on track — mirrors Checkbox.css checked fill literal */
+}
+
+.nx-toggle__input:checked + .nx-toggle__track::after,
+.nx-toggle__track--checked::after {
+  left: calc(100% - 17px);                       /* 36 − 14 − 3 + 2px settle */
+}
+
+/* On + hover */
+.nx-toggle__row:hover .nx-toggle__input:checked:not(:disabled) + .nx-toggle__track,
+.nx-toggle__row:hover .nx-toggle__track--checked:not(.nx-toggle__track--disabled) {
+  background: #4a4a4a; /* on-hover track — no token */
+}
+
+/* ─── Error tone ────────────────────────────────────────────────── */
+/* Off + error: pink track with red border */
+.nx-toggle--error .nx-toggle__track:not(.nx-toggle__track--checked):not(.nx-toggle__track--disabled) {
+  background: var(--nx-bg-critical);             /* #fee9e8 */
+  border: 0.66px solid var(--nx-border-input-error); /* #8e1f0b */
+}
+
+/* On + error: solid critical red */
+.nx-toggle--error .nx-toggle__input:checked:not(:disabled) + .nx-toggle__track,
+.nx-toggle--error .nx-toggle__track--checked:not(.nx-toggle__track--disabled) {
+  background: var(--nx-color-critical);          /* #d92d20 */
+  border: none;
+}
+
+/* ─── Disabled state ────────────────────────────────────────────── */
+.nx-toggle__input:disabled + .nx-toggle__track,
+.nx-toggle__track--disabled {
+  background: var(--nx-bg-control-disabled);     /* rgba(0,0,0,0.08) */
+  border: none;
+  cursor: not-allowed;
+}
+
+.nx-toggle__input:disabled + .nx-toggle__track::after,
+.nx-toggle__track--disabled::after {
+  background: #c9c9c9; /* disabled thumb — no surface token (—nx-border-secondary-btn is a border colour) */
+  box-shadow: none;
+}
+
+/* ─── Label ─────────────────────────────────────────────────────── */
+.nx-toggle__label {
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450; /* between regular/medium — no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);
+  user-select: none;
+  cursor: inherit;
+}
+
+.nx-toggle__input:disabled ~ .nx-toggle__label {
+  color: var(--nx-text-disabled);                /* #b5b5b5 */
+}
+
+/* ─── Help text ─────────────────────────────────────────────────── */
+.nx-toggle__help {
+  padding-left: 44px;                            /* 36px track + 8px gap */
+  font-size: var(--nx-font-size-label);
+  font-weight: 450; /* no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-subdued);                 /* #616161 */
+}
+
+/* ─── Error message ─────────────────────────────────────────────── */
+.nx-toggle__error {
+  padding-left: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--nx-font-size-label);
+  font-weight: 450; /* no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-critical);                /* #8e1f0b */
+}

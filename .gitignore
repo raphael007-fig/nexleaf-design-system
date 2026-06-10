@@ -10,3 +10,7 @@ angular/node_modules/
 angular/dist/
 angular/out-tsc/
 angular/.angular/
+
+# Playwright (keep baselines in tests/visual/__snapshots__, ignore run artifacts)
+test-results/
+playwright-report/

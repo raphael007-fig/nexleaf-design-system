@@ -1,0 +1,155 @@
+/*
+ * Nexleaf Design System — TextareaInput
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Shares the Input Field Style with TextInput / NumberInput / SelectInput
+ * (0.66px border, #fdfdfd bg, focus ring, error state). Rules are declared
+ * here in full so this file is standalone.
+ *
+ * Selector structure:
+ *   .nx-field                  — wrapper (label row + textarea + help text)
+ *   .nx-field__label-row       — flex row holding label + label action
+ *   .nx-field__label           — field label text (Angular emits text directly,
+ *                                no inner <span>)
+ *   .nx-field__label--required — adds red asterisk via ::after
+ *   .nx-field__label-action    — optional right-aligned label button
+ *   .nx-input-wrap             — chrome container holding the <textarea>
+ *   .nx-input-wrap--error      — error border + red bg (forced modifier)
+ *   .nx-input-wrap--disabled   — disabled/read-only state (forced modifier)
+ *   .nx-input                  — shared inner-control reset (also on textarea)
+ *   .nx-textarea               — the <textarea> element: resize + min-height
+ *   .nx-field__help            — help text below textarea
+ *   .nx-field__error           — error message row
+ */
+
+/* ─── Field wrapper ────────────────────────────────────────────── */
+.nx-field {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);            /* 4px */
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Label row (label + optional action button) ───────────────── */
+.nx-field__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ─── Label ────────────────────────────────────────────────────── */
+.nx-field__label {
+  font-size: var(--nx-font-size-label);      /* 13px */
+  font-weight: var(--nx-font-weight-medium); /* 500 */
+  color: var(--nx-text-default);
+  line-height: var(--nx-line-height-normal);
+}
+
+.nx-field__label--required::after {
+  content: ' *';
+  color: var(--nx-color-critical);           /* #d92d20 */
+}
+
+.nx-field__label-action {
+  font-size: var(--nx-font-size-label);
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-color-primary);            /* #005bd3 */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Input wrapper ────────────────────────────────────────────── */
+.nx-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  border: 0.66px solid var(--nx-border-input);   /* #8a8a8a */
+  background: var(--nx-bg-input);                /* #fdfdfd */
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+/* Rest → Hover */
+.nx-input-wrap:hover:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
+  border-color: var(--nx-border-input-focus);    /* #616161 */
+  background: var(--nx-bg-input-focus);          /* #fafafa */
+}
+
+/* Rest → Focus (via :focus-within for pure CSS) */
+.nx-input-wrap:focus-within:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
+  border-color: var(--nx-border-input-focus);    /* #616161 */
+  background: var(--nx-bg-input-focus);
+  box-shadow: var(--nx-focus-ring);              /* 0 0 0 2px #005bd3 */
+}
+
+/* Error state (forced modifier — Angular binds [class.nx-input-wrap--error]) */
+.nx-input-wrap--error {
+  border-color: var(--nx-border-input-error);    /* #8e1f0b */
+  background: var(--nx-bg-critical);             /* #fee9e8 */
+}
+
+/* Disabled / read-only (forced modifier) */
+.nx-input-wrap--disabled {
+  border: none;
+  background: rgba(0, 0, 0, 0.08); /* matches React + TextInput.css disabled fill */
+  cursor: not-allowed;
+}
+
+/* ─── Inner control reset (shared with text inputs) ────────────── */
+.nx-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);       /* 13px */
+  line-height: var(--nx-line-height-normal);  /* 20px */
+  color: var(--nx-text-default);
+}
+
+.nx-input::placeholder {
+  color: var(--nx-text-placeholder);          /* #9e9e9e */
+}
+
+.nx-input:disabled {
+  color: var(--nx-text-disabled);             /* #b5b5b5 */
+  cursor: not-allowed;
+}
+
+/* ─── Textarea element ─────────────────────────────────────────── */
+.nx-textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 80px;                  /* 4 rows × 20px line-height (React rows=4) */
+  padding: 2px 0;                    /* wrap pads 6px; React textarea pads 8px vertically */
+}
+
+.nx-textarea:disabled {
+  resize: none;
+}
+
+/* ─── Help text ────────────────────────────────────────────────── */
+.nx-field__help {
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-text-subdued);              /* #616161 */
+  line-height: var(--nx-line-height-normal);
+}
+
+/* ─── Error message ────────────────────────────────────────────── */
+.nx-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: var(--nx-font-size-label);
+  color: var(--nx-color-critical);            /* #d92d20 */
+  line-height: var(--nx-line-height-normal);
+}

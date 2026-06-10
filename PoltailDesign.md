@@ -13,17 +13,21 @@ This file governs how all UI work in this project should be implemented. Follow 
 - **Inter** font from Google Fonts (weights 400, 500, 600, 700)
 - **Styling** — inline CSS in `<style>` blocks + inline `style={{}}` props in React components. No Tailwind, no CSS modules, no styled-components.
 
-### Multi-framework delivery
+### Multi-framework delivery — CSS is canonical (ratified)
 
-Each component is delivered in up to **three parallel layers** so any stack can consume it. They are visually identical because they all resolve to the same design tokens:
+**The canonical visual source of truth is `src/tokens/tokens.css` + the shared `nx-*.css` layers.** Both frameworks are views of it: Angular consumes the CSS natively (classes), React mirrors it (inline styles). Design decisions (color, spacing, radius, sizing, states) land in **tokens + CSS first** — never in one framework's component alone. New components are authored CSS-layer-first, then both wrappers.
 
-| Layer | Where it lives | Consume from |
-|-------|----------------|--------------|
-| **React** | `src/components/<Name>/<Name>.jsx` | React / HTML-prototype work (the default for this project) |
-| **CSS classes** | `src/components/<Name>/<Name>.css` + `src/tokens/tokens.css` | Django, vanilla HTML, server-rendered, or any non-React stack |
-| **Angular** | compilable library source under `angular/projects/nexleaf-angular/src/lib/<name>/` (`.component.ts` + `.module.ts`), published as `@nexleaf/angular` | Angular apps that import the per-component `NxXxxModule` |
+| Layer | Where it lives | Role |
+|-------|----------------|------|
+| **Tokens + CSS** (canonical) | `src/tokens/tokens.css` + `src/components/<Name>/<Name>.css` | Single visual source of truth; consumable by Django/vanilla/any stack |
+| **Angular** (production) | `angular/projects/nexleaf-angular/src/lib/<name>/`, published as `@nexleaf/angular` with the bundled `styles.css` | What engineering ships |
+| **React** (reference) | `src/components/<Name>/<Name>.jsx` | Design playground, HTML prototypes, the richest docs |
 
-Coverage is now at **functional parity**: every React component has an Angular equivalent, and the shared CSS layer covers ~28 components. When in doubt, the React `.jsx` is the canonical reference implementation. The Angular package ships a single bundled stylesheet (`@nexleaf/angular/styles.css`). A few mappings aren't 1:1 by name: `Card` → `nx-card-layout-type1…6`, `Breadcrumbs` lives in the toolbar module (`nx-breadcrumbs`), and React's `Overlay` is a legacy thin wrapper over `Modal` (Angular uses `nx-modal`).
+**Two delivery surfaces (one system):**
+- **React Storybook** (`npm run storybook`, port 6006) — the design/reference environment with full MDX docs.
+- **Angular Storybook** (`npm run storybook:angular` / `cd angular && npm run storybook`, port 6007) — the **production-facing** surface: renders `@nexleaf/angular` against the exact bundled `styles.css` the package ships.
+
+Coverage is **full**: every component ships all three layers (42 stylesheets in the Angular bundle), and both surfaces are locked by the visual gate (see "Visual gate"). A few mappings aren't 1:1 by name: `Card` → `nx-card-layout-type1…6`, `Breadcrumbs` lives in the toolbar module (`nx-breadcrumbs`), and React's `Overlay` is a legacy thin wrapper over `Modal` (Angular uses `nx-modal`).
 
 ---
 
@@ -738,7 +742,7 @@ For Django / Angular / vanilla-HTML consumers, components ship a hand-written st
 
 ### Components that ship a `.css` layer
 
-Foundational: `Accordion`, `Badge`, `Banner`, `Btn`, `Breadcrumbs`, `Checkbox`, `Divider`, `Modal`, `OptionList`, `Page`, `Pagination`, `Popover`, `Tabs`, `TextInput`. Responsive / shell + list: `Cell`, `NavCard`, `Skeleton`, `EquipmentCard`, `TertiaryActions`, `MenuDrawer`, `BottomSheet`, `SlideOver`, `SideNavigation`, `TopBar`, `Toolbar`. Plus `src/global.css` (keyframes, resets, `.nx-home-grid`) and `src/tokens/tokens.css` (token source of truth). All token names map 1:1 to the JS constants in `src/tokens/index.js`.
+**All of them.** Every component has its `nx-*.css` (the only exception is `Overlay`, a React-legacy wrapper with no Angular visual twin). The full set — foundational (`Accordion`, `Badge`, `Banner`, `Btn`, `Breadcrumbs`, `Card` incl. layout types, `Checkbox`, `DatePicker`, `Divider`, `IndexTable`, `MetricCard`, `Modal`, `NumberInput`, `OptionList`, `Page`, `Pagination`, `PolarisIcon`, `Popover`, `RadioButton`, `SearchSelect`, `SelectInput`, `Tabs`, `Tag`, `TextInput`, `TextareaInput`, `Toggle`, `Tooltip`, `Upload`) and responsive/shell (`Cell`, `NavCard`, `Skeleton`, `EquipmentCard`, `TertiaryActions`, `MenuDrawer`, `BottomSheet`, `SlideOver`, `SideNavigation`, `TopBar`, `Toolbar`) — plus `src/global.css` (keyframes, resets, `.nx-home-grid`) and `src/tokens/tokens.css`. 42 stylesheets total in the Angular bundle. All token names map 1:1 to the JS constants in `src/tokens/index.js`.
 
 The Angular package bundles tokens + every component stylesheet into one file at build time (`angular/scripts/bundle-styles.mjs`), shipped as **`@nexleaf/angular/styles.css`** (and a tokens-only `@nexleaf/angular/tokens.css`) — so an Angular app imports one stylesheet instead of each `nx-*.css`.
 
@@ -751,6 +755,7 @@ Angular ships as **real, compilable library source**, not just doc snippets. It 
 - **Source:** `angular/projects/nexleaf-angular/src/lib/<name>/` — one `.component.ts` + one `.module.ts` per component, re-exported from `src/public-api.ts`.
 - **Coverage:** functional parity with React — every React component has an Angular equivalent. The foundational set (accordion, badge, banner, btn, card → `nx-card-layout-type1…6`, checkbox, date-picker, divider, index-table, metric-card, number-input, option-list, page, pagination, polaris-icon, radio, search-select, select-input, tabs, tag, text-input, textarea-input, toggle, toolbar incl. `nx-breadcrumbs`, tooltip, upload, **modal**, **popover**, **skeleton**), the responsive/shell layer (app-shell, **side-navigation**, top-bar, menu-drawer, bottom-sheet, slide-over, overlay foundation, equipment-card, tertiary-actions, cell, nav-card), and the `nav-sync` helpers.
 - **Build:** `cd angular && npm install && npm run build` (Angular 18 + ng-packagr → `angular/dist/nexleaf-angular`), which also runs `scripts/bundle-styles.mjs`.
+- **Storybook (production surface):** `cd angular && npm run storybook` (port 6007; or `npm run storybook:angular` from the repo root). 41 stories across the library, rendered against the exact bundled `styles.css` the package ships. `npm run build-storybook` produces the static site in `angular/storybook-static/`. Run `npm run build` first so `dist/nexleaf-angular/styles.css` exists.
 - **Architecture:** template-only components — each one emits the same `nx-*` CSS classes + tokens as the React/CSS layers, so styling stays 1:1. **Styling ships as one bundled `@nexleaf/angular/styles.css`** (tokens + every component stylesheet; also `@nexleaf/angular/tokens.css` for just the vars) — import it once. Components are `standalone: false` and grouped into per-component `NxXxxModule`s (NgModule pattern). Form controls implement `ControlValueAccessor` for `ngModel`.
 
 ### Conventions
@@ -785,6 +790,22 @@ import { NxBtnModule } from '@nexleaf/angular';
 ```
 
 > Note: Angular `(change)`/`[activeIndex]` is the framework-idiomatic shape for that platform. The React layer uses the system-standard `onSelect(id, item, index)` callback (see "Item Shape & Callback Contract") — the two are intentionally framework-native rather than identical.
+
+---
+
+## Visual Gate (automated regression check)
+
+`playwright.config.js` + `tests/visual/` lock the rendered look of **both** delivery surfaces — 106 committed baseline screenshots (React: 12 curated stories; Angular: all 41 stories; each at desktop 1280×860 + mobile 375×812).
+
+```bash
+npm run test:visual          # compare both Storybooks against committed baselines
+npm run test:visual:update   # re-seed baselines after an INTENDED visual change
+```
+
+- Baselines live in `tests/visual/__snapshots__/` and are **committed** — a failing diff means the look changed. Intended → update baselines (and say so in the PR); unintended → fix before merging.
+- The Angular side always builds the package + static Storybook first, so the gate tests the exact artifact `@nexleaf/angular` ships.
+- Servers are reused if already running (React 6006 / Angular static 6007); otherwise the gate starts them itself.
+- Run the gate after ANY change to tokens, an `nx-*.css`, or a component in either framework.
 
 ---
 

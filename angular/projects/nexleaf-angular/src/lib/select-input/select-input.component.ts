@@ -18,7 +18,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
       <div class="nx-input-wrap" [class.nx-input-wrap--disabled]="disabled">
         <select
           class="nx-input nx-select"
-          [value]="value"
+          [value]="value ?? ''"
           [disabled]="disabled"
           (change)="onChange($event)"
         >

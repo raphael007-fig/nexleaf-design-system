@@ -1,0 +1,99 @@
+/*
+ * Nexleaf Design System — DatePicker
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css to be imported first.
+ *
+ * Scope note — the Angular `nx-date-picker` template renders a native
+ * <input type="date"> inside the picker card; it does NOT (yet) emit the
+ * custom calendar grid the React DatePicker draws (day cells, weekday
+ * header, month-nav buttons — those live as inline styles in
+ * src/components/DatePicker/DatePicker.jsx). This layer therefore styles
+ * exactly the classes the template emits: the card chrome from the system
+ * spec (#fdfdfd bg, 0.66px #e0e0e0 border, 12px radius, 16px padding) and
+ * an input that wears the canonical Input Field Style. When the Angular
+ * calendar grid is authored, its day-cell classes get added here with the
+ * React values (32×32 cells, selected #303030/#fff, range-middle #ebebeb,
+ * today inset ring 0.66px #8a8a8a).
+ *
+ * Selector structure:
+ *   .nx-date-picker               — root card (inline-block)
+ *   .nx-date-picker--range        — range mode: lays projected start/end inputs in a row
+ *   .nx-date-picker--multi-month  — two months side-by-side (row layout hook)
+ *   .nx-date-picker--vertical     — multi-month stacked vertically (column layout hook)
+ *   .nx-date-picker__input        — the native <input type="date"> (Input Field Style)
+ */
+
+/* ─── Root card ────────────────────────────────────────────────── */
+.nx-date-picker {
+  display: inline-block;
+  background: var(--nx-bg-input);              /* #fdfdfd — card bg per spec */
+  border: 0.66px solid var(--nx-border-default); /* #e0e0e0 */
+  border-radius: var(--nx-radius-lg);          /* 12px */
+  padding: var(--nx-space-4);                  /* 16px */
+  font-family: var(--nx-font-family);
+  box-sizing: border-box;
+}
+
+/* ─── Layout modifiers ─────────────────────────────────────────── */
+/* Range mode: when the host projects a start + end input pair they sit
+   on one row. With the single template input this is a no-op. */
+.nx-date-picker--range {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-2);                      /* 8px */
+}
+
+/* Multi-month: months (or inputs) side-by-side — 24px gutter, matching
+   the React side-by-side layout (gap: 24). */
+.nx-date-picker--multi-month {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--nx-space-6);                      /* 24px */
+}
+
+/* Vertical stack: months stacked in a column — 20px gutter, matching
+   the React verticalStack layout (gap: 20). Wins over --multi-month
+   (declared later, same specificity). */
+.nx-date-picker--vertical {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--nx-space-5);                      /* 20px */
+}
+
+/* ─── Date input (canonical Input Field Style) ─────────────────── */
+.nx-date-picker__input {
+  border: 0.66px solid var(--nx-border-input); /* #8a8a8a */
+  background: var(--nx-bg-input);              /* #fdfdfd */
+  border-radius: var(--nx-radius-sm);          /* 8px */
+  padding: 6px 12px;                           /* field padding — matches .nx-input-wrap (no 6px token) */
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);        /* 13px */
+  line-height: var(--nx-line-height-normal);   /* 20px */
+  color: var(--nx-text-default);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+
+.nx-date-picker__input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+/* Rest → Hover */
+.nx-date-picker__input:hover:not(:disabled) {
+  background: var(--nx-bg-input-focus);        /* #fafafa */
+}
+
+/* Rest → Focus */
+.nx-date-picker__input:focus-visible {
+  background: var(--nx-bg-input-focus);
+  box-shadow: var(--nx-focus-ring);            /* 0 0 0 2px #005bd3 */
+}
+
+/* Disabled */
+.nx-date-picker__input:disabled {
+  border-color: transparent;                   /* keep box size; React drops the border */
+  background: var(--nx-bg-control-disabled);   /* rgba(0,0,0,0.08) */
+  color: var(--nx-text-disabled);              /* #b5b5b5 */
+  cursor: not-allowed;
+}

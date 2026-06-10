@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../dist/out-tsc/storybook",
+    "declaration": false,
+    "types": ["node"]
+  },
+  "include": [
+    "./*.ts",
+    "../stories/**/*.ts",
+    "../projects/nexleaf-angular/src/**/*.ts"
+  ],
+  "exclude": [
+    "../projects/nexleaf-angular/src/**/*.spec.ts"
+  ]
+}

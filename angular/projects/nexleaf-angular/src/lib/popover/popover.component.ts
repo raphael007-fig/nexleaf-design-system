@@ -1,7 +1,7 @@
 import {
   Component, Input, Output, EventEmitter, ElementRef, ViewChild,
   ChangeDetectionStrategy, ChangeDetectorRef, HostListener, OnChanges,
-  SimpleChanges, AfterViewChecked,
+  SimpleChanges, AfterViewChecked, OnDestroy,
 } from '@angular/core';
 
 export type NxPopoverPlacement =
@@ -54,7 +54,7 @@ export type NxPopoverPlacement =
     </div>
   `,
 })
-export class NxPopoverComponent implements OnChanges, AfterViewChecked {
+export class NxPopoverComponent implements OnChanges, AfterViewChecked, OnDestroy {
   /** Controlled open state. Use `[(open)]` for two-way binding. */
   @Input() open = false;
   @Input() placement: NxPopoverPlacement = 'bottom-start';
@@ -97,6 +97,11 @@ export class NxPopoverComponent implements OnChanges, AfterViewChecked {
         this.detachPanel();
       }
     }
+  }
+
+  // The panel lives in <body> while open, so Angular won't remove it with the host.
+  ngOnDestroy(): void {
+    this.detachPanel();
   }
 
   // Portal the panel to <body>, position it, then (once measured) auto-focus.

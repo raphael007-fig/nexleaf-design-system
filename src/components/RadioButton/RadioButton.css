@@ -1,0 +1,170 @@
+/*
+ * Nexleaf Design System — RadioButton / RadioGroup
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Sibling of Checkbox.css (canonical small-control styling). The Angular
+ * template uses a NATIVE <input type="radio"> (no class) inside a label, so
+ * the 16×16 ring is drawn on the input itself via `appearance: none`, and
+ * checked/disabled/focus states use real input pseudo-classes.
+ *
+ * Selector structure:
+ *   .nx-radio-group            — vertical group wrapper (role="radiogroup")
+ *   .nx-radio-group--error     — group-level error: tints child rings red
+ *   .nx-radio-group__error     — error message row below the options
+ *   .nx-radio-option           — one option: <label> grid of ring/label/help
+ *   .nx-radio-option--magic    — purple (magic) tone (forced modifier)
+ *   .nx-radio-option--disabled — disabled option (forced modifier)
+ *   .nx-radio-option input[type='radio'] — the 16×16 ring (native input)
+ *   .nx-radio-option__label    — option label text
+ *   .nx-radio-option__help     — help text under the label
+ */
+
+/* ─── Group wrapper ─────────────────────────────────────────────── */
+.nx-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);                        /* 4px */
+  font-family: var(--nx-font-family);
+}
+
+/* ─── Option row ────────────────────────────────────────────────── */
+/* Grid keeps help text aligned under the label (ring column = 16px). */
+.nx-radio-option {
+  display: grid;
+  grid-template-columns: 16px auto;
+  column-gap: var(--nx-space-2);                 /* 8px */
+  align-items: center;
+  justify-content: start;
+  cursor: pointer;
+  font-family: var(--nx-font-family);
+}
+
+.nx-radio-option--disabled {
+  cursor: not-allowed;
+}
+
+/* ─── Ring (native input) ───────────────────────────────────────── */
+.nx-radio-option input[type='radio'] {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--nx-radius-circle);        /* 50% */
+  grid-column: 1;
+  flex-shrink: 0;
+  cursor: inherit;
+  box-sizing: border-box;
+  outline: none;
+  border: 0.66px solid var(--nx-border-input);   /* #8a8a8a */
+  background-color: var(--nx-bg-input);          /* #fdfdfd */
+  transition: background 0.12s, border-color 0.12s;
+}
+
+/* Hover / keyboard focus (rest, unchecked) */
+.nx-radio-option:hover input[type='radio']:not(:checked):not(:disabled),
+.nx-radio-option input[type='radio']:focus-visible:not(:checked):not(:disabled) {
+  background-color: var(--nx-bg-input-focus);    /* #fafafa */
+  border-color: var(--nx-border-input-focus);    /* #616161 */
+}
+
+.nx-radio-option input[type='radio']:focus-visible {
+  box-shadow: var(--nx-focus-ring);              /* 0 0 0 2px #005bd3 */
+}
+
+/* Checked: dark fill + 6px white inner dot (radial-gradient — pseudo-elements
+   are unreliable on replaced <input> elements). */
+.nx-radio-option input[type='radio']:checked {
+  border: none;
+  background-color: #303030; /* checked fill — mirrors Checkbox.css literal */
+  background-image: radial-gradient(circle, #ffffff 0 3px, transparent 3px); /* 6px dot */
+}
+
+/* Disabled */
+.nx-radio-option input[type='radio']:disabled {
+  border: none;
+  background-color: var(--nx-bg-control-disabled); /* rgba(0,0,0,0.08) */
+  cursor: not-allowed;
+}
+
+.nx-radio-option input[type='radio']:disabled:checked {
+  background-image: radial-gradient(circle, rgba(160, 160, 160, 0.7) 0 3px, transparent 3px); /* muted dot — no token */
+}
+
+/* ─── Magic (purple) tone ───────────────────────────────────────── */
+.nx-radio-option--magic input[type='radio'] {
+  border-color: var(--nx-magic-secondary);       /* #9474ff */
+  background-color: var(--nx-magic-bg-input-rest);  /* #f8f7ff */
+}
+
+.nx-radio-option--magic:hover input[type='radio']:not(:checked):not(:disabled),
+.nx-radio-option--magic input[type='radio']:focus-visible:not(:checked):not(:disabled) {
+  border-color: var(--nx-magic-primary);         /* #8051ff */
+  background-color: var(--nx-magic-bg-input-focus); /* #f3f1ff */
+}
+
+.nx-radio-option--magic input[type='radio']:checked {
+  border: none;
+  background-color: var(--nx-magic-primary);     /* #8051ff */
+}
+
+/* Magic + checked → purple label */
+.nx-radio-option--magic input[type='radio']:checked ~ .nx-radio-option__label {
+  color: var(--nx-magic-text);                   /* #5700d1 */
+}
+
+/* ─── Label ─────────────────────────────────────────────────────── */
+.nx-radio-option__label {
+  grid-column: 2;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450; /* between regular/medium — no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);
+  user-select: none;
+  cursor: inherit;
+  padding: 4px 0;
+}
+
+.nx-radio-option--disabled .nx-radio-option__label {
+  color: var(--nx-text-disabled);                /* #b5b5b5 */
+}
+
+/* ─── Help text ─────────────────────────────────────────────────── */
+.nx-radio-option__help {
+  grid-column: 2;
+  font-size: var(--nx-font-size-label);
+  font-weight: 450; /* no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-subdued);                 /* #616161 */
+  padding-bottom: var(--nx-space-1);
+}
+
+.nx-radio-option--disabled .nx-radio-option__help {
+  color: var(--nx-text-disabled);
+}
+
+/* ─── Group error state ─────────────────────────────────────────── */
+/* The Angular template carries error at the GROUP level only, so the
+   per-option error visuals (React: error ring colours) are propagated
+   from the group modifier. */
+.nx-radio-group--error .nx-radio-option input[type='radio']:not(:checked):not(:disabled) {
+  border-color: var(--nx-border-input-error);    /* #8e1f0b */
+  background-color: var(--nx-bg-critical);       /* #fee9e8 */
+}
+
+.nx-radio-group--error .nx-radio-option input[type='radio']:checked:not(:disabled) {
+  background-color: var(--nx-text-critical);     /* #8e1f0b — error checked fill */
+}
+
+/* ─── Error message row ─────────────────────────────────────────── */
+.nx-radio-group__error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: var(--nx-space-1);                /* 4px */
+  font-size: var(--nx-font-size-label);
+  font-weight: 450; /* no token (matches Checkbox.css) */
+  line-height: var(--nx-line-height-normal);
+  color: var(--nx-text-critical);                /* #8e1f0b */
+}

@@ -35,7 +35,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
       >
         <textarea
           class="nx-input nx-textarea"
-          [value]="value"
+          [value]="value ?? ''"
           [placeholder]="placeholder || ''"
           [attr.maxlength]="maxLength != null ? maxLength : null"
           [disabled]="disabled"

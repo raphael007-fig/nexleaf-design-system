@@ -1,0 +1,191 @@
+/*
+ * Nexleaf Design System — Upload
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css. The field label (`.nx-field__label`,
+ * `.nx-field__label--required`) is defined in TextInput.css and is NOT
+ * redefined here — load TextInput.css alongside this file.
+ *
+ * Mirrors the React Upload (src/components/Upload/Upload.jsx): label, helper
+ * text, and a vertical file list (name + status/progress/error + action).
+ * The Angular template additionally exposes a visible dropzone with a native
+ * file input, so this layer gives it the dashed drop-target treatment.
+ *
+ * .nx-upload                 — column wrapper (8px gap, max 560px)
+ * .nx-upload--disabled       — dims dropzone, blocks pointer affordances
+ * .nx-upload__dropzone       — dashed drop target around the file input
+ * .nx-upload__dropzone--hover— forced hover state (real :hover also styled)
+ * .nx-upload__input          — native file input inside the dropzone
+ * .nx-upload__helper         — helper text under the input
+ * .nx-upload__list           — vertical file list (ul)
+ * .nx-upload__item           — one file row (li)
+ * .nx-upload__item--error    — error row — critical-soft tint + red message
+ * .nx-upload__name           — file name (truncates)
+ * .nx-upload__status         — status word (uploading / done / error)
+ * .nx-upload__progress       — "NN%" while uploading
+ * .nx-upload__error-msg      — error message text
+ * .nx-upload__item button    — row action (Cancel / Retry / Remove) — the
+ *                              Angular template emits bare <button>s here
+ */
+
+.nx-upload {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-2);                        /* 8px */
+  max-width: 560px;                              /* matches React; no token */
+  font-family: var(--nx-font-family);
+}
+
+/* ── Dropzone ────────────────────────────────────────────────────────────────── */
+.nx-upload__dropzone {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-2);                        /* 8px */
+  padding: var(--nx-space-4);                    /* 16px */
+  background: var(--nx-bg-input);                /* #fdfdfd */
+  border: 1px dashed var(--nx-border-input);     /* #8a8a8a */
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  transition: background 0.1s, border-color 0.1s;
+}
+
+.nx-upload__dropzone:hover,
+.nx-upload__dropzone--hover {
+  background: var(--nx-bg-input-focus);          /* #fafafa */
+  border-color: var(--nx-border-input-focus);    /* #616161 */
+}
+
+.nx-upload--disabled .nx-upload__dropzone,
+.nx-upload--disabled .nx-upload__dropzone:hover {
+  background: var(--nx-bg-disabled);             /* rgba(0,0,0,0.06) */
+  border-color: var(--nx-border-default);        /* #e0e0e0 */
+  cursor: not-allowed;
+}
+
+/* ── File input ──────────────────────────────────────────────────────────────── */
+.nx-upload__input {
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px */
+  color: var(--nx-text-default);
+  cursor: pointer;
+}
+
+.nx-upload__input:focus-visible {
+  outline: none;
+  box-shadow: var(--nx-focus-ring);
+  border-radius: var(--nx-radius-xs);
+}
+
+.nx-upload__input:disabled {
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+
+/* ── Helper text ─────────────────────────────────────────────────────────────── */
+.nx-upload__helper {
+  margin: 0;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;                              /* matches React; no token at 450 */
+  line-height: 18px;                             /* matches React; no token at 18px */
+  color: var(--nx-text-subdued);                 /* #616161 */
+}
+
+/* ── File list ───────────────────────────────────────────────────────────────── */
+.nx-upload__list {
+  list-style: none;
+  margin: var(--nx-space-3) 0 0;                 /* 12px — matches React list marginTop */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-1);                        /* 4px */
+}
+
+.nx-upload__item {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-4);                        /* 16px — matches React row gap */
+  padding: var(--nx-space-1) 0;                  /* 4px 0 — matches React row padding */
+}
+
+/* Error row — soft critical tint (badge-circle red from the React ErrorBadge) */
+.nx-upload__item--error {
+  background: var(--nx-bg-critical-soft);        /* #fde2e1 */
+  padding: var(--nx-space-2);                    /* 8px — gives the tint breathing room */
+  border-radius: var(--nx-radius-sm);            /* 8px */
+}
+
+/* ── Row text ────────────────────────────────────────────────────────────────── */
+.nx-upload__name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--nx-font-size-body);           /* 14px */
+  font-weight: var(--nx-font-weight-bold);       /* 600 */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);                 /* #303030 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nx-upload__status {
+  flex-shrink: 0;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  line-height: 18px;                             /* matches React meta row */
+  color: var(--nx-text-placeholder);             /* #9e9e9e — meta tone */
+  text-transform: capitalize;
+}
+
+.nx-upload__progress {
+  flex-shrink: 0;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: var(--nx-font-weight-bold);       /* 600 — matches the React ring label */
+  color: var(--nx-color-primary);                /* #005bd3 — progress accent */
+}
+
+.nx-upload__error-msg {
+  flex-shrink: 0;
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;                              /* matches React; no token at 450 */
+  line-height: 18px;
+  color: var(--nx-color-critical);               /* #d92d20 */
+}
+
+/* ── Row actions (Cancel / Retry / Remove) ───────────────────────────────────── */
+/* The Angular template emits bare <button> elements — secondary-button chrome. */
+.nx-upload__item button {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--nx-space-1) var(--nx-space-3);  /* 4px 12px */
+  background: var(--nx-bg-surface);
+  border: none;
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  box-shadow: var(--nx-shadow-btn-rest);
+
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: var(--nx-font-weight-medium);     /* 500 */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);
+
+  cursor: pointer;
+  transition: background 0.1s, box-shadow 0.12s;
+}
+
+.nx-upload__item button:hover:not(:disabled) {
+  background: var(--nx-bg-surface-hover);        /* #f7f7f7 */
+  box-shadow: var(--nx-shadow-btn-hover);
+}
+
+.nx-upload__item button:active:not(:disabled) {
+  box-shadow: var(--nx-shadow-btn-active);
+}
+
+.nx-upload__item button:focus-visible {
+  outline: none;
+  box-shadow: var(--nx-shadow-btn-rest), var(--nx-focus-ring);
+}
+
+.nx-upload__item button:disabled {
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}

@@ -1,0 +1,271 @@
+/*
+ * Nexleaf Design System — IndexTable (selectable / sortable data table)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first. Loading rows compose the shared
+ * .nx-skeleton block (Skeleton.css — not redefined here); the projected footer
+ * typically hosts .nx-pagination (Pagination.css).
+ *
+ * .nx-index-table                 — card surface (white, radius 12, bevel shadow)
+ * .nx-index-table--loading        — loading state (interaction suppressed;
+ *                                   render .nx-skeleton blocks inside cells)
+ * .nx-index-table__bulk           — bulk-action bar (selected-blue strip)
+ * .nx-index-table__bulk-action    — bulk-action button (secondary-button recipe)
+ * .nx-index-table__table          — the <table> element
+ * .nx-index-table__th             — header cell (+ --sorted active state)
+ * .nx-index-table__sort-dir       — sort-direction indicator inside a th
+ * .nx-index-table__select-col     — checkbox column (th + td)
+ * .nx-index-table__actions-col    — row-actions column (th + td)
+ * .nx-index-table__row            — body row (hover bg; .is-selected forced state)
+ * .nx-index-table__td             — body data cell (links render primary blue)
+ * .nx-index-table__empty          — empty-state block
+ * .nx-index-table__empty-heading  — empty-state heading
+ * .nx-index-table__empty-desc     — empty-state description
+ * .nx-index-table__footer         — projected footer (e.g. pagination)
+ */
+
+/* ─── Card surface ─────────────────────────────────────────────── */
+.nx-index-table {
+  box-sizing: border-box;
+  background: var(--nx-bg-surface);       /* #ffffff */
+  border-radius: var(--nx-radius-lg);     /* 12px */
+  overflow: hidden;
+  /* Table-card bevel — same inset recipe as CARD_SHADOW (Cell.css) but with a
+     softer offset drop layer, matching IndexTable.jsx. */
+  box-shadow:
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5),
+    0 3px 1px -1px rgba(26, 26, 26, 0.07);
+  font-family: var(--nx-font-family);
+}
+
+/* Loading — rows are replaced by .nx-skeleton blocks by the host; suppress
+   row/header interaction while the placeholder content is shown. */
+.nx-index-table--loading {
+  pointer-events: none;
+}
+
+/* ─── Bulk-action bar ──────────────────────────────────────────── */
+.nx-index-table__bulk {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                 /* 8px */
+  padding: var(--nx-space-2) var(--nx-space-3); /* 8px 12px */
+  background: var(--nx-bg-selected);      /* #f0f7ff */
+  border-bottom: 1px solid #e3e3e3;       /* toolbar divider — no token at this value */
+}
+
+/* Secondary-button recipe (mirrors .nx-btn--secondary, medium). */
+.nx-index-table__bulk-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 var(--nx-space-3);           /* 12px */
+  border: none;
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  background: var(--nx-bg-surface);       /* #ffffff */
+  box-shadow: var(--nx-shadow-btn-rest);
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-index-table__bulk-action:hover {
+  background: #fafafa;                    /* button hover — no neutral token at this value */
+  box-shadow: var(--nx-shadow-btn-hover);
+}
+
+.nx-index-table__bulk-action:active {
+  box-shadow: var(--nx-shadow-btn-active);
+}
+
+.nx-index-table__bulk-action:focus-visible {
+  box-shadow: var(--nx-focus-ring), var(--nx-shadow-btn-rest);
+}
+
+/* ─── Table ────────────────────────────────────────────────────── */
+.nx-index-table__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+/* Header strip */
+.nx-index-table__table thead tr {
+  background: var(--nx-bg-surface-hover); /* #f7f7f7 header-row fill */
+}
+
+.nx-index-table__table thead th {
+  border-bottom: 1px solid #e3e3e3;       /* header divider — no token at this value */
+}
+
+.nx-index-table__th {
+  padding: var(--nx-space-2);             /* 8px */
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  color: var(--nx-text-subdued);          /* #616161 */
+  text-align: left;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;                        /* every th is a sort trigger in the template */
+}
+
+.nx-index-table__th--sorted {
+  color: var(--nx-text-default);          /* #303030 — active sort column */
+}
+
+.nx-index-table__sort-dir {
+  margin-left: var(--nx-space-1);         /* 4px */
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-medium);
+  color: var(--nx-text-default);          /* #303030 */
+  text-transform: lowercase;
+}
+
+/* ─── Selection column ─────────────────────────────────────────── */
+.nx-index-table__select-col {
+  width: 40px;
+  vertical-align: middle;
+  text-align: left;
+}
+
+th.nx-index-table__select-col {
+  padding: var(--nx-space-2) var(--nx-space-3); /* 8px 12px */
+}
+
+td.nx-index-table__select-col {
+  padding: var(--nx-space-3);             /* 12px */
+  border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
+}
+
+.nx-index-table__select-col input[type='checkbox'] {
+  accent-color: var(--nx-color-primary);  /* #005bd3 */
+  cursor: pointer;
+}
+
+/* ─── Body rows ────────────────────────────────────────────────── */
+.nx-index-table__row {
+  background: var(--nx-bg-surface);       /* #ffffff */
+  transition: background 0.1s;
+}
+
+.nx-index-table__row:hover {
+  background: #fafafa;                    /* row hover — no neutral token at this value */
+}
+
+/* Forced selected state — the template does not bind a selected class yet;
+   hosts apply .is-selected (same convention as .nx-cell.is-hover). */
+.nx-index-table__row.is-selected {
+  background: var(--nx-bg-selected);      /* #f0f7ff */
+}
+
+.nx-index-table__td {
+  padding: var(--nx-space-3) var(--nx-space-2); /* 12px 8px */
+  border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+  text-align: left;
+  vertical-align: middle;
+}
+
+/* Link cells — anchors inside data cells read as underlined primary links. */
+.nx-index-table__td a {
+  color: var(--nx-color-primary);         /* #005bd3 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nx-index-table__td a:hover {
+  color: var(--nx-color-primary-hover);   /* #004bb0 */
+}
+
+/* ─── Row actions column ───────────────────────────────────────── */
+.nx-index-table__actions-col {
+  width: 56px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+td.nx-index-table__actions-col {
+  padding: var(--nx-space-1) var(--nx-space-2); /* 4px 8px */
+  border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
+}
+
+/* Action buttons — link-style text buttons (the template renders one labelled
+   button per row action; the React three-dot menu is not reproduced here). */
+.nx-index-table__actions-col button {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--nx-space-1) 6px;         /* 4px 6px hit padding */
+  margin: 0;
+  border: none;
+  border-radius: var(--nx-radius-control); /* 6px */
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-color-primary);         /* #005bd3 */
+  transition: background 0.12s;
+}
+
+.nx-index-table__actions-col button:hover {
+  background: var(--nx-bg-hover);         /* rgba(0,0,0,0.06) */
+  color: var(--nx-color-primary-hover);   /* #004bb0 */
+}
+
+.nx-index-table__actions-col button:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+/* ─── Empty state ──────────────────────────────────────────────── */
+.nx-index-table__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nx-space-3);                 /* 12px */
+  padding: 48px var(--nx-space-6);        /* 48px 24px — no 48px space token */
+  text-align: center;
+}
+
+.nx-index-table__empty-heading {
+  margin: 0;
+  font-size: var(--nx-font-size-heading-sm); /* 16px */
+  font-weight: var(--nx-font-weight-bold);   /* 600 */
+  line-height: var(--nx-line-height-relaxed); /* 24px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-index-table__empty-desc {
+  margin: 0;
+  max-width: 320px;
+  font-size: var(--nx-font-size-body);    /* 14px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+/* ─── Footer (projected, e.g. pagination) ──────────────────────── */
+.nx-index-table__footer {
+  border-top: 1px solid var(--nx-border-light); /* #ebebeb */
+}
+
+/* The template always renders the footer slot — hide it (and its border)
+   when nothing is projected. */
+.nx-index-table__footer:empty {
+  display: none;
+}

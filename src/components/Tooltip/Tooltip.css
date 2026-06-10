@@ -1,0 +1,106 @@
+/*
+ * Nexleaf Design System — Tooltip
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first; the entrance fade reuses @keyframes nxFadeIn
+ * defined in global.css.
+ *
+ * Mirrors the React Tooltip (src/components/Tooltip/Tooltip.jsx): white bubble,
+ * 8px radius, 4px/8px padding, Figma shadow-300 inset borders + outer
+ * drop-shadow, centered arrow, shown above (default) or below the trigger.
+ * The React version draws the arrow as an SVG sibling; here it is a rotated
+ * ::after square on the bubble so the single `nx-tooltip__bubble` span the
+ * Angular template emits is enough. Visibility is pure CSS (:hover /
+ * :focus-within) with a forced modifier for demos.
+ *
+ * .nx-tooltip            — relative wrapper around trigger + bubble (above by default)
+ * .nx-tooltip--above     — explicit above placement (same as default)
+ * .nx-tooltip--below     — bubble below the trigger, arrow on top
+ * .nx-tooltip--visible   — forced visible state (demos; real :hover/:focus-within also styled)
+ * .nx-tooltip__trigger   — projected trigger element
+ * .nx-tooltip__bubble    — the floating tooltip body (+ ::after arrow)
+ */
+
+.nx-tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.nx-tooltip__trigger {
+  display: inline-flex;
+}
+
+/* ── Bubble ──────────────────────────────────────────────────────────────────── */
+.nx-tooltip__bubble {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 12px);  /* 6px gap + arrow depth — matches React above placement */
+  z-index: 1000;              /* matches React zIndex: 1000 (overlay layer) */
+
+  display: block;
+  padding: 4px 8px;           /* matches React; no spacing token at 4px/8px pair */
+  background: var(--nx-bg-surface);              /* #ffffff */
+  border-radius: var(--nx-radius-sm);            /* 8px */
+  white-space: nowrap;
+
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;                              /* matches React; no token at 450 */
+  line-height: var(--nx-line-height-normal);     /* 20px */
+  color: var(--nx-text-default);                 /* #303030 */
+
+  /* Figma shadow-300 inset borders (no token — matches React INSET_SHADOW) */
+  box-shadow:
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+  /* Outer drop-shadow wraps bubble + ::after arrow as one shape (matches React) */
+  filter: drop-shadow(0px 4px 6px rgba(26, 26, 26, 0.2));
+
+  /* Hidden at rest; revealed on hover/focus/forced modifier */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.12s ease-out, visibility 0.12s;
+}
+
+/* Arrow — rotated square sharing the bubble fill */
+.nx-tooltip__bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 10px;
+  height: 10px;
+  background: var(--nx-bg-surface);
+  transform: translateX(-50%) rotate(45deg);
+  z-index: -1;                /* keeps the bubble's inset border shadows on top */
+}
+
+/* ── Below placement ─────────────────────────────────────────────────────────── */
+.nx-tooltip--below .nx-tooltip__bubble {
+  bottom: auto;
+  top: calc(100% + 12px);
+}
+
+.nx-tooltip--below .nx-tooltip__bubble::after {
+  bottom: auto;
+  top: -5px;
+}
+
+/* ── Reveal ──────────────────────────────────────────────────────────────────── */
+.nx-tooltip:hover .nx-tooltip__bubble,
+.nx-tooltip:focus-within .nx-tooltip__bubble,
+.nx-tooltip--visible .nx-tooltip__bubble {
+  opacity: 1;
+  visibility: visible;
+  animation: nxFadeIn 0.12s ease-out;            /* global.css keyframes */
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nx-tooltip__bubble {
+    transition: none;
+    animation: none !important;
+  }
+}

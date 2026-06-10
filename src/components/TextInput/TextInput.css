@@ -73,13 +73,13 @@
 
 /* Rest → Hover */
 .nx-input-wrap:hover:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
-  border-color: var(--nx-border-input);
+  border-color: var(--nx-border-input-focus);  /* #616161 */
   background: var(--nx-bg-input-focus);    /* #fafafa */
 }
 
 /* Rest → Focus (via :focus-within for pure CSS) */
 .nx-input-wrap:focus-within:not(.nx-input-wrap--disabled):not(.nx-input-wrap--error) {
-  border-color: var(--nx-border-input);    /* #8a8a8a (stays same) */
+  border-color: var(--nx-border-input-focus);  /* #616161 */
   background: var(--nx-bg-input-focus);
   box-shadow: var(--nx-focus-ring);        /* 0 0 0 2px #005bd3 */
 }

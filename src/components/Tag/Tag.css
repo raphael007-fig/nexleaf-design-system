@@ -1,0 +1,164 @@
+/*
+ * Nexleaf Design System — Tag
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css.
+ *
+ * Pill-shaped chip representing a keyword or selected value. Mirrors the React
+ * Tag (src/components/Tag/Tag.jsx), which styles inline; this file is the shared
+ * `nx-tag*` layer consumed by the Angular `nx-tag` / `nx-tag-group`.
+ *
+ * .nx-tag                 — base pill (default grey tone)
+ * .nx-tag--magic          — purple tone
+ * .nx-tag--removable      — tightens right padding for the trailing X button
+ * .nx-tag--disabled       — disabled fill/text, blocks hover + remove
+ * .nx-tag--hover          — forced hover state (demos; real :hover also styled)
+ * .nx-tag--active         — forced pressed state (real :active also styled)
+ * .nx-tag--focus          — forced focus ring (real :focus-visible also styled)
+ * .nx-tag__icon           — optional 14×14 leading icon slot
+ * .nx-tag__label          — label text
+ * .nx-tag__remove         — trailing 18×18 circular remove button
+ * .nx-tag-group           — wrapping flex row of tags (8px gap)
+ */
+
+.nx-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--nx-space-1);                        /* 4px between icon/label/X */
+  padding: 3px 10px;                             /* matches React (no spacing token at 3px) */
+  border-radius: var(--nx-radius-pill);          /* 100px */
+
+  background: var(--nx-border-light);            /* #ebebeb — default rest fill */
+  color: var(--nx-text-default);                 /* #303030 */
+
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px */
+  font-weight: 450;                              /* between regular(400) and medium(500) — no token */
+  line-height: 18px;                             /* matches React; no token at 18px */
+  white-space: nowrap;
+
+  cursor: default;
+  user-select: none;
+  outline: none;
+  flex-shrink: 0;
+  transition: background 0.1s, box-shadow 0.12s;
+}
+
+/* Removable — trailing X button hugs the right edge */
+.nx-tag--removable {
+  padding: 3px 4px 3px 10px;
+}
+
+/* ── Default tone states ─────────────────────────────────────────────────────── */
+.nx-tag:hover:not(.nx-tag--disabled),
+.nx-tag--hover:not(.nx-tag--disabled) {
+  background: var(--nx-border-default);          /* #e0e0e0 — default hover */
+}
+
+.nx-tag:active:not(.nx-tag--disabled),
+.nx-tag--active:not(.nx-tag--disabled) {
+  background: #d2d2d2;                           /* default pressed — no token */
+}
+
+.nx-tag:focus-visible:not(.nx-tag--disabled),
+.nx-tag--focus:not(.nx-tag--disabled) {
+  box-shadow: var(--nx-focus-ring);              /* 0 0 0 2px #005bd3 */
+}
+
+/* ── Magic (purple) tone ─────────────────────────────────────────────────────── */
+.nx-tag--magic {
+  background: var(--nx-magic-bg-tag-rest);       /* #ede7ff */
+  color: var(--nx-magic-text);                   /* #5700d1 */
+}
+
+.nx-tag--magic:hover:not(.nx-tag--disabled),
+.nx-tag--magic.nx-tag--hover:not(.nx-tag--disabled) {
+  background: var(--nx-magic-bg-tag-hover);      /* #dcd0ff */
+}
+
+.nx-tag--magic:active:not(.nx-tag--disabled),
+.nx-tag--magic.nx-tag--active:not(.nx-tag--disabled) {
+  background: #cbb8ff;                           /* magic pressed — no token */
+}
+
+/* ── Disabled ────────────────────────────────────────────────────────────────── */
+.nx-tag--disabled {
+  background: var(--nx-bg-disabled);             /* rgba(0,0,0,0.06) */
+  color: var(--nx-text-disabled);                /* #b5b5b5 */
+  cursor: not-allowed;
+}
+
+/* ── Leading icon slot ───────────────────────────────────────────────────────── */
+.nx-tag__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+/* ── Label ───────────────────────────────────────────────────────────────────── */
+.nx-tag__label {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Remove (X) button ───────────────────────────────────────────────────────── */
+.nx-tag__remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  flex-shrink: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: var(--nx-radius-circle);        /* 50% */
+  color: var(--nx-text-subdued);                 /* #616161 — X glyph */
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-label);          /* 13px — sizes the &times; glyph */
+  line-height: 1;
+
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.nx-tag--magic .nx-tag__remove {
+  color: var(--nx-magic-text);                   /* #5700d1 */
+}
+
+/* X hover inverts: dark fill + white glyph (purple fill on magic) */
+.nx-tag__remove:hover:not(:disabled) {
+  background: var(--nx-text-default);            /* #303030 */
+  color: var(--nx-text-on-primary);              /* #ffffff */
+}
+
+.nx-tag--magic .nx-tag__remove:hover:not(:disabled) {
+  background: var(--nx-magic-text);              /* #5700d1 */
+  color: var(--nx-text-on-primary);
+}
+
+.nx-tag__remove:focus-visible {
+  outline: none;
+  box-shadow: var(--nx-focus-ring);
+}
+
+.nx-tag__remove:disabled {
+  color: var(--nx-text-disabled);
+  cursor: not-allowed;
+}
+
+/* ── Tag group ───────────────────────────────────────────────────────────────── */
+.nx-tag-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--nx-space-2);                        /* 8px */
+  font-family: var(--nx-font-family);
+}

@@ -23,7 +23,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         <input
           class="nx-input"
           [type]="type"
-          [value]="value"
+          [value]="value ?? ''"
           [placeholder]="placeholder || ''"
           [disabled]="disabled"
           (input)="onInput($event)"

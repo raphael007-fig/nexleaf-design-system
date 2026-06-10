@@ -1,0 +1,38 @@
+/*
+ * Nexleaf Design System — PolarisIcon
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css.
+ *
+ * Minimal display layer. The Angular `nx-polaris-icon` renders a sized span
+ * (width/height/color are set inline from the component inputs) carrying the
+ * icon name in `data-icon`; real glyphs are out of scope for the Angular twin.
+ * While the span is empty it shows the same placeholder tile the React
+ * PolarisIconImg (src/components/PolarisIcon/PolarisIcon.jsx) renders for
+ * unknown icons; if an SVG glyph is ever projected inside, the placeholder
+ * fill disappears (`:empty` guard) and the glyph centers in the box.
+ *
+ * .nx-polaris-icon — sized inline icon box
+ */
+
+.nx-polaris-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* Placeholder tile while no glyph is rendered (matches React unknown-icon box) */
+.nx-polaris-icon:empty {
+  background: var(--nx-border-lighter);          /* #f0f0f0 */
+  border-radius: var(--nx-radius-xs);            /* 4px */
+}
+
+/* Projected SVG glyphs fill the box and inherit the host color */
+.nx-polaris-icon > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+  flex-shrink: 0;
+}

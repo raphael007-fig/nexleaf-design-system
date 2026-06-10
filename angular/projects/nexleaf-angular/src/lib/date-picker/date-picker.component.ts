@@ -18,7 +18,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
       <input
         type="date"
         class="nx-date-picker__input"
-        [value]="value"
+        [value]="value ?? ''"
         [min]="minDate"
         [max]="maxDate"
         (input)="onInput($event)"

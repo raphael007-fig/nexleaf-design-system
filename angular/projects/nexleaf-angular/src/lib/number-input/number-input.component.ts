@@ -24,7 +24,7 @@ import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from 
         <input
           type="number"
           class="nx-input"
-          [value]="value"
+          [value]="value ?? ''"
           [step]="step"
           [min]="min"
           [max]="max"

@@ -1,0 +1,412 @@
+/*
+ * Nexleaf Design System — Card (detail-card layout family)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first. Skeleton placeholders reuse the
+ * shared .nx-skeleton block (Skeleton.css); the type6 header badge/action reuse
+ * .nx-badge (Badge.css) and .nx-btn--plain (Btn.css).
+ *
+ * .nx-card                  — base card surface (white, radius 8, bevel shadow)
+ * .nx-card--type1           — image gallery + field grid + notes
+ * .nx-card--type2           — titled accordion card with tabs + table (no padding)
+ * .nx-card--type3           — region + facility-link card
+ * .nx-card--type4           — added-by / contact metadata card
+ * .nx-card--type6           — header / action card (icon + title + badge + button)
+ * .nx-card--critical        — red-tinted edge (type6 "Immediate Action" tone)
+ * .nx-card--loading         — loading-state surface (skeleton content)
+ *
+ * Type1:
+ * .nx-card__images          — thumbnail row
+ * .nx-card__image           — square thumbnail (caps at 120px)
+ * .nx-card__fields          — 2-column field grid (<dl>)
+ * .nx-card__field           — one label + value pair
+ * .nx-card__field-label     — field label text
+ * .nx-card__field-value     — field value text (links inherit primary blue)
+ * .nx-card__notes           — multi-line notes paragraph
+ *
+ * Type2:
+ * .nx-card__head            — header block (title + description)
+ * .nx-card__title           — card title
+ * .nx-card__description     — card subtitle
+ * .nx-card__tabs            — tab strip
+ * .nx-card__tab             — individual tab (+ --active)
+ * .nx-card__table           — embedded data table
+ * .nx-card__table-row       — table body row
+ *
+ * Type3:
+ * .nx-card__region          — region text
+ * .nx-card__facility        — facility link
+ *
+ * Type4:
+ * .nx-card__meta            — one metadata pair
+ * .nx-card__meta-label      — metadata label
+ * .nx-card__meta-value      — metadata value
+ *
+ * Type6:
+ * .nx-card__head--action    — header row (lead group + trailing action button)
+ * .nx-card__head-lead       — leading group (icon + title + badge)
+ * .nx-card__head-icon       — leading 20×20 icon slot
+ * .nx-card__head-title      — header title text
+ * .nx-card__body            — projected body (stack of nx-cell rows)
+ * .nx-card__sk-head-icon    — skeleton: header icon
+ * .nx-card__sk-head-title   — skeleton: header title
+ * .nx-card__sk-head-badge   — skeleton: header badge pill
+ * .nx-card__sk-head-action  — skeleton: trailing action label
+ *
+ * HTML-stack extras (React-only sub-components, no Angular twin yet):
+ * .nx-card__section-title   — section header row (CardSectionTitle)
+ * .nx-card__divider         — 1px horizontal rule (CardDivider)
+ */
+
+/* ─── Surface ──────────────────────────────────────────────────── */
+.nx-card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-3);                 /* 12px */
+  padding: var(--nx-space-3);             /* 12px */
+  background: var(--nx-bg-surface);       /* #ffffff */
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  /* Shared card shadow recipe (CARD_SHADOW) — same literal stack as Cell.css. */
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+  font-family: var(--nx-font-family);
+}
+
+/* Critical tone — same bevel recipe as CARD_SHADOW but red-tinted
+   (CARD_SHADOW_CRITICAL in Card.jsx; Figma "Immediate Action"). Raw rgba tints
+   mirror the CARD_SHADOW pattern — no token exists for tinted bevels. */
+.nx-card--critical {
+  box-shadow:
+    0 1px 0 rgba(235, 27, 27, 0.07),
+    inset 1px 0 0 rgba(235, 27, 27, 0.13),
+    inset -1px 0 0 rgba(235, 27, 27, 0.13),
+    inset 0 -1px 0 rgba(235, 27, 27, 0.17),
+    inset 0 1px 0 rgba(255, 182, 182, 0.5);
+}
+
+/* Loading surface — content is .nx-skeleton blocks (Skeleton.css). */
+.nx-card--loading {
+  cursor: default;
+}
+
+/* ─── Type1 — image gallery + field grid + notes ───────────────── */
+.nx-card__images {
+  display: flex;
+  gap: var(--nx-space-4);                 /* 16px */
+  flex-wrap: wrap;
+}
+
+/* Square thumbnails: cap at 120px on wide layouts but shrink proportionally
+   on narrow screens so a 3-up row never overflows the viewport. */
+.nx-card__image {
+  display: block;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 120px;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  object-fit: cover;
+  overflow: hidden;
+  background: var(--nx-bg-page);          /* #f1f1f1 placeholder fill */
+}
+
+/* Field grid — React pairs fields two per row; the flat <dl> reproduces
+   that with a 2-column grid. */
+.nx-card__fields {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--nx-space-3);                 /* 12px */
+}
+
+.nx-card__field {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--nx-space-1);                 /* 4px */
+  min-width: 0;
+  min-height: 44px;                       /* fixed 44px field-row height in React */
+}
+
+.nx-card__field-label {
+  margin: 0;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: 650;                       /* between semibold/bold — no token (matches Cell title) */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-card__field-value {
+  margin: 0;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+  overflow-wrap: break-word;
+}
+
+/* Link values (CardField linkHref) render as underlined primary links. */
+.nx-card__field-value a {
+  color: var(--nx-color-primary);         /* #005bd3 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nx-card__field-value a:hover {
+  color: var(--nx-color-primary-hover);   /* #004bb0 */
+}
+
+.nx-card__notes {
+  margin: 0;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+/* ─── Type2 — titled card with tabs + table ────────────────────── */
+/* The accordion-card chrome owns its own internal padding (header strip is
+   12×16), so the base padding/gap are removed. */
+.nx-card--type2 {
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+.nx-card--type2 .nx-card__head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;                               /* title→description gap (no 2px token) */
+  padding: var(--nx-space-3) var(--nx-space-4); /* 12px 16px */
+}
+
+.nx-card__title {
+  margin: 0;
+  font-size: var(--nx-font-size-body);    /* 14px */
+  font-weight: 650;                       /* between semibold/bold — no token */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-card__description {
+  margin: 0;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+/* Tab strip — visual recipe mirrors .nx-tab (Tabs.css). */
+.nx-card__tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-1);                 /* 4px */
+  padding: var(--nx-space-2) var(--nx-space-4); /* 8px 16px */
+  border-top: 1px solid var(--nx-border-light); /* #ebebeb */
+}
+
+.nx-card__tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 6px 12px;
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  outline: none;
+  transition: background 0.1s;
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--nx-font-family);
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  color: var(--nx-text-default);
+}
+
+.nx-card__tab:hover:not(.nx-card__tab--active) {
+  background: var(--nx-bg-hover-subtle);  /* rgba(0,0,0,0.05) */
+}
+
+.nx-card__tab:focus-visible {
+  box-shadow: var(--nx-focus-ring);
+}
+
+.nx-card__tab--active {
+  background: var(--nx-bg-pressed);       /* rgba(0,0,0,0.08) */
+}
+
+/* Embedded component table. */
+.nx-card__table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.nx-card__table-row td {
+  padding: var(--nx-space-3) var(--nx-space-2); /* 12px 8px */
+  border-bottom: 1px solid var(--nx-border-light); /* #ebebeb */
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+  text-align: left;
+  vertical-align: middle;
+}
+
+.nx-card__table-row:hover {
+  background: #fafafa;                    /* row hover — no neutral token at this value */
+}
+
+.nx-card__table-row:last-child td {
+  border-bottom: none;
+}
+
+/* ─── Type3 — region + facility link ───────────────────────────── */
+.nx-card__region {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-card__facility {
+  align-self: flex-start;
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-color-primary);         /* #005bd3 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nx-card__facility:hover {
+  color: var(--nx-color-primary-hover);   /* #004bb0 */
+}
+
+/* ─── Type4 — added-by / contact metadata ──────────────────────── */
+.nx-card__meta {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--nx-space-1);                 /* 4px */
+  min-width: 0;
+}
+
+.nx-card__meta-label {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: 650;                       /* between semibold/bold — no token */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-card__meta-value {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: var(--nx-font-weight-regular);
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 (icon-led value tone) */
+}
+
+/* ─── Type6 — header / action card ─────────────────────────────── */
+.nx-card--type6 {
+  gap: var(--nx-space-2);                 /* 8px header→body */
+}
+
+.nx-card__head--action {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--nx-space-3);                 /* 12px */
+  width: 100%;
+  padding: 0;                             /* type6 head sits inside the card padding */
+}
+
+.nx-card__head-lead {
+  display: flex;
+  align-items: center;
+  gap: 2px;                               /* icon→title gap (React inner group) */
+  min-width: 0;
+}
+
+/* Badge sits 8px from the title (outer-group gap in React = 8px; lead gap is
+   2px, so the badge adds the remaining 6px). */
+.nx-card__head-lead > .nx-badge {
+  margin-left: 6px;
+}
+
+.nx-card__head-icon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.nx-card__head-title {
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  color: var(--nx-text-default);          /* #303030 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nx-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--nx-space-3);                 /* 12px between cell rows */
+}
+
+/* ─── Type6 loading skeleton sizes ─────────────────────────────── */
+/* Compose with the shared .nx-skeleton pulse block (Skeleton.css). */
+.nx-card__sk-head-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--nx-radius-xs);     /* 4px */
+  flex-shrink: 0;
+}
+
+.nx-card__sk-head-title {
+  width: 110px;
+  height: 12px;
+  border-radius: var(--nx-radius-xs);     /* 4px */
+}
+
+.nx-card__sk-head-badge {
+  width: 84px;
+  height: 20px;
+  border-radius: var(--nx-radius-pill);   /* 100px */
+}
+
+.nx-card__sk-head-action {
+  width: 96px;
+  height: 16px;
+  border-radius: var(--nx-radius-xs);     /* 4px */
+  flex-shrink: 0;
+}
+
+/* ─── HTML-stack extras (no Angular twin yet) ──────────────────── */
+/* CardSectionTitle — section header row; apply to the row wrapper. The
+   typography also works when applied directly to a lone text span. */
+.nx-card__section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                 /* 8px */
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: 650;                       /* between semibold/bold — no token */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+/* CardDivider — 1px full-width rule. */
+.nx-card__divider {
+  height: 1px;
+  background: var(--nx-border-light);     /* #ebebeb */
+  border: none;
+  margin: 0;
+}

@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "build": "ng-packagr -p projects/nexleaf-angular/ng-package.json -c projects/nexleaf-angular/tsconfig.lib.json && node scripts/bundle-styles.mjs",
-    "bundle:styles": "node scripts/bundle-styles.mjs"
+    "bundle:styles": "node scripts/bundle-styles.mjs",
+    "storybook": "ng run storybook-host:storybook",
+    "build-storybook": "ng run storybook-host:build-storybook"
   },
   "dependencies": {
     "@angular/common": "^18.2.0",
@@ -15,9 +17,17 @@
     "tslib": "^2.6.0"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^18.2.21",
+    "@angular/animations": "^18.2.14",
+    "@angular/cli": "^18.2.21",
     "@angular/compiler": "^18.2.0",
     "@angular/compiler-cli": "^18.2.0",
+    "@angular/platform-browser": "^18.2.14",
+    "@angular/platform-browser-dynamic": "^18.2.14",
+    "@storybook/angular": "^8.6.18",
     "ng-packagr": "^18.2.0",
-    "typescript": "~5.5.4"
+    "storybook": "^8.6.18",
+    "typescript": "~5.5.4",
+    "zone.js": "^0.14.10"
   }
 }

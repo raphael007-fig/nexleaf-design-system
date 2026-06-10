@@ -1,0 +1,169 @@
+/*
+ * Nexleaf Design System — MetricCard (selectable metric tile)
+ * CSS class implementation for non-React stacks (Django, Angular, vanilla HTML).
+ * Requires tokens.css to be imported first. Loading placeholders compose the
+ * shared .nx-skeleton block (Skeleton.css).
+ *
+ * .nx-metric-card             — the tile itself (a <button>)
+ * .nx-metric-card--selected   — active filter state (pressed-grey fill)
+ * .nx-metric-card--loading    — loading state (interaction suppressed)
+ * .nx-metric-card--disabled   — disabled state (also via :disabled)
+ * .nx-metric-card__title      — metric label text
+ * .nx-metric-card__metric     — primary value (30px display number)
+ * .nx-metric-card__badge      — trend badge pill; tone via [data-tone="…"]
+ *                               (info | success | attention | warning |
+ *                                critical | default — values mirror Badge.css)
+ */
+
+/* ─── Surface ──────────────────────────────────────────────────── */
+.nx-metric-card {
+  appearance: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--nx-space-3);                 /* 12px */
+  width: 100%;
+  margin: 0;
+  padding: var(--nx-space-4);             /* 16px */
+  border: none;
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  background: var(--nx-bg-surface);       /* #ffffff */
+  /* Shared card shadow recipe (CARD_SHADOW) — same literal stack as Cell.css
+     (drop layer + 4 inset bevel layers). */
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+  box-sizing: border-box;
+  cursor: pointer;
+  user-select: none;
+  text-align: left;
+  outline: none;
+  font-family: var(--nx-font-family);
+  transition: background 0.1s;
+}
+
+/* ─── Interaction states ───────────────────────────────────────── */
+.nx-metric-card:hover:not(:disabled):not(.nx-metric-card--disabled):not(.nx-metric-card--selected):not(.nx-metric-card--loading):not(:active) {
+  background: var(--nx-bg-surface-hover); /* #f7f7f7 */
+}
+
+/* Pressed — fill goes one step darker and the bevel inverts (no drop layer). */
+.nx-metric-card:active:not(:disabled):not(.nx-metric-card--disabled):not(.nx-metric-card--loading) {
+  background: var(--nx-bg-surface-active); /* #f3f3f3 */
+  /* INSET_PRESSED recipe from MetricCard.jsx — no token for pressed-card bevel. */
+  box-shadow:
+    inset -1px 0 1px rgba(26, 26, 26, 0.12),
+    inset 1px 0 1px rgba(26, 26, 26, 0.12),
+    inset 0 2px 1px rgba(26, 26, 26, 0.2);
+}
+
+/* Keyboard focus — primary ring layered over the resting bevel. */
+.nx-metric-card:focus-visible {
+  box-shadow:
+    var(--nx-focus-ring),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+}
+
+/* Selected (active filter) */
+.nx-metric-card--selected {
+  background: var(--nx-bg-pressed);       /* rgba(0,0,0,0.08) */
+}
+
+/* Loading — placeholder content (.nx-skeleton blocks); not interactive. */
+.nx-metric-card--loading {
+  cursor: default;
+}
+
+/* Disabled */
+.nx-metric-card--disabled,
+.nx-metric-card:disabled {
+  background: var(--nx-bg-hover-subtle);  /* rgba(0,0,0,0.05) */
+  cursor: default;
+}
+
+/* ─── Title ────────────────────────────────────────────────────── */
+.nx-metric-card__title {
+  font-size: var(--nx-font-size-label);   /* 13px */
+  font-weight: 650;                       /* between semibold/bold — no token (matches Cell title) */
+  line-height: var(--nx-line-height-normal); /* 20px */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+.nx-metric-card--disabled .nx-metric-card__title,
+.nx-metric-card:disabled .nx-metric-card__title {
+  color: var(--nx-text-disabled);         /* #b5b5b5 */
+}
+
+/* ─── Metric value ─────────────────────────────────────────────── */
+.nx-metric-card__metric {
+  font-size: 30px;                        /* display number — larger than --nx-font-size-heading-lg (24px), no token */
+  font-weight: var(--nx-font-weight-extrabold); /* 700 */
+  line-height: 40px;                      /* matches the 30px display size — no token */
+  letter-spacing: -0.3px;                 /* optical tightening at display size — no token */
+  color: var(--nx-text-default);          /* #303030 */
+}
+
+.nx-metric-card--disabled .nx-metric-card__metric,
+.nx-metric-card:disabled .nx-metric-card__metric {
+  color: var(--nx-text-disabled);         /* #b5b5b5 */
+}
+
+/* ─── Badge ────────────────────────────────────────────────────── */
+/* Pill recipe mirrors .nx-badge (Badge.css); tones keyed off data-tone so the
+   template's [attr.data-tone] binding maps 1:1. Default tone (no/unknown
+   data-tone) renders as info — matching the React `badge?.tone || 'info'`. */
+.nx-metric-card__badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  height: 20px;
+  padding: 2px var(--nx-space-2);         /* 2px 8px */
+  border-radius: var(--nx-radius-sm);     /* 8px */
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: var(--nx-font-size-caption); /* 12px */
+  font-weight: var(--nx-font-weight-semibold); /* 550 */
+  line-height: var(--nx-line-height-tight);    /* 16px */
+  /* info tone (the default) — values from Badge.css */
+  background: #e0f0ff;                    /* Badge info bg — no token (—nx-bg-info is #eaf4ff) */
+  color: var(--nx-text-info);             /* #00527c */
+}
+
+.nx-metric-card__badge[data-tone='success'] {
+  background: var(--nx-bg-success);       /* #cdfee1 */
+  color: var(--nx-text-success);          /* #0c5132 */
+}
+
+.nx-metric-card__badge[data-tone='attention'] {
+  background: #ffef9d;                    /* Badge attention bg — no token */
+  color: #4f4700;                         /* Badge attention text — no token */
+}
+
+.nx-metric-card__badge[data-tone='warning'] {
+  background: #ffd6a4;                    /* Badge warning bg — no token (—nx-bg-warning is #fff3cd) */
+  color: #5e4200;                         /* Badge warning text — no token */
+}
+
+.nx-metric-card__badge[data-tone='critical'] {
+  background: #fedad9;                    /* Badge critical bg — no token (—nx-bg-critical is #fee9e8) */
+  color: var(--nx-text-critical);         /* #8e1f0b */
+}
+
+.nx-metric-card__badge[data-tone='default'] {
+  background: var(--nx-bg-hover);         /* rgba(0,0,0,0.06) */
+  color: var(--nx-text-subdued);          /* #616161 */
+}
+
+/* Disabled card forces the badge grey regardless of tone (React parity). */
+.nx-metric-card--disabled .nx-metric-card__badge,
+.nx-metric-card:disabled .nx-metric-card__badge {
+  background: var(--nx-bg-hover);         /* rgba(0,0,0,0.06) */
+  color: var(--nx-text-disabled);         /* #b5b5b5 */
+}
