@@ -21,7 +21,7 @@ const preview: Preview = {
       // @ts-ignore — params intentionally untyped (annotations break the eval'd string)
       storySort: (a, b) => {
         const TOP_ORDER = ['Foundation', 'Components', 'Patterns'];
-        const NAV_ORDER = ['Breadcrumbs', 'Pagination', 'Tabs', 'TopBar', 'HeaderPage'];
+        const NAV_ORDER = ['NavCard', 'TopBar', 'Breadcrumbs', 'Pagination', 'Tabs', 'Toolbar', 'Header Page', 'Side Navigation'];
         const NAV_PREFIX = 'Components/Navigation/';
 
         // 1) Same component → Docs first, then preserve original order.

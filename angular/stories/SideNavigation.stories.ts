@@ -10,7 +10,7 @@ import { NX_COLDTRACE_NAV_ITEMS } from '../projects/nexleaf-angular/src/lib/menu
  * tree + activeItemId with nx-menu-drawer.
  */
 const meta: Meta<NxSideNavigationComponent> = {
-  title: 'Patterns/Responsive/SideNavigation',
+  title: 'Components/Navigation/Side Navigation',
   component: NxSideNavigationComponent,
   decorators: [moduleMetadata({ imports: [NxSideNavigationModule] })],
 };

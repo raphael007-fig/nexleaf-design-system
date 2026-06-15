@@ -10,7 +10,7 @@ import { NxTertiaryActionsModule } from '../projects/nexleaf-angular/src/lib/ter
  * action row projected into the `[actions]` slot.
  */
 const meta: Meta<NxPageComponent> = {
-  title: 'Components/Navigation/HeaderPage',
+  title: 'Components/Navigation/Header Page',
   component: NxPageComponent,
   decorators: [moduleMetadata({ imports: [NxPageModule, NxTertiaryActionsModule] })],
 };
