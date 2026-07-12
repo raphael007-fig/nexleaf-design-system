@@ -78,16 +78,23 @@ export function AppShell({
   breadcrumbs,
   homeCrumb,
   onBreadcrumbSelect,
-  // 'primary' | 'secondary' | 'tertiary'. On MOBILE only, a tertiary (record /
-  // detail) page is a focused record-confirmation surface: the global top bar is
-  // hidden so the in-page record header takes priority (no competition between
-  // global nav and record identity). iPad/tablet and desktop are unaffected —
-  // they keep the global top bar for context.
+  // 'primary' | 'secondary' | 'tertiary'. Drives NAV VISIBILITY per the product
+  // rule — navigation only becomes active once you're inside a module:
+  //   • primary  — no navigation at all: rail hidden on desktop, hamburger
+  //                hidden on tablet/mobile. Home is a launcher.
+  //   • secondary — full nav: docked rail (desktop) / hamburger → drawer.
+  //   • tertiary — desktop keeps the rail for context; tablet/mobile hide the
+  //                hamburger (the record's back arrow leads). On MOBILE the
+  //                whole top bar is also hidden so the record header takes
+  //                priority (focused record-confirmation surface).
+  // Omitting `level` keeps nav always-on (back-compat for plain shell demos).
   level,
   // Shared content container so Primary / Secondary / Tertiary line up with the
   // SAME width + vertical rhythm (no jump as you navigate). One uniform max-width
-  // by default; pass a number to change it, or 'full' to opt a page out
-  // (full-bleed — the page then owns its own padding/width).
+  // by default; pass a number to change it, 'fluid' to stretch to the viewport
+  // while KEEPING the standard padding rhythm (dashboards / wide tables), or
+  // 'full' to opt out entirely (true full-bleed — the page then owns its own
+  // padding/width, e.g. the Application Layout supplies its own insets).
   contentWidth = 1080,
   country = { code: 'KE', name: 'Kenya' },
   onAskAi,
@@ -107,6 +114,20 @@ export function AppShell({
   // below. Same nav tree + activeId drive both — only the surface swaps.
   const docked = width >= BP_LG;
   const railWidth = railCollapsed ? 60 : 240;
+
+  // Nav visibility per `level` (see prop doc): Home/primary shows NO navigation
+  // — it's a launcher, nav activates inside a module. Desktop keeps the rail on
+  // secondary AND tertiary; tablet/mobile get the hamburger on secondary only
+  // (tertiary leads with the record's back arrow instead). `level` omitted →
+  // nav always on (back-compat).
+  const isPrimary = level === 'primary';
+  const showRail = docked && !isPrimary;
+  const showHamburger = !docked && (level == null || level === 'secondary');
+  // When the bar renders with NO nav element (no rail, no hamburger), nothing
+  // carries the brand — force the leaf logo: primary at every size, and the
+  // tablet tertiary page (hamburger hidden, bar kept). Left undefined otherwise
+  // so TopBar's own follow-showMenu default applies.
+  const forceLogo = isPrimary || (!docked && level === 'tertiary');
 
   // Model 2 (split control): selecting any row navigates and closes the drawer.
   // Expanding a group is the caret's job inside SideNavigation — it doesn't
@@ -140,17 +161,23 @@ export function AppShell({
   // viewport edge. The standard 24px would read as "starting low"; 0 reads as
   // cramped — 12 matches the top bar's own internal offset.
   const fullBleed = contentWidth === 'full' || contentWidth == null;
+  const fluid = contentWidth === 'fluid';
   const sidePad = width < BP_SM ? 12 : 16;
   const padTop = hideTopBar ? 'calc(12px + var(--nx-safe-top, 0px))' : '24px';
   const contentStyle = fullBleed
     ? { minWidth: 0 }
-    : { maxWidth: contentWidth, margin: '0 auto', padding: `${padTop} ${sidePad}px 32px`, boxSizing: 'border-box', minWidth: 0 };
+    : fluid
+      // 'fluid': stretch to the viewport but keep the SAME top/side/bottom
+      // rhythm as the capped container — full width must never mean content
+      // hugging the rail with no breathing room.
+      ? { padding: `${padTop} ${sidePad}px 32px`, boxSizing: 'border-box', minWidth: 0 }
+      : { maxWidth: contentWidth, margin: '0 auto', padding: `${padTop} ${sidePad}px 32px`, boxSizing: 'border-box', minWidth: 0 };
 
   return (
     <div style={{ background: BG_PAGE, minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       {/* Desktop (≥lg): docked SideNavigation rail — same nav tree + activeId as
           the drawer, so selection / breadcrumb / page title stay in lock-step. */}
-      {docked && (
+      {showRail && (
         <div style={{ position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 10 }}>
           <SideNavigation
             collapsed={railCollapsed}
@@ -165,15 +192,18 @@ export function AppShell({
         </div>
       )}
 
-      {/* Content column — offset by the rail on desktop. */}
-      <div style={{ marginLeft: docked ? railWidth : 0, transition: 'margin-left 0.18s ease', minWidth: 0 }}>
+      {/* Content column — offset by the rail on desktop (when it shows). */}
+      <div style={{ marginLeft: showRail ? railWidth : 0, transition: 'margin-left 0.18s ease', minWidth: 0 }}>
         {/* One progressive top bar across every size. On desktop the docked rail
             leads, so the hamburger + logo are hidden (showMenu=false) and the
-            breadcrumb leads. Suppressed on mobile tertiary (record header leads). */}
+            breadcrumb leads. On primary there's no nav at all, so the brand logo
+            steps in (showLogo) where the rail/hamburger would have carried it.
+            Suppressed on mobile tertiary (record header leads). */}
         {!hideTopBar && (
           <TopBar
             sticky
-            showMenu={!docked}
+            showMenu={showHamburger}
+            showLogo={forceLogo ? true : undefined}
             breadcrumbs={resolvedBreadcrumbs}
             onBreadcrumbSelect={onBreadcrumbSelect}
             onMenu={() => setDrawerOpen(true)}
@@ -195,8 +225,9 @@ export function AppShell({
       </div>
 
       {/* Tablet / mobile: the drawer the hamburger opens — also the home of
-          Notification + Profile when they drop out of the top bar. */}
-      {!docked && (
+          Notification + Profile when they drop out of the top bar. Mounted only
+          when the hamburger is live (no trigger → no drawer). */}
+      {showHamburger && (
         <MenuDrawer
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}

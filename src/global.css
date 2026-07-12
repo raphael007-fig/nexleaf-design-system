@@ -79,11 +79,26 @@ html, body {
 .nx-home-grid__tiles {
   display: grid;
   gap: 16px;
-  grid-template-columns: 1fr;               /* phones: 1 column */
+  /* minmax(0, 1fr) — NOT plain 1fr (= minmax(auto,1fr)). The `auto` minimum lets
+     a track grow to a child's min-content, so a card with a nowrap row wider than
+     a phone viewport would spill past the screen (h-scroll). minmax(0,…) lets the
+     track shrink to the container and the row's own ellipsis clips instead. */
+  grid-template-columns: minmax(0, 1fr);    /* phones: 1 column */
 }
 @container (min-width: 460px) {
   .nx-home-grid__tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }   /* 2 columns */
 }
 @container (min-width: 720px) {
   .nx-home-grid__tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }   /* 3 columns (cap) */
+}
+
+/* Home action row (Layout 1): Quick Action rides column 1 and Action Required
+   spans columns 2–3, so its left edge starts exactly on the module grid's 2nd
+   column line. Below the 3-column breakpoint both stack full-width — spanning
+   would otherwise leave an orphan hole beside Quick Action at 2 columns. */
+.nx-home-actions__quick,
+.nx-home-actions__wide { grid-column: 1 / -1; min-width: 0; }
+@container (min-width: 720px) {
+  .nx-home-actions__quick { grid-column: span 1; }
+  .nx-home-actions__wide  { grid-column: span 2; }
 }

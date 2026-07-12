@@ -1,11 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { AppShell, RailCollapseToggle } from './AppShell.jsx';
 import { Page } from '../Page/Page.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 import { Cell } from '../Cell/Cell.jsx';
+import { MetricCard } from '../MetricCard/MetricCard.jsx';
+import { IndexTable } from '../IndexTable/IndexTable.jsx';
+import { Pagination } from '../Pagination/Pagination.jsx';
+import { SearchSelectButton } from '../SearchSelect/SearchSelect.jsx';
+import { StatusBadge } from '../Badge/Badge.jsx';
 import { CardLayoutType6, Card, CardSectionTitle, CardField } from '../Card/Card.jsx';
+import { TemperatureTasksCard } from '../TemperatureTasksCard/TemperatureTasksCard.jsx';
 import { NavCard } from '../NavCard/NavCard.jsx';
-import { EquipmentCard } from '../EquipmentCard/EquipmentCard.jsx';
 import { TertiaryActions } from '../TertiaryActions/TertiaryActions.jsx';
 import { COLDTRACE_NAV_ITEMS } from '../MenuDrawer/MenuDrawer.jsx';
 import { useNavSync } from '../../foundation/useNavSync.js';
@@ -103,11 +108,49 @@ const NAV_ITEMS = COLDTRACE_NAV_ITEMS;
 const HOME_CRUMB = { id: 'home', label: 'Home', icon: <PolarisIconImg name="HomeFilledIcon" size={20} color="#303030" />, iconOnly: true };
 
 // ─── Primary / Home ───────────────────────────────────────────────────────────
-function Home({ onOpenModule }) {
+// `variant` is additive: 'default' is Home Layout 1 (unchanged); 'tasks' is
+// Home Layout 2 — it inserts the "Today's Temperature Tasks" widget into the
+// action row between Quick Action and Action Required.
+function Home({ onOpenModule, variant = 'default' }) {
+  const showTasks = variant === 'tasks';
   // Grids reflow in pure CSS (flex-wrap + auto-fit) so they key off the ACTUAL
   // available width — no JS measurement, no resize lag, and they can never spill
   // past the viewport (the old window-width breakpoints lagged a frame on resize,
   // briefly overflowing → a horizontal scrollbar).
+
+  // Action-row cards defined once, then placed into whichever container the
+  // layout needs (flex row for Layout 1, aligned 3-col grid for Layout 2).
+  const quickActionCard = (
+    <CardLayoutType6 icon={<IcoScanRows />} title="Quick Action">
+      <Cell
+        icon={<IcoQr />}
+        iconTone="neutral"
+        title="Scan QR Code or Enter Serial No."
+        onClick={() => onOpenModule('coldchain')}
+        ariaLabel="Scan QR Code or Enter Serial No."
+      />
+    </CardLayoutType6>
+  );
+  const actionRequiredCard = (
+    <CardLayoutType6
+      tone="critical"
+      icon={<IcoAlertCircle />}
+      title="Action Required"
+      badge="5 Urgent Issues"
+      actionLabel="View All"
+      onAction={() => onOpenModule('coldchain')}
+    >
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12 }}>
+        <Cell icon={<IcoGauge />} iconTone="neutral" title="Temperature exceeds threshold" description="Incubator HC 1501-2023-001 | Main Laboratory" hasChevron onClick={() => onOpenModule('coldchain')} ariaLabel="Temperature exceeds threshold" />
+        {/* Layout 2 keeps Action Required to a single cell so it balances the
+            three-column action row; Layout 1 shows both. */}
+        {!showTasks && (
+          <Cell icon={<IcoGear />} iconTone="neutral" title="Maintenance due" description="Generator GEN-2023-005 | Power Room" hasChevron onClick={() => onOpenModule('coldchain')} ariaLabel="Maintenance due" />
+        )}
+      </div>
+    </CardLayoutType6>
+  );
+
   return (
     <div>
       {/* Greeting */}
@@ -118,36 +161,27 @@ function Home({ onOpenModule }) {
         </h1>
       </div>
 
-      {/* Action row — Quick Action (~1fr) + Action Required (~2fr) side by side,
-          wrapping to a stack when they no longer fit. flex-wrap keeps the ratio
-          when wide and stacks when narrow, with no JS width measurement. */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-        <div style={{ flex: '1 1 260px', minWidth: 0 }}>
-          <CardLayoutType6 icon={<IcoScanRows />} title="Quick Action">
-            <Cell
-              icon={<IcoQr />}
-              iconTone="neutral"
-              title="Scan QR Code or Enter Serial No."
-              onClick={() => onOpenModule('coldchain')}
-              ariaLabel="Scan QR Code or Enter Serial No."
-            />
-          </CardLayoutType6>
-        </div>
-
-        <div style={{ flex: '2 1 460px', minWidth: 0 }}>
-          <CardLayoutType6
-            tone="critical"
-            icon={<IcoAlertCircle />}
-            title="Action Required"
-            badge="5 Urgent Issues"
-            actionLabel="View All"
-            onAction={() => onOpenModule('coldchain')}
-          >
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 12 }}>
-              <Cell icon={<IcoGauge />} iconTone="neutral" title="Temperature exceeds threshold" description="Incubator HC 1501-2023-001 | Main Laboratory" hasChevron onClick={() => onOpenModule('coldchain')} ariaLabel="Temperature exceeds threshold" />
-              <Cell icon={<IcoGear />} iconTone="neutral" title="Maintenance due" description="Generator GEN-2023-005 | Power Room" hasChevron onClick={() => onOpenModule('coldchain')} ariaLabel="Maintenance due" />
-            </div>
-          </CardLayoutType6>
+      {/* Action row — always on the SAME .nx-home-grid as the module tiles
+          below, so the cards sit column-for-column on that grid (3 → 2 → 1).
+          • Layout 2 (showTasks): Quick Action · Temperature Tasks · Action
+            Required — one card per column.
+          • Layout 1: Quick Action rides column 1 and Action Required spans
+            columns 2–3, its left edge starting exactly on the 2nd column line
+            (see .nx-home-actions__* in global.css). */}
+      <div className="nx-home-grid" style={{ marginBottom: 16 }}>
+        <div className="nx-home-grid__tiles">
+          {showTasks ? (
+            <>
+              {quickActionCard}
+              <TemperatureTasksCard onRecord={() => onOpenModule('coldchain')} />
+              {actionRequiredCard}
+            </>
+          ) : (
+            <>
+              <div className="nx-home-actions__quick">{quickActionCard}</div>
+              <div className="nx-home-actions__wide">{actionRequiredCard}</div>
+            </>
+          )}
         </div>
       </div>
 
@@ -173,23 +207,160 @@ function Home({ onOpenModule }) {
 }
 
 // ─── Secondary / List ─────────────────────────────────────────────────────────
+// ONE responsive page at every size — the Application Layout's Sectioned view:
+// Page header (title switcher + Region picker + Add New), interactive metric
+// tiles, then the full IndexTable (tabs, search, bulk + row actions,
+// pagination). No layout swap on resize: the metric grid auto-fits and
+// IndexTable owns its own table → stacked-card reflow on narrow screens.
+
+// Toolbar icons — same inline SVGs as the Sectioned Layout.
+const IcoFilter = ({ size = 16, color = '#303030' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M3 5h14M6 10h8M8.5 15h3" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
+const IcoAdjust = ({ size = 16, color = '#303030' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M4 4v5M4 12v4M10 4v2M10 9v7M16 4v8M16 15v1" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="4" cy="10.5" r="1.5" stroke={color} strokeWidth="1.3" />
+    <circle cx="10" cy="7.5" r="1.5" stroke={color} strokeWidth="1.3" />
+    <circle cx="16" cy="13.5" r="1.5" stroke={color} strokeWidth="1.3" />
+  </svg>
+);
+
+const EQUIP_COLUMNS = [
+  { key: 'name',        label: 'Equipment Name', width: 200, primary: true },
+  { key: 'type',        label: 'Type',           width: 170 },
+  { key: 'serial',      label: 'Serial Number',  width: 190 },
+  { key: 'facility',    label: 'Facility',       width: 160 },
+  { key: 'health',      label: 'Health',         width: 120, render: (row) => <StatusBadge status={row.health} /> },
+  { key: 'maintenance', label: 'Maintenance',    width: 140, render: (row) => (row.maintenance ? <StatusBadge status={row.maintenance} /> : '—') },
+];
+
+// Tab 0 shows everything; the rest filter on the health dimension.
+const EQUIP_TABS = [
+  { label: 'All',        filter: '__all' },
+  { label: 'Functional', filter: 'functional' },
+  { label: 'Faulty',     filter: 'faulty' },
+  { label: 'Unknown',    filter: 'unknown' },
+];
+
+const EQUIP_METRICS = [
+  { key: 'total',      title: 'Total Equipment', metric: '248', badge: { label: '5 Urgent',     tone: 'critical'  }, tooltip: 'All registered cold-chain equipment in this region.' },
+  { key: 'functional', title: 'Functional',      metric: '210', badge: { label: 'Healthy',      tone: 'success'   }, tooltip: 'Equipment reporting a functional health status.' },
+  { key: 'faulty',     title: 'Faulty',          metric: '12',  badge: { label: '3 Overdue',    tone: 'critical'  }, tooltip: 'Equipment with an open fault — service required.' },
+  { key: 'unknown',    title: 'Unknown Status',  metric: '26',  badge: { label: 'Needs Review', tone: 'attention' }, tooltip: 'Equipment that has not reported a health status recently.' },
+];
+
+const REGION_OPTIONS = [
+  { id: 'nairobi', label: 'Nairobi' },
+  { id: 'coast',   label: 'Coast',       children: [{ id: 'mombasa', label: 'Mombasa' }, { id: 'kilifi', label: 'Kilifi' }] },
+  { id: 'nyanza',  label: 'Nyanza',      children: [{ id: 'kisumu', label: 'Kisumu' }] },
+  { id: 'rift',    label: 'Rift Valley', children: [{ id: 'nakuru', label: 'Nakuru' }] },
+];
+
 function List({ title, titleDisclosure, onOpenRecord }) {
-  // Title + switcher are derived from the single nav source (useNavSync) by the
-  // parent and passed straight in — the switcher (popover desktop / BottomSheet
-  // mobile) already routes selections back through the shared writer.
+  // Table-toolbar state — same shape as the Sectioned Layout: tab + search
+  // filter the rows; changing either resets the selection so bulk actions
+  // never target hidden rows. IndexTable's selection contract is a Set of ids.
+  const [selected, setSelected] = useState(new Set());
+  const [activeTab, setActiveTab] = useState(0);
+  const [search, setSearch] = useState('');
+  const [region, setRegion] = useState([]);
+  const [activeMetric, setActiveMetric] = useState(null);
+
+  const filtered = useMemo(() => {
+    const f = EQUIP_TABS[activeTab].filter;
+    let rows = f === '__all' ? EQUIPMENT : EQUIPMENT.filter((r) => r.health === f);
+    const q = search.trim().toLowerCase();
+    if (q) rows = rows.filter((r) => [r.name, r.type, r.serial, r.facility].some((v) => v.toLowerCase().includes(q)));
+    return rows;
+  }, [activeTab, search]);
+
+  const countFor = (filter) =>
+    filter === '__all' ? EQUIPMENT.length : EQUIPMENT.filter((r) => r.health === filter).length;
+
   return (
-    <Page
-      flushTop
-      title={title}
-      titleDisclosure={titleDisclosure}
-      primaryAction={{ content: '+ Add New', onClick: () => {} }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-        {EQUIPMENT.map((e) => (
-          <EquipmentCard key={e.id} {...e} onClick={() => onOpenRecord(e)} />
+    <>
+      <Page
+        flushTop
+        title={title}
+        titleDisclosure={titleDisclosure}
+        secondaryActions={[{
+          node: (
+            <SearchSelectButton
+              label="Region"
+              placeholder="Choose Region"
+              leadingIcon={<PolarisIconImg name="LocationIcon" size={16} color="currentColor" />}
+              options={REGION_OPTIONS}
+              value={region}
+              onChange={setRegion}
+              multiple
+            />
+          ),
+        }]}
+        primaryAction={{ content: '+ Add New', onClick: () => {} }}
+      />
+
+      {/* Metric tiles — interactive, same rhythm as the Sectioned Layout:
+          Page's 24px bottom padding above, explicit 24px below to the table. */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+        gap: 12,
+        marginBottom: 24,
+      }}>
+        {EQUIP_METRICS.map((card) => (
+          <MetricCard
+            key={card.key}
+            title={card.title}
+            metric={card.metric}
+            badge={card.badge}
+            infoTooltip={card.tooltip}
+            selected={activeMetric === card.key}
+            onClick={() => setActiveMetric((prev) => (prev === card.key ? null : card.key))}
+          />
         ))}
       </div>
-    </Page>
+
+      <IndexTable
+        columns={EQUIP_COLUMNS}
+        rows={filtered}
+        selectedRows={selected}
+        onSelectionChange={setSelected}
+        tabs={EQUIP_TABS.map((t) => ({ label: t.label, badge: countFor(t.filter) }))}
+        activeTab={activeTab}
+        onTabChange={(i) => { setActiveTab(i); setSelected(new Set()); }}
+        searchValue={search}
+        onSearchChange={(v) => { setSearch(v); setSelected(new Set()); }}
+        searchPlaceholder="Search equipment…"
+        toolbarActions={[
+          { label: 'Filter',  icon: <IcoFilter size={16} />, onClick: () => {} },
+          { label: 'Columns', icon: <IcoAdjust size={16} />, onClick: () => {} },
+        ]}
+        bulkActions={[
+          { label: 'Export',  onAction: () => {} },
+          { label: 'Archive', onAction: () => {} },
+        ]}
+        rowActions={[
+          { label: 'View details', onAction: (row) => onOpenRecord(row) },
+          { label: 'Edit',         onAction: () => {} },
+          { label: 'Delete',       onAction: () => {}, destructive: true },
+        ]}
+        emptyState={{
+          heading: 'No equipment matches this filter',
+          description: 'Try a different status tab or clear the search.',
+        }}
+        footer={
+          <Pagination
+            type="table"
+            hasPrevious={false}
+            hasNext={false}
+            label={filtered.length === 0 ? '0 of 0' : `1–${filtered.length} of ${filtered.length}`}
+          />
+        }
+      />
+    </>
   );
 }
 
@@ -207,16 +378,36 @@ function Detail({ record, onBack }) {
         subtitle={record.serial}
         actions={<TertiaryActions state={record.health === 'functional' ? 'functional' : record.health === 'faulty' ? 'faulty' : record.health === 'unknown' ? 'unknown' : 'functional'} onAction={() => {}} />}
       />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16 }}>
-        <Card>
-          <CardSectionTitle>Description</CardSectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: 12 }}>
-            <CardField label="Equipment Type" value={record.type} />
-            <CardField label="Serial Number" value={record.serial} />
-            <CardField label="Facility" value={record.facility} />
-            <CardField label="Maintenance" value={record.maintenance || 'Unknown'} />
-          </div>
-        </Card>
+      {/* Record body — main description card (fields paired 2-per-row like
+          CardLayoutType1, the canonical detail card) + a contact aside. The
+          2fr/1fr flex row fills the full-width shell and wraps to a stack on
+          narrow screens — same pattern as the Home action row. */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16, alignItems: 'flex-start' }}>
+        <div style={{ flex: '2 1 480px', minWidth: 0 }}>
+          <Card>
+            <CardSectionTitle title="Description" />
+            {[
+              [
+                { label: 'Equipment Type', value: record.type },
+                { label: 'Serial Number', value: record.serial },
+              ],
+              [
+                { label: 'Facility', value: record.facility },
+                { label: 'Maintenance', value: record.maintenance || 'Unknown' },
+              ],
+            ].map((pair, i) => (
+              <div key={i} style={{ display: 'flex', gap: 12, minHeight: 44, alignItems: 'center' }}>
+                {pair.map((f) => <CardField key={f.label} label={f.label} value={f.value} />)}
+              </div>
+            ))}
+          </Card>
+        </div>
+        <div style={{ flex: '1 1 280px', minWidth: 0 }}>
+          <Card>
+            <CardSectionTitle title="Added by" />
+            <CardField label="Grace Mwangi" value="+254 712 345 678" />
+          </Card>
+        </div>
       </div>
     </>
   );
@@ -226,9 +417,10 @@ function Detail({ record, onBack }) {
 // Resize the canvas (or use the viewport addon) to cross 1024px: desktop docks
 // the rail; tablet/mobile use the hamburger → MenuDrawer. The route/IA is the
 // same at every size — only the shell adapts.
-export const ResponsiveApp = {
-  name: 'Assembled app (Primary / Secondary / Tertiary)',
-  render: () => {
+// Shared assembled-app harness. `homeVariant` is threaded into the Home page so
+// the two Home layouts share ONE assembled shell (nav sync, breadcrumbs, record
+// drilldown) instead of duplicating it.
+function AssembledApp({ homeVariant = 'default' }) {
     // ── Single source of truth via useNavSync ───────────────────────────────
     // `nav.activeId` drives the rail/drawer, breadcrumb, and title switcher.
     // `record` is the Tertiary detail (an extra dimension, not a nav id); `view`
@@ -264,6 +456,11 @@ export const ResponsiveApp = {
         onBreadcrumbSelect={navigate}
         onAskAi={() => setChatOpen((o) => !o)}
         askAiActive={chatOpen}
+        // 'fluid' = stretch like the Application Layout but KEEP the shell's
+        // standard padding rhythm (24px top / 16px sides / 32px bottom). 'full'
+        // would be true full-bleed — content hugging the rail with no insets —
+        // which only suits pages that supply their own padding.
+        contentWidth="fluid"
       >
         {/* Ask AI opens the chat panel (same behaviour as the Application Layout). */}
         <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
@@ -271,7 +468,7 @@ export const ResponsiveApp = {
             AI chat panel content lives here.
           </div>
         </AiChatPanel>
-        {view === 'home' && <Home onOpenModule={navigate} />}
+        {view === 'home' && <Home onOpenModule={navigate} variant={homeVariant} />}
         {view === 'list' && (
           <List
             title={nav.labelFor(nav.activeId)}
@@ -284,7 +481,21 @@ export const ResponsiveApp = {
         )}
       </AppShell>
     );
-  },
+}
+
+export const ResponsiveApp = {
+  name: 'Assembled app (Primary / Secondary / Tertiary)',
+  render: () => <AssembledApp />,
+};
+
+// ─── Home Layout 2 ─────────────────────────────────────────────────────────────
+// Same assembled app as above, but the Home page runs Layout 2: the "Today's
+// Temperature Tasks" widget joins the action row (Quick Action · Temperature
+// Tasks · Action Required). Everything else — nav, breadcrumbs, list/detail
+// drilldown — is identical.
+export const HomeLayout2 = {
+  name: 'Home Layout 2 (Temperature Tasks widget)',
+  render: () => <AssembledApp homeVariant="tasks" />,
 };
 
 // ─── Interaction states ───────────────────────────────────────────────────────

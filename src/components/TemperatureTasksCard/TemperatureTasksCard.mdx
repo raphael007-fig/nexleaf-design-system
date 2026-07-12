@@ -1,0 +1,66 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as TemperatureTasksCardStories from './TemperatureTasksCard.stories.jsx';
+
+<Meta title="Components/TemperatureTasksCard/Docs" />
+
+# Today's Temperature Tasks
+
+A Home widget that surfaces the temperature readings due today. It is a **sibling of the Action Card** (`CardLayoutType6`): same header (leading icon + title + count badge + a right-aligned **View All**) and the same `Cell` rows. The single difference is the trailing control — Action Required rows end in a **chevron** (navigate to the issue); temperature-task rows end in a **Record** button (log the reading in place).
+
+<Canvas of={TemperatureTasksCardStories.Default} />
+
+---
+
+## Anatomy
+
+- **Header** — gauge icon, "Today's Temperature Tasks", a `attention`-tone badge showing the pending count (Morning + Evening), and a ghost **View All** button.
+- **Body** — one or more preview rows (`previewCount`, default 1). Each is a `Cell` with `iconTone="warning"` and `buttonLabel="Record"`.
+- **View All** — opens a right `SlideOver` with **Morning / Evening / Completed** tabs (each showing its count) and a paginated list. Every row carries its own **Record** button; pagination appears only when a tab has more than `pageSize` rows (default 6).
+
+## Reuse, not reinvention
+
+This component adds **no new visual primitives**. It composes existing pieces:
+
+| Piece | Reused component |
+|-------|------------------|
+| Card surface + header | same layout as `CardLayoutType6` |
+| Task row | `Cell` (`buttonLabel` / `onButtonClick`) |
+| Count / pending badge | `Badge` (`tone="attention"`) |
+| View All button | `Btn` (`variant="ghost"`) |
+| Session tabs | `Tabs` (with `badge` counts) |
+| Paged list panel | `SlideOver` + `Pagination` |
+
+## Props
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `tasks` | `{ morning, evening, completed }` | `SAMPLE_TEMPERATURE_TASKS` | Each item: `{ id, name, facility, session }` |
+| `previewCount` | number | `1` | Rows shown in the card body |
+| `pageSize` | number | `6` | Rows per page in the View All panel |
+| `onRecord` | `(task) => void` | — | Fires when a row's **Record** is clicked |
+| `title` | string | `Today's Temperature Tasks` | |
+| `loading` | boolean | `false` | Header + row skeleton |
+
+`TemperatureTasksPanel` is exported separately so the "View All" slide-over can be opened/documented on its own.
+
+---
+
+## View All
+
+<Canvas of={TemperatureTasksCardStories.ViewAll} />
+
+## Empty (all completed)
+
+When no readings are pending the badge disappears; each empty tab shows its own message.
+
+<Canvas of={TemperatureTasksCardStories.AllCompleted} />
+
+## Loading
+
+<Canvas of={TemperatureTasksCardStories.Loading} />
+
+---
+
+## Where it's used
+
+The **App Shell → Home Layout 2** places this widget in the Home action row between **Quick Action** and **Action Required**. Home Layout 1 (default) is unchanged.

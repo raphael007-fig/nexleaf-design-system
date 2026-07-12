@@ -83,6 +83,11 @@ export function TopBar({
   // used when a docked SideNavigation rail already carries the brand + nav
   // (desktop). Defaults true (mobile/tablet drawer-first).
   showMenu = true,
+  // Show the brand logo independently of the hamburger. Default (undefined)
+  // follows `showMenu` — unchanged behavior. Pass true for surfaces with NO
+  // navigation at all (e.g. the primary/Home page hides both rail and
+  // hamburger) so the leaf mark still carries the brand at the far left.
+  showLogo,
   breadcrumbs = [],
   onBreadcrumbSelect,
   askAiLabel = 'Ask AI',
@@ -216,8 +221,11 @@ export function TopBar({
           {showMenu && menuBtn}
           {/* Logo is dropped on the tightest (mobile) layouts so Ask AI and the
               Country selector stop colliding — the brand still lives in the
-              drawer the menu button opens. */}
-          {showMenu && !hideLogo && logoEl}
+              drawer the menu button opens. An EXPLICIT `showLogo` overrides
+              both the follow-showMenu default and that fit-math drop: on
+              nav-less surfaces (Home, tablet record pages) there is no drawer
+              carrying the brand, so the leaf must stay even when tight. */}
+          {(showLogo != null ? showLogo : (showMenu && !hideLogo)) && logoEl}
           {mode === 'center-bc' && bcEl && <div style={{ minWidth: 0, overflow: 'hidden' }}>{bcEl}</div>}
           {mode === 'flow' && <span style={{ flexShrink: 0 }}>{askAiBtn}</span>}
         </div>
