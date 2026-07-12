@@ -14,7 +14,7 @@ import { NavCard } from '../NavCard/NavCard.jsx';
 import { TertiaryActions } from '../TertiaryActions/TertiaryActions.jsx';
 import { COLDTRACE_NAV_ITEMS } from '../MenuDrawer/MenuDrawer.jsx';
 import { useNavSync } from '../../foundation/useNavSync.js';
-import { AiChatPanel } from '../Toolbar/Toolbar.jsx';
+import { AiChatDemo } from '../AiChat/AiChatDemo.jsx';
 import { PolarisIconImg } from '../PolarisIcon/PolarisIcon.jsx';
 // Home module-grid illustrations — shared with the Sectioned Layout (Pages).
 import illoEquipment from '../../pages/ApplicationLayout/home-illustrations/equipment-management.svg?raw';
@@ -462,12 +462,10 @@ function AssembledApp({ homeVariant = 'default' }) {
         // which only suits pages that supply their own padding.
         contentWidth="fluid"
       >
-        {/* Ask AI opens the chat panel (same behaviour as the Application Layout). */}
-        <AiChatPanel open={chatOpen} onClose={() => setChatOpen(false)}>
-          <div style={{ padding: 24, fontSize: 13, color: '#616161' }}>
-            AI chat panel content lives here.
-          </div>
-        </AiChatPanel>
+        {/* Ask AI opens the canonical AI Chat Bot demo — the same assembled
+            panel (welcome, scripted replies, history, dialogs) every surface
+            shares, so the chat experience is identical system-wide. */}
+        <AiChatDemo open={chatOpen} onClose={() => setChatOpen(false)} />
         {view === 'home' && <Home onOpenModule={navigate} variant={homeVariant} />}
         {view === 'list' && (
           <List

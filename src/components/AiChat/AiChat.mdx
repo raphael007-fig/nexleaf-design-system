@@ -1,0 +1,106 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as AiChatStories from './AiChat.stories.jsx';
+
+<Meta title="Components/AiChat/Docs" />
+
+# AiChat
+
+The content components for the **Ask AI** slide-over, implementing the AI Chat Bot design (Figma: *AI-Chat-Bot* — chat `2069:9866`, conversation `1849:6226`, Previous Chat `1915:5949` ff.). `AiChatPanel` (Toolbar module) provides the right-side drawer shell; these pieces fill its body. All of them are stateless and controlled, so any backend (or scripted demo) can drive them.
+
+<Canvas of={AiChatStories.FullPanel} />
+
+---
+
+## Anatomy
+
+```jsx
+<AiChatPanel
+  open={open} onClose={close}
+  onBack={inHistory ? backToChat : undefined}       // ← history view
+  title={inHistory ? 'Previous Chat' : 'AI Chat Bot'} beta={!inHistory}
+  disclaimer={inHistory ? 'This shows your recent conversations' : DEFAULT_DISCLAIMER}
+  onNewChat={reset} onPreviousChat={openHistory}
+  overflowActions={[{ id: 'language', label: 'English', icon: AiChatIcons.language }, …]}
+  onOverflowSelect={handleOverflow}
+>
+  {/* chat view */}
+  <AiChatConversation>
+    <AiChatWelcome suggestions={SUGGESTIONS} onSelect={ask} />
+    <AiChatMessage role="user">…</AiChatMessage>
+    <AiChatResponse title="…" onCopy={copy} onLike={like} onDislike={dislike}
+      followUps={FOLLOW_UPS} onFollowUpSelect={ask}>…</AiChatResponse>
+    <AiChatTyping />
+  </AiChatConversation>
+  <AiChatComposer value={draft} onChange={setDraft} onSend={ask} onAttach={attach} onMic={voice} />
+</AiChatPanel>
+```
+
+- **`AiChatPanel`** — the drawer (560px). Header actions render only when their callback is passed; `onBack` adds the ← arrow for sub-views; `overflowActions` gives the "⋯" button a built-in dropdown (`onOverflowSelect(id, item, index)`); the ✕ fires `onClose`.
+- **`AiChatWelcome`** — centered empty state with two-line suggestion cards (`{ id, label, description? }` → `onSelect(id, item, index)`).
+- **`AiChatMessage`** — `role="user"` renders the success-green speech bubble with its tail; `role="assistant"` renders logo-above plain text for simple replies.
+- **`AiChatResponse`** — the full reply block: logo, bold `title`, body, **Copy** / 👍 / 👎 actions (render only when their callback is passed), and info-chip `followUps` behind a divider.
+- **`AiChatTyping` / `AiChatSkeleton`** — response-pending dots and the first-open history skeleton.
+- **`AiChatComposer`** — `[attach] [field with mic suffix] [send]`; Enter sends, Shift+Enter breaks a line. The send circle uses `--nx-color-ai` (`#31b564`).
+
+## Conversation
+
+<Canvas of={AiChatStories.Conversation} />
+
+## Reply variants
+
+`AiChatResponse` also takes `sources` (gray link-chips naming where the answer came from, via the system `Tag`) and `onDownload` (adds a **Download** action). Error fallbacks and entity links are plain JSX children.
+
+<Canvas of={AiChatStories.ReplyVariants} />
+
+## Table replies
+
+`AiChatTable` embeds matching records right in an answer ("3 matching records across 2 facilities") — compact card-chrome table with a 12/550 header, 13/450 cells (values can be nodes, e.g. `StatusBadge`), horizontal scroll when columns outgrow the panel, `onRowClick(row, index)` for opening records, and an optional `footnote`.
+
+<Canvas of={AiChatStories.TableReply} />
+
+## Media cards
+
+`AiChatMediaCard` (`type="image" | "video" | "file"`) renders the Polaris-style media card inside a reply — media area with the play/duration pill for video or the red file tile, then 13/650 title + 12/450 description.
+
+<Canvas of={AiChatStories.MediaCards} />
+
+## Delete / Rename
+
+`AiChatDeleteChatsDialog` (confirm → `deleting` progress card) and `AiChatRenameChatDialog` compose the system `Modal`; success feedback is the inline `AiChatToast`.
+
+<Canvas of={AiChatStories.DeleteRenameFlow} />
+
+## Previous Chat
+
+List, select mode, and empty state. Cells are bevel cards (same `shadow-bevel-100` as `Cell`); hovering floats the checkbox off the left edge, the "⋯" opens an `AiChatMenu` of row actions (Select / View / Rename / Share / Archive / Delete), and selection swaps to the primary-blue bevel. Pagination is the system `Pagination type="page"`.
+
+<Canvas of={AiChatStories.PreviousChatList} />
+
+<Canvas of={AiChatStories.PreviousChatSelectMode} />
+
+<Canvas of={AiChatStories.PreviousChatEmpty} />
+
+- **`AiChatHistoryCount`** — "You have N chats with Nexleaf AI" + the **Select** entry point (ghost `Btn`).
+- **`AiChatHistorySelectBar`** — bulk bar: select-all checkbox, "N selected", archive + delete, ✕ exit.
+- **`AiChatHistoryCell`** — `{ title, meta, onOpen, actions, onAction, selectMode, checked, onCheckedChange }`; force `state="hover"` for docs.
+- **`AiChatHistoryEmpty`** — note-sync illustration, message, "Start a New Chat".
+- **`AiChatMenu`** — portal-anchored dropdown built on `OptionList` (critical rows go `--nx-color-critical`, same pattern as IndexTable row actions).
+- **`AiChatIcons`** — the shared menu glyph set (select / view / rename / share / archive / delete / language / settings / feedback / copy).
+
+## Empty state
+
+<Canvas of={AiChatStories.Welcome} />
+
+## Loading
+
+<Canvas of={AiChatStories.Loading} />
+
+## Composer states
+
+<Canvas of={AiChatStories.ComposerStates} />
+
+---
+
+## CSS classes (non-React stacks)
+
+`AiChat.css` ships the `nx-ai-chat-*` classes: conversation/welcome/message (`__bubble` is now the green speech bubble + `__tail`), `nx-ai-chat-response` (`__title`, `__body`, `__actions`, `__divider`, `__follow-ups`) with `nx-ai-chat-follow-up` chips, the history set (`nx-ai-chat-history-count`, `-select-bar`, `-cell` + `--hover`/`--selected`, `-empty`), `nx-ai-chat-menu`, typing, and the composer. Reuse `.nx-btn` / `.nx-option-list` / `.nx-checkbox` for the interactive parts. Requires `tokens.css` first.

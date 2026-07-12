@@ -5,6 +5,7 @@ import {
 } from '../../foundation/overlay/overlayHooks.js';
 import { Skeleton } from '../Skeleton/Skeleton.jsx';
 import { OptionList } from '../OptionList/OptionList.jsx';
+import { Btn, IconBtn } from '../Btn/Btn.jsx';
 
 // ── Nexleaf AI logo (gradient ring) ───────────────────────────────────────
 // Used both as the brand logo (left of the toolbar) and as the leading
@@ -704,19 +705,92 @@ export function ToolbarMenuButton({
   );
 }
 
+// ── AiChatPanel header icons (inlined per the icon rule) ──────────────────
+const IcoCompose = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M14.6659 3.60354C14.8611 3.40828 15.1777 3.40828 15.373 3.60354L16.4337 4.6642C16.6289 4.85946 16.6289 5.17604 16.4337 5.37131L15.4765 6.32842L13.7088 4.56065L14.6659 3.60354Z" fill={color} />
+    <path d="M13.0017 5.26776L14.7694 7.03553L10.9388 10.8661C10.58 11.225 10.0982 11.434 9.59095 11.4508L8.81894 11.4764C8.67442 11.4812 8.55599 11.3628 8.56078 11.2183L8.5864 10.4462C8.60322 9.93903 8.81224 9.45719 9.17108 9.09834L13.0017 5.26776Z" fill={color} />
+    <path d="M5 7.24999C5 6.00734 6.00736 4.99999 7.25 4.99999H9.08C9.49421 4.99999 9.83 4.6642 9.83 4.24999C9.83 3.83577 9.49421 3.49999 9.08 3.49999H7.25C5.17893 3.49999 3.5 5.17892 3.5 7.24999V12.75C3.5 14.8211 5.17893 16.5 7.25 16.5H12.75C14.8211 16.5 16.5 14.8211 16.5 12.75V10.92C16.5 10.5058 16.1642 10.17 15.75 10.17C15.3358 10.17 15 10.5058 15 10.92V12.75C15 13.9926 13.9926 15 12.75 15H7.25C6.00736 15 5 13.9926 5 12.75V7.24999Z" fill={color} />
+  </svg>
+);
+
+const IcoPageClock = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M7.75 12C7.75 11.5858 7.41421 11.25 7 11.25C6.58579 11.25 6.25 11.5858 6.25 12V13.2929C6.25 13.6244 6.3817 13.9424 6.61612 14.1768L7.46967 15.0303C7.76256 15.3232 8.23744 15.3232 8.53033 15.0303C8.82322 14.7374 8.82322 14.2626 8.53033 13.9697L7.75 13.1893V12Z" fill={color} />
+    <path fillRule="evenodd" clipRule="evenodd" d="M14.25 17H9.82867C9.0558 17.6254 8.07165 18 7 18C4.51472 18 2.5 15.9853 2.5 13.5C2.5 11.2703 4.12172 9.41928 6.25 9.06222V5.75C6.25 4.23122 7.48122 3 9 3H12C12.1989 3 12.3897 3.07902 12.5303 3.21967L16.7803 7.46967C16.921 7.61032 17 7.80109 17 8V14.25C17 15.7688 15.7688 17 14.25 17ZM7.75 5.75C7.75 5.05964 8.30964 4.5 9 4.5H11.25V7C11.25 7.9665 12.0335 8.75 13 8.75H15.5V14.25C15.5 14.9404 14.9404 15.5 14.25 15.5H11.0322C11.3316 14.8975 11.5 14.2184 11.5 13.5C11.5 11.2703 9.87828 9.41928 7.75 9.06222V5.75ZM14.4393 7.25L12.75 5.56066V7C12.75 7.13807 12.8619 7.25 13 7.25H14.4393ZM7 16.5C8.65685 16.5 10 15.1569 10 13.5C10 11.8431 8.65685 10.5 7 10.5C5.34315 10.5 4 11.8431 4 13.5C4 15.1569 5.34315 16.5 7 16.5Z" fill={color} />
+  </svg>
+);
+
+const IcoMenuHorizontal = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M6 10C6 10.8284 5.32843 11.5 4.5 11.5C3.67157 11.5 3 10.8284 3 10C3 9.17157 3.67157 8.5 4.5 8.5C5.32843 8.5 6 9.17157 6 10Z" fill={color} />
+    <path d="M11.5 10C11.5 10.8284 10.8284 11.5 10 11.5C9.17157 11.5 8.5 10.8284 8.5 10C8.5 9.17157 9.17157 8.5 10 8.5C10.8284 8.5 11.5 9.17157 11.5 10Z" fill={color} />
+    <path d="M15.5 11.5C16.3284 11.5 17 10.8284 17 10C17 9.17157 16.3284 8.5 15.5 8.5C14.6716 8.5 14 9.17157 14 10C14 10.8284 14.6716 11.5 15.5 11.5Z" fill={color} />
+  </svg>
+);
+
+const IcoArrowLeft = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path fillRule="evenodd" clipRule="evenodd" d="M17.5 10C17.5 10.4602 17.1269 10.8333 16.6667 10.8333L5.90087 10.8333L8.923 13.8552C9.24845 14.1806 9.24848 14.7082 8.92306 15.0337C8.59764 15.3591 8.07 15.3591 7.74455 15.0337L3.29966 10.5893C3.14336 10.433 3.05555 10.221 3.05555 10C3.05555 9.77897 3.14336 9.567 3.29966 9.41071L7.74455 4.96627C8.07 4.64085 8.59764 4.64088 8.92306 4.96633C9.24848 5.29178 9.24845 5.81942 8.923 6.14484L5.90087 9.16667L16.6667 9.16667C17.1269 9.16667 17.5 9.53976 17.5 10Z" fill={color} />
+  </svg>
+);
+
+const IcoMinimize = ({ size = 20, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <path d="M14.1667 9.44444C14.6269 9.44444 15 9.07135 15 8.61111C15 8.15087 14.6269 7.77778 14.1667 7.77778H13.4007L16.9781 4.20037C17.3036 3.87493 17.3036 3.34729 16.9781 3.02186C16.6527 2.69642 16.1251 2.69642 15.7996 3.02186L12.2222 6.59927V5.83333C12.2222 5.3731 11.8491 5 11.3889 5C10.9287 5 10.5556 5.3731 10.5556 5.83333V8.61111C10.5556 9.07135 10.9287 9.44444 11.3889 9.44444L14.1667 9.44444Z" fill={color} />
+    <path d="M5.83333 10.5556C5.3731 10.5556 5 10.9287 5 11.3889C5 11.8491 5.3731 12.2222 5.83333 12.2222H6.59927L3.02186 15.7996C2.69642 16.1251 2.69642 16.6527 3.02186 16.9781C3.34729 17.3036 3.87493 17.3036 4.20037 16.9781L7.77778 13.4007V14.1667C7.77778 14.6269 8.15087 15 8.61111 15C9.07135 15 9.44444 14.6269 9.44444 14.1667V11.3889C9.44444 10.9287 9.07135 10.5556 8.61111 10.5556H5.83333Z" fill={color} />
+  </svg>
+);
+
 // ── AiChatPanel — right-side drawer opened by ToolbarAiChatButton ─────────
 //
-// Stateless dialog. Consumer controls `open` and renders any chat UI as
-// children. Slides in from the right; backdrop click and Escape close it.
+// Stateless dialog implementing the AI Chat Bot design (Figma: AI-Chat-Bot,
+// node 2069:10173). Consumer controls `open` and renders the chat UI as
+// children (see src/components/AiChat/). Slides in from the right; backdrop
+// click, the minimize control, and Escape all close it.
 //
+// Header: [← back?] logo + title, then [Start New Chat] [Previous Chat]
+// [⋯ overflow] [✕ close] — each action renders only when its callback is
+// passed. `disclaimer` renders the muted usage note under the title row.
+// `overflowActions` ({ id, label, icon?, tone? }[]) gives the "⋯" button a
+// built-in dropdown (fires onOverflowSelect); plain `onOverflow` still works
+// for consumers that render their own menu.
 export function AiChatPanel({
   open,
   onClose,
+  onBack,
   title = 'AI Chat Bot',
   beta = true,
-  width = 420,
+  width = 560,
+  disclaimer = 'This chatbot shows off the potential of generative AI in healthcare applications. Your data and submissions are not used to train or improve models.',
+  onNewChat,
+  onPreviousChat,
+  onOverflow,
+  overflowActions,
+  onOverflowSelect,
   children,
 }) {
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const overflowBtnRef = useRef(null);
+  const overflowMenuRef = useRef(null);
+
+  // Outside-click + Escape close for the built-in overflow dropdown.
+  useEffect(() => {
+    if (!overflowOpen) return;
+    function onDoc(e) {
+      if (overflowMenuRef.current && !overflowMenuRef.current.contains(e.target)
+        && !(overflowBtnRef.current && overflowBtnRef.current.contains(e.target))) {
+        setOverflowOpen(false);
+      }
+    }
+    function onKey(e) { if (e.key === 'Escape') setOverflowOpen(false); }
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDoc);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [overflowOpen]);
   const panelRef = useRef(null);
   // The panel declares aria-modal, so it must behave like one: trap focus
   // inside, lock body scroll, restore focus to the trigger on close, and close
@@ -756,34 +830,108 @@ export function AiChatPanel({
           animation: reduce ? 'none' : 'slideInRight 0.22s ease-out',
         }}
       >
-        <header style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '14px 16px',
-          borderBottom: '1px solid #ebebeb',
-        }}>
-          <AiLogo size={24} />
-          <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6, flex: 1, minWidth: 0 }}>
-            <span style={{
-              fontFamily: 'Inter, sans-serif', fontSize: 16, fontWeight: 600,
-              color: '#303030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-            }}>{title}</span>
-            {beta && <span style={{ color: '#616161', fontSize: 13, fontWeight: 400 }}>(beta)</span>}
-          </span>
-          <button
-            type="button"
-            aria-label="Close AI chat"
-            onClick={onClose}
-            style={{
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              width: 32, height: 32, padding: 0,
-              background: 'transparent', border: 'none', borderRadius: 8,
-              color: '#303030', cursor: 'pointer',
-            }}
-          >
-            <IcoClose size={18} color="currentColor" />
-          </button>
+        <header style={{ flexShrink: 0 }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, rowGap: 8, flexWrap: 'wrap',
+            padding: '16px 16px 4px',
+          }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 140 }}>
+              {onBack && (
+                <button
+                  type="button"
+                  aria-label="Back"
+                  onClick={onBack}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 28, height: 28, padding: 0,
+                    background: 'transparent', border: 'none', borderRadius: 8,
+                    color: '#616161', cursor: 'pointer', flexShrink: 0,
+                  }}
+                >
+                  <IcoArrowLeft size={20} color="currentColor" />
+                </button>
+              )}
+              <AiLogo size={24} />
+              <span style={{
+                fontFamily: 'Inter, sans-serif', fontSize: 14, fontWeight: 650, lineHeight: '20px',
+                color: '#303030', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {title}{beta && <span style={{ color: '#616161', fontWeight: 650 }}> (beta)</span>}
+              </span>
+            </span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+              {onNewChat && (
+                <Btn variant="secondary" size="medium" icon={<IcoCompose size={16} />} onClick={onNewChat}>
+                  Start New Chat
+                </Btn>
+              )}
+              {onPreviousChat && (
+                <Btn variant="secondary" size="medium" icon={<IcoPageClock size={16} />} onClick={onPreviousChat}>
+                  Previous Chat
+                </Btn>
+              )}
+              {(overflowActions?.length || onOverflow) && (
+                <span ref={overflowBtnRef} style={{ position: 'relative', display: 'inline-flex' }}>
+                  <IconBtn
+                    icon={<IcoMenuHorizontal size={20} />}
+                    onClick={overflowActions?.length ? () => setOverflowOpen((o) => !o) : onOverflow}
+                  />
+                  {overflowOpen && overflowActions?.length > 0 && (
+                    <div
+                      ref={overflowMenuRef}
+                      style={{
+                        position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                        zIndex: 10, width: 180,
+                        background: '#ffffff', borderRadius: 12,
+                        boxShadow: '0 20px 25px -5px rgba(0,0,0,0.10), 0 10px 10px -5px rgba(0,0,0,0.04)',
+                      }}
+                    >
+                      <OptionList
+                        sections={[{
+                          options: overflowActions.map((a) => ({
+                            id: a.id,
+                            label: a.tone === 'critical' ? <span style={{ color: '#d92d20' }}>{a.label}</span> : a.label,
+                            media: a.icon
+                              ? <span style={{ display: 'inline-flex', color: a.tone === 'critical' ? '#d92d20' : '#616161' }}>{a.icon}</span>
+                              : undefined,
+                            disabled: a.disabled,
+                          })),
+                        }]}
+                        onChange={(id) => {
+                          setOverflowOpen(false);
+                          const idx = overflowActions.findIndex((a) => a.id === id);
+                          onOverflowSelect && onOverflowSelect(id, overflowActions[idx], idx);
+                        }}
+                      />
+                    </div>
+                  )}
+                </span>
+              )}
+              <button
+                type="button"
+                aria-label="Close AI chat"
+                onClick={onClose}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  width: 28, height: 28, padding: 0,
+                  background: 'transparent', border: 'none', borderRadius: 8,
+                  color: '#616161', cursor: 'pointer',
+                }}
+              >
+                <IcoClose size={20} color="currentColor" />
+              </button>
+            </span>
+          </div>
+          {disclaimer && (
+            <div style={{
+              padding: '8px 12px',
+              fontFamily: 'Inter, sans-serif', fontSize: 12, fontWeight: 600, lineHeight: '16px',
+              color: '#616161',
+            }}>{disclaimer}</div>
+          )}
+          <div style={{ margin: '0 12px', height: 1, background: '#ebebeb' }} />
         </header>
-        <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+        <div style={{ flex: 1, minHeight: 0, overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
           {children}
         </div>
       </aside>

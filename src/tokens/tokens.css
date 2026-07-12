@@ -107,6 +107,7 @@
    * ───────────────────────────────────────────── */
   --nx-color-morning: #f59e0b;  /* Morning/day session indicators */
   --nx-color-evening: #6366f1;  /* Evening/night session indicators */
+  --nx-color-ai:      #31b564;  /* Nexleaf AI accent green — AI chat send button (AI logo family) */
 
   /* ─────────────────────────────────────────────
    * TYPOGRAPHY

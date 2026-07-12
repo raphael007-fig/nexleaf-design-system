@@ -82,6 +82,7 @@ export const MAGIC_BG_INPUT_FOCUS   = '#f3f1ff';
 // Contextual / Domain-specific
 export const COLOR_MORNING = '#f59e0b';
 export const COLOR_EVENING = '#6366f1';
+export const COLOR_AI      = '#31b564'; // Nexleaf AI accent green — AI chat send button (AI logo family)
 
 // Button shadows — exact Figma tokens
 export const BTN_SHADOW_DEFAULT  = 'inset 0 -1px 0 #b5b5b5, inset -1px 0 0 #e3e3e3, inset 1px 0 0 #e3e3e3, inset 0 1px 0 #e3e3e3';
