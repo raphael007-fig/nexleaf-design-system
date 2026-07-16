@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { siblingsFor, trailFor } from '../../components/SideNavigation/SideNavigation.jsx';
 import { AppShell } from '../../components/AppShell/AppShell.jsx';
 import { AiChatPanel } from '../../components/Toolbar/Toolbar.jsx';
+import { ScanQrCodeBody } from '../ScanQrCode/ScanQrCodeBody.jsx';
 import {
   AiChatConversation, AiChatWelcome, AiChatMessage, AiChatResponse, AiChatTyping, AiChatComposer,
   AiChatHistoryCount, AiChatHistorySelectBar, AiChatHistoryCell, AiChatHistoryEmpty, AiChatIcons,
@@ -1095,7 +1096,7 @@ const HOME_SECTIONS = [
   { id: 'service',     title: 'Service Requests',       svg: illoHealthHub },
 ];
 
-function HomeView({ onOpenSection }) {
+function HomeView({ onOpenSection, onOpenScan }) {
     const { width } = useViewport();
     const [country] = useState(COUNTRIES.find((c) => c.code === 'KE') || COUNTRIES[0]);
     const [chatOpen, setChatOpen] = useState(false);
@@ -1132,22 +1133,26 @@ function HomeView({ onOpenSection }) {
             </h1>
           </div>
 
-          {/* Action row — Quick Action (~1fr) + Action Required (~2fr), wrapping
-              to a stack when they no longer fit (pure-CSS flex, no JS width). */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginBottom: 16 }}>
-            <div style={{ flex: '1 1 260px', minWidth: 0 }}>
+          {/* Action row — on the SAME .nx-home-grid as the module tiles below:
+              Quick Action rides column 1 and Action Required spans columns 2–3,
+              its left edge starting exactly on the 2nd column line (see
+              .nx-home-actions__* in global.css). Below the 3-column breakpoint
+              both stack full-width. */}
+          <div className="nx-home-grid" style={{ marginBottom: 16 }}>
+          <div className="nx-home-grid__tiles">
+            <div className="nx-home-actions__quick">
               <CardLayoutType6 icon={<IcoScanRows />} title="Quick Action">
                 <Cell
                   icon={<IcoQr />}
                   iconTone="neutral"
                   title="Scan QR Code or Enter Serial No."
-                  onClick={() => {}}
+                  onClick={onOpenScan}
                   ariaLabel="Scan QR Code or Enter Serial No."
                 />
               </CardLayoutType6>
             </div>
 
-            <div style={{ flex: '2 1 460px', minWidth: 0 }}>
+            <div className="nx-home-actions__wide">
               <CardLayoutType6
                 tone="critical"
                 icon={<IcoAlertCircle />}
@@ -1179,6 +1184,7 @@ function HomeView({ onOpenSection }) {
               </CardLayoutType6>
             </div>
           </div>
+          </div>
 
           {/* Section grid — NavCard home tiles. Capped at 3 columns on desktop,
               stepping 3 → 2 → 1 via container queries (.nx-home-grid in
@@ -1202,11 +1208,41 @@ function HomeView({ onOpenSection }) {
     );
 }
 
+// ─── Scan QR Code view ────────────────────────────────────────────────────────
+// The "Select an Option" page (shared ScanQrCodeBody) inside this shell.
+// Reached from Home's Quick Action; Home (rail item or breadcrumb) returns to
+// the Home Layout; scanning / submitting a serial "finds" the equipment and
+// opens the Sectioned Layout at ColdChain Equipment.
+function ScanView({ onGoHome, onOpenSection, onFound }) {
+  const [country] = useState(COUNTRIES.find((c) => c.code === 'KE') || COUNTRIES[0]);
+  const [chatOpen, setChatOpen] = useState(false);
+  return (
+    <AppShell
+      navItems={EQUIPMENT_ITEMS}
+      activeItemId="home"
+      onNavSelect={(id) => (id === 'home' ? onGoHome() : onOpenSection(id))}
+      breadcrumbs={[HOME_CRUMB, { id: 'scan', label: 'Scan QR Code' }]}
+      onBreadcrumbSelect={(id) => { if (id === 'home') onGoHome(); }}
+      level="secondary"
+      contentWidth="fluid"
+      country={country}
+      onAskAi={() => setChatOpen((o) => !o)}
+      askAiActive={chatOpen}
+    >
+      <DemoAiChat open={chatOpen} onClose={() => setChatOpen(false)} />
+      <ScanQrCodeBody onScan={onFound} onSubmit={onFound} />
+    </AppShell>
+  );
+}
+
 // ─── Application shell ────────────────────────────────────────────────────────
 // Single stateful host shared by both stories. `view` flips between the
-// standalone Home Layout and the Sectioned Layout app shell so the two can
-// navigate to each other within one Storybook frame:
+// standalone Home Layout, the Scan QR Code page, and the Sectioned Layout app
+// shell so all three navigate to each other within one Storybook frame:
+//   • Home → Scan      : the Quick Action "Scan QR Code or Enter Serial No.".
 //   • Home → Sectioned : the "Inventory Management" tile (target 'coldchain').
+//   • Scan → Home      : the side-rail "Home" item and the "Home" breadcrumb.
+//   • Scan → Sectioned : scanning / submitting a serial (opens ColdChain).
 //   • Sectioned → Home : the side-rail "Home" item and the "Home" breadcrumb.
 function ApplicationShell({ initialView = 'home' }) {
   const [view, setView] = useState(initialView);
@@ -1216,6 +1252,16 @@ function ApplicationShell({ initialView = 'home' }) {
     return (
       <HomeView
         onOpenSection={(id) => { if (id) setTargetId(id); setView('sectioned'); }}
+        onOpenScan={() => setView('scan')}
+      />
+    );
+  }
+  if (view === 'scan') {
+    return (
+      <ScanView
+        onGoHome={() => setView('home')}
+        onOpenSection={(id) => { if (id) setTargetId(id); setView('sectioned'); }}
+        onFound={() => { setTargetId('coldchain'); setView('sectioned'); }}
       />
     );
   }

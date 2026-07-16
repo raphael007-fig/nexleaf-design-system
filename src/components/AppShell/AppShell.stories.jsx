@@ -15,6 +15,7 @@ import { TertiaryActions } from '../TertiaryActions/TertiaryActions.jsx';
 import { COLDTRACE_NAV_ITEMS } from '../MenuDrawer/MenuDrawer.jsx';
 import { useNavSync } from '../../foundation/useNavSync.js';
 import { AiChatDemo } from '../AiChat/AiChatDemo.jsx';
+import { ScanQrCodeBody } from '../../pages/ScanQrCode/ScanQrCodeBody.jsx';
 import { PolarisIconImg } from '../PolarisIcon/PolarisIcon.jsx';
 // Home module-grid illustrations — shared with the Sectioned Layout (Pages).
 import illoEquipment from '../../pages/ApplicationLayout/home-illustrations/equipment-management.svg?raw';
@@ -111,7 +112,7 @@ const HOME_CRUMB = { id: 'home', label: 'Home', icon: <PolarisIconImg name="Home
 // `variant` is additive: 'default' is Home Layout 1 (unchanged); 'tasks' is
 // Home Layout 2 — it inserts the "Today's Temperature Tasks" widget into the
 // action row between Quick Action and Action Required.
-function Home({ onOpenModule, variant = 'default' }) {
+function Home({ onOpenModule, onOpenScan, variant = 'default' }) {
   const showTasks = variant === 'tasks';
   // Grids reflow in pure CSS (flex-wrap + auto-fit) so they key off the ACTUAL
   // available width — no JS measurement, no resize lag, and they can never spill
@@ -126,7 +127,7 @@ function Home({ onOpenModule, variant = 'default' }) {
         icon={<IcoQr />}
         iconTone="neutral"
         title="Scan QR Code or Enter Serial No."
-        onClick={() => onOpenModule('coldchain')}
+        onClick={onOpenScan}
         ariaLabel="Scan QR Code or Enter Serial No."
       />
     </CardLayoutType6>
@@ -427,14 +428,15 @@ function AssembledApp({ homeVariant = 'default' }) {
     // is DERIVED, never stored.
     const nav = useNavSync(NAV_ITEMS, { home: HOME_CRUMB, initialId: 'home', groupsArePages: true });
     const [record, setRecord] = useState(null);
+    const [scanOpen, setScanOpen] = useState(false);   // Scan QR Code page
     const [chatOpen, setChatOpen] = useState(false);   // Ask AI panel
 
-    // One writer for every surface — also clears any open record so a nav/crumb
-    // jump leaves the detail view.
-    const navigate = (id) => { setRecord(null); nav.go(id); };
+    // One writer for every surface — also clears any open record / scan page so
+    // a nav/crumb jump (e.g. the Home button) always lands on that page.
+    const navigate = (id) => { setRecord(null); setScanOpen(false); nav.go(id); };
 
     const isHome = nav.activeId === 'home';
-    const view = record ? 'detail' : isHome ? 'home' : 'list';
+    const view = record ? 'detail' : scanOpen ? 'scan' : isHome ? 'home' : 'list';
 
     // Breadcrumbs come straight from the hook (a pure projection of activeId) —
     // the Home crumb shows on the Primary page, just like the Application Layout
@@ -442,10 +444,12 @@ function AssembledApp({ homeVariant = 'default' }) {
     // responsively.
     const breadcrumbs = record
       ? [...nav.breadcrumbs, { id: record.id, label: record.name }]
-      : nav.breadcrumbs;
+      : scanOpen
+        ? [...nav.breadcrumbs, { id: 'scan', label: 'Scan QR Code' }]
+        : nav.breadcrumbs;
 
     // Page level drives the mobile tertiary focus behaviour (top bar hidden).
-    const level = view === 'detail' ? 'tertiary' : view === 'list' ? 'secondary' : 'primary';
+    const level = view === 'detail' ? 'tertiary' : (view === 'list' || view === 'scan') ? 'secondary' : 'primary';
 
     return (
       <AppShell
@@ -466,7 +470,15 @@ function AssembledApp({ homeVariant = 'default' }) {
             panel (welcome, scripted replies, history, dialogs) every surface
             shares, so the chat experience is identical system-wide. */}
         <AiChatDemo open={chatOpen} onClose={() => setChatOpen(false)} />
-        {view === 'home' && <Home onOpenModule={navigate} variant={homeVariant} />}
+        {view === 'home' && <Home onOpenModule={navigate} onOpenScan={() => setScanOpen(true)} variant={homeVariant} />}
+        {view === 'scan' && (
+          <ScanQrCodeBody
+            // Scanning / submitting a serial "finds" the demo equipment and
+            // opens its record — the same drilldown the list rows use.
+            onScan={() => { setScanOpen(false); setRecord(EQUIPMENT[0]); nav.go('coldchain'); }}
+            onSubmit={() => { setScanOpen(false); setRecord(EQUIPMENT[0]); nav.go('coldchain'); }}
+          />
+        )}
         {view === 'list' && (
           <List
             title={nav.labelFor(nav.activeId)}
