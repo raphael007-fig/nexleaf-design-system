@@ -70,25 +70,146 @@ function filterTree(opts, query) {
   return walk(opts);
 }
 
-// ─── Dropdown — one canonical OptionList (flat options or grouped sections) ───
+// Trailing single-select check tick.
+const IcoCheck = () => (
+  <svg width={14} height={14} viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+    <path d="M4.5 10.5 8 14 15.5 6" stroke="#005bd3" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
 
-// Convert a filtered option tree into OptionList shape. Flat lists pass
-// straight through as `options`; one level of branches (e.g. Region → Facility)
-// becomes OptionList `sections`. This keeps EVERY dropdown menu — single,
-// multi, flat, or grouped — rendered by the one canonical OptionList component.
-function toOptionListProps(filtered) {
-  if (filtered.every((o) => !hasChildren(o))) return { options: filtered };
-  const sections = [];
-  let loose = [];
-  const flushLoose = () => { if (loose.length) { sections.push({ options: loose }); loose = []; } };
-  for (const o of filtered) {
-    // A branch → a section carrying the branch `id`, which lets OptionList
-    // render a selectable header (Region "select all Facilities") in multi mode.
-    if (hasChildren(o)) { flushLoose(); sections.push({ id: oid(o), title: getItemLabel(o), options: o.children }); }
-    else loose.push(o);
+// Collect every leaf value beneath a node (or the node itself if it's a leaf).
+function collectLeafValues(opt) {
+  if (!hasChildren(opt)) return [oid(opt)];
+  return opt.children.flatMap(collectLeafValues);
+}
+
+// Visual checked-state for any node: 'checked' | 'indeterminate' | 'unchecked'.
+function nodeState(opt, selectedSet) {
+  if (!hasChildren(opt)) return selectedSet.has(oid(opt)) ? 'checked' : 'unchecked';
+  const leaves = collectLeafValues(opt);
+  const n = leaves.filter(v => selectedSet.has(v)).length;
+  if (n === 0) return 'unchecked';
+  if (n === leaves.length) return 'checked';
+  return 'indeterminate';
+}
+
+// Visual-only checkbox cell (mirrors <Checkbox>) — the row owns click + focus.
+function CheckboxCell({ state, disabled }) {
+  const checked = state === 'checked';
+  const indeterminate = state === 'indeterminate';
+  const active = checked || indeterminate;
+  const bg = disabled ? 'rgba(0,0,0,0.08)' : (active ? '#303030' : '#fdfdfd');
+  const border = active || disabled ? 'none' : '0.66px solid #8a8a8a';
+  const iconColor = disabled ? 'rgba(160,160,160,0.7)' : '#fff';
+  return (
+    <span style={{
+      width: 16, height: 16, borderRadius: 4, flexShrink: 0, border, background: bg,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      overflow: 'hidden', boxSizing: 'border-box', transition: 'background 0.1s, border 0.1s',
+    }}>
+      {checked && (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M3 8.5L6 11.5L13 4.5" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      )}
+      {indeterminate && (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <path d="M4 8h8" stroke={iconColor} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+// ─── Dropdown body — flat → OptionList; nested → recursive step-tree ──────────
+//
+// Flat option sets render through the canonical OptionList (dense) for one
+// consistent row size/shape. NESTED sets (Region ▸ County ▸ Ward, any depth)
+// render as an indented recursive tree — the "step" look — at the SAME dense
+// row size, so a 3-level structure stays legible instead of being flattened
+// into one level of grouping.
+
+// One recursive tree row + its children (branches indent by `level`).
+function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
+  const [hov, setHov] = useState(false);
+  const branch = hasChildren(opt);
+  const state = multiple ? nodeState(opt, selectedSet) : (selectedSet.has(oid(opt)) ? 'checked' : 'unchecked');
+  const isSelected = state !== 'unchecked';
+  const handleClick = () => { if (!opt.disabled) onToggle(opt, state); };
+  return (
+    <>
+      <div
+        role="option"
+        aria-selected={isSelected}
+        aria-disabled={opt.disabled || undefined}
+        tabIndex={opt.disabled ? -1 : 0}
+        onClick={handleClick}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
+        onMouseEnter={() => setHov(true)}
+        onMouseLeave={() => setHov(false)}
+        style={{
+          // Dense OptionList row size (32px / 13px). `paddingLeft` steps each
+          // level in by 20px → the indented tree look.
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '6px 8px', paddingLeft: 8 + level * 20, borderRadius: 8,
+          cursor: opt.disabled ? 'not-allowed' : 'pointer',
+          background: hov && !opt.disabled ? '#f1f1f1' : 'transparent',
+          transition: 'background 0.1s', outline: 'none',
+        }}
+      >
+        {multiple && <CheckboxCell state={state} disabled={opt.disabled} />}
+        <span style={{
+          flex: 1, fontSize: 13, fontFamily: 'Inter, sans-serif', lineHeight: '20px',
+          fontWeight: branch ? 550 : 450,
+          color: opt.disabled ? '#b5b5b5' : '#303030',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {getItemLabel(opt)}
+        </span>
+        {!multiple && state === 'checked' && <IcoCheck />}
+      </div>
+      {branch && opt.children.map(child => (
+        <OptionNode key={oid(child)} opt={child} level={level + 1}
+          multiple={multiple} selectedSet={selectedSet} onToggle={onToggle} />
+      ))}
+    </>
+  );
+}
+
+// Shared renderer used by BOTH the field dropdown and the button-trigger popover.
+function DropdownBody({ filtered, multiple, selectedSet, onSingle, onMulti }) {
+  const isFlat = filtered.every((o) => !hasChildren(o));
+  if (isFlat) {
+    return (
+      <OptionList
+        flush
+        dense
+        allowMultiple={multiple}
+        options={filtered}
+        selected={multiple ? Array.from(selectedSet) : (Array.from(selectedSet)[0] ?? null)}
+        ariaLabel="Options"
+        onChange={(next) => { multiple ? onMulti(next) : onSingle(next); }}
+      />
+    );
   }
-  flushLoose();
-  return { sections };
+  // Nested → recursive step-tree. A branch toggle selects/clears all its enabled
+  // leaves (indeterminate when partial); single select only accepts leaves.
+  const onToggle = (opt, state) => {
+    if (multiple) {
+      const leaves = collectLeafValues(opt).filter(v => { const l = findOption(filtered, v); return l && !l.disabled; });
+      const curr = Array.from(selectedSet);
+      const next = state === 'checked'
+        ? curr.filter(v => !leaves.includes(v))
+        : Array.from(new Set([...curr, ...leaves]));
+      onMulti(next);
+    } else if (!hasChildren(opt)) {
+      onSingle(oid(opt));
+    }
+  };
+  return filtered.map(opt => (
+    <OptionNode key={oid(opt)} opt={opt} level={0}
+      multiple={multiple} selectedSet={selectedSet} onToggle={onToggle} />
+  ));
 }
 
 function Dropdown({ options, query, multiple, selected, onSelectSingle, onReplaceMulti }) {
@@ -108,16 +229,12 @@ function Dropdown({ options, query, multiple, selected, onSelectSingle, onReplac
             No results for "{query}"
           </div>
         ) : (
-          <OptionList
-            flush
-            dense
-            allowMultiple={multiple}
-            {...toOptionListProps(filtered)}
-            selected={multiple ? Array.from(selected) : (Array.from(selected)[0] ?? null)}
-            ariaLabel="Options"
-            // Single → one id; multi → the full next array (OptionList already
-            // handles leaf + branch "select all", so pass it straight through).
-            onChange={(next) => { multiple ? onReplaceMulti(next) : onSelectSingle(next); }}
+          <DropdownBody
+            filtered={filtered}
+            multiple={multiple}
+            selectedSet={selected}
+            onSingle={onSelectSingle}
+            onMulti={onReplaceMulti}
           />
         )}
       </div>
@@ -634,16 +751,12 @@ export function SearchSelectButton({
                   );
                 }
                 return (
-                  <OptionList
-                    flush
-                    dense
-                    allowMultiple={multiple}
-                    {...toOptionListProps(filtered)}
-                    selected={multiple ? Array.from(selectedSet) : (Array.from(selectedSet)[0] ?? null)}
-                    ariaLabel={typeof label === 'string' ? label : 'Options'}
-                    // Single → one id; multi → full next array (OptionList
-                    // resolves leaf + branch "select all").
-                    onChange={(next) => { multiple ? handleReplace(next) : handleSelectSingle(next); }}
+                  <DropdownBody
+                    filtered={filtered}
+                    multiple={multiple}
+                    selectedSet={selectedSet}
+                    onSingle={handleSelectSingle}
+                    onMulti={handleReplace}
                   />
                 );
               })()}
