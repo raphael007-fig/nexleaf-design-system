@@ -146,6 +146,7 @@ Optional purple variant for emphasis or marketing-style tones. Used by Tag (`ton
 |-------|-------|-------|
 | `color-morning` | `#F59E0B` | Morning/day session indicators |
 | `color-evening` | `#6366F1` | Evening/night session indicators |
+| `color-ai` | `#31b564` | Nexleaf AI accent green — AI chat send button (AI logo family) |
 
 ### Responsive / Shell (hybrid AppShell)
 Added for the responsive shell + overlays. Use the tokens — don't hardcode z-index, shadow, or shell dimensions inside components.
@@ -312,9 +313,21 @@ One route/IA at every size — only the *shell* adapts. Works in responsive web 
 
 - **`max-width: 1080px`**, centered, padding `24px` top / `16px` sides (12px < 640) / `32px` bottom (`box-sizing: border-box`).
 - Content column = `viewport − 240px (docked rail)`, capped at 1080 (the cap engages ≈ ≥ 1320px viewport).
-- `contentWidth` prop overrides it; `contentWidth="full"` opts a page out to full-bleed (e.g. the IndexTable Sectioned Layout).
+- `contentWidth` prop overrides it: a **number** changes the cap; **`'fluid'`** stretches to the viewport while KEEPING the standard padding rhythm (dashboards / wide tables — the assembled App Shell demos use this); **`'full'`** opts out entirely — true full-bleed with no insets, only for pages that supply their own padding (the Application Layout does).
 - **Mobile tertiary exception:** when the top bar is hidden (focused record page < 768), the top padding collapses to `12px + safe-area` so the record header leads where the bar would have sat — flush start, but never touching the viewport edge.
 - **`Page flushTop`** — inside the shell, pass `flushTop` to `Page` so its own header top-padding doesn't stack on the container's (keeps the Secondary/Tertiary header start aligned with Primary's content). Standalone `Page` (no shell) leaves it off.
+
+### Navigation visibility by page level
+
+`AppShell level` drives WHERE navigation appears — Home is a launcher; navigation activates once you're inside a module (and is scoped to it):
+
+| `level` | Desktop rail (≥1024) | Tablet hamburger | Mobile hamburger |
+|---------|----------------------|------------------|------------------|
+| `primary` | hidden | hidden | hidden |
+| `secondary` | **shown** | **shown** | **shown** |
+| `tertiary` | **shown** | hidden | hidden (whole top bar hidden — record header leads) |
+
+When the bar renders with no nav element to carry the brand (primary at every size; tablet tertiary), the TopBar shows the leaf logo instead (`showLogo` override — it also bypasses the tight-layout logo drop). Omitting `level` keeps nav always-on (back-compat for plain shell demos).
 
 ### Progressive TopBar
 
@@ -338,6 +351,8 @@ Parent rows are **pages AND groups**. The row splits into two hit areas: the **l
 The NavCard dashboard tiles use a **container query** utility (`.nx-home-grid` / `.nx-home-grid__tiles` in `global.css`), so they key off the content column (correct whether the rail is docked) in pure CSS — no JS, no resize lag, capped at 3:
 
 - container ≥ **720px → 3 columns** · ≥ **460px → 2** · else **1**
+
+The Home **action row** rides the same grid so its edges sit on the module columns: Layout 1 puts Quick Action on column 1 and Action Required spanning columns 2–3 (`.nx-home-actions__quick` / `.nx-home-actions__wide`); **Home Layout 2** adds `TemperatureTasksCard` as the middle column (one card per column). Below the 3-column breakpoint they stack full-width.
 
 > **Responsive grids rule:** content grids reflow in pure CSS (`repeat(auto-fit, minmax(min(100%, N), 1fr))` or `flex-wrap`, or container queries when a hard column cap is needed) — **not** JS-width-driven `gridTemplateColumns`, which lags a frame on resize and can overflow.
 
@@ -492,6 +507,16 @@ Props: `label`, `options` (string[] or `{id, label}[]`), `placeholder`, `disable
 - Day cells `32×32px`; selected `#303030`/`#fff`; range middle `#ebebeb`; today inset `0.66px #8a8a8a`
 - Props: `value`, `onChange`, `allowRange`, `multiMonth`, `verticalStack`, `minDate`, `maxDate`, `initialMonth`
 
+### `DateField` — Date Input with Calendar Popover
+```jsx
+<DateField label="Configuration date" required value={date} onChange={setDate} />
+<DateField label="Installed" value={date} onChange={setDate} helpText="Usually today." error={err} />
+```
+- A normal form field that opens `DatePicker` in a `Popover` on click; picking a day fills the field and closes it
+- Composition of `TextInput` + `Popover` + `DatePicker` — standard label/help/error furniture
+- Display format `20 Jul 2026` (override via `formatDate`); `minDate`/`maxDate` pass through
+- Props: `label`, `required`, `value`, `onChange`, `placeholder`, `helpText`, `error`, `disabled`, `formatDate`, `minDate`, `maxDate`
+
 ### `Tag` / `TagGroup` — Keyword Chip
 ```jsx
 <Tag label="Africa" />
@@ -542,6 +567,18 @@ Props: `tone` (default/info/success/attention/warning/critical), `size` (medium/
 <Banner type="warning">Check this value.</Banner>
 <Banner type="critical">Something went wrong.</Banner>
 ```
+
+### `Toast` — Transient Auto-dismissing Notice
+```jsx
+{notice && (
+  <Toast tone={notice.tone} onDismiss={() => setNotice(null)}>{notice.message}</Toast>
+)}
+<Toast tone="warning" duration={0} placement="bottom-center" onDismiss={fn}>Kept until dismissed</Toast>
+```
+- Visual = the compact in-card `Banner`; Toast adds fixed placement (`Z_TOAST`), overlay shadow, and the auto-hide timer
+- Auto-dismisses after `duration` ms (default `4500`; `0` disables); ✕ and timer both call `onDismiss`
+- `role="status"`; one toast at a time — replace, don't stack
+- Props: `open`, `tone`, `icon`, `children`, `onDismiss`, `duration`, `placement` (`top-right` default, `top-center`, `bottom-center`, `bottom-right`)
 
 ### `Accordion` — Expandable Section
 ```jsx
@@ -600,6 +637,20 @@ Props: `content`, `position` (above/below), `children`
 ```
 Props: `title`, `options` (`{id, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections`, `error`
 
+### `OptionCard` — Selectable Illustrated Card
+```jsx
+<div role="radiogroup" aria-label="How is this equipment's temperature monitored?">
+  {options.map(o => (
+    <OptionCard key={o.id} media={o.illustration} title={o.title} description={o.description}
+      selected={value === o.id} onSelect={() => setValue(o.id)} />
+  ))}
+</div>
+```
+- One-of-N decisions where each option deserves media + title + description (Figma 8055-205358); richer than `RadioGroup`
+- Surface = base `Card` (radius 16); selected = `bg-selected` + 2px primary ring; hover = interactive-card primary ring
+- Radio semantics (`role="radio"`, Enter/Space); wrap the set in `role="radiogroup"`
+- Props: `media`, `title`, `description`, `selected`, `onSelect`, `disabled`
+
 ### `IndexTable` — Data Table
 ```jsx
 <IndexTable
@@ -632,6 +683,17 @@ Props: `tabs` (`{id, label, badge, disabled}[]`), `activeIndex`, `onSelect` (`(i
 <Pagination hasPrevious hasNext onPrevious={fn} onNext={fn} label="1–20 of 80" type="table" />
 ```
 Props: `hasPrevious`, `hasNext`, `onPrevious`, `onNext`, `label`, `type` (page/table)
+
+### `Stepper` — Wizard Phase Stepper
+```jsx
+<Stepper phases={[{ label: 'Select RTMD' }, { label: 'Review & Submit' }]} activeIndex={0} />
+<Stepper phases={phases} activeIndex={2} navigable={visitedFlags} onSelect={goToPhase} />
+<Stepper phases={phases} activeIndex={2} compact />   {/* < ~900px */}
+```
+- Figma 84893-5520 "Step Grid": Default grey ring · Active primary ring/number · Completed filled + white check · Hover grey pill around the whole step (space always reserved — no shift)
+- `navigable[]` + `onSelect` make visited steps tappable (jump back, or forward again, keeping state — the host owns the data); non-navigable steps are inert with `aria-disabled`
+- `compact` = circles only + `Step X of Y · Label` summary line, for narrow viewports
+- Props: `phases` (`{label}[]`), `activeIndex`, `compact`, `navigable`, `onSelect`
 
 ### `Divider`
 ```jsx
@@ -671,8 +733,9 @@ These compose the hybrid shell and the mobile list/record surfaces. Each ships R
 // SideNavigation — docked rail; Model 2 split (label navigates, caret expands)
 <SideNavigation items={NAV_ITEMS} activeItemId={id} onSelect={setId} collapsed={c} onCollapsedChange={setC} />
 
-// AppShell — hybrid shell: docks the rail ≥1024, drawer below; one TopBar; shared 1080 content container
-<AppShell activeItemId={id} onNavSelect={go} breadcrumbs={trail} level="secondary" /* contentWidth=1080|'full' */>{page}</AppShell>
+// AppShell — hybrid shell: docks the rail ≥1024, drawer below; one TopBar; shared content container.
+// `level` drives nav visibility (primary = no nav · secondary = full nav · tertiary = desktop rail only).
+<AppShell activeItemId={id} onNavSelect={go} breadcrumbs={trail} level="secondary" /* contentWidth=1080|'fluid'|'full' */>{page}</AppShell>
 
 // TopBar — progressive top bar (wide→medium→compact→mobile); loading swaps breadcrumb/region/avatar for skeletons
 <TopBar breadcrumbs={trail} onMenu={openDrawer} country={{code:'KE',name:'Kenya'}} onAskAi={fn} />
@@ -699,6 +762,16 @@ These compose the hybrid shell and the mobile list/record surfaces. Each ships R
 <NavCard layout="home" title="Inventory Management" media={<Media/>} onClick={open} />
 
 // MetricCard — KPI tile (see above); loading skeleton + selected state
+
+// TemperatureTasksCard — "Today's Temp. Tasks" home widget. Sibling of the Action Card (CardLayoutType6):
+// same header (icon + title + StatusBadge count + View All), Cell rows ending in a RECORD BUTTON (not a
+// chevron). View All opens a SlideOver with Morning/Evening/Completed tabs + pagination.
+<TemperatureTasksCard tasks={{ morning, evening, completed }} onRecord={openRecordForm} />
+
+// AiChat — the AI Chat Bot kit (conversation, welcome, message/response, typing, composer, media cards,
+// table replies, toast, history w/ select-rename-archive-delete, dialogs). AiChatDemo is the ONE canonical
+// assembled panel — every surface's Ask AI opens it so the chat is identical system-wide.
+<AiChatDemo open={chatOpen} onClose={close} />
 ```
 
 ---
@@ -742,7 +815,7 @@ For Django / Angular / vanilla-HTML consumers, components ship a hand-written st
 
 ### Components that ship a `.css` layer
 
-**All of them.** Every component has its `nx-*.css` (the only exception is `Overlay`, a React-legacy wrapper with no Angular visual twin). The full set — foundational (`Accordion`, `Badge`, `Banner`, `Btn`, `Breadcrumbs`, `Card` incl. layout types, `Checkbox`, `DatePicker`, `Divider`, `IndexTable`, `MetricCard`, `Modal`, `NumberInput`, `OptionList`, `Page`, `Pagination`, `PolarisIcon`, `Popover`, `RadioButton`, `SearchSelect`, `SelectInput`, `Tabs`, `Tag`, `TextInput`, `TextareaInput`, `Toggle`, `Tooltip`, `Upload`) and responsive/shell (`Cell`, `NavCard`, `Skeleton`, `EquipmentCard`, `TertiaryActions`, `MenuDrawer`, `BottomSheet`, `SlideOver`, `SideNavigation`, `TopBar`, `Toolbar`) — plus `src/global.css` (keyframes, resets, `.nx-home-grid`) and `src/tokens/tokens.css`. 42 stylesheets total in the Angular bundle. All token names map 1:1 to the JS constants in `src/tokens/index.js`.
+**All of them.** Every component has its `nx-*.css` (the only exception is `Overlay`, a React-legacy wrapper with no Angular visual twin). The full set — foundational (`Accordion`, `Badge`, `Banner`, `Btn`, `Breadcrumbs`, `Card` incl. layout types, `Checkbox`, `DatePicker`, `Divider`, `IndexTable`, `MetricCard`, `Modal`, `NumberInput`, `OptionList`, `Page`, `Pagination`, `PolarisIcon`, `Popover`, `RadioButton`, `SearchSelect`, `SelectInput`, `Tabs`, `Tag`, `TextInput`, `TextareaInput`, `Toggle`, `Tooltip`, `Upload`) and responsive/shell (`Cell`, `NavCard`, `Skeleton`, `EquipmentCard`, `TertiaryActions`, `MenuDrawer`, `BottomSheet`, `SlideOver`, `SideNavigation`, `TopBar`, `Toolbar`) — plus `src/global.css` (keyframes, resets, `.nx-home-grid`) and `src/tokens/tokens.css`. 42 stylesheets total in the Angular bundle. Newest additions — `Stepper`, `DateField`, `Toast`, `OptionCard` — ship React + `nx-*.css`; their Angular ports are pending. All token names map 1:1 to the JS constants in `src/tokens/index.js`.
 
 The Angular package bundles tokens + every component stylesheet into one file at build time (`angular/scripts/bundle-styles.mjs`), shipped as **`@nexleaf/angular/styles.css`** (and a tokens-only `@nexleaf/angular/tokens.css`) — so an Angular app imports one stylesheet instead of each `nx-*.css`.
 
@@ -818,9 +891,9 @@ npm run test:visual:update   # re-seed baselines after an INTENDED visual change
 | `Components/Navigation` | SideNavigation, TopBar, Breadcrumbs, Tabs, Pagination, Toolbar, Header Page |
 | `Components/Overlays` | Modal, Popover, SlideOver |
 | `Components/Lists` | Cell, OptionList |
-| `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, NavCard, Skeleton, Tooltip, Divider, Page |
+| `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, NavCard, Skeleton, Tooltip, Divider, Page, TemperatureTasksCard, AiChat |
 | `Patterns/Responsive` | AppShell, MenuDrawer, BottomSheet, EquipmentCard, TertiaryActions |
-| `Pages/` | Application Layout, Equipment Detail |
+| `Pages/` | Application Layout, Equipment Detail, Scan QR Code |
 
 MDX docs pages use `[Group]/[Name]/Docs` as the `<Meta title>`. Sidebar order is Foundation → Components → Patterns → Pages (see `.storybook/preview.js` `storySort`).
 
