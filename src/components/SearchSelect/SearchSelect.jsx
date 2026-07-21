@@ -155,6 +155,7 @@ function Dropdown({ options, query, multiple, selected, onToggle }) {
         ) : isFlat ? (
           <OptionList
             flush
+            dense
             allowMultiple={multiple}
             options={filtered}
             selected={multiple ? Array.from(selected) : (Array.from(selected)[0] ?? null)}
@@ -217,10 +218,13 @@ function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          display: 'flex', alignItems: 'center', gap: 10,
-          padding: '8px 10px',
-          paddingLeft: 10 + level * 20,
-          borderRadius: 6,
+          // Compact rows matching the dense OptionList (same size across the
+          // flat + nested dropdowns). Tree logic below is untouched — only the
+          // row's own padding/radius/font change.
+          display: 'flex', alignItems: 'center', gap: 8,
+          padding: '6px 8px',
+          paddingLeft: 8 + level * 20,
+          borderRadius: 8,
           cursor: opt.disabled ? 'not-allowed' : 'pointer',
           background: hov && !opt.disabled ? '#f5f5f5' : 'transparent',
           transition: 'background 0.1s',
@@ -229,9 +233,9 @@ function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
       >
         {multiple && <CheckboxCell state={state} disabled={opt.disabled} />}
         <span style={{
-          // Body text — match OptionList's dropdown rows (14px/450); a branch
-          // (group parent) gets medium 550, not the old heading-weight 600.
-          flex: 1, fontSize: 14, fontFamily: 'Inter, sans-serif', lineHeight: '20px',
+          // Body text — match the dense OptionList dropdown rows (13px/450); a
+          // branch (group parent) gets medium 550, not heading-weight 600.
+          flex: 1, fontSize: 13, fontFamily: 'Inter, sans-serif', lineHeight: '20px',
           fontWeight: branch ? 550 : 450,
           color: opt.disabled ? '#b5b5b5' : '#303030',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',

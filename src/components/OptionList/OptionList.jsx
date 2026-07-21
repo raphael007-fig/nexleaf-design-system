@@ -15,7 +15,11 @@ const IcoMediaPlaceholder = ({ color = '#616161', size = 20 }) => (
   </svg>
 );
 
-export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error, ariaLabel, flush = false }) {
+// `flush`  — borderless, full-width container (embed inside a dropdown/sheet).
+// `dense`  — compact rows matching the standalone OptionList size (13px / 6px
+//            padding / ~32px), instead of flush's 48px touch targets. Combine
+//            `flush dense` for a dropdown that reads at the OptionList row size.
+export function OptionList({ title, options = [], selected, onChange, allowMultiple = false, sections = [], error, ariaLabel, flush = false, dense = false }) {
   const [hovKey, setHovKey] = useState(null);
   const [focKey, setFocKey] = useState(null);
   const baseId = useId();
@@ -91,9 +95,12 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 onFocus={() => setFocKey(key)}
                 onBlur={() => setFocKey(null)}
                 style={{ display: 'flex', alignItems: 'center', gap: 8,
-                  padding: flush ? '12px 14px' : 6,
-                  minHeight: flush ? 48 : undefined,
-                  borderRadius: flush ? 12 : 8,
+                  // `dense` = the compact standalone-OptionList row size even
+                  // inside a flush container (used by the SelectInput /
+                  // SearchSelect dropdowns).
+                  padding: dense ? '6px 8px' : (flush ? '12px 14px' : 6),
+                  minHeight: (flush && !dense) ? 48 : undefined,
+                  borderRadius: dense ? 8 : (flush ? 12 : 8),
                   background: itemBg(optId, opt.disabled, key),
                   cursor: opt.disabled ? 'not-allowed' : 'pointer',
                   position: 'relative', outline: 'none',
@@ -117,12 +124,13 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: flush ? 14 : 13,
+                    <span style={{ fontSize: (flush && !dense) ? 14 : 13,
                       // Body text — the dropdown/sheet row is content, not a
                       // heading. `flush` used to render 15px/500 which read as
-                      // title text; body is 14px/450 (selected → 550 medium,
-                      // never the 650 heading weight).
-                      fontWeight: flush
+                      // title text; body is 13–14px/450 (selected → 550 medium,
+                      // never the 650 heading weight). `dense` = 13px to match
+                      // the standalone OptionList.
+                      fontWeight: (flush || dense)
                         ? (!allowMultiple && sel ? 550 : 450)
                         : ((!allowMultiple && sel) ? 650 : 450),
                       lineHeight: '20px',

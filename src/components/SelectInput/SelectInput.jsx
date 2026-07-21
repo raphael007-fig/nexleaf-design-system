@@ -1,5 +1,17 @@
-import { useState } from 'react';
+// ── Nexleaf Design System — SelectInput ──────────────────────────────────────
+// Dropdown select rendered with the system's OWN OptionList in a Popover — not
+// the native <select>, whose OS-drawn menu (macOS/iOS especially) breaks visual
+// consistency across platforms. The field, label, error, and help rows are
+// unchanged; only the open menu is now ours.
+//
+// API is unchanged and event-compatible: `onChange` still receives an
+// event-shaped object ({ target: { value } }), so existing consumers using
+// `e.target.value` keep working.
+
+import { useRef, useState } from 'react';
 import { Skeleton, SkeletonGroup } from '../Skeleton/Skeleton.jsx';
+import { Popover } from '../Popover/Popover.jsx';
+import { OptionList } from '../OptionList/OptionList.jsx';
 import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
 const IcoErrorCircle = () => (
@@ -10,10 +22,19 @@ const IcoErrorCircle = () => (
   </svg>
 );
 
+const IcoChevron = ({ open }) => (
+  <svg width={16} height={16} viewBox="0 0 16 16" fill="none" aria-hidden="true"
+    style={{ flexShrink: 0, transition: 'transform 0.12s ease', transform: open ? 'rotate(180deg)' : 'none' }}>
+    <path d="M4 6l4 4 4-4" stroke="#616161" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export function SelectInput({ label, options = [], placeholder, disabled, value, onChange, required, error, helpText, skeleton = false }) {
   const [internal,  setInternal]  = useState('');
   const [focused,   setFocused]   = useState(false);
   const [hovered,   setHovered]   = useState(false);
+  const [open,      setOpen]      = useState(false);
+  const anchorRef = useRef(null);
 
   // Skeleton mode short-circuits rendering (hooks above stay called so order is
   // stable if a parent toggles `skeleton` in place). Mirrors TextInput: label
@@ -31,10 +52,17 @@ export function SelectInput({ label, options = [], placeholder, disabled, value,
 
   const isControlled = onChange !== undefined;
   const val = isControlled ? (value || '') : internal;
+  const selectedLabel = (() => {
+    const hit = options.find((o) => getItemId(o, 'SelectInput') === val);
+    return hit != null ? getItemLabel(hit) : '';
+  })();
 
-  function handleChange(e) {
-    if (!isControlled) setInternal(e.target.value);
-    if (onChange) onChange(e);
+  function select(id) {
+    if (!isControlled) setInternal(id);
+    // Event-shaped payload keeps `e.target.value` consumers working.
+    if (onChange) onChange({ target: { value: id } });
+    setOpen(false);
+    anchorRef.current?.focus();
   }
 
   let border, bg, focusShadow;
@@ -42,8 +70,8 @@ export function SelectInput({ label, options = [], placeholder, disabled, value,
     border = 'none'; bg = 'rgba(0,0,0,0.08)'; focusShadow = 'none';
   } else if (error) {
     border = '0.66px solid #8e1f0b'; bg = '#fee9e8'; focusShadow = 'none';
-  } else if (focused) {
-    border = '0.66px solid #616161'; bg = '#fafafa'; focusShadow = '0 0 0 2px #005bd3';
+  } else if (focused || open) {
+    border = '0.66px solid #616161'; bg = '#fafafa'; focusShadow = open ? 'none' : '0 0 0 2px #005bd3';
   } else if (hovered) {
     border = '0.66px solid #616161'; bg = '#fafafa'; focusShadow = 'none';
   } else {
@@ -57,44 +85,65 @@ export function SelectInput({ label, options = [], placeholder, disabled, value,
           {label}{required && <span style={{ color: '#d92d20', marginLeft: 2 }}>*</span>}
         </label>
       )}
-      <select
-        value={val}
-        onChange={handleChange}
-        disabled={disabled}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        onMouseEnter={() => !disabled && setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{
-          width: '100%',
-          padding: '6px 36px 6px 12px',
-          borderRadius: 8,
-          border,
-          background: bg,
-          boxShadow: focusShadow,
-          fontSize: 13,
-          fontFamily: 'Inter, sans-serif',
-          lineHeight: '20px',
-          color: val ? (disabled ? '#b5b5b5' : '#303030') : '#9e9e9e',
-          outline: 'none',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          transition: 'border-color 0.12s, background 0.12s, box-shadow 0.12s',
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='M4 6l4 4 4-4' stroke='%23616161' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
-          backgroundRepeat: 'no-repeat',
-          backgroundPosition: 'right 10px center',
-          WebkitAppearance: 'none',
-          appearance: 'none',
-        }}
-      >
-        <option value="" disabled style={{ color: '#9e9e9e' }}>{placeholder || 'Select…'}</option>
-        {options.map(o => {
-          // Canonical identity is `id` (falls back to legacy `value`). Plain
-          // string/number options are their own id + label.
-          const v = getItemId(o, 'SelectInput');
-          const l = getItemLabel(o);
-          return <option key={v} value={v} style={{ color: '#303030' }}>{l}</option>;
-        })}
-      </select>
+      <div style={{ position: 'relative' }}>
+        <button
+          ref={anchorRef}
+          type="button"
+          disabled={disabled}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+          aria-label={typeof label === 'string' ? label : undefined}
+          onClick={() => setOpen((o) => !o)}
+          onKeyDown={(e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); setOpen(true); }
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onMouseEnter={() => !disabled && setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            width: '100%',
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '6px 10px 6px 12px',
+            borderRadius: 8,
+            border,
+            background: bg,
+            boxShadow: focusShadow,
+            fontSize: 13,
+            fontFamily: 'Inter, sans-serif',
+            lineHeight: '20px',
+            color: val ? (disabled ? '#b5b5b5' : '#303030') : '#9e9e9e',
+            outline: 'none',
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            transition: 'border-color 0.12s, background 0.12s, box-shadow 0.12s',
+            textAlign: 'left',
+          }}
+        >
+          <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {selectedLabel || placeholder || 'Select…'}
+          </span>
+          <IcoChevron open={open} />
+        </button>
+        <Popover
+          open={open}
+          onClose={() => setOpen(false)}
+          anchorRef={anchorRef}
+          role="listbox"
+          ariaLabel={typeof label === 'string' ? label : 'Options'}
+          matchWidth
+        >
+          <div style={{ padding: 4 }}>
+            <OptionList
+              flush
+              dense
+              options={options}
+              selected={val}
+              onChange={select}
+              ariaLabel={typeof label === 'string' ? label : 'Options'}
+            />
+          </div>
+        </Popover>
+      </div>
       {error && (
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
           <IcoErrorCircle />
