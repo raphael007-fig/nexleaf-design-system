@@ -117,8 +117,14 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
                 )}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ fontSize: flush ? 15 : 13,
-                      fontWeight: (!allowMultiple && sel) ? 650 : (flush ? 500 : 450),
+                    <span style={{ fontSize: flush ? 14 : 13,
+                      // Body text — the dropdown/sheet row is content, not a
+                      // heading. `flush` used to render 15px/500 which read as
+                      // title text; body is 14px/450 (selected → 550 medium,
+                      // never the 650 heading weight).
+                      fontWeight: flush
+                        ? (!allowMultiple && sel ? 550 : 450)
+                        : ((!allowMultiple && sel) ? 650 : 450),
                       lineHeight: '20px',
                       color: opt.disabled ? '#b5b5b5' : '#303030',
                       whiteSpace: flush ? 'normal' : 'nowrap' }}>

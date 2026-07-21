@@ -3,6 +3,15 @@
 // Manual Temperature Recording, (2) an unassigned QR-code scan, or (3)
 // Equipment Management → Add Equipment.
 //
+// ARCHITECTURE NOTE — this file is two layers, deliberately separable:
+//   1. A generic ADDITION-FLOW WIZARD SYSTEM (content-agnostic): Page header +
+//      Stepper + fixed-height card with pinned footer (StepFrame/useFixedFrame),
+//      phase spines with micro-steps inside phases, visited-step tap
+//      navigation, and secondary→tertiary shell-level switching.
+//   2. The Add Equipment CONTENT: its phase spines (phasesFor) and step bodies.
+// Any other "add X" flow (e.g. Add Solar Equipment, Figma 8061-292936) can
+// reuse layer 1 by supplying its own phases + step bodies.
+//
 // Three concepts stay separate throughout: the EQUIPMENT record, the
 // MONITORING DEVICE on it, and the INTEGRATION that (maybe) pulls its data.
 // An equipment record can exist with a monitoring device and no integration —
@@ -16,7 +25,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Page } from '../../components/Page/Page.jsx';
 import { useIsMobile, useViewport } from '../../foundation/useViewport.js';
-import { Card, CardSectionTitle, CardField, CardDivider } from '../../components/Card/Card.jsx';
+import { Card, CardSectionTitle } from '../../components/Card/Card.jsx';
 import { Btn } from '../../components/Btn/Btn.jsx';
 import { Banner } from '../../components/Banner/Banner.jsx';
 import { Badge } from '../../components/Badge/Badge.jsx';
@@ -25,6 +34,7 @@ import { Modal } from '../../components/Modal/Modal.jsx';
 import { Cell } from '../../components/Cell/Cell.jsx';
 import { Divider } from '../../components/Divider/Divider.jsx';
 import { Checkbox } from '../../components/Checkbox/Checkbox.jsx';
+import { RadioGroup } from '../../components/RadioButton/RadioButton.jsx';
 import { TextInput } from '../../components/TextInput/TextInput.jsx';
 import { NumberInput } from '../../components/NumberInput/NumberInput.jsx';
 import { TextareaInput } from '../../components/TextareaInput/TextareaInput.jsx';
@@ -35,17 +45,28 @@ import { Stepper } from '../../components/Stepper/Stepper.jsx';
 import { DateField } from '../../components/DateField/DateField.jsx';
 import { Toast } from '../../components/Toast/Toast.jsx';
 import { OptionCard } from '../../components/OptionCard/OptionCard.jsx';
+import { Illustration } from '../../foundation/illustrations/index.jsx';
 import { ScanQrCodeBody } from '../ScanQrCode/ScanQrCodeBody.jsx';
 import {
-  TEXT_DEFAULT, TEXT_SUBDUED, TEXT_INFO, BG_INFO, BG_WARNING, BG_SUCCESS, BG_SURFACE,
-  BORDER_LIGHT,
-  COLOR_PRIMARY, COLOR_SUCCESS, COLOR_SUCCESS_FILLED, COLOR_CRITICAL_STRONG,
+  TEXT_DEFAULT, TEXT_SUBDUED, TEXT_INFO, TEXT_CRITICAL, BG_INFO, BG_WARNING, BG_SUCCESS, BG_SURFACE, BG_SELECTED,
+  BORDER_LIGHT, BORDER_INFO, BORDER_DEFAULT,
+  COLOR_PRIMARY, COLOR_SUCCESS,
 } from '../../tokens/index.js';
 
 // ─── Reference data (prototype backend) ───────────────────────────────────────
 
-export const EXISTING_SERIALS = ['EQ1-001', 'CCE-2214-KLF', 'VF-2024-001234'];
-export const ASSIGNED_QRS = ['QR-00412', 'QR-01118'];
+// Equipment already registered in ColdTrace — the serial search matches
+// against these. Order matters: stories reference EXISTING_SERIALS[1].
+export const EXISTING_EQUIPMENT = [
+  { serial: 'EQ1-001', name: 'HBC-80 Vaccine Refrigerator', facility: 'Mombasa North Health Centre', county: 'Mombasa County', qr: 'QR-00412' },
+  { serial: 'CCE-2214-KLF', name: 'TCW 3000 AC Refrigerator', facility: 'Likoni Sub-County Hospital', county: 'Mombasa County', qr: 'QR-01118' },
+  { serial: 'VF-2024-001234', name: 'MK 204 ILR Refrigerator', facility: 'Mbagathi County Referral Hospital', county: 'Nairobi County' },
+  { serial: 'CCE-2024-MK114-002', name: 'MK 114 Vaccine Refrigerator', facility: 'Pumwani Maternity Hospital', county: 'Nairobi County' },
+  { serial: 'CCE-2024-MK114-014', name: 'MK 114 Vaccine Refrigerator', facility: 'Kenyatta National Hospital', county: 'Nairobi County' },
+  { serial: 'CCE-2024-MK144-001', name: 'MK 144 ILR Refrigerator', facility: 'Coast General Teaching & Referral Hospital', county: 'Mombasa County' },
+];
+export const EXISTING_SERIALS = EXISTING_EQUIPMENT.map((e) => e.serial);
+export const ASSIGNED_QRS = EXISTING_EQUIPMENT.map((e) => e.qr).filter(Boolean);
 
 export const RTMDS = [
   { id: 'rtmd-1', imei: '356938035643809', mac: 'DC:2C:26:0A:4F:12', model: 'ColdTrace 5' },
@@ -107,10 +128,36 @@ export const ALARM_CONTACTS = CONTACT_NAMES.map((name, i) => ({
 }));
 const MAX_ALARM_CONTACTS = 10;
 
-const EQUIPMENT_TYPES = ['ILR Refrigerator', 'Vaccine Freezer', 'Refrigerator-Freezer Combo', 'Walk-in Cold Room', 'Transport Cold Box'];
-const EQUIPMENT_MAKERS = ['Vestfrost', 'Haier Biomedical', 'B Medical Systems', 'Godrej', 'Dometic', 'Zero Appliances'];
+// Equipment Details data set — mirrors the production "Create New Equipment"
+// modal: Equipment Information (make & model, serial, funding source),
+// Installation Details (status, region + facility), Maintenance & Warranty
+// (warranty years), QR Code.
+const MAKE_MODELS = [
+  'Vestfrost MK 144', 'Vestfrost MK 204', 'Vestfrost VLS 054 SDD',
+  'Haier Biomedical HBC-80', 'Haier Biomedical HBD-116', 'Haier Biomedical HTC-112',
+  'B Medical Systems TCW 40 SDD', 'B Medical Systems TCW 3000 AC',
+  'Godrej GVR 51 Lite', 'Godrej GVR 100 AC',
+  'Dometic TCW 2000 AC', 'Zero Appliances ZLF 30 AC',
+];
+const FUNDING_SOURCES = ['Gavi', 'UNICEF', 'Ministry of Health', 'World Bank', 'Global Fund', 'Government of Kenya', 'Other'];
+const EQUIPMENT_STATUS = [
+  { id: 'installed', label: 'Installed' },
+  { id: 'not-installed', label: 'Not Installed' },
+];
+const POWER_SOURCES = ['Grid Electricity', 'Gas', 'Kerosene', 'Solar', 'Unpowered', 'Generator'];
+const WARRANTY_YEARS = ['1 year', '2 years', '3 years', '5 years', '10 years', 'No warranty'];
 const COMM_METHODS = ['Display only (read on device)', 'USB download', 'Bluetooth to phone app', 'SMS gateway', 'Manual export from vendor portal'];
 const COMPARTMENTS = ['Fridge compartment (+2 to +8 °C)', 'Freezer compartment (−25 to −15 °C)', 'Ambient / room'];
+
+const REGIONS = FACILITIES.map(({ id, label }) => ({ id, label }));
+
+function regionOfFacility(facilityId) {
+  return FACILITIES.find((r) => (r.children || []).some((f) => f.id === facilityId))?.id || '';
+}
+
+function regionLabel(id) {
+  return REGIONS.find((r) => r.id === id)?.label || 'Not set';
+}
 
 function facilityLabel(id) {
   for (const region of FACILITIES) {
@@ -177,6 +224,54 @@ const IcoLocation = ({ size = 20, color = TEXT_SUBDUED }) => (
   </svg>
 );
 
+// QR preview — a deterministic QR-style pattern derived from the code string
+// (three finder squares + hashed data modules). Prototype rendering; inline
+// SVG only, no QR library.
+function QrPreview({ code, size = 200 }) {
+  const n = 21;
+  let h = 2166136261;
+  for (let i = 0; i < code.length; i++) { h ^= code.charCodeAt(i); h = Math.imul(h, 16777619); }
+  const rand = () => {
+    h = Math.imul(h ^ (h >>> 15), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+  const inFinder = (r, c) => (r < 8 && c < 8) || (r < 8 && c >= n - 8) || (r >= n - 8 && c < 8);
+  const cells = [];
+  for (let r = 0; r < n; r++) {
+    for (let c = 0; c < n; c++) {
+      if (!inFinder(r, c) && rand() > 0.52) cells.push([r, c]);
+    }
+  }
+  const u = size / n;
+  const finder = (x, y) => (
+    <g key={`f${x}-${y}`}>
+      <rect x={x * u} y={y * u} width={7 * u} height={7 * u} fill={TEXT_DEFAULT} />
+      <rect x={(x + 1) * u} y={(y + 1) * u} width={5 * u} height={5 * u} fill={BG_SURFACE} />
+      <rect x={(x + 2) * u} y={(y + 2) * u} width={3 * u} height={3 * u} fill={TEXT_DEFAULT} />
+    </g>
+  );
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`QR code ${code}`}>
+      <rect width={size} height={size} fill={BG_SURFACE} />
+      {finder(0, 0)}
+      {finder(n - 7, 0)}
+      {finder(0, n - 7)}
+      {cells.map(([r, c]) => (
+        <rect key={`${r}.${c}`} x={c * u} y={r * u} width={u} height={u} fill={TEXT_DEFAULT} />
+      ))}
+    </svg>
+  );
+}
+
+const IcoCamera = ({ size = 16, color = 'currentColor' }) => (
+  <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
+    <rect x="2.75" y="5.75" width="14.5" height="10.5" rx="2" stroke={color} strokeWidth="1.5" />
+    <path d="M7 5.75 8.2 3.9a1 1 0 0 1 .84-.45h1.92a1 1 0 0 1 .84.45L13 5.75" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+    <circle cx="10" cy="10.75" r="2.75" stroke={color} strokeWidth="1.5" />
+  </svg>
+);
+
 const IcoCheckCircle = ({ size = 20, color = COLOR_SUCCESS }) => (
   <svg width={size} height={size} viewBox="0 0 20 20" fill="none" aria-hidden="true">
     <circle cx="10" cy="10" r="7.25" stroke={color} strokeWidth="1.5" />
@@ -192,53 +287,26 @@ const IcoClipboard = ({ size = 20, color = TEXT_SUBDUED }) => (
   </svg>
 );
 
-// Monitoring-method illustrations (64px, inline SVG, token colors only) — a
-// monitored screen with a status badge: check = Nexleaf, signal = third-party,
-// cross = unmonitored. Matches the Figma cards' 64px illustration slot.
-const IlloMonitor = ({ badge, size = 64 }) => {
-  const badgeFill = badge === 'check' ? COLOR_SUCCESS_FILLED
-    : badge === 'signal' ? COLOR_PRIMARY
-      : COLOR_CRITICAL_STRONG;
-  return (
-    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
-      <rect x="8" y="12" width="44" height="30" rx="4" fill={BG_INFO} stroke={COLOR_PRIMARY} strokeWidth="2.5" />
-      <path d="M15 32c3-6 6-6 9 0s6 6 9 0 6-6 9 0" stroke={COLOR_PRIMARY} strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M30 42v7" stroke={COLOR_PRIMARY} strokeWidth="2.5" strokeLinecap="round" />
-      <path d="M20 52h20" stroke={COLOR_PRIMARY} strokeWidth="2.5" strokeLinecap="round" />
-      <circle cx="50" cy="16" r="11" fill={badgeFill} stroke={BG_SURFACE} strokeWidth="2.5" />
-      {badge === 'check' && (
-        <path d="m45.5 16.2 3 3 5-5.5" stroke={BG_SURFACE} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-      )}
-      {badge === 'signal' && (<>
-        <path d="M46 18.5a6 6 0 0 1 8 0" stroke={BG_SURFACE} strokeWidth="2" strokeLinecap="round" />
-        <path d="M47.8 15.6a3.6 3.6 0 0 1 4.4 0" stroke={BG_SURFACE} strokeWidth="2" strokeLinecap="round" />
-        <circle cx="50" cy="20.4" r="1.4" fill={BG_SURFACE} />
-      </>)}
-      {badge === 'cross' && (
-        <path d="m46.5 12.5 7 7m0-7-7 7" stroke={BG_SURFACE} strokeWidth="2.5" strokeLinecap="round" />
-      )}
-    </svg>
-  );
-};
-
+// Monitoring-method illustrations now come from the Illustration Hub
+// (Foundation/Illustrations): monitored / connect-monitor / not-monitored.
 const METHOD_OPTIONS = [
   {
     id: 'rtmd',
     title: 'Monitored Equipment by Nexleaf',
     description: 'A Nexleaf remote temperature monitoring device is (or will be) installed on this equipment. Data uploads automatically.',
-    badge: 'check',
+    illo: 'monitored',
   },
   {
     id: 'external',
     title: 'Built in or 3rd Party Device',
     description: 'The equipment has its own logger or display e.g. a built-in Haier logger or a Berlinger Fridge-tag. We’ll check whether it can be connected.',
-    badge: 'signal',
+    illo: 'connect-monitor',
   },
   {
     id: 'none',
     title: 'Unmonitored Equipment',
     description: 'No device records this equipment’s temperature. Temperatures will be recorded manually with a thermometer.',
-    badge: 'cross',
+    illo: 'not-monitored',
   },
 ];
 
@@ -389,10 +457,82 @@ function ScanScreen({ onScan, onSubmit }) {
   );
 }
 
+// Search-result panel (Scan Progress dialog): the design system's in-card
+// compact tinted Banner carrying name + serial + facility; a selection ring
+// wraps it when the result is part of a pick list.
+function ResultPanel({ title, lines, selectable = false, selected = false, onSelect }) {
+  return (
+    <div
+      role={selectable ? 'radio' : undefined}
+      aria-checked={selectable ? selected : undefined}
+      tabIndex={selectable ? 0 : undefined}
+      onClick={selectable ? onSelect : undefined}
+      onKeyDown={selectable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(); } } : undefined}
+      style={{
+        borderRadius: 8, outline: 'none',
+        boxShadow: selectable && selected ? `0 0 0 2px ${COLOR_PRIMARY}` : 'none',
+        cursor: selectable ? 'pointer' : 'default',
+        transition: 'box-shadow 0.12s ease',
+      }}
+    >
+      <Banner tone="info" inCard>
+        <span style={{ display: 'block', fontWeight: 650 }}>{title}</span>
+        {lines.map((l) => (
+          <span key={l} style={{ display: 'block' }}>{l}</span>
+        ))}
+      </Banner>
+    </div>
+  );
+}
+
+// Form section header — icon + title over a hairline, grouping detail fields
+// exactly like the production Create New Equipment modal.
+function FormSection({ icon, title, required, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${BORDER_LIGHT}`, paddingBottom: 8 }}>
+        {icon}
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 650, lineHeight: '20px', color: TEXT_DEFAULT }}>
+          {title}{required && <span style={{ color: TEXT_CRITICAL, marginLeft: 2 }}>*</span>}
+        </h3>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// Summary rows — a two-column definition list (label left, value right) with
+// comfortable rhythm; hairlines only BETWEEN rows. Pass rows as
+// [label, value] tuples; falsy entries are skipped (conditional rows).
+function ReviewRows({ rows }) {
+  const visible = rows.filter(Boolean);
+  return (
+    <div>
+      {visible.map(([label, value], i) => (
+        <div
+          key={label}
+          style={{
+            display: 'flex', gap: 24, alignItems: 'baseline',
+            padding: '12px 0',
+            borderBottom: i < visible.length - 1 ? `1px solid ${BORDER_LIGHT}` : 'none',
+          }}
+        >
+          <span style={{ width: 180, flexShrink: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
+            {label}
+          </span>
+          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, lineHeight: '20px', color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>
+            {value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // Review-section header: CardSectionTitle + a ghost Edit action.
 function ReviewSection({ icon, title, onEdit, children }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <CardSectionTitle icon={icon} title={title} />
         {onEdit && <Btn variant="ghost" small onClick={onEdit}>Edit</Btn>}
@@ -517,14 +657,25 @@ export function AddEquipmentFlow({
   const [errors, setErrors] = useState(initialErrors);
   const [cancelOpen, setCancelOpen] = useState(initialCancelOpen);
   const [scanOpen, setScanOpen] = useState(false);
+  const [scanCount, setScanCount] = useState(0);
+  // Assign QR Code modal: null = closed; { scanning, scanned } while open.
+  const [assignQr, setAssignQr] = useState(null);
+  const [qrViewOpen, setQrViewOpen] = useState(false);
+  const [nextQrSeq, setNextQrSeq] = useState(3307);
   const [locationPromptOpen, setLocationPromptOpen] = useState(true);
   const [searchNotice, setSearchNotice] = useState(null);
+  // Scan Progress dialog: null = closed; { query, matches, exact, selected }.
+  // selected is a serial, or '__new__' for "add as new equipment".
+  const [searchResults, setSearchResults] = useState(null);
   const fromRecording = entryCtx === 'serial-search' || entryCtx === 'qr-scan';
 
   // The three separate concepts: equipment / monitoring device / integration.
   const [equipment, setEquipment] = useState({
-    serial: entrySerial, qrCode: entryQr, type: '', manufacturer: '', model: '',
-    facilityId: '', location: '',
+    serial: entrySerial, qrCode: entryQr,
+    makeModel: '', fundingSource: '',
+    status: '', installDate: null, powerSource: '',
+    regionId: '', facilityId: '',
+    warrantyYears: '',
     ...initialData.equipment,
   });
   // monitoring.method: 'rtmd' | 'external' | 'none'
@@ -580,14 +731,39 @@ export function AddEquipmentFlow({
       setSearchNotice({ tone: 'warning', message: 'Enter a serial number from the equipment label, or scan the QR code instead.' });
       return;
     }
-    if (EXISTING_SERIALS.includes(s)) {
-      setSearchNotice({ tone: 'success', message: `${s} is already registered. Its record opens here for temperature recording.` });
+    const q = s.toUpperCase();
+    const exact = EXISTING_EQUIPMENT.find((e) => e.serial.toUpperCase() === q);
+    const matches = exact ? [exact] : EXISTING_EQUIPMENT.filter((e) => e.serial.toUpperCase().includes(q));
+    setSearchNotice(null);
+    if (exact) {
+      // Instance 1 — one identical record found
+      setSearchResults({ query: s, matches, exact: true, selected: exact.serial });
       return;
     }
-    setSearchNotice(null);
+    if (matches.length > 0) {
+      // Instance 2 — several close matches; first preselected, plus "add new"
+      setSearchResults({ query: s, matches, exact: false, selected: matches[0].serial });
+      return;
+    }
+    // Instance 3 — nothing identical: offer to add the equipment
     setEntryCtx('serial-search');
     setEquipment((prev) => ({ ...prev, serial: s }));
     goTo('entry');
+  }
+
+  function continueFromResults() {
+    const r = searchResults;
+    if (!r) return;
+    if (r.selected === '__new__') {
+      setSearchResults(null);
+      setEntryCtx('serial-search');
+      setEquipment((prev) => ({ ...prev, serial: r.query }));
+      goTo('method');
+      return;
+    }
+    const eq = r.matches.find((m) => m.serial === r.selected);
+    setSearchResults(null);
+    setSearchNotice({ tone: 'success', message: `Opening ${eq.name} (${eq.serial}) for temperature recording.` });
   }
 
   // Close the entry pop-up back onto the scan screen (Search/Scan again, ✕,
@@ -600,13 +776,22 @@ export function AddEquipmentFlow({
 
   function simulateScan() {
     setScanOpen(true);
-    // Prototype scanner: after a beat, "reads" an unassigned QR label.
+    // Prototype scanner — two instances, alternating per scan for the demo:
+    //   odd scans  → an UNASSIGNED label → "no equipment associated" pop-up
+    //   even scans → a REGISTERED label  → Scan Progress with the exact record
     setTimeout(() => {
       setScanOpen(false);
       setSearchNotice(null);
-      setEntryCtx('qr-scan');
-      setEquipment((prev) => ({ ...prev, qrCode: prev.qrCode || 'QR-30977' }));
-      goTo('entry');
+      if (scanCount % 2 === 1) {
+        const tagged = EXISTING_EQUIPMENT.filter((e) => e.qr);
+        const eq = tagged[Math.floor(scanCount / 2) % tagged.length];
+        setSearchResults({ query: eq.qr, matches: [eq], exact: true, selected: eq.serial });
+      } else {
+        setEntryCtx('qr-scan');
+        setEquipment((prev) => ({ ...prev, qrCode: prev.qrCode || 'QR-30977' }));
+        goTo('entry');
+      }
+      setScanCount((c) => c + 1);
     }, 1400);
   }
 
@@ -621,7 +806,7 @@ export function AddEquipmentFlow({
     setLocationPromptOpen(true);
     setVisitedSteps(new Set(['search']));
     setEntryCtx(entryContext);
-    setEquipment({ serial: '', qrCode: '', type: '', manufacturer: '', model: '', facilityId: '', location: '' });
+    setEquipment({ serial: '', qrCode: '', makeModel: '', fundingSource: '', status: '', installDate: null, powerSource: '', regionId: '', facilityId: '', warrantyYears: '' });
     setMonitoring({ method: null });
     setRtmd({
       deviceId: '', configDate: new Date(), locationGranted: false,
@@ -684,17 +869,35 @@ export function AddEquipmentFlow({
     setTimeout(() => setRtmd((s) => ({ ...s, configuring: false, configured: true })), 1100);
   }
 
+  // Entering Equipment Details: backfill Region from an already-chosen
+  // facility (RTMD path) and default Status to Installed for RTMD installs.
+  useEffect(() => {
+    if (step !== 'details') return;
+    setEquipment((s) => {
+      const status = s.status || (monitoring.method === 'rtmd' ? 'installed' : '');
+      return {
+        ...s,
+        regionId: s.regionId || regionOfFacility(s.facilityId),
+        status,
+        installDate: s.installDate || (status === 'installed' ? new Date() : null),
+      };
+    });
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function validateDetails() {
     const e = {};
     if (!equipment.serial.trim()) e.serial = 'Serial number is required.';
     else if (EXISTING_SERIALS.includes(equipment.serial.trim())) {
       e.serial = 'An equipment record with this serial number already exists. Search for it in Manual Temperature Recording instead of creating a duplicate.';
     }
-    if (equipment.qrCode && ASSIGNED_QRS.includes(equipment.qrCode.trim())) {
+    if (!equipment.qrCode) {
+      e.qrCode = 'A QR code is required. Assign one to continue.';
+    } else if (ASSIGNED_QRS.includes(equipment.qrCode.trim())) {
       e.qrCode = 'This QR code is already assigned to another equipment record. Remove it there first, or scan a different code.';
     }
-    if (!equipment.type) e.type = 'Equipment type is required.';
-    if (!equipment.manufacturer) e.manufacturer = 'Manufacturer is required.';
+    if (!equipment.makeModel) e.makeModel = 'Equipment make and model is required.';
+    if (!equipment.status) e.status = 'Equipment status is required.';
+    if (!equipment.regionId) e.regionId = 'Region is required.';
     if (!equipment.facilityId) e.facilityId = 'Facility is required.';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -718,8 +921,21 @@ export function AddEquipmentFlow({
     .map((id) => contactDirectory.find((c) => c.id === id)?.name)
     .filter(Boolean);
 
+  // Required-field gates — the footer primary stays disabled until the step's
+  // required fields are filled (uniqueness checks still run on click).
+  const stepReady = {
+    'rtmd-select': !!(rtmd.deviceId && rtmd.configDate),
+    'rtmd-facility': !!rtmd.facilityId,
+    provider: !!provider,
+    connect: !!(integration.deviceId.trim() && integration.accessCode.trim()),
+    register: !!(externalDevice.manufacturer.trim() && externalDevice.serial.trim()),
+    details: !!(
+      equipment.makeModel && equipment.serial.trim() && equipment.status
+      && equipment.regionId && equipment.facilityId && equipment.qrCode
+    ),
+  };
+
   // ── Shared footer buttons ───────────────────────────────────────────────────
-  const cancelBtn = <Btn variant="ghost" onClick={() => setCancelOpen(true)}>Cancel</Btn>;
   const backBtn = <Btn variant="secondary" onClick={goBack}>Back</Btn>;
   const continueBtn = (onClick, label = 'Next', disabled = false) => (
     <Btn variant="primary" onClick={onClick} disabled={disabled}>{label}</Btn>
@@ -799,7 +1015,7 @@ export function AddEquipmentFlow({
             {METHOD_OPTIONS.map((opt) => (
               <OptionCard
                 key={opt.id}
-                media={<IlloMonitor badge={opt.badge} />}
+                media={<Illustration name={opt.illo} size={64} />}
                 title={opt.title}
                 description={opt.description}
                 selected={monitoring.method === opt.id}
@@ -825,15 +1041,7 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Select the RTMD"
         subtitle="Pick the Nexleaf device being installed on this equipment. Search by the IMEI or MAC address printed on its label."
-        footerLeft={cancelBtn}
-        footerRight={<>{backBtn}{continueBtn(() => {
-          const e = {};
-          if (!rtmd.deviceId) e.rtmd = 'Select an RTMD to continue.';
-          if (!rtmd.configDate) e.configDate = 'Configuration date is required.';
-          setErrors(e);
-          if (Object.keys(e).length) return;
-          goTo('rtmd-configure');
-        })}</>}
+        footerRight={<>{backBtn}{continueBtn(() => goTo('rtmd-configure'), 'Next', !stepReady['rtmd-select'])}</>}
       >
         <div style={FIELD_STACK}>
           <SearchSelect
@@ -866,18 +1074,27 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Configure RTMD"
         subtitle="Push the configuration to the device. Keep the RTMD powered on and within network coverage."
-        footerLeft={cancelBtn}
-        footerRight={<>{backBtn}{continueBtn(() => goTo('rtmd-facility'), 'Next', !rtmd.configured)}</>}
+        footerRight={<>{backBtn}
+          {rtmd.configured
+            ? continueBtn(() => goTo('rtmd-facility'), 'Next')
+            : (
+              <Btn
+                variant="primary"
+                loading={rtmd.configuring}
+                disabled={!rtmd.locationGranted || rtmd.configuring}
+                onClick={configureRtmd}
+              >
+                {rtmd.configuring ? 'Configuring…' : 'Configure RTMD'}
+              </Btn>
+            )}
+        </>}
       >
-        <div>
-          <CardField label="Device" value={device.model} />
-          <CardDivider />
-          <CardField label="IMEI" value={device.imei} />
-          <CardDivider />
-          <CardField label="MAC address" value={device.mac} />
-          <CardDivider />
-          <CardField label="Configuration date" value={formatDate(rtmd.configDate)} />
-        </div>
+        <ReviewRows rows={[
+          ['Device', device.model],
+          ['IMEI', device.imei],
+          ['MAC address', device.mac],
+          ['Configuration date', formatDate(rtmd.configDate)],
+        ]} />
         {rtmd.locationGranted ? (
           <Banner tone="success" title="Location captured">
             −4.0435° S, 39.6682° E · accuracy ±8 m. The installation location is saved with this RTMD.
@@ -891,14 +1108,10 @@ export function AddEquipmentFlow({
             ColdTrace records where the RTMD is installed so alerts and reports point to the right place.
           </Banner>
         )}
-        {rtmd.configured ? (
+        {rtmd.configured && (
           <Banner tone="success" title="RTMD configured">
             The device accepted the configuration and reported a first heartbeat.
           </Banner>
-        ) : (
-          <Btn variant="primary" fullWidth loading={rtmd.configuring} disabled={!rtmd.locationGranted || rtmd.configuring} onClick={configureRtmd}>
-            {rtmd.configuring ? 'Configuring…' : 'Configure RTMD'}
-          </Btn>
         )}
 
         {/* Location permission — a system-prompt style modal over this step */}
@@ -935,12 +1148,10 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Facility & alarm contacts"
         subtitle="The facility where this RTMD and equipment are installed, and who gets its SMS alarm alerts."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}{continueBtn(() => {
-          if (!rtmd.facilityId) { setErrors({ facility: 'Select a facility to continue.' }); return; }
           setEquipment((s) => ({ ...s, facilityId: rtmd.facilityId || s.facilityId }));
           goTo('rtmd-sensors');
-        })}</>}
+        }, 'Next', !stepReady['rtmd-facility'])}</>}
       >
         <SearchSelect
           label="Facility"
@@ -998,7 +1209,7 @@ export function AddEquipmentFlow({
             )}
 
             {added.length === 0 ? (
-              <Banner tone="info">
+              <Banner tone="info" inCard>
                 No alarm contacts in this facility yet. Without contacts, alarms only appear on the ColdTrace dashboard.
               </Banner>
             ) : (
@@ -1106,7 +1317,6 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Sensor configuration"
         subtitle="Set what each sensor probe monitors and its safe temperature range."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}{continueBtn(() => goTo('rtmd-confirm'))}</>}
       >
         <SelectInput
@@ -1150,27 +1360,19 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Confirm RTMD installation"
         subtitle="Review the monitoring setup. Next you'll add the equipment's own details."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}{continueBtn(() => goTo('details'), 'Confirm RTMD')}</>}
       >
         <Banner tone="success" title="RTMD ready">
           Sensor data will upload automatically once the equipment record is created.
         </Banner>
-        <div>
-          <CardField label="Device" value={`${device.model} · ${device.imei}`} />
-          <CardDivider />
-          <CardField label="Facility" value={facilityLabel(rtmd.facilityId)} />
-          <CardDivider />
-          <CardField label="Alarm contacts" value={contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'} />
-          <CardDivider />
-          <CardField label="Configured on" value={formatDate(rtmd.configDate)} />
-          <CardDivider />
-          <CardField label="Sensor 1" value={`${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`} />
-          {rtmd.hasSensor2 && (<>
-            <CardDivider />
-            <CardField label="Sensor 2" value={`${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`} />
-          </>)}
-        </div>
+        <ReviewRows rows={[
+          ['Device', `${device.model} · ${device.imei}`],
+          ['Facility', facilityLabel(rtmd.facilityId)],
+          ['Alarm contacts', contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'],
+          ['Configured on', formatDate(rtmd.configDate)],
+          ['Sensor 1', `${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`],
+          rtmd.hasSensor2 && ['Sensor 2', `${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`],
+        ]} />
       </StepFrame>
     );
   }
@@ -1182,11 +1384,9 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Monitoring device manufacturer"
         subtitle="Who makes the monitoring device on this equipment? We'll check whether ColdTrace can collect its data automatically."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}{continueBtn(() => {
-          if (!provider) { setErrors({ provider: 'Select the device manufacturer to continue.' }); return; }
           goTo(provider.supported ? 'connect' : 'register');
-        })}</>}
+        }, 'Next', !stepReady.provider)}</>}
       >
         <SearchSelect
           label="Manufacturer"
@@ -1222,16 +1422,10 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title={`Connect ${provider?.label || 'monitoring device'}`}
         subtitle="Enter the connection details from the device or its vendor portal. ColdTrace validates the connection before continuing."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}
-          <Btn variant="primary" loading={busy} disabled={busy} onClick={() => {
-            const e = {};
-            if (!integration.deviceId.trim()) e.deviceId = 'Device ID is required.';
-            if (!integration.accessCode.trim()) e.accessCode = 'Access code is required.';
-            setErrors(e);
-            if (Object.keys(e).length) return;
-            connectDevice();
-          }}>{busy ? 'Validating…' : 'Connect device'}</Btn>
+          <Btn variant="primary" loading={busy} disabled={busy || !stepReady.connect} onClick={connectDevice}>
+            {busy ? 'Validating…' : 'Connect device'}
+          </Btn>
         </>}
       >
         <Cell
@@ -1291,7 +1485,6 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Device connected"
         subtitle="ColdTrace validated the connection and pulled the first reading."
-        footerLeft={cancelBtn}
         footerRight={<>{backBtn}{continueBtn(() => goTo('details'), 'Continue to equipment details')}</>}
       >
         <Cell
@@ -1301,13 +1494,11 @@ export function AddEquipmentFlow({
           description={`Device ID ${integration.deviceId || 'FT2-0048812'}`}
           badge={<Badge tone="success">Connected</Badge>}
         />
-        <div>
-          <CardField label="Last sync" value={integration.lastSync || 'Just now'} />
-          <CardDivider />
-          <CardField label="Latest reading" value={integration.latestReading || '+4.6 °C at 09:42'} />
-          <CardDivider />
-          <CardField label="Temperature source" value="Automatic · integration" />
-        </div>
+        <ReviewRows rows={[
+          ['Last sync', integration.lastSync || 'Just now'],
+          ['Latest reading', integration.latestReading || '+4.6 °C at 09:42'],
+          ['Temperature source', 'Automatic · integration'],
+        ]} />
       </StepFrame>
     );
   }
@@ -1318,15 +1509,7 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Register the monitoring device"
         subtitle="Save the device's details with the equipment record. If an integration becomes available later, it can be connected without recreating the equipment."
-        footerLeft={cancelBtn}
-        footerRight={<>{backBtn}{continueBtn(() => {
-          const e = {};
-          if (!externalDevice.manufacturer.trim()) e.exManufacturer = 'Manufacturer is required.';
-          if (!externalDevice.serial.trim()) e.exSerial = 'Device serial number is required.';
-          setErrors(e);
-          if (Object.keys(e).length) return;
-          goTo('details');
-        }, 'Save device and continue')}</>}
+        footerRight={<>{backBtn}{continueBtn(() => goTo('details'), 'Save device and continue', !stepReady.register)}</>}
       >
         <Banner tone="info" title="Temperature source: manual recording">
           Until this device is connected, temperatures for the equipment are recorded manually in Manual Temperature Recording.
@@ -1401,71 +1584,242 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Equipment details"
         subtitle="The equipment record itself. It exists independently of any monitoring device or integration."
-        footerLeft={cancelBtn}
-        footerRight={<>{backBtn}{continueBtn(() => { if (validateDetails()) goTo('review'); })}</>}
+        footerRight={<>{backBtn}{continueBtn(() => { if (validateDetails()) goTo('review'); }, 'Next', !stepReady.details)}</>}
       >
-        <div style={FIELD_STACK}>
-        <TextInput
-          label="Equipment serial number"
-          required
-          placeholder="e.g. VF-2024-001234"
-          helpText={entryCtx === 'serial-search'
-            ? 'Kept from your search. Edit it if it was mistyped.'
-            : 'Enter the full serial number from the label on the equipment.'}
-          value={equipment.serial}
-          onChange={(e) => setEquipment((s) => ({ ...s, serial: e.target.value }))}
-          error={errors.serial}
-        />
-        <TextInput
-          label="QR code"
-          placeholder="e.g. QR-30977"
-          helpText={entryCtx === 'qr-scan'
-            ? 'Kept from your scan. It will be assigned to this equipment.'
-            : 'Optional. Scan or type a ColdTrace QR label to assign it.'}
-          value={equipment.qrCode}
-          onChange={(e) => setEquipment((s) => ({ ...s, qrCode: e.target.value }))}
-          error={errors.qrCode}
-        />
-        <SelectInput
-          label="Equipment type"
-          required
-          options={EQUIPMENT_TYPES}
-          placeholder="Select…"
-          value={equipment.type}
-          onChange={(e) => setEquipment((s) => ({ ...s, type: e.target.value }))}
-          error={errors.type}
-        />
-        <SelectInput
-          label="Manufacturer"
-          required
-          options={EQUIPMENT_MAKERS}
-          placeholder="Select…"
-          value={equipment.manufacturer}
-          onChange={(e) => setEquipment((s) => ({ ...s, manufacturer: e.target.value }))}
-          error={errors.manufacturer}
-        />
-        <TextInput
-          label="Model"
-          placeholder="e.g. MK 144"
-          value={equipment.model}
-          onChange={(e) => setEquipment((s) => ({ ...s, model: e.target.value }))}
-        />
-        <SearchSelect
-          label="Facility"
-          required
-          placeholder="Search facilities…"
-          options={FACILITIES}
-          value={equipment.facilityId}
-          onChange={(v) => setEquipment((s) => ({ ...s, facilityId: v }))}
-          error={errors.facilityId}
-        />
-        <TextInput
-          label="Location within facility"
-          placeholder="e.g. EPI store room"
-          value={equipment.location}
-          onChange={(e) => setEquipment((s) => ({ ...s, location: e.target.value }))}
-        />
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <FormSection icon={<IcoDevice color={TEXT_DEFAULT} />} title="Equipment Information">
+            <SearchSelect
+              label="Equipment make and model"
+              required
+              placeholder="Search make and model…"
+              options={MAKE_MODELS.map((m) => ({ id: m, label: m }))}
+              value={equipment.makeModel}
+              onChange={(v) => setEquipment((s) => ({ ...s, makeModel: v }))}
+              error={errors.makeModel}
+            />
+            <TextInput
+              label="Serial number"
+              required
+              placeholder="e.g. VF-2024-001234"
+              helpText={entryCtx === 'serial-search'
+                ? 'Kept from your search. Edit it if it was mistyped.'
+                : 'Enter the full serial number from the label on the equipment.'}
+              value={equipment.serial}
+              onChange={(e) => setEquipment((s) => ({ ...s, serial: e.target.value }))}
+              error={errors.serial}
+            />
+            <SelectInput
+              label="Funding source"
+              options={FUNDING_SOURCES}
+              placeholder="Select…"
+              value={equipment.fundingSource}
+              onChange={(e) => setEquipment((s) => ({ ...s, fundingSource: e.target.value }))}
+            />
+          </FormSection>
+
+          <FormSection icon={<IcoLocation color={TEXT_DEFAULT} />} title="Installation Details">
+            <RadioGroup
+              title="Equipment status"
+              required
+              name="equipment-status"
+              value={equipment.status}
+              onChange={(id) => {
+                setEquipment((s) => ({
+                  ...s,
+                  status: id,
+                  installDate: id === 'installed' ? (s.installDate || new Date()) : s.installDate,
+                }));
+                setErrors((prev) => ({ ...prev, status: undefined }));
+              }}
+              options={EQUIPMENT_STATUS}
+              error={errors.status}
+            />
+            {equipment.status === 'installed' && (
+              <>
+                <DateField
+                  label="Equipment install date"
+                  value={equipment.installDate}
+                  onChange={(d) => setEquipment((s) => ({ ...s, installDate: d }))}
+                  helpText="When the equipment was installed at the facility. Defaults to today."
+                />
+                <SelectInput
+                  label="Power source"
+                  options={POWER_SOURCES}
+                  placeholder="Select…"
+                  value={equipment.powerSource}
+                  onChange={(e) => setEquipment((s) => ({ ...s, powerSource: e.target.value }))}
+                />
+              </>
+            )}
+            <SelectInput
+              label="Region"
+              required
+              options={REGIONS.map((r) => r.label)}
+              placeholder="Select…"
+              value={regionLabel(equipment.regionId) === 'Not set' ? '' : regionLabel(equipment.regionId)}
+              onChange={(e) => {
+                const region = REGIONS.find((r) => r.label === e.target.value);
+                setEquipment((s) => ({
+                  ...s,
+                  regionId: region?.id || '',
+                  // clear the facility if it doesn't belong to the new region
+                  facilityId: regionOfFacility(s.facilityId) === region?.id ? s.facilityId : '',
+                }));
+                setErrors((prev) => ({ ...prev, regionId: undefined }));
+              }}
+              error={errors.regionId}
+            />
+            <SearchSelect
+              label="Facility"
+              required
+              placeholder="Search facilities…"
+              options={equipment.regionId ? FACILITIES.filter((r) => r.id === equipment.regionId) : FACILITIES}
+              value={equipment.facilityId}
+              onChange={(v) => setEquipment((s) => ({ ...s, facilityId: v, regionId: s.regionId || regionOfFacility(v) }))}
+              error={errors.facilityId}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: -12 }}>
+              <span style={{ fontSize: 13, fontWeight: 450, color: TEXT_SUBDUED }}>
+                Can't find your facility?
+              </span>
+              <Btn variant="ghost" small onClick={() => setSearchNotice({ tone: 'info', message: 'Facility creation lives in Facility Management. This prototype uses the existing facility list.' })}>
+                Create a new facility
+              </Btn>
+            </div>
+          </FormSection>
+
+          <FormSection icon={<IcoClipboard color={TEXT_DEFAULT} />} title="Maintenance and Warranty">
+            <SelectInput
+              label="Warranty years"
+              options={WARRANTY_YEARS}
+              placeholder="Select…"
+              value={equipment.warrantyYears}
+              onChange={(e) => setEquipment((s) => ({ ...s, warrantyYears: e.target.value }))}
+            />
+          </FormSection>
+
+          <FormSection icon={<IcoQr color={TEXT_DEFAULT} />} title="QR Code" required>
+            {equipment.qrCode ? (
+              <>
+                <Banner tone="info" inCard icon={<IcoQr size={20} color={TEXT_INFO} />}>
+                  <><strong>{equipment.qrCode}</strong>{entryCtx === 'qr-scan'
+                    ? ' was captured from your scan and will be linked to this equipment when the record is created.'
+                    : ' is ready and will be linked to this equipment when the record is created.'}</>
+                </Banner>
+                {errors.qrCode && (
+                  <p style={{ margin: '-8px 0 0', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_CRITICAL }}>
+                    {errors.qrCode}
+                  </p>
+                )}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                  <Btn variant="secondary" onClick={() => setQrViewOpen(true)}>
+                    Check QR Code
+                  </Btn>
+                  <Btn variant="secondary" onClick={() => setAssignQr({ scanning: false, scanned: null })}>
+                    Reassign QR Code
+                  </Btn>
+                </div>
+              </>
+            ) : (
+              <>
+                <Banner tone="info" inCard icon={<IcoQr size={20} color={TEXT_INFO} />}>
+                  No QR code has been generated for this equipment yet. Every equipment record needs one — assign it to continue.
+                </Banner>
+                {errors.qrCode && (
+                  <p style={{ margin: '-8px 0 0', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_CRITICAL }}>
+                    {errors.qrCode}
+                  </p>
+                )}
+                <div style={{ display: 'flex' }}>
+                  <Btn variant="secondary" onClick={() => setAssignQr({ scanning: false, scanned: null })}>
+                    Assign QR Code
+                  </Btn>
+                </div>
+              </>
+            )}
+          </FormSection>
         </div>
+
+        {/* Check QR Code — view the assigned label */}
+        <Modal
+          open={qrViewOpen}
+          onClose={() => setQrViewOpen(false)}
+          title="QR Code"
+          size="small"
+          footer={
+            <Btn variant="secondary" small onClick={() => setQrViewOpen(false)}>Close</Btn>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '12px 0', textAlign: 'center' }}>
+            <div style={{ border: `1px solid ${BORDER_LIGHT}`, borderRadius: 12, padding: 16 }}>
+              <QrPreview code={equipment.qrCode || 'QR'} size={192} />
+            </div>
+            <span style={{ fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>
+              {equipment.qrCode}
+            </span>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
+              This label will identify the equipment. Scanning it opens the equipment record.
+            </p>
+          </div>
+        </Modal>
+
+        {/* Assign QR Code — scan panel modal (simulated scanner issues a fresh label) */}
+        <Modal
+          open={assignQr != null}
+          onClose={() => setAssignQr(null)}
+          title="Assign QR Code"
+          footer={<>
+            <Btn variant="secondary" small onClick={() => setAssignQr(null)}>Cancel</Btn>
+            <Btn
+              variant="primary"
+              small
+              disabled={!assignQr?.scanned}
+              onClick={() => {
+                const code = assignQr.scanned;
+                setEquipment((s) => ({ ...s, qrCode: code }));
+                setErrors((prev) => ({ ...prev, qrCode: undefined }));
+                setAssignQr(null);
+                setSearchNotice({ tone: 'success', message: `${code} assigned to this equipment.` });
+              }}
+            >
+              Assign QR Code
+            </Btn>
+          </>}
+        >
+          {assignQr != null && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{
+                border: `1px solid ${BORDER_LIGHT}`, borderRadius: 12,
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+                padding: '40px 24px',
+              }}>
+                <IcoQr size={44} color={TEXT_SUBDUED} />
+                <span style={{ fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>
+                  Scan QR Code
+                </span>
+                <Btn
+                  variant="primary"
+                  icon={<IcoCamera />}
+                  loading={assignQr.scanning}
+                  disabled={assignQr.scanning}
+                  onClick={() => {
+                    setAssignQr((a) => ({ ...a, scanning: true }));
+                    const code = `QR-${nextQrSeq}`;
+                    setNextQrSeq((n) => n + 1);
+                    setTimeout(() => setAssignQr((a) => (a ? { scanning: false, scanned: code } : a)), 1200);
+                  }}
+                >
+                  {assignQr.scanning ? 'Scanning…' : assignQr.scanned ? 'Scan Again' : 'Start Scanning'}
+                </Btn>
+              </div>
+              {assignQr.scanned && (
+                <Banner tone="success" inCard>
+                  QR Code scanned successfully! ({assignQr.scanned})
+                </Banner>
+              )}
+            </div>
+          )}
+        </Modal>
       </StepFrame>
     );
   }
@@ -1478,21 +1832,22 @@ export function AddEquipmentFlow({
         {...wizardChrome}
         title="Review and confirm"
         subtitle="Check everything before the equipment record is created."
-        footerLeft={cancelBtn}
-        footerRight={<>{backBtn}{continueBtn(createEquipment, entryCtx === 'qr-scan' ? 'Add and Assign Equipment' : 'Add Equipment')}</>}
+        footerRight={<>{backBtn}{continueBtn(createEquipment, 'Submit')}</>}
       >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
         <ReviewSection icon={<IcoDevice color={TEXT_DEFAULT} />} title="Equipment" onEdit={() => goTo('details')}>
-          <CardField label="Serial number" value={equipment.serial || '—'} />
-          <CardDivider />
-          <CardField label="QR code" value={equipment.qrCode || 'Not assigned'} />
-          <CardDivider />
-          <CardField label="Type" value={equipment.type || '—'} />
-          <CardDivider />
-          <CardField label="Make & model" value={[equipment.manufacturer, equipment.model].filter(Boolean).join(' ') || '—'} />
-          <CardDivider />
-          <CardField label="Facility" value={facilityLabel(equipment.facilityId)} />
-          <CardDivider />
-          <CardField label="Location" value={equipment.location || '—'} />
+          <ReviewRows rows={[
+            ['Make and model', equipment.makeModel || 'Not set'],
+            ['Serial number', equipment.serial || 'Not set'],
+            ['Funding source', equipment.fundingSource || 'Not set'],
+            ['Equipment status', EQUIPMENT_STATUS.find((o) => o.id === equipment.status)?.label || 'Not set'],
+            equipment.status === 'installed' && ['Install date', formatDate(equipment.installDate)],
+            equipment.status === 'installed' && ['Power source', equipment.powerSource || 'Not set'],
+            ['Region', regionLabel(equipment.regionId)],
+            ['Facility', facilityLabel(equipment.facilityId)],
+            ['Warranty', equipment.warrantyYears || 'Not set'],
+            ['QR code', equipment.qrCode || 'Not assigned'],
+          ]} />
         </ReviewSection>
 
         <ReviewSection
@@ -1500,45 +1855,29 @@ export function AddEquipmentFlow({
           title="Temperature monitoring"
           onEdit={() => goTo('method')}
         >
-          {monitoring.method === 'rtmd' && (<>
-            <CardField label="Method" value="Nexleaf RTMD" />
-            <CardDivider />
-            <CardField label="Alarm contacts" value={contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'} />
-            <CardDivider />
-            <CardField label="Device" value={device ? `${device.model} · ${device.imei}` : '—'} />
-            <CardDivider />
-            <CardField label="Sensor 1" value={`${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`} />
-            {rtmd.hasSensor2 && (<>
-              <CardDivider />
-              <CardField label="Sensor 2" value={`${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`} />
-            </>)}
-          </>)}
-          {monitoring.method === 'external' && integration.status === 'connected' && (<>
-            <CardField label="Method" value="Third-party integration" />
-            <CardDivider />
-            <CardField label="Provider" value={provider?.label || '—'} />
-            <CardDivider />
-            <CardField label="Status" value="Connected · synced just now" />
-          </>)}
-          {monitoring.method === 'external' && integration.status !== 'connected' && (<>
-            <CardField label="Method" value="Monitoring device (not connected)" />
-            <CardDivider />
-            <CardField label="Device" value={[externalDevice.manufacturer, externalDevice.model].filter(Boolean).join(' ') || provider?.label || '—'} />
-            <CardDivider />
-            <CardField label="Device serial" value={externalDevice.serial || '—'} />
-          </>)}
-          {monitoring.method === 'none' && (
-            <CardField label="Method" value="No monitoring device" />
-          )}
-          <CardDivider />
-          <CardField label="Temperature source" value={temperatureSource} />
+          <ReviewRows rows={[
+            monitoring.method === 'rtmd' && ['Method', 'Nexleaf RTMD'],
+            monitoring.method === 'rtmd' && ['Alarm contacts', contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'],
+            monitoring.method === 'rtmd' && ['Device', device ? `${device.model} · ${device.imei}` : 'Not set'],
+            monitoring.method === 'rtmd' && ['Sensor 1', `${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`],
+            monitoring.method === 'rtmd' && rtmd.hasSensor2 && ['Sensor 2', `${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`],
+            monitoring.method === 'external' && integration.status === 'connected' && ['Method', 'Third-party integration'],
+            monitoring.method === 'external' && integration.status === 'connected' && ['Provider', provider?.label || 'Not set'],
+            monitoring.method === 'external' && integration.status === 'connected' && ['Status', 'Connected · synced just now'],
+            monitoring.method === 'external' && integration.status !== 'connected' && ['Method', 'Monitoring device (not connected)'],
+            monitoring.method === 'external' && integration.status !== 'connected' && ['Device', [externalDevice.manufacturer, externalDevice.model].filter(Boolean).join(' ') || provider?.label || 'Not set'],
+            monitoring.method === 'external' && integration.status !== 'connected' && ['Device serial', externalDevice.serial || 'Not set'],
+            monitoring.method === 'none' && ['Method', 'No monitoring device'],
+            ['Temperature source', temperatureSource],
+          ]} />
         </ReviewSection>
 
         {temperatureSource === 'Manual recording' && (
-          <Banner tone="info">
+          <Banner tone="info" inCard>
             This equipment will appear in Manual Temperature Recording for twice-daily readings.
           </Banner>
         )}
+        </div>
       </StepFrame>
     );
   }
@@ -1563,7 +1902,7 @@ export function AddEquipmentFlow({
         <Cell
           icon={<IcoThermometer />}
           iconTone="success"
-          title={[equipment.manufacturer, equipment.model].filter(Boolean).join(' ') || equipment.type || 'New equipment'}
+          title={equipment.makeModel || 'New equipment'}
           description={`${equipment.serial || 'No serial'} · ${facilityLabel(equipment.facilityId)}`}
           badge={<Badge tone="success">{temperatureSource === 'Manual recording' ? 'Manual recording' : 'Automatic'}</Badge>}
         />
@@ -1604,7 +1943,7 @@ export function AddEquipmentFlow({
                 <Btn variant="secondary" onClick={onExit}>Done</Btn>
                 <Btn variant="primary" onClick={() => {
                   setStep('method'); setHistory([]); setErrors({});
-                  setEquipment({ serial: '', qrCode: '', type: '', manufacturer: '', model: '', facilityId: '', location: '' });
+                  setEquipment({ serial: '', qrCode: '', makeModel: '', fundingSource: '', status: '', installDate: null, powerSource: '', regionId: '', facilityId: '', warrantyYears: '' });
                   setMonitoring({ method: null });
                 }}>Add another equipment</Btn>
               </>}
@@ -1640,6 +1979,62 @@ export function AddEquipmentFlow({
               ? `You’ll return to Manual Temperature Recording${equipment.serial ? `, and the serial number ${equipment.serial} you entered will be kept in the search` : ''}.`
               : 'You’ll return to Equipment Management.'}
         </p>
+      </Modal>
+
+      {/* Scan Progress — serial-search results (Figma: single match, multiple
+          matches with "add as new", or fall through to the not-found pop-up) */}
+      <Modal
+        open={searchResults != null}
+        onClose={() => setSearchResults(null)}
+        title="Scan Progress"
+        maxWidth={520}
+        footer={<>
+          <Btn variant="secondary" small onClick={() => setSearchResults(null)}>Cancel</Btn>
+          <Btn variant="primary" small onClick={continueFromResults}>Continue</Btn>
+        </>}
+      >
+        {searchResults != null && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {!searchResults.exact && (
+              <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
+                {searchResults.matches.length} registered {searchResults.matches.length === 1 ? 'record matches' : 'records match'} “{searchResults.query}”.
+                Pick the right one, or add it as new equipment.
+              </p>
+            )}
+            {searchResults.matches.map((eq) => (
+              <ResultPanel
+                key={eq.serial}
+                title={eq.name}
+                lines={[`Serial Number: ${eq.serial}`, `${eq.facility} · ${eq.county}`]}
+                selectable={!searchResults.exact}
+                selected={searchResults.selected === eq.serial}
+                onSelect={() => setSearchResults((r) => ({ ...r, selected: eq.serial }))}
+              />
+            ))}
+            {!searchResults.exact && (
+              <div
+                role="radio"
+                aria-checked={searchResults.selected === '__new__'}
+                tabIndex={0}
+                onClick={() => setSearchResults((r) => ({ ...r, selected: '__new__' }))}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSearchResults((r) => ({ ...r, selected: '__new__' })); } }}
+                style={{
+                  background: BG_SURFACE, borderRadius: 8, padding: '12px 16px',
+                  boxShadow: searchResults.selected === '__new__' ? `0 0 0 2px ${COLOR_PRIMARY}` : `inset 0 0 0 1px ${BORDER_DEFAULT}`,
+                  outline: 'none', cursor: 'pointer', transition: 'box-shadow 0.12s ease',
+                  display: 'flex', flexDirection: 'column', gap: 2,
+                }}
+              >
+                <span style={{ fontSize: 14, fontWeight: 650, lineHeight: '20px', color: TEXT_DEFAULT }}>
+                  None of these? Add as new equipment
+                </span>
+                <span style={{ fontSize: 13, fontWeight: 450, lineHeight: '18px', color: TEXT_SUBDUED }}>
+                  Create a new record with the serial number “{searchResults.query}”.
+                </span>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* Prototype scanner — simulates reading an unassigned QR label */}

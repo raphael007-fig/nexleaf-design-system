@@ -3,6 +3,7 @@ import { Tag, TagGroup } from '../Tag/Tag.jsx';
 import { Btn } from '../Btn/Btn.jsx';
 import { TextInput } from '../TextInput/TextInput.jsx';
 import { BottomSheet } from '../BottomSheet/BottomSheet.jsx';
+import { OptionList } from '../OptionList/OptionList.jsx';
 import { useIsMobile } from '../../foundation/useViewport.js';
 import { getItemId, getItemLabel } from '../../foundation/itemShape.js';
 
@@ -132,6 +133,11 @@ function CheckboxCell({ state, disabled }) {
 
 function Dropdown({ options, query, multiple, selected, onToggle }) {
   const filtered = filterTree(options, query);
+  // Reuse the OptionList component for FLAT option sets (the common single/multi
+  // case) so dropdown rows are the design-system's canonical body-text option
+  // rows. Nested trees keep the bespoke OptionNode (OptionList is flat-only —
+  // no arbitrary indentation or indeterminate parents).
+  const isFlat = filtered.every((o) => !hasChildren(o));
   return (
     <div style={{
       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
@@ -146,6 +152,30 @@ function Dropdown({ options, query, multiple, selected, onToggle }) {
             fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
             No results for "{query}"
           </div>
+        ) : isFlat ? (
+          <OptionList
+            flush
+            allowMultiple={multiple}
+            options={filtered}
+            selected={multiple ? Array.from(selected) : (Array.from(selected)[0] ?? null)}
+            ariaLabel="Options"
+            onChange={(next) => {
+              // Translate OptionList's value/array output back to SearchSelect's
+              // onToggle(opt, state) contract (which respects maxTags, tags, etc).
+              if (multiple) {
+                const nextSet = new Set(next);
+                let id = next.find((v) => !selected.has(v));            // newly checked
+                let wasChecked = false;
+                if (id === undefined) {                                  // else newly unchecked
+                  id = Array.from(selected).find((v) => !nextSet.has(v));
+                  wasChecked = true;
+                }
+                if (id !== undefined) onToggle(findOption(filtered, id), wasChecked ? 'checked' : 'unchecked');
+              } else {
+                onToggle(findOption(filtered, next), 'unchecked');
+              }
+            }}
+          />
         ) : (
           filtered.map(opt => (
             <OptionNode
@@ -199,8 +229,10 @@ function OptionNode({ opt, level, multiple, selectedSet, onToggle }) {
       >
         {multiple && <CheckboxCell state={state} disabled={opt.disabled} />}
         <span style={{
-          flex: 1, fontSize: 13, fontFamily: 'Inter, sans-serif', lineHeight: '20px',
-          fontWeight: branch ? 600 : 450,
+          // Body text — match OptionList's dropdown rows (14px/450); a branch
+          // (group parent) gets medium 550, not the old heading-weight 600.
+          flex: 1, fontSize: 14, fontFamily: 'Inter, sans-serif', lineHeight: '20px',
+          fontWeight: branch ? 550 : 450,
           color: opt.disabled ? '#b5b5b5' : '#303030',
           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
         }}>
