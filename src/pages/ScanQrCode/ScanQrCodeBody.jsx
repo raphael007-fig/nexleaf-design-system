@@ -45,11 +45,13 @@ const IcoChevronRight = ({ size = 20, color = TEXT_DEFAULT }) => (
  * ScanQrCodeBody
  * @param {() => void} [onScan]           Chevron / "open the scanner" tap.
  * @param {(serial:string) => void} [onSubmit]  Submit with the typed serial.
+ * @param {object} [style]                Optional Card style overrides (e.g. a
+ *                                        fixed height from the host layout).
  */
-export function ScanQrCodeBody({ onScan, onSubmit }) {
+export function ScanQrCodeBody({ onScan, onSubmit, style }) {
   const [serial, setSerial] = useState('');
   return (
-    <Card style={{ minHeight: 'calc(100vh - 160px)', padding: 32 }}>
+    <Card style={{ minHeight: 'calc(100vh - 160px)', padding: 32, ...style }}>
       <div style={{ width: '100%', maxWidth: 600, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Heading */}
         <div style={{ textAlign: 'center' }}>

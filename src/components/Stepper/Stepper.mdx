@@ -1,0 +1,56 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as StepperStories from './Stepper.stories.jsx';
+
+<Meta title="Components/Navigation/Stepper/Docs" />
+
+# Stepper
+
+A horizontal wizard phase indicator (Figma 84893-5520 "Step Grid"). Each step is a numbered
+circle with a label; dashed connectors join them. Born in the ColdTrace Add Equipment flow,
+where one wizard chrome serves several flows with different phase spines.
+
+<Canvas of={StepperStories.AllStates} />
+
+---
+
+## Step states
+
+- **Default** — grey ring, dark number, subdued label (upcoming, not yet reachable)
+- **Active** — primary ring and number, dark semibold label
+- **Completed** — filled primary circle with a white check
+- **Hover** — a soft grey pill wraps the whole step (circle + label). The pill's padding is
+  always reserved, so hovering never shifts layout.
+
+## Navigation
+
+Pass `navigable` (per-phase booleans) and `onSelect` to make visited steps tappable — the
+canonical pattern is *jump backward, or forward again to an already-filled phase, without
+losing data*. The Stepper only reports the tap; keeping state is the host's job. Steps that
+aren't navigable ignore hover and clicks (`aria-disabled`). Navigable steps are real buttons:
+focusable, `Enter`/`Space` activate.
+
+<Canvas of={StepperStories.Interactive} />
+
+## Compact variant
+
+Five labeled phases need roughly 900px. Below that, switch to `compact` — circles only, with
+a `Step X of Y · Label` summary line underneath.
+
+<Canvas of={StepperStories.Compact} />
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `phases` | `{label}[]` | `[]` | Ordered phases |
+| `activeIndex` | `number` | `0` | Current phase |
+| `compact` | `boolean` | `false` | Circles-only + summary line |
+| `navigable` | `boolean[]` | `[]` | Per-phase tappability (visited steps) |
+| `onSelect` | `(index) => void` | — | Fires when a navigable step is tapped |
+
+## CSS-canonical usage
+
+`Stepper.css` ships the `nx-stepper` classes for non-React stacks — see the file header for
+the selector structure. Angular parity is pending.

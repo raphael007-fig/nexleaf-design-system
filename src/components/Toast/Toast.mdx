@@ -1,0 +1,45 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as ToastStories from './Toast.stories.jsx';
+
+<Meta title="Components/Overlays/Toast/Docs" />
+
+# Toast
+
+A transient, auto-dismissing notice that floats on the toast layer (`Z_TOAST`), top-right by
+default. The visual is the compact in-card **Banner** — Toast only adds fixed positioning,
+overlay elevation, and the auto-hide timer. Announced politely via `role="status"`.
+
+<Canvas of={ToastStories.Interactive} />
+
+---
+
+## When to use
+
+- **Toast** — a passing acknowledgement or gentle warning that shouldn't interrupt the flow
+  (e.g. "serial already registered", "contact limit reached")
+- **Banner** — persistent context that belongs to the page and shouldn't disappear
+- **Modal** — a decision the user must make before continuing
+
+## Behavior
+
+- Auto-dismisses after `duration` (default 4.5s; `0` keeps it until dismissed)
+- Dismissable via the Banner's ✕; both paths call `onDismiss`
+- The timer restarts when the message (`children`) changes
+- One toast at a time is the intended pattern — replace, don't stack
+
+## Props
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `open` | `boolean` | `true` | |
+| `tone` | `'info' \| 'success' \| 'warning' \| 'critical'` | `'info'` | Banner tone |
+| `children` | node | — | Message |
+| `onDismiss` | `() => void` | — | ✕ or timer |
+| `duration` | `number` | `4500` | ms; `0` disables auto-hide |
+| `placement` | `'top-right' \| 'top-center' \| 'bottom-center' \| 'bottom-right'` | `'top-right'` | |
+| `icon` | node | — | Banner icon override |
+
+## CSS-canonical usage
+
+`Toast.css` ships `nx-toast` placement classes; the body is `.nx-banner--in-card`. Angular
+parity is pending.

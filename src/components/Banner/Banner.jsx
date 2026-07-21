@@ -109,9 +109,11 @@ const BannerBtn = ({ onClick, children }) => (
  *   dismissable — boolean — shows the × dismiss button
  *   onDismiss   — function — called when dismissed
  *   actions     — [{ label, onClick }] — action buttons
+ *   icon        — ReactNode — optional override for the tone icon (defaults to
+ *                 the tone's own glyph; used e.g. for a QR/search context icon)
  *   children    — message text
  */
-export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, children }) {
+export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, icon, children }) {
   const t = TONES[tone] || TONES.info;
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
@@ -130,7 +132,7 @@ export function Banner({ tone = 'info', title, inCard = false, dismissable, onDi
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 4, paddingTop: 12, paddingBottom: 12 }}>
             {/* Icon at 14px inside a 20px container, matching Figma */}
             <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <t.Icon size={14} color={t.headerText} />
+              {icon || <t.Icon size={14} color={t.headerText} />}
             </div>
             <span style={{
               fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 650,
@@ -176,7 +178,7 @@ export function Banner({ tone = 'info', title, inCard = false, dismissable, onDi
         background: t.inCardBg, borderRadius: 8, padding: 8,
       }}>
         <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'flex-start', flexShrink: 0 }}>
-          <t.Icon size={20} color={t.inCardText} />
+          {icon || <t.Icon size={20} color={t.inCardText} />}
         </div>
         <div style={{ flex: 1, paddingRight: dismissable ? 28 : 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: t.inCardText }}>
@@ -217,7 +219,7 @@ export function Banner({ tone = 'info', title, inCard = false, dismissable, onDi
         width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: t.headerBg, borderRadius: 8, flexShrink: 0, padding: 4, boxSizing: 'border-box',
       }}>
-        <t.Icon size={20} color={t.headerText} />
+        {icon || <t.Icon size={20} color={t.headerText} />}
       </div>
       {/* Message */}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>

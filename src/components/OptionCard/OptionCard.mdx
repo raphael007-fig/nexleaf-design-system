@@ -1,0 +1,45 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as OptionCardStories from './OptionCard.stories.jsx';
+
+<Meta title="Components/Lists/OptionCard/Docs" />
+
+# OptionCard
+
+A selectable illustrated card for one-of-N decisions where each option deserves real
+explanation — media + title + description, with radio semantics. Born as the
+monitoring-method chooser in the ColdTrace Add Equipment flow (Figma 8055-205358).
+
+<Canvas of={OptionCardStories.Interactive} />
+
+---
+
+## When to use
+
+- **OptionCard** — a small set (2–4) of rich, mutually exclusive choices that steer a flow
+- **RadioGroup** — compact one-line choices inside a form
+- **OptionList** — searchless pick lists inside popovers/panels
+
+## States
+
+Rest · hover (primary ring) · selected (`bg-selected` + 2px primary ring) · disabled.
+Cards are keyboard-operable (`role="radio"`, Enter/Space). Wrap the set in
+`role="radiogroup"` with a label.
+
+<Canvas of={OptionCardStories.AllStates} />
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `media` | node | — | Leading illustration slot (e.g. 64px inline SVG) |
+| `title` | node | — | |
+| `description` | node | — | |
+| `selected` | `boolean` | `false` | |
+| `onSelect` | `() => void` | — | Click / Enter / Space |
+| `disabled` | `boolean` | `false` | |
+
+## CSS-canonical usage
+
+`OptionCard.css` ships the `nx-option-card` classes. Angular parity is pending.

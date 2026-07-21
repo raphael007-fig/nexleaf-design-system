@@ -1,0 +1,86 @@
+/*
+ * Nexleaf Design System — OptionCard
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * A selectable illustrated card (media + title + description) with radio
+ * semantics. Surface is the base card recipe; selection = bg-selected +
+ * 2px primary ring; hover = interactive-card primary ring.
+ *
+ * Selector structure:
+ *   .nx-option-card              — outer hit-area (ring lives here)
+ *   .nx-option-card--selected    — 2px primary ring + tinted surface
+ *   .nx-option-card--disabled    — muted, not-allowed
+ *   .nx-option-card__surface     — the card (white, radius 16, row layout)
+ *   .nx-option-card__media       — leading illustration slot
+ *   .nx-option-card__title
+ *   .nx-option-card__description
+ */
+
+.nx-option-card {
+  border-radius: var(--nx-radius-xl);            /* 16px */
+  cursor: pointer;
+  outline: none;
+  transition: box-shadow 0.15s ease;
+  font-family: var(--nx-font-family);
+}
+
+.nx-option-card:hover:not(.nx-option-card--selected):not(.nx-option-card--disabled) {
+  box-shadow: 0 0 0 1px var(--nx-color-primary), 0 2px 8px var(--nx-color-primary-hover-shadow);
+}
+
+.nx-option-card--selected {
+  box-shadow: 0 0 0 2px var(--nx-color-primary);
+}
+
+.nx-option-card--disabled {
+  cursor: not-allowed;
+}
+
+.nx-option-card__surface {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--nx-space-3);                        /* 12px */
+  padding: var(--nx-space-4);                    /* 16px */
+  border-radius: var(--nx-radius-xl);
+  background: var(--nx-bg-surface);
+  /* Card surface shadow — same recipe as Card.css (.nx-card) */
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+}
+
+.nx-option-card--selected .nx-option-card__surface {
+  background: var(--nx-bg-selected);
+}
+
+.nx-option-card--disabled .nx-option-card__surface {
+  background: var(--nx-bg-disabled);
+}
+
+.nx-option-card__media {
+  flex-shrink: 0;
+}
+
+.nx-option-card__title {
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 20px;
+  color: var(--nx-text-default);
+}
+
+.nx-option-card__description {
+  font-size: 12px;
+  font-weight: 450;
+  line-height: 16px;
+  color: var(--nx-text-default);
+}
+
+.nx-option-card--disabled .nx-option-card__title,
+.nx-option-card--disabled .nx-option-card__description {
+  color: var(--nx-text-disabled);
+}

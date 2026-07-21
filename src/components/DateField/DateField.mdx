@@ -1,0 +1,44 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as DateFieldStories from './DateField.stories.jsx';
+
+<Meta title="Components/Forms/DateField/Docs" />
+
+# DateField
+
+A date input that looks like every other form field: click it and the DatePicker calendar
+opens in a Popover anchored beneath. Picking a day fills the field and closes the calendar;
+Escape or clicking outside also close. Pure composition — TextInput + Popover + DatePicker.
+
+<Canvas of={DateFieldStories.Interactive} />
+
+---
+
+## When to use
+
+- **DateField** — a date inside a form, alongside other fields (installation date,
+  configuration date)
+- **DatePicker** — the raw inline calendar, when the calendar itself *is* the page content
+  (report range pickers, dashboards)
+
+## States
+
+<Canvas of={DateFieldStories.AllStates} />
+
+---
+
+## Props
+
+| Prop | Type | Default | Notes |
+|---|---|---|---|
+| `label` / `required` / `helpText` / `error` / `disabled` | — | — | Standard field furniture (TextInput) |
+| `value` | `Date \| null` | — | Selected date |
+| `onChange` | `(d: Date) => void` | — | Fires on pick; popover closes |
+| `placeholder` | `string` | `'Select a date'` | |
+| `formatDate` | `(d) => string` | `20 Jul 2026` style | Display formatter |
+| `minDate` / `maxDate` | `Date` | — | Passed through to DatePicker |
+
+## CSS-canonical usage
+
+DateField is a composition — its canonical CSS (`DateField.css`) only adds the wrapper
+cursor and suffix-icon classes; the field, calendar, and popover use their own canonical
+files. Angular parity is pending.

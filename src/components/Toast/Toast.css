@@ -1,0 +1,45 @@
+/*
+ * Nexleaf Design System — Toast
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Toast is a positioned wrapper around the compact in-card Banner
+ * (Banner.css / .nx-banner--in-card): fixed placement on the toast layer,
+ * overlay elevation, rounded to match the banner. The auto-dismiss timer is
+ * behavior, not style — hosts remove the node when it elapses.
+ *
+ * Selector structure:
+ *   .nx-toast                    — fixed wrapper (default: top-right)
+ *   .nx-toast--top-center
+ *   .nx-toast--bottom-center
+ *   .nx-toast--bottom-right
+ */
+
+.nx-toast {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: var(--nx-z-toast);
+  width: min(480px, calc(100vw - 32px));
+  box-shadow: var(--nx-shadow-overlay);
+  border-radius: var(--nx-radius-sm);
+}
+
+.nx-toast--top-center {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nx-toast--bottom-center {
+  top: auto;
+  right: auto;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.nx-toast--bottom-right {
+  top: auto;
+  bottom: 24px;
+}

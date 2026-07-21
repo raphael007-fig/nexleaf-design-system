@@ -1,0 +1,33 @@
+/*
+ * Nexleaf Design System — DateField
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * DateField is a composition, not a new visual primitive: the field is a
+ * standard text input (see TextInput.css / .nx-input) rendered read-only with
+ * a calendar suffix icon; clicking it opens the DatePicker (DatePicker.css /
+ * .nx-datepicker) inside a Popover surface (Popover.css / .nx-popover).
+ *
+ * Selector structure:
+ *   .nx-datefield            — wrapper around the input (pointer cursor)
+ *   .nx-datefield--disabled  — not-allowed cursor, input disabled styling
+ *   .nx-datefield__icon      — 20px calendar suffix glyph (stroke: text-subdued)
+ *
+ * Everything else (label, help, error, focus ring, popover, calendar) comes
+ * from the composed components' own canonical CSS.
+ */
+
+.nx-datefield {
+  cursor: pointer;
+}
+
+.nx-datefield--disabled {
+  cursor: not-allowed;
+}
+
+.nx-datefield__icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: var(--nx-text-subdued);
+}

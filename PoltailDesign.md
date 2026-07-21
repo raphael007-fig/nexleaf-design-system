@@ -887,13 +887,13 @@ npm run test:visual:update   # re-seed baselines after an INTENDED visual change
 | Group | Components |
 |-------|-----------|
 | `Foundation/` | Colors, Typography, Spacing, Shadows, PolarisIcon, Emojis |
-| `Components/Inputs` | TextInput, NumberInput, TextareaInput, SelectInput, SearchSelect |
-| `Components/Navigation` | SideNavigation, TopBar, Breadcrumbs, Tabs, Pagination, Toolbar, Header Page |
-| `Components/Overlays` | Modal, Popover, SlideOver |
-| `Components/Lists` | Cell, OptionList |
+| `Components/Inputs` | TextInput, NumberInput, TextareaInput, SelectInput, SearchSelect, DateField |
+| `Components/Navigation` | SideNavigation, TopBar, Breadcrumbs, Tabs, Pagination, Toolbar, Header Page, Stepper |
+| `Components/Overlays` | Modal, Popover, SlideOver, Toast |
+| `Components/Lists` | Cell, OptionList, OptionCard |
 | `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, NavCard, Skeleton, Tooltip, Divider, Page, TemperatureTasksCard, AiChat |
 | `Patterns/Responsive` | AppShell, MenuDrawer, BottomSheet, EquipmentCard, TertiaryActions |
-| `Pages/` | Application Layout, Equipment Detail, Scan QR Code |
+| `Pages/` | Application Layout, Equipment Detail, Scan QR Code, Add Equipment |
 
 MDX docs pages use `[Group]/[Name]/Docs` as the `<Meta title>`. Sidebar order is Foundation → Components → Patterns → Pages (see `.storybook/preview.js` `storySort`).
 

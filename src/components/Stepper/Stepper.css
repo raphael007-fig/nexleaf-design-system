@@ -1,0 +1,149 @@
+/*
+ * Nexleaf Design System — Stepper (wizard phase stepper)
+ * CSS class implementation for non-React stacks.
+ * Requires tokens.css to be imported first.
+ *
+ * Figma 84893-5520 "Step Grid": Default grey ring · Active primary ring +
+ * number · Completed filled primary circle with white check · Hover wraps the
+ * whole step in a soft grey pill (space always reserved — no layout shift).
+ *
+ * Selector structure:
+ *   .nx-stepper                      — row of steps + dashed connectors
+ *   .nx-stepper--compact             — circles-only variant (mobile)
+ *   .nx-stepper__step                — one step (pill hit-area: circle + label)
+ *   .nx-stepper__step--navigable     — visited step: hover pill + pointer
+ *   .nx-stepper__circle              — 36px numbered circle (28px compact)
+ *   .nx-stepper__circle--active      — primary ring + primary number
+ *   .nx-stepper__circle--done        — filled primary, white check glyph
+ *   .nx-stepper__label               — label under the circle (full variant)
+ *   .nx-stepper__connector           — dashed line between steps
+ *   .nx-stepper__summary             — "Step X of Y · Label" line (compact)
+ */
+
+/* ─── Row ───────────────────────────────────────────────────────── */
+.nx-stepper {
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  font-family: var(--nx-font-family);
+}
+
+/* ─── One step (pill) ───────────────────────────────────────────── */
+.nx-stepper__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--nx-space-3);                        /* 12px */
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 180px;
+  padding: 10px 16px;
+  border-radius: var(--nx-radius-lg);            /* 12px */
+  background: transparent;
+  transition: background-color 0.12s ease;
+  outline: none;
+}
+
+.nx-stepper__step--navigable {
+  cursor: pointer;
+}
+.nx-stepper__step--navigable:hover {
+  background: var(--nx-bg-surface-hover);
+}
+/* Hover also darkens the label (see below) */
+.nx-stepper__step--navigable:hover .nx-stepper__label {
+  color: var(--nx-text-default);
+}
+
+/* ─── Circle ────────────────────────────────────────────────────── */
+.nx-stepper__circle {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--nx-radius-circle);
+  box-sizing: border-box;
+  border: 1.5px solid var(--nx-border-secondary-btn);
+  background: var(--nx-bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+  color: var(--nx-text-default);
+}
+
+.nx-stepper__circle--active {
+  border-color: var(--nx-color-primary);
+  color: var(--nx-color-primary);
+}
+
+.nx-stepper__circle--done {
+  border-color: var(--nx-color-primary);
+  background: var(--nx-color-primary);
+  color: var(--nx-text-on-primary);
+}
+
+/* ─── Label ─────────────────────────────────────────────────────── */
+.nx-stepper__label {
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  color: var(--nx-text-subdued);
+  text-align: center;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.nx-stepper__step--active .nx-stepper__label,
+.nx-stepper__step--done .nx-stepper__label {
+  color: var(--nx-text-default);
+}
+.nx-stepper__step--active .nx-stepper__label {
+  font-weight: 600;
+}
+
+/* ─── Connector ─────────────────────────────────────────────────── */
+.nx-stepper__connector {
+  flex: 1;
+  border-top: 2px dashed var(--nx-border-default);
+  margin-top: 28px;                              /* aligns to circle centre (10px pad + 18px) */
+  min-width: 24px;
+}
+
+/* ─── Compact variant ───────────────────────────────────────────── */
+.nx-stepper--compact {
+  flex-direction: column;
+  align-items: stretch;
+}
+.nx-stepper--compact .nx-stepper__row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+.nx-stepper--compact .nx-stepper__step {
+  padding: 4px;
+  border-radius: var(--nx-radius-md);            /* 10px */
+  max-width: none;
+}
+.nx-stepper--compact .nx-stepper__circle {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+.nx-stepper--compact .nx-stepper__connector {
+  margin-top: 0;
+  min-width: 12px;
+  margin-left: 6px;
+  margin-right: 6px;
+}
+.nx-stepper__summary {
+  margin: 12px 0 0;
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 20px;
+  color: var(--nx-text-subdued);
+}
+.nx-stepper__summary strong {
+  font-weight: 600;
+  color: var(--nx-text-default);
+}
