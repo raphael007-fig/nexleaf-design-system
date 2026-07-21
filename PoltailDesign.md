@@ -784,6 +784,24 @@ These compose the hybrid shell and the mobile list/record surfaces. Each ships R
 // chevron). View All opens a SlideOver with Morning/Evening/Completed tabs + pagination.
 <TemperatureTasksCard tasks={{ morning, evening, completed }} onRecord={openRecordForm} />
 
+// SubmissionSuccessCard — GENERIC submission-confirmation layout: icon circle + centered title +
+// info-surface detail panel (sections of lines; a line is 'text', {label, value}, or a tone-dot
+// {dot: 'success'|'warning'|'attention', text}) + optional footer + Btn action row. Composes the Card
+// edge shadow, the info-Banner surface (BG_INFO family), Badge tone dots (COLOR_SUCCESS /
+// BORDER_WARNING / COLOR_MORNING) and Btn — no new primitives. Any "submission recorded" flow uses it.
+<SubmissionSuccessCard title="Service Request Submitted"
+  sections={[{ lines: ['Ticket: SR-2026-0142', { dot: 'warning', text: 'Status: Awaiting Technician' }] }]}
+  footer={{ label: 'Next step', value: 'Technician assigned within 24h' }}
+  primaryAction={{ label: 'Track Request', onClick: fn }} secondaryActions={[...]} homeAction={{ onClick: fn }} />
+
+// TemperatureSubmissionSuccessCard — the cold-chain preset on top of it. ONE component, four data-derived
+// states (morning-only / complete × today / past-entry); past entries add a "Submitted On" line. CTA
+// switches with completeness: "Record Evening Temperature" → "Record Another CCE".
+<TemperatureSubmissionSuccessCard equipment={{name, serial, facility}} recordingDate="Jul 21, 2026"
+  morning={{temp, prevMax, prevMin, alarms, recordedBy, recordedAt}}
+  evening={{temp, equipmentStatus, recordedBy, recordedAt}}  /* presence ⇒ complete */
+  pastEntry submittedOn="Jul 21, 2026" onPrimary={fn} onViewLogs={fn} onServiceRequest={fn} />
+
 // AiChat — the AI Chat Bot kit (conversation, welcome, message/response, typing, composer, media cards,
 // table replies, toast, history w/ select-rename-archive-delete, dialogs). AiChatDemo is the ONE canonical
 // assembled panel — every surface's Ask AI opens it so the chat is identical system-wide.
@@ -902,7 +920,7 @@ npm run test:visual:update   # re-seed baselines after an INTENDED visual change
 
 | Group | Components |
 |-------|-----------|
-| `Foundation/` | Colors, Typography, Spacing, Shadows, PolarisIcon, Emojis |
+| `Foundation/` | Colors, Typography, Spacing, Shadows, PolarisIcon, Emojis, Illustrations |
 | `Components/Inputs` | TextInput, NumberInput, TextareaInput, SelectInput, SearchSelect, DateField |
 | `Components/Navigation` | SideNavigation, TopBar, Breadcrumbs, Tabs, Pagination, Toolbar, Header Page, Stepper |
 | `Components/Overlays` | Modal, Popover, SlideOver, Toast |
@@ -933,6 +951,17 @@ Naming: `Filled` → solid · `Up/Down/Left/Right` → directional · `Add/Remov
 
 ### Fallback: Phosphor Icons (fill weight, 20px preferred)
 Inline SVG only — never icon font or external image. Do not install icon packages.
+
+### Illustrations (spot artwork) — the Illustration Hub
+
+ALL illustrations live in **`src/foundation/illustrations/`** — never inside a component or page folder. `index.jsx` is the catalog (`ILLUSTRATIONS`: id → { title, svg, usage }) plus a uniform renderer:
+
+```jsx
+<Illustration name="monitored" size={64} />          // via the catalog
+import raw from '.../illustrations/monitored.svg?raw' // or direct raw import
+```
+
+Browse the full set in **Foundation/Illustrations**. Current families: the 9+1 Home module tiles (80×80 in NavCards), the AiChat media artwork, and the 64×64 monitoring-status set (`monitored` / `connect-monitor` / `not-monitored` — the Add Equipment monitoring-type choices). Adding artwork = drop the kebab-case `.svg` in the hub + one catalog entry.
 
 ---
 

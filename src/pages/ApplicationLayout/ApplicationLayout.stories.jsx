@@ -24,15 +24,15 @@ import { useViewport, BP_SM } from '../../foundation/useViewport.js';
 // Home grid illustrations — imported raw so they render as true inline SVG
 // (no <img>, no icon package). Each artwork is a 100×100 illustration that
 // already carries its own circular tinted backdrop.
-import illoEquipment from './home-illustrations/equipment-management.svg?raw';
-import illoMonitoring from './home-illustrations/monitoring.svg?raw';
-import illoTraining from './home-illustrations/training.svg?raw';
-import illoReports from './home-illustrations/reports-hub.svg?raw';
-import illoFacility from './home-illustrations/facility-management.svg?raw';
-import illoForecasting from './home-illustrations/forecasting.svg?raw';
-import illoEvents from './home-illustrations/events.svg?raw';
-import illoTransport from './home-illustrations/coldtrace-transport.svg?raw';
-import illoHealthHub from './home-illustrations/health-tech-hub.svg?raw';
+import illoEquipment from '../../foundation/illustrations/equipment-management.svg?raw';
+import illoMonitoring from '../../foundation/illustrations/monitoring.svg?raw';
+import illoTraining from '../../foundation/illustrations/training.svg?raw';
+import illoReports from '../../foundation/illustrations/reports-hub.svg?raw';
+import illoFacility from '../../foundation/illustrations/facility-management.svg?raw';
+import illoForecasting from '../../foundation/illustrations/forecasting.svg?raw';
+import illoEvents from '../../foundation/illustrations/events.svg?raw';
+import illoTransport from '../../foundation/illustrations/coldtrace-transport.svg?raw';
+import illoHealthHub from '../../foundation/illustrations/health-tech-hub.svg?raw';
 
 export default {
   title: 'Pages/Application Layout',

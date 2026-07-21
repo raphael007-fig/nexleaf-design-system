@@ -26,15 +26,15 @@ import {
 } from '../../foundation/moduleNavs.jsx';
 import { TEXT_DEFAULT, TEXT_SUBDUED } from '../../tokens/index.js';
 // Home module-grid illustrations — shared with the other home surfaces.
-import illoEquipment from '../ApplicationLayout/home-illustrations/equipment-management.svg?raw';
-import illoMonitoring from '../ApplicationLayout/home-illustrations/monitoring.svg?raw';
-import illoTraining from '../ApplicationLayout/home-illustrations/training.svg?raw';
-import illoReports from '../ApplicationLayout/home-illustrations/reports-hub.svg?raw';
-import illoFacility from '../ApplicationLayout/home-illustrations/facility-management.svg?raw';
-import illoForecasting from '../ApplicationLayout/home-illustrations/forecasting.svg?raw';
-import illoEvents from '../ApplicationLayout/home-illustrations/events.svg?raw';
-import illoTransport from '../ApplicationLayout/home-illustrations/coldtrace-transport.svg?raw';
-import illoHealthHub from '../ApplicationLayout/home-illustrations/health-tech-hub.svg?raw';
+import illoEquipment from '../../foundation/illustrations/equipment-management.svg?raw';
+import illoMonitoring from '../../foundation/illustrations/monitoring.svg?raw';
+import illoTraining from '../../foundation/illustrations/training.svg?raw';
+import illoReports from '../../foundation/illustrations/reports-hub.svg?raw';
+import illoFacility from '../../foundation/illustrations/facility-management.svg?raw';
+import illoForecasting from '../../foundation/illustrations/forecasting.svg?raw';
+import illoEvents from '../../foundation/illustrations/events.svg?raw';
+import illoTransport from '../../foundation/illustrations/coldtrace-transport.svg?raw';
+import illoHealthHub from '../../foundation/illustrations/health-tech-hub.svg?raw';
 
 export default {
   title: 'Patterns/Module Navigation',

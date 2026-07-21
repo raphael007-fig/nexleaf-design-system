@@ -18,15 +18,15 @@ import { AiChatDemo } from '../AiChat/AiChatDemo.jsx';
 import { ScanQrCodeBody } from '../../pages/ScanQrCode/ScanQrCodeBody.jsx';
 import { PolarisIconImg } from '../PolarisIcon/PolarisIcon.jsx';
 // Home module-grid illustrations — shared with the Sectioned Layout (Pages).
-import illoEquipment from '../../pages/ApplicationLayout/home-illustrations/equipment-management.svg?raw';
-import illoMonitoring from '../../pages/ApplicationLayout/home-illustrations/monitoring.svg?raw';
-import illoTraining from '../../pages/ApplicationLayout/home-illustrations/training.svg?raw';
-import illoReports from '../../pages/ApplicationLayout/home-illustrations/reports-hub.svg?raw';
-import illoFacility from '../../pages/ApplicationLayout/home-illustrations/facility-management.svg?raw';
-import illoForecasting from '../../pages/ApplicationLayout/home-illustrations/forecasting.svg?raw';
-import illoEvents from '../../pages/ApplicationLayout/home-illustrations/events.svg?raw';
-import illoTransport from '../../pages/ApplicationLayout/home-illustrations/coldtrace-transport.svg?raw';
-import illoHealthHub from '../../pages/ApplicationLayout/home-illustrations/health-tech-hub.svg?raw';
+import illoEquipment from '../../foundation/illustrations/equipment-management.svg?raw';
+import illoMonitoring from '../../foundation/illustrations/monitoring.svg?raw';
+import illoTraining from '../../foundation/illustrations/training.svg?raw';
+import illoReports from '../../foundation/illustrations/reports-hub.svg?raw';
+import illoFacility from '../../foundation/illustrations/facility-management.svg?raw';
+import illoForecasting from '../../foundation/illustrations/forecasting.svg?raw';
+import illoEvents from '../../foundation/illustrations/events.svg?raw';
+import illoTransport from '../../foundation/illustrations/coldtrace-transport.svg?raw';
+import illoHealthHub from '../../foundation/illustrations/health-tech-hub.svg?raw';
 
 export default {
   title: 'Patterns/Responsive/App Shell',

@@ -16,7 +16,7 @@ import {
   BORDER_INPUT, BORDER_INPUT_FOCUS, BORDER_LIGHT, BORDER_LIGHTER, BORDER_DEFAULT, FOCUS_RING,
   COLOR_AI, COLOR_CRITICAL, COLOR_CRITICAL_STRONG, RADIUS_SM, RADIUS_LG, SHADOW_OVERLAY,
 } from '../../tokens/index.js';
-import illoNoteSync from './note-sync.svg?raw';
+import illoNoteSync from '../../foundation/illustrations/note-sync.svg?raw';
 
 // ─── AiChat — content components for the Ask AI panel ────────────────────────
 //
