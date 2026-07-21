@@ -329,6 +329,15 @@ One route/IA at every size — only the *shell* adapts. Works in responsive web 
 
 When the bar renders with no nav element to carry the brand (primary at every size; tablet tertiary), the TopBar shows the leaf logo instead (`showLogo` override — it also bypasses the tight-layout logo drop). Omitting `level` keeps nav always-on (back-compat for plain shell demos).
 
+### Module-scoped navigation (registry)
+
+Navigation is scoped to the MODULE you entered from Home — the rail/drawer never shows another module's world. `src/foundation/moduleNavs.jsx` is the canonical registry: one entry per Home card (`{ id, title, nav }`), 9 modules today. The shell just receives `navItemsForModule(id)` (Home + that module's tree) — no component changes, since `AppShell`/`useNavSync`/`MenuDrawer` take `navItems` as a prop.
+
+- **Scaling rule:** adding module #10 = one registry entry + a home tile; scoped nav, drawer, breadcrumbs, and the title switcher come for free.
+- **Ratified moves:** RTMDs → `temperature`; Performance → `reports`. **Provisional defaults** (one-line moves later): Electrification → `inventory`, Event Logs → `temperature`, Maps → `reports`.
+- `forecasting` nav is TBD (its module page says so); `facilities` is minimal.
+- Assembled demo: **Patterns/Module Navigation** (Home launcher ⇄ all 9 module shells).
+
 ### Progressive TopBar
 
 ONE bar that collapses by width — controls are never deleted, they move into the drawer. `nxTopBarStateForWidth`:
@@ -684,6 +693,13 @@ Props: `tabs` (`{id, label, badge, disabled}[]`), `activeIndex`, `onSelect` (`(i
 ```
 Props: `hasPrevious`, `hasNext`, `onPrevious`, `onNext`, `label`, `type` (page/table)
 
+### Addition-flow wizard system (pattern)
+The Add Equipment page (`src/pages/AddEquipment/`) is built as a reusable ADDITION-FLOW
+system, not a one-off: the chrome (Page header + `Stepper` + fixed-height card with pinned
+footer + phase spines with micro-steps + visited-step tap navigation + secondary→tertiary
+shell switching) is content-agnostic. New "add X" flows (e.g. Add Solar Equipment) reuse the
+chrome by supplying their own phase list and step bodies — do not rebuild the wizard shell.
+
 ### `Stepper` — Wizard Phase Stepper
 ```jsx
 <Stepper phases={[{ label: 'Select RTMD' }, { label: 'Review & Submit' }]} activeIndex={0} />
@@ -893,6 +909,7 @@ npm run test:visual:update   # re-seed baselines after an INTENDED visual change
 | `Components/Lists` | Cell, OptionList, OptionCard |
 | `Components/` (root) | Btn, Checkbox, RadioButton, Toggle, DatePicker, Tag, Badge, Banner, Accordion, Card, IndexTable, MetricCard, NavCard, Skeleton, Tooltip, Divider, Page, TemperatureTasksCard, AiChat |
 | `Patterns/Responsive` | AppShell, MenuDrawer, BottomSheet, EquipmentCard, TertiaryActions |
+| `Patterns/` (root) | Module Navigation (Home launcher ⇄ 9 module-scoped navs) |
 | `Pages/` | Application Layout, Equipment Detail, Scan QR Code, Add Equipment |
 
 MDX docs pages use `[Group]/[Name]/Docs` as the `<Meta title>`. Sidebar order is Foundation → Components → Patterns → Pages (see `.storybook/preview.js` `storySort`).
