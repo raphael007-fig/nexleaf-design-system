@@ -103,6 +103,10 @@ function TbdModulePage({ module }) {
 }
 
 // ── The assembled app: Home launcher ⇄ 9 module shells ───────────────────────
+// Breadcrumb home crumb — the RATIFIED icon-only Home (the rail item shows the
+// label; the trail shows just the glyph).
+const HOME_CRUMB = { ...MODULE_HOME_ITEM, iconOnly: true };
+
 function ModuleNavigationApp() {
   const [moduleId, setModuleId] = useState(null);      // null = Home launcher
   const [chatOpen, setChatOpen] = useState(false);
@@ -111,13 +115,25 @@ function ModuleNavigationApp() {
 
   // One nav engine over WHICHEVER module tree is active — breadcrumbs, labels,
   // and the sibling switcher are pure projections of (items, activeId).
-  const nav = useNavSync(items, { home: MODULE_HOME_ITEM, initialId: 'home', groupsArePages: true });
+  const nav = useNavSync(items, { home: HOME_CRUMB, initialId: 'home', groupsArePages: true });
 
   const goHome = () => { setModuleId(null); nav.setActiveId('home'); };
   const openModule = (id) => { setModuleId(id); nav.setActiveId(firstItemIdForModule(id)); };
-  const select = (id) => (id === 'home' ? goHome() : nav.go(id));
+  const select = (id) => {
+    if (id === 'home') return goHome();
+    // The injected module crumb → the module's landing (its first section).
+    if (id === '__module') return nav.go(firstItemIdForModule(module.id));
+    nav.go(id);
+  };
 
   const isHome = module == null;
+
+  // Breadcrumb STRUCTURE rule: Home › [Module] › [Section] (› subsection). The
+  // scoped tree can't produce the module level itself, so it's injected after
+  // the icon-only Home crumb; Breadcrumbs' own collapse rule handles 4+ levels.
+  const breadcrumbs = isHome
+    ? [HOME_CRUMB]
+    : [nav.breadcrumbs[0], { id: '__module', label: module.title }, ...nav.breadcrumbs.slice(1)];
 
   return (
     <AppShell
@@ -125,7 +141,7 @@ function ModuleNavigationApp() {
       navItems={items}
       activeItemId={nav.activeId}
       onNavSelect={select}
-      breadcrumbs={isHome ? [MODULE_HOME_ITEM] : nav.breadcrumbs}
+      breadcrumbs={breadcrumbs}
       onBreadcrumbSelect={select}
       contentWidth="fluid"
       onAskAi={() => setChatOpen((o) => !o)}

@@ -17,6 +17,8 @@
 //
 // Item shape matches COLDTRACE_NAV_ITEMS: icons on top-level items and groups
 // (PolarisIconImg); sub-items are text-only ({ id, label }).
+// SIDE-NAV ICON RULE: Filled variants. Where the catalog has no filled sibling
+// the closest filled concept is used — each is a one-line swap.
 
 import { PolarisIconImg } from '../components/PolarisIcon/PolarisIcon.jsx';
 
@@ -44,7 +46,7 @@ export const MODULES = [
           { id: 'activity-log', label: 'Activity Log' },
         ],
       },
-      { id: 'spare-parts', label: 'Spare Parts', icon: ico('WrenchIcon') },
+      { id: 'spare-parts', label: 'Spare Parts', icon: ico('SettingsFilledIcon') },
       // Provisional: lives here (vs reports).
       { id: 'electrification', label: 'Electrification', icon: ico('FlashIcon') },
     ],
@@ -54,10 +56,10 @@ export const MODULES = [
     title: 'Temperature Monitoring',
     nav: [
       // Moved in from inventory.
-      { id: 'rtmds', label: 'RTMDs / Devices', icon: ico('WifiIcon') },
-      { id: 'record-temperature', label: 'Record Temperature', icon: ico('ComposeIcon') },
+      { id: 'rtmds', label: 'RTMDs / Devices', icon: ico('LiveFilledIcon') },
+      { id: 'record-temperature', label: 'Record Temperature', icon: ico('ContentFilledIcon') },
       {
-        id: 'summaries', label: 'Summaries', icon: ico('CalendarIcon'),
+        id: 'summaries', label: 'Summaries', icon: ico('PageClockFilledIcon'),
         children: [
           { id: 'summary-daily', label: 'Daily' },
           { id: 'summary-weekly', label: 'Weekly' },
@@ -65,7 +67,7 @@ export const MODULES = [
         ],
       },
       // Provisional: lives here (vs events).
-      { id: 'event-logs', label: 'Event Logs', icon: ico('ListBulletedIcon') },
+      { id: 'event-logs', label: 'Event Logs', icon: ico('ListBulletedFilledIcon') },
     ],
   },
   {
@@ -73,20 +75,20 @@ export const MODULES = [
     title: 'Learning Hub',
     nav: [
       // Home / My Learning / Community are in-page tabs, not nav items.
-      { id: 'training', label: 'Training', icon: ico('BookOpenIcon') },
-      { id: 'learning-admin', label: 'Admin', icon: ico('ShieldPersonIcon') },
+      { id: 'training', label: 'Training', icon: ico('WorkFilledIcon') },
+      { id: 'learning-admin', label: 'Admin', icon: ico('PersonLockFilledIcon') },
     ],
   },
   {
     id: 'reports',
     title: 'Reports',
     nav: [
-      { id: 'reports-overview', label: 'Overview', icon: ico('ChartLineIcon') },
-      { id: 'reports-hub', label: 'Reports Hub', icon: ico('FileIcon') },
+      { id: 'reports-overview', label: 'Overview', icon: ico('ChartVerticalFilledIcon') },
+      { id: 'reports-hub', label: 'Reports Hub', icon: ico('FileFilledIcon') },
       // Moved in from inventory.
       { id: 'performance', label: 'Performance', icon: ico('GaugeFilledIcon') },
       // Provisional: lives here (vs facilities).
-      { id: 'maps', label: 'Maps', icon: ico('LocationIcon') },
+      { id: 'maps', label: 'Maps', icon: ico('LocationFilledIcon') },
     ],
   },
   {
@@ -94,7 +96,7 @@ export const MODULES = [
     title: 'Facility Registry',
     // NET-NEW — minimal until scope is confirmed. Detail pages are tertiary.
     nav: [
-      { id: 'facilities-list', label: 'Facilities', icon: ico('StoreIcon') },
+      { id: 'facilities-list', label: 'Facilities', icon: ico('StoreFilledIcon') },
     ],
   },
   {
@@ -109,7 +111,7 @@ export const MODULES = [
     title: 'Events',
     nav: [
       {
-        id: 'subscriptions', label: 'Subscriptions', icon: ico('NotificationIcon'),
+        id: 'subscriptions', label: 'Subscriptions', icon: ico('NotificationFilledIcon'),
         children: [
           { id: 'sub-escalated', label: 'Escalated Temperature' },
           { id: 'sub-weekly', label: 'Weekly Reports' },
@@ -117,7 +119,7 @@ export const MODULES = [
         ],
       },
       {
-        id: 'sms-group', label: 'SMS', icon: ico('ChatIcon'),
+        id: 'sms-group', label: 'SMS', icon: ico('TextInRowsFilledIcon'),
         children: [
           { id: 'sms', label: 'SMS' },
           { id: 'gateways', label: 'Gateways' },
@@ -130,17 +132,17 @@ export const MODULES = [
     title: 'ColdChain Transport',
     // Single page: list + trip detail (detail is tertiary).
     nav: [
-      { id: 'transport-list', label: 'Transport', icon: ico('DeliveryIcon') },
+      { id: 'transport-list', label: 'Transport', icon: ico('DeliveryFilledIcon') },
     ],
   },
   {
     id: 'service',
     title: 'Service Requests',
     nav: [
-      { id: 'tech-hub', label: 'Tech Hub Home', icon: ico('AppsIcon') },
-      { id: 'service-requests', label: 'Service Requests', icon: ico('ClipboardChecklistIcon') },
+      { id: 'tech-hub', label: 'Tech Hub Home', icon: ico('AppsFilledIcon') },
+      { id: 'service-requests', label: 'Service Requests', icon: ico('ClipboardCheckFilledIcon') },
       // Technician Performance lives here; "Add Technician" is an action, not nav.
-      { id: 'service-admin', label: 'Admin View', icon: ico('TeamIcon') },
+      { id: 'service-admin', label: 'Admin View', icon: ico('OrganizationFilledIcon') },
     ],
   },
 ];
