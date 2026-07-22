@@ -20,7 +20,7 @@ import { NavCard } from '../../components/NavCard/NavCard.jsx';
 import { TemperatureTasksCard } from '../../components/TemperatureTasksCard/TemperatureTasksCard.jsx';
 import { ScanQrCodeBody } from '../ScanQrCode/ScanQrCodeBody.jsx';
 import { AiChatDemo } from '../../components/AiChat/AiChatDemo.jsx';
-import { NavigateColdtraceModal, NotificationsModal, AccountMenu } from './TopBarPanels.jsx';
+import { NavigateColdtracePanel, NotificationsPanel, AccountMenu } from './TopBarPanels.jsx';
 import { useNavSync } from '../../foundation/useNavSync.js';
 import {
   MODULES, MODULE_HOME_ITEM, navItemsForModule, firstItemIdForModule,
@@ -193,8 +193,8 @@ function ModuleNavigationApp() {
       onProfile={(e) => setAcctAnchor({ current: e.currentTarget })}
     >
       <AiChatDemo open={chatOpen} onClose={() => setChatOpen(false)} />
-      <NavigateColdtraceModal open={appsOpen} onClose={() => setAppsOpen(false)} onOpenModule={openModule} />
-      <NotificationsModal open={notifOpen} onClose={() => setNotifOpen(false)} />
+      <NavigateColdtracePanel open={appsOpen} onClose={() => setAppsOpen(false)} onOpenModule={openModule} />
+      <NotificationsPanel open={notifOpen} onClose={() => setNotifOpen(false)} />
       <AccountMenu open={!!acctAnchor} onClose={() => setAcctAnchor(null)} anchorRef={acctAnchor} onSelect={() => {}} />
 
       {scanOpen ? (

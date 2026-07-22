@@ -1,7 +1,7 @@
 // ── Top-bar panels — Navigate ColdTrace · Notifications · Account menu ────────
 // The three interactive top-bar icons (after the static Kenya country pill):
-//   • apps grid  → NavigateColdtraceModal   (jump to any of the 9 modules)
-//   • bell       → NotificationsModal        (All Notifications / What's New)
+//   • apps grid  → NavigateColdtracePanel   (jump to any of the 9 modules)
+//   • bell       → NotificationsPanel        (All Notifications / What's New)
 //   • avatar     → AccountMenu               (anchored popover)
 // Pure composition — Modal, Popover, NavCard, Tabs, Tag, Illustration hub.
 
@@ -24,7 +24,7 @@ const MODULE_ILLO = {
   learning: 'training', transport: 'coldtrace-transport', events: 'events',
 };
 
-export function NavigateColdtraceModal({ open, onClose, onOpenModule }) {
+export function NavigateColdtracePanel({ open, onClose, onOpenModule }) {
   const byId = Object.fromEntries(MODULES.map((m) => [m.id, m]));
   return (
     <SlideOver open={open} onClose={onClose} title="Navigate ColdTrace" width={520}>
@@ -118,7 +118,7 @@ function WhatsNewRow({ n, i }) {
   );
 }
 
-export function NotificationsModal({ open, onClose }) {
+export function NotificationsPanel({ open, onClose }) {
   const [tab, setTab] = useState(0);
   const allCount = ALL_NOTIFICATIONS.reduce((s, g) => s + g.items.length, 0);
   const wnCount = WHATS_NEW.reduce((s, g) => s + g.items.length, 0);
