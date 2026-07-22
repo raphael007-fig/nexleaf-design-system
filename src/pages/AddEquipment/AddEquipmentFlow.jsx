@@ -58,12 +58,12 @@ import {
 // Equipment already registered in ColdTrace — the serial search matches
 // against these. Order matters: stories reference EXISTING_SERIALS[1].
 export const EXISTING_EQUIPMENT = [
-  { serial: 'EQ1-001', name: 'HBC-80 Vaccine Refrigerator', facility: 'Mombasa North Health Centre', county: 'Mombasa County', qr: 'QR-00412' },
-  { serial: 'CCE-2214-KLF', name: 'TCW 3000 AC Refrigerator', facility: 'Likoni Sub-County Hospital', county: 'Mombasa County', qr: 'QR-01118' },
-  { serial: 'VF-2024-001234', name: 'MK 204 ILR Refrigerator', facility: 'Mbagathi County Referral Hospital', county: 'Nairobi County' },
-  { serial: 'CCE-2024-MK114-002', name: 'MK 114 Vaccine Refrigerator', facility: 'Pumwani Maternity Hospital', county: 'Nairobi County' },
-  { serial: 'CCE-2024-MK114-014', name: 'MK 114 Vaccine Refrigerator', facility: 'Kenyatta National Hospital', county: 'Nairobi County' },
-  { serial: 'CCE-2024-MK144-001', name: 'MK 144 ILR Refrigerator', facility: 'Coast General Teaching & Referral Hospital', county: 'Mombasa County' },
+  { serial: 'EQ1-001', name: 'Haier HBC-80 Vaccine Refrigerator', facility: 'Mombasa North Health Centre', region: 'Coast Region', county: 'Mombasa County', monitoring: 'Nexleaf RTMD', qr: 'QR-00412' },
+  { serial: 'CCE-2214-KLF', name: 'B Medical TCW 3000 AC Refrigerator', facility: 'Likoni Sub-County Hospital', region: 'Coast Region', county: 'Mombasa County', monitoring: 'Manual recording', qr: 'QR-01118' },
+  { serial: 'VF-2024-001234', name: 'Vestfrost MK 204 ILR Refrigerator', facility: 'Mbagathi County Referral Hospital', region: 'Nairobi Region', county: 'Nairobi County', monitoring: 'Nexleaf RTMD' },
+  { serial: 'CCE-2024-MK114-002', name: 'Vestfrost MK 114 Vaccine Refrigerator', facility: 'Pumwani Maternity Hospital', region: 'Nairobi Region', county: 'Nairobi County', monitoring: 'Berlinger integration' },
+  { serial: 'CCE-2024-MK114-014', name: 'Vestfrost MK 114 Vaccine Refrigerator', facility: 'Kenyatta National Hospital', region: 'Nairobi Region', county: 'Nairobi County', monitoring: 'Manual recording' },
+  { serial: 'CCE-2024-MK144-001', name: 'Vestfrost MK 144 ILR Refrigerator', facility: 'Coast General Teaching & Referral Hospital', region: 'Coast Region', county: 'Mombasa County', monitoring: 'Nexleaf RTMD' },
 ];
 export const EXISTING_SERIALS = EXISTING_EQUIPMENT.map((e) => e.serial);
 export const ASSIGNED_QRS = EXISTING_EQUIPMENT.map((e) => e.qr).filter(Boolean);
@@ -475,7 +475,7 @@ function ResultPanel({ title, lines, selectable = false, selected = false, onSel
         transition: 'box-shadow 0.12s ease',
       }}
     >
-      <Banner tone="info" inCard>
+      <Banner tone="info" inCard hideIcon>
         <span style={{ display: 'block', fontWeight: 650 }}>{title}</span>
         {lines.map((l) => (
           <span key={l} style={{ display: 'block' }}>{l}</span>
@@ -529,12 +529,16 @@ function ReviewRows({ rows }) {
   );
 }
 
-// Review-section header: CardSectionTitle + a ghost Edit action.
-function ReviewSection({ icon, title, onEdit, children }) {
+// Review-section header: CardSectionTitle + an optional completion status Badge
+// + a ghost Edit action.
+function ReviewSection({ icon, title, status, onEdit, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <CardSectionTitle icon={icon} title={title} />
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+          <CardSectionTitle icon={icon} title={title} />
+          {status}
+        </div>
         {onEdit && <Btn variant="ghost" small onClick={onEdit}>Edit</Btn>}
       </div>
       {children}
@@ -741,8 +745,9 @@ export function AddEquipmentFlow({
       return;
     }
     if (matches.length > 0) {
-      // Instance 2 — several close matches; first preselected, plus "add new"
-      setSearchResults({ query: s, matches, exact: false, selected: matches[0].serial });
+      // Instance 2 — several close matches. No auto-preselect: the user must
+      // explicitly choose one (or "add as new"); Continue stays disabled until then.
+      setSearchResults({ query: s, matches, exact: false, selected: null });
       return;
     }
     // Instance 3 — nothing identical: offer to add the equipment
@@ -1686,6 +1691,16 @@ export function AddEquipmentFlow({
                 Create a new facility
               </Btn>
             </div>
+            {/* Region + Facility are prefilled from the RTMD setup; warn if the
+                user changes the facility away from the one the RTMD was set up for. */}
+            {monitoring.method === 'rtmd' && rtmd.facilityId && equipment.facilityId
+              && equipment.facilityId !== rtmd.facilityId && (
+              <Banner tone="warning" inCard>
+                This facility differs from the one selected during RTMD setup
+                ({facilityLabel(rtmd.facilityId)}). Changing it may affect the RTMD configuration —
+                update the RTMD's facility if this equipment has moved.
+              </Banner>
+            )}
           </FormSection>
 
           <FormSection icon={<IcoClipboard color={TEXT_DEFAULT} />} title="Maintenance and Warranty">
@@ -1827,6 +1842,12 @@ export function AddEquipmentFlow({
   // ── Review & confirm ────────────────────────────────────────────────────────
   if (step === 'review') {
     const device = RTMDS.find((d) => d.id === rtmd.deviceId);
+    const isRtmd = monitoring.method === 'rtmd';
+    const isExternal = monitoring.method === 'external';
+    const connected = isExternal && integration.status === 'connected';
+    // Completion flags → section status badges (existing Badge component only).
+    const equipmentComplete = !!(equipment.makeModel && equipment.serial.trim() && equipment.status && equipment.regionId && equipment.facilityId);
+    const badge = (tone, text) => <Badge tone={tone} size="small">{text}</Badge>;
     body = (
       <StepFrame
         {...wizardChrome}
@@ -1835,7 +1856,14 @@ export function AddEquipmentFlow({
         footerRight={<>{backBtn}{continueBtn(createEquipment, 'Submit')}</>}
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 32 }}>
-        <ReviewSection icon={<IcoDevice color={TEXT_DEFAULT} />} title="Equipment" onEdit={() => goTo('details')}>
+
+        {/* Equipment — the equipment record itself (its own make/model/serial). */}
+        <ReviewSection
+          icon={<IcoDevice color={TEXT_DEFAULT} />}
+          title="Equipment"
+          status={badge(equipmentComplete ? 'success' : 'warning', equipmentComplete ? 'Complete' : 'Incomplete')}
+          onEdit={() => goTo('details')}
+        >
           <ReviewRows rows={[
             ['Make and model', equipment.makeModel || 'Not set'],
             ['Serial number', equipment.serial || 'Not set'],
@@ -1846,29 +1874,100 @@ export function AddEquipmentFlow({
             ['Region', regionLabel(equipment.regionId)],
             ['Facility', facilityLabel(equipment.facilityId)],
             ['Warranty', equipment.warrantyYears || 'Not set'],
-            ['QR code', equipment.qrCode || 'Not assigned'],
           ]} />
         </ReviewSection>
 
+        {/* Monitoring Device — separate from Equipment; NOT assumed to share a
+            manufacturer. Shown for RTMD and built-in / third-party devices. */}
+        {isRtmd && (
+          <ReviewSection
+            icon={<IcoThermometer color={TEXT_DEFAULT} />}
+            title="Monitoring Device"
+            status={badge('success', 'Registered')}
+            onEdit={() => goTo('rtmd-select')}
+          >
+            <ReviewRows rows={[
+              ['Manufacturer', 'Nexleaf'],
+              ['Model', device ? device.model : 'Not set'],
+              ['Serial number (IMEI)', device ? device.imei : 'Not set'],
+              ['Monitoring type', 'Nexleaf RTMD'],
+            ]} />
+          </ReviewSection>
+        )}
+        {isExternal && (
+          <ReviewSection
+            icon={<IcoThermometer color={TEXT_DEFAULT} />}
+            title="Monitoring Device"
+            status={connected ? badge('success', 'Connected') : badge('success', 'Registered')}
+            onEdit={() => goTo(connected ? 'connect' : 'register')}
+          >
+            <ReviewRows rows={[
+              ['Manufacturer', externalDevice.manufacturer || provider?.label || 'Not set'],
+              ['Model', externalDevice.model || 'Not set'],
+              ['Serial number', externalDevice.serial || (connected ? integration.deviceId : 'Not set')],
+              ['Monitoring type', connected ? 'Third-party integration' : 'Manual recording'],
+            ]} />
+          </ReviewSection>
+        )}
+
+        {/* RTMD Configuration — the install setup (facility, sensors, contacts). */}
+        {isRtmd && (
+          <ReviewSection
+            icon={<IcoDevice color={TEXT_DEFAULT} />}
+            title="RTMD Configuration"
+            status={badge('success', 'Complete')}
+            onEdit={() => goTo('rtmd-configure')}
+          >
+            <ReviewRows rows={[
+              ['Configured on', formatDate(rtmd.configDate)],
+              ['Sensor 1', `${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`],
+              rtmd.hasSensor2 && ['Sensor 2', `${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`],
+              ['Alarm contacts', contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'],
+            ]} />
+          </ReviewSection>
+        )}
+
+        {/* Integration — connection status for third-party devices. */}
+        {isExternal && (
+          <ReviewSection
+            icon={<IcoThermometer color={TEXT_DEFAULT} />}
+            title="Integration"
+            status={connected ? badge('success', 'Connected') : badge('warning', 'Not Connected')}
+            onEdit={() => goTo(connected ? 'connect' : 'register')}
+          >
+            <ReviewRows rows={[
+              ['Provider', provider?.label || 'Not set'],
+              connected && ['Last sync', integration.lastSync || 'Just now'],
+              connected && ['Latest reading', integration.latestReading || 'Not set'],
+              !connected && ['Status', 'Not connected — manual recording until an integration is connected'],
+            ]} />
+          </ReviewSection>
+        )}
+
+        {/* Unmonitored Equipment. */}
+        {monitoring.method === 'none' && (
+          <ReviewSection
+            icon={<IcoThermometer color={TEXT_DEFAULT} />}
+            title="Monitoring"
+            status={badge('default', 'Unmonitored Equipment')}
+            onEdit={() => goTo('method')}
+          >
+            <ReviewRows rows={[
+              ['Monitoring type', 'Unmonitored Equipment'],
+              ['Temperature source', 'Manual recording'],
+            ]} />
+          </ReviewSection>
+        )}
+
+        {/* QR Code. */}
         <ReviewSection
-          icon={<IcoThermometer color={TEXT_DEFAULT} />}
-          title="Temperature monitoring"
-          onEdit={() => goTo('method')}
+          icon={<IcoQr color={TEXT_DEFAULT} />}
+          title="QR Code"
+          status={equipment.qrCode ? badge('success', 'Assigned') : badge('warning', 'Not assigned')}
+          onEdit={() => goTo('details')}
         >
           <ReviewRows rows={[
-            monitoring.method === 'rtmd' && ['Method', 'Nexleaf RTMD'],
-            monitoring.method === 'rtmd' && ['Alarm contacts', contactNames.length ? contactNames.join(', ') : 'None (dashboard alarms only)'],
-            monitoring.method === 'rtmd' && ['Device', device ? `${device.model} · ${device.imei}` : 'Not set'],
-            monitoring.method === 'rtmd' && ['Sensor 1', `${rtmd.sensor1.compartment} · ${rtmd.sensor1.min} to ${rtmd.sensor1.max} °C`],
-            monitoring.method === 'rtmd' && rtmd.hasSensor2 && ['Sensor 2', `${rtmd.sensor2.compartment} · ${rtmd.sensor2.min} to ${rtmd.sensor2.max} °C`],
-            monitoring.method === 'external' && integration.status === 'connected' && ['Method', 'Third-party integration'],
-            monitoring.method === 'external' && integration.status === 'connected' && ['Provider', provider?.label || 'Not set'],
-            monitoring.method === 'external' && integration.status === 'connected' && ['Status', 'Connected · synced just now'],
-            monitoring.method === 'external' && integration.status !== 'connected' && ['Method', 'Monitoring device (not connected)'],
-            monitoring.method === 'external' && integration.status !== 'connected' && ['Device', [externalDevice.manufacturer, externalDevice.model].filter(Boolean).join(' ') || provider?.label || 'Not set'],
-            monitoring.method === 'external' && integration.status !== 'connected' && ['Device serial', externalDevice.serial || 'Not set'],
-            monitoring.method === 'none' && ['Method', 'No monitoring device'],
-            ['Temperature source', temperatureSource],
+            ['QR code', equipment.qrCode || 'Not assigned'],
           ]} />
         </ReviewSection>
 
@@ -1885,7 +1984,10 @@ export function AddEquipmentFlow({
   // ── Success — return to Manual Temperature Recording ────────────────────────
   if (step === 'success') {
     body = (
-      <Card style={{ minHeight: 'calc(100vh - 160px)', padding: isMobile ? '24px 16px' : '40px 32px', gap: 0 }}>
+      // Success sits on the completed flow's own white card, content FULLY
+      // centered on that surface: justifyContent centers the column vertically,
+      // the inner margin:auto centers it horizontally.
+      <Card style={{ minHeight: 'calc(100vh - 160px)', padding: isMobile ? '24px 16px' : '40px 32px', gap: 0, justifyContent: 'center' }}>
         <div style={{ width: '100%', maxWidth: 620, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, textAlign: 'center' }}>
           <CircleMedia tone="success"><IcoCheckCircle size={44} color={TEXT_DEFAULT} /></CircleMedia>
@@ -1907,6 +2009,8 @@ export function AddEquipmentFlow({
           badge={<Badge tone="success">{temperatureSource === 'Manual recording' ? 'Manual recording' : 'Automatic'}</Badge>}
         />
 
+        {/* Manual recording, reached from Temperature Recording → let the user
+            log the first reading right here. The footer primary drives the save. */}
         {fromRecording && temperatureSource === 'Manual recording' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <Divider />
@@ -1915,38 +2019,50 @@ export function AddEquipmentFlow({
                 {reading.value} °C recorded for {equipment.serial || 'this equipment'}, morning session.
               </Banner>
             ) : (
-              <>
-                <NumberInput
-                  label="Current temperature"
-                  required
-                  suffix="°C"
-                  step={0.1}
-                  placeholder="e.g. 4.5"
-                  helpText="Normal range: +2 to +8 °C"
-                  value={reading.value}
-                  onChange={(v) => setReading((s) => ({ ...s, value: v }))}
-                />
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Btn variant="primary" disabled={reading.value === ''} onClick={() => setReading((s) => ({ ...s, saved: true }))}>
-                    Save reading
-                  </Btn>
-                </div>
-              </>
+              <NumberInput
+                label="Current temperature"
+                required
+                suffix="°C"
+                step={0.1}
+                placeholder="e.g. 4.5"
+                helpText="Normal range: +2 to +8 °C"
+                value={reading.value}
+                onChange={(v) => setReading((s) => ({ ...s, value: v }))}
+              />
             )}
           </div>
         )}
 
+        {/* CTAs tailored to the entry point (reusing the standard Btn pair). */}
         <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 8 }}>
-          {fromRecording
-            ? <Btn variant="secondary" onClick={exitFlow}>Back to temperature tasks</Btn>
-            : <>
-                <Btn variant="secondary" onClick={onExit}>Done</Btn>
-                <Btn variant="primary" onClick={() => {
-                  setStep('method'); setHistory([]); setErrors({});
-                  setEquipment({ serial: '', qrCode: '', makeModel: '', fundingSource: '', status: '', installDate: null, powerSource: '', regionId: '', facilityId: '', warrantyYears: '' });
-                  setMonitoring({ method: null });
-                }}>Add another equipment</Btn>
-              </>}
+          {fromRecording ? (
+            temperatureSource === 'Manual recording' ? (
+              <>
+                <Btn variant="secondary" onClick={exitFlow}>View Equipment</Btn>
+                <Btn
+                  variant="primary"
+                  disabled={reading.saved ? false : reading.value === ''}
+                  onClick={() => (reading.saved ? exitFlow() : setReading((s) => ({ ...s, saved: true })))}
+                >
+                  {reading.saved ? 'Done' : 'Record First Temperature'}
+                </Btn>
+              </>
+            ) : (
+              <>
+                <Btn variant="secondary" onClick={exitFlow}>Back to temperature tasks</Btn>
+                <Btn variant="primary" onClick={exitFlow}>View Equipment</Btn>
+              </>
+            )
+          ) : (
+            <>
+              <Btn variant="secondary" onClick={() => {
+                setStep('method'); setHistory([]); setErrors({});
+                setEquipment({ serial: '', qrCode: '', makeModel: '', fundingSource: '', status: '', installDate: null, powerSource: '', regionId: '', facilityId: '', warrantyYears: '' });
+                setMonitoring({ method: null });
+              }}>Add Another Equipment</Btn>
+              <Btn variant="primary" onClick={onExit}>View Equipment</Btn>
+            </>
+          )}
         </div>
         </div>
       </Card>
@@ -1990,7 +2106,7 @@ export function AddEquipmentFlow({
         maxWidth={520}
         footer={<>
           <Btn variant="secondary" small onClick={() => setSearchResults(null)}>Cancel</Btn>
-          <Btn variant="primary" small onClick={continueFromResults}>Continue</Btn>
+          <Btn variant="primary" small disabled={!searchResults?.selected} onClick={continueFromResults}>Continue</Btn>
         </>}
       >
         {searchResults != null && (
@@ -1998,14 +2114,18 @@ export function AddEquipmentFlow({
             {!searchResults.exact && (
               <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
                 {searchResults.matches.length} registered {searchResults.matches.length === 1 ? 'record matches' : 'records match'} “{searchResults.query}”.
-                Pick the right one, or add it as new equipment.
+                Select the right one, or add it as new equipment.
               </p>
             )}
             {searchResults.matches.map((eq) => (
               <ResultPanel
                 key={eq.serial}
                 title={eq.name}
-                lines={[`Serial Number: ${eq.serial}`, `${eq.facility} · ${eq.county}`]}
+                lines={[
+                  `Serial Number: ${eq.serial}`,
+                  `${eq.facility} · ${eq.region || eq.county}`,
+                  `Monitoring: ${eq.monitoring || 'Manual recording'}`,
+                ]}
                 selectable={!searchResults.exact}
                 selected={searchResults.selected === eq.serial}
                 onSelect={() => setSearchResults((r) => ({ ...r, selected: eq.serial }))}
