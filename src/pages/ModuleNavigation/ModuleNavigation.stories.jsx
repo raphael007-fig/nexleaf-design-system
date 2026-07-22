@@ -20,6 +20,7 @@ import { NavCard } from '../../components/NavCard/NavCard.jsx';
 import { TemperatureTasksCard } from '../../components/TemperatureTasksCard/TemperatureTasksCard.jsx';
 import { ScanQrCodeBody } from '../ScanQrCode/ScanQrCodeBody.jsx';
 import { AiChatDemo } from '../../components/AiChat/AiChatDemo.jsx';
+import { NavigateColdtraceModal, NotificationsModal, AccountMenu } from './TopBarPanels.jsx';
 import { useNavSync } from '../../foundation/useNavSync.js';
 import {
   MODULES, MODULE_HOME_ITEM, navItemsForModule, firstItemIdForModule,
@@ -141,6 +142,10 @@ function ModuleNavigationApp() {
   const [moduleId, setModuleId] = useState(null);      // null = Home launcher
   const [scanOpen, setScanOpen] = useState(false);     // Scan QR Code page
   const [chatOpen, setChatOpen] = useState(false);
+  // Top-bar icon panels (after the static Kenya country pill).
+  const [appsOpen, setAppsOpen] = useState(false);        // apps grid → Navigate ColdTrace
+  const [notifOpen, setNotifOpen] = useState(false);      // bell → Notifications
+  const [acctAnchor, setAcctAnchor] = useState(null);     // avatar → account menu (anchored)
   const module = MODULES.find((m) => m.id === moduleId) || null;
   const items = module ? navItemsForModule(module.id) : [MODULE_HOME_ITEM];
 
@@ -182,8 +187,15 @@ function ModuleNavigationApp() {
       contentWidth="fluid"
       onAskAi={() => setChatOpen((o) => !o)}
       askAiActive={chatOpen}
+      // Static country pill (set at onboarding) · apps grid · bell · avatar.
+      onApps={() => setAppsOpen(true)}
+      onNotification={() => setNotifOpen(true)}
+      onProfile={(e) => setAcctAnchor({ current: e.currentTarget })}
     >
       <AiChatDemo open={chatOpen} onClose={() => setChatOpen(false)} />
+      <NavigateColdtraceModal open={appsOpen} onClose={() => setAppsOpen(false)} onOpenModule={openModule} />
+      <NotificationsModal open={notifOpen} onClose={() => setNotifOpen(false)} />
+      <AccountMenu open={!!acctAnchor} onClose={() => setAcctAnchor(null)} anchorRef={acctAnchor} onSelect={() => {}} />
 
       {scanOpen ? (
         <ScanQrCodeBody
