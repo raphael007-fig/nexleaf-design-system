@@ -6,7 +6,7 @@
 // Pure composition — Modal, Popover, NavCard, Tabs, Tag, Illustration hub.
 
 import { useState } from 'react';
-import { Modal } from '../../components/Modal/Modal.jsx';
+import { SlideOver } from '../../components/SlideOver/SlideOver.jsx';
 import { Popover } from '../../components/Popover/Popover.jsx';
 import { NavCard } from '../../components/NavCard/NavCard.jsx';
 import { Tabs } from '../../components/Tabs/Tabs.jsx';
@@ -27,8 +27,8 @@ const MODULE_ILLO = {
 export function NavigateColdtraceModal({ open, onClose, onOpenModule }) {
   const byId = Object.fromEntries(MODULES.map((m) => [m.id, m]));
   return (
-    <Modal open={open} onClose={onClose} title="Navigate ColdTrace" maxWidth={560}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 12 }}>
+    <SlideOver open={open} onClose={onClose} title="Navigate ColdTrace" width={520}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
         {NAV_ORDER.map((id) => (
           <NavCard
             key={id}
@@ -41,7 +41,7 @@ export function NavigateColdtraceModal({ open, onClose, onOpenModule }) {
           />
         ))}
       </div>
-    </Modal>
+    </SlideOver>
   );
 }
 
@@ -124,14 +124,14 @@ export function NotificationsModal({ open, onClose }) {
   const wnCount = WHATS_NEW.reduce((s, g) => s + g.items.length, 0);
   let wnIndex = 0;
   return (
-    <Modal open={open} onClose={onClose} title="Notifications" maxWidth={660}>
+    <SlideOver open={open} onClose={onClose} title="Notifications" width={480}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         <Tabs
           tabs={[{ id: 'all', label: 'All Notifications', badge: allCount }, { id: 'new', label: "What's New", badge: wnCount }]}
           activeIndex={tab}
           onSelect={(_id, _item, i) => setTab(i)}
         />
-        <div style={{ maxHeight: '56vh', overflowY: 'auto', paddingRight: 4 }}>
+        <div>
           {tab === 0
             ? ALL_NOTIFICATIONS.map((g) => (
                 <div key={g.group}>
@@ -151,7 +151,7 @@ export function NotificationsModal({ open, onClose }) {
               ))}
         </div>
       </div>
-    </Modal>
+    </SlideOver>
   );
 }
 
