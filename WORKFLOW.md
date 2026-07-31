@@ -53,8 +53,9 @@ Stack table: [`docs/README.md`](docs/README.md).
 Built and live: Figma ingest · FIGMA-MAP bridge (top 12) · barrel export · prototype hub v2
 (projects, types, activity log) · Jira structure (PD-30 epic, PD-31 seed) · docs/ · skills.
 
+- [x] Hub production build verified (Vite 8, `✓ built` — caught & fixed a duplicate `RadioButton` barrel export; generator now dedupes globally).
+- [x] Committed (`7f499fe`, workflow files only — component WIP left for Raf).
+
 Open:
-- [ ] First local `npm run dev` of the hub (couldn't be run in the sandbox).
-- [ ] Commit everything to git.
-- [ ] Confirm Figma-side component names + map the remaining 35 components (needs the design-system file open in Figma desktop).
-- [ ] Point design.nexleaf.org (Vercel) at `prototype-hub/`.
+- [ ] Confirm Figma-side component names + map the remaining 35 components (blocked on the design-system file being open in Figma desktop — remote access only exposes the cover page; verified).
+- [ ] Point design.nexleaf.org (Vercel) at `prototype-hub/` (needs Raf's Vercel access).
