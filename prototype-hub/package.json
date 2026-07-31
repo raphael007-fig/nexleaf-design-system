@@ -1,0 +1,19 @@
+{
+  "name": "@nexleaf/prototype-hub",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Central hub for Claude Code prototypes, built from the Poltail design system.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "new": "node scripts/new-prototype.mjs",
+    "new-project": "node scripts/new-project.mjs",
+    "gen-barrel": "node scripts/gen-barrel.mjs"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.11"
+  }
+}
