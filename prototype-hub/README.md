@@ -54,4 +54,10 @@ scripts/
   new-project.mjs · new-prototype.mjs · gen-barrel.mjs
 ```
 
+## Deploy
+
+Automatic via the deploy-hub watcher (`~/Documents/deploy-hub/watch.sh`): any change under
+`src/` builds (`--base=/prototype-hub/`) and uploads to GCS → live at
+**design.nexleaf.org/prototype-hub/**.
+
 Full docs: [`../docs/`](../docs/README.md).

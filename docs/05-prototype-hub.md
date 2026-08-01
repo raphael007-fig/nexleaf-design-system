@@ -76,8 +76,12 @@ in one project.
 - **Every meaningful change is logged** — CHANGELOG entry (what + why + source) + commit `proto(<slug>): <what> — <why> [PD-XX]`. Small tweaks batch into checkpoints; see [Conventions](08-conventions.md).
 - `meta.js` carries the prototype's Jira key; `project.js` carries the epic — the hub renders both as links.
 
-## Deploy — design.nexleaf.org
+## Deploy — design.nexleaf.org (auto)
 
-`vercel.json` is configured for a Vite build. Point the design.nexleaf.org Vercel project
-(or a route/subdomain of it) at `prototype-hub/` so the team browses projects and clicks
-through live prototypes.
+Deployment is handled by the **deploy-hub watcher** (`~/Documents/deploy-hub/watch.sh`):
+it watches `prototype-hub/src`, and on any change builds with
+`vite build --base=/prototype-hub/` and uploads `dist/` to
+`gs://nexleaf-design-content/prototype-hub/` — live at
+**design.nexleaf.org/prototype-hub/**. Design-system component changes also trigger a hub
+redeploy (prototypes import the DS). Save a file → it ships. If the watcher isn't running,
+start it: `~/Documents/deploy-hub/watch.sh &`.
