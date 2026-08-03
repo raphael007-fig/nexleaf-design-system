@@ -27,3 +27,11 @@
 
 /* Activity entries inside SlideOver (Cards in a column) */
 .hub-activity-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* Storybook-style chrome restore pill (shown when the hub bar is hidden).
+   Deliberately hub chrome, not product UI — kept minimal and out of the way. */
+.hub-chrome-restore { position: fixed; top: 8px; left: 50%; transform: translateX(-50%);
+  z-index: 300; font-size: 11px; font-weight: 600; color: #616161;
+  background: rgba(255,255,255,.92); border: 1px solid #e0e0e0; border-radius: 100px;
+  padding: 4px 12px; cursor: pointer; opacity: .55; transition: opacity .15s; }
+.hub-chrome-restore:hover { opacity: 1; }

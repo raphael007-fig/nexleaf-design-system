@@ -182,9 +182,21 @@ function parseChangelog(md) {
 export default function App() {
   const [projectSlug, protoSlug] = useHashPath();
   const [showActivity, setShowActivity] = useState(false);
+  // Storybook-style: the hub's own top bar is chrome, not part of the prototype.
+  // Hide it to view the prototype full-screen; a floating pill brings it back.
+  const [chromeHidden, setChromeHidden] = useState(false);
   const project = projects.find((p) => p.slug === projectSlug);
 
   useEffect(() => setShowActivity(false), [projectSlug, protoSlug]);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape' && chromeHidden) setChromeHidden(false);
+      // "f" toggles full-screen prototype view (ignores typing in fields)
+      if (e.key === 'f' && !/input|textarea|select/i.test(e.target.tagName)) setChromeHidden((v) => !v);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [chromeHidden]);
 
   if (!project) return <ProjectsIndex />;
 
@@ -196,18 +208,31 @@ export default function App() {
 
   return (
     <div>
-      <div className="hub-topbar">
-        <Btn variant="tertiary" onClick={() => go(`#/${project.slug}`)}>← {project.title}</Btn>
-        <span className="hub-topbar-title">{proto.title}</span>
-        <Badge>{proto.type}</Badge>
-        {proto.jiraKey && (
-          <LinkCell items={[{ label: proto.jiraKey, href: jiraUrl(proto.jiraKey) }]} />
-        )}
-        <div className="hub-topbar-spacer" />
-        <Btn variant="secondary" onClick={() => setShowActivity((v) => !v)}>
-          {showActivity ? 'Hide activity' : 'Activity'}
-        </Btn>
-      </div>
+      {!chromeHidden && (
+        <div className="hub-topbar">
+          <Btn variant="tertiary" onClick={() => go(`#/${project.slug}`)}>← {project.title}</Btn>
+          <span className="hub-topbar-title">{proto.title}</span>
+          <Badge>{proto.type}</Badge>
+          {proto.jiraKey && (
+            <LinkCell items={[{ label: proto.jiraKey, href: jiraUrl(proto.jiraKey) }]} />
+          )}
+          <div className="hub-topbar-spacer" />
+          <Btn variant="tertiary" onClick={() => setChromeHidden(true)}>Full screen</Btn>
+          <Btn variant="secondary" onClick={() => setShowActivity((v) => !v)}>
+            {showActivity ? 'Hide activity' : 'Activity'}
+          </Btn>
+        </div>
+      )}
+      {chromeHidden && (
+        <button
+          type="button"
+          className="hub-chrome-restore"
+          onClick={() => setChromeHidden(false)}
+          title="Show hub navigation (Esc)"
+        >
+          ⌄ Show hub bar
+        </button>
+      )}
       <SlideOver
         open={showActivity}
         onClose={() => setShowActivity(false)}

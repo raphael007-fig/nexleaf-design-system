@@ -1,6 +1,11 @@
 import React, { useRef, useState } from 'react';
 // Built ONLY from Poltail design-system components (via the @ds barrel).
-import { Page, MetricCard, Banner, IndexTable, Badge, Btn, Popover, OptionList, Toast } from '@ds';
+// Layout anatomy matches the product: AppShell provides TopBar + SideNavigation
+// rail; Page supplies the header + primaryAction. See FIGMA-MAP.md § layout anatomy.
+import {
+  AppShell, Page, MetricCard, Banner, IndexTable, Badge, Btn,
+  Popover, OptionList, Toast, COLDTRACE_NAV_ITEMS,
+} from '@ds';
 
 const COLUMNS = [
   { key: 'date', label: 'Date', sortable: true },
@@ -28,7 +33,8 @@ const RECORD_OPTIONS = [
 export default function TemperatureReadings() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const recordBtnRef = useRef(null);
+  const [activeId, setActiveId] = useState('temperature-monitoring');
+  const anchorRef = useRef(null);
 
   const handleRecordChoice = (id) => {
     setMenuOpen(false);
@@ -40,54 +46,61 @@ export default function TemperatureReadings() {
   };
 
   return (
-    <div style={{ background: '#f1f1f1', minHeight: '100vh' }}>
-      <div style={{ maxWidth: 1080, margin: '0 auto', padding: 24 }}>
-        {/* Header row: Page (left) + Record reading disclosure action (right) */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
-          <div style={{ flex: 1 }}>
-            <Page title="Temperature Readings" subtitle="Cold-chain submissions across facilities" />
-          </div>
-          <div ref={recordBtnRef} style={{ paddingTop: 4 }}>
-            <Btn variant="primary" disclosure onClick={() => setMenuOpen((v) => !v)}>
-              Record reading
-            </Btn>
-          </div>
-        </div>
-        <Popover
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          anchorRef={recordBtnRef}
-          placement="bottom-end"
-          minWidth={280}
-          ariaLabel="Record reading options"
-        >
-          <OptionList
-            flush
-            dense
-            options={RECORD_OPTIONS}
-            onChange={handleRecordChoice}
-            ariaLabel="How do you want to record the reading?"
-          />
-        </Popover>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '16px 0' }}>
-          <MetricCard title="Facilities reporting" metric="42" />
-          <MetricCard title="Complete today" metric="38" />
-          <MetricCard title="Needs attention" metric="4" selected />
-        </div>
-        <Banner tone="warning" title="4 facilities have incomplete readings">
-          Follow up before end of day to keep the cold-chain log complete.
-        </Banner>
-        <div style={{ marginTop: 16 }}>
-          <IndexTable columns={COLUMNS} rows={ROWS} />
-        </div>
-
-        {toast && (
-          <Toast tone="info" onDismiss={() => setToast(null)}>
-            {toast}
-          </Toast>
-        )}
+    <AppShell
+      level="secondary"
+      navItems={COLDTRACE_NAV_ITEMS}
+      activeItemId={activeId}
+      onNavSelect={setActiveId}
+      homeCrumb={{ id: 'home', label: 'Home' }}
+      contentWidth="fluid"
+    >
+      <div ref={anchorRef}>
+        <Page
+          title="Temperature Readings"
+          subtitle="Cold-chain submissions across facilities"
+          primaryAction={{
+            content: 'Record reading',
+            disclosure: true,
+            onAction: () => setMenuOpen((v) => !v),
+          }}
+        />
       </div>
-    </div>
+      <Popover
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        anchorRef={anchorRef}
+        placement="bottom-end"
+        minWidth={280}
+        ariaLabel="Record reading options"
+      >
+        <OptionList
+          flush
+          dense
+          options={RECORD_OPTIONS}
+          onChange={handleRecordChoice}
+          ariaLabel="How do you want to record the reading?"
+        />
+      </Popover>
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '16px 0' }}>
+        <MetricCard title="Facilities reporting" metric="42" badge={{ tone: 'info', label: '42 of 46 total' }} />
+        <MetricCard title="Complete today" metric="38" badge={{ tone: 'success', label: '92% of target' }} />
+        <MetricCard title="Needs attention" metric="4" badge={{ tone: 'warning', label: '4 incomplete' }} selected />
+      </div>
+
+      <Banner tone="warning" title="4 facilities have incomplete readings">
+        Follow up before end of day to keep the cold-chain log complete.
+      </Banner>
+
+      <div style={{ marginTop: 16 }}>
+        <IndexTable columns={COLUMNS} rows={ROWS} />
+      </div>
+
+      {toast && (
+        <Toast tone="info" onDismiss={() => setToast(null)}>
+          {toast}
+        </Toast>
+      )}
+    </AppShell>
   );
 }

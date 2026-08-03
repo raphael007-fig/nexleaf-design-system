@@ -49,6 +49,28 @@ PD's standard workflow applies: **To Do → In Progress → Done.** "In review" 
 the ticket sitting in In Progress with the Figma/commit links attached and a review request
 in the comments (or move it to a Review column if one is added to the board later).
 
+## Working a ticket — status hygiene
+
+- **Move the ticket to `In Progress` when work starts** (not when it finishes). Every session
+  that touches a ticket transitions it first.
+- Post a comment when a meaningful step lands (change made, Figma mirrored, audit run).
+- Move to `Done` only when the Definition of Done below is fully met.
+
+## Ticket vs comment — investigate before filing
+
+**Never open a ticket for something noticed mid-task.** Observations, gaps, and revisions on
+in-progress work are **comments on the existing ticket**.
+
+Before filing anything as a new ticket:
+
+1. **Search the Figma file and the repo first.** A "missing component" is usually an existing
+   pattern under a different name (e.g. the KPI tile lives on the Design Rep page, not as a
+   published component). Reuse it.
+2. Only genuinely **new scope** — work nobody has asked for yet and that needs its own
+   lifecycle — becomes a ticket.
+3. If a ticket was filed in error: comment explaining why, move it to Done, and put the
+   content where it belonged.
+
 ## Definition of Done (per ticket)
 
 1. Built from real Poltail components (no hand-rolled UI).

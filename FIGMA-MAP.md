@@ -116,6 +116,45 @@ these rules are mandatory. Neatness is part of the deliverable.
 **Feedback**
 9. Reviewer questions/feedback get noted next to the frame (and mirrored to the Jira ticket). **Unresolved feedback blocks Done.** When feedback causes a change → new versioned frame + annotation + ticket comment.
 
+## Layout anatomy — every product screen (BINDING)
+
+Learned from the **Design Rep** page (`8483:56185`), which is the canonical resource dump
+for layouts. A desktop screen is NEVER just a content column:
+
+| Part | Spec |
+|---|---|
+| **Top bar** | 1440×56 at y=0, + 1px divider at y=57. Contains breadcrumb, AI Chat Bot, region, apps, notifications, avatar. |
+| **Side navigation** | Collapsed rail 56px wide at x=0, full height ("Closed Navigation"); expanded rail 240px. |
+| **Content** | starts at **x=80, y=72** (clear of rail + top bar), width 1280 on a 1440 frame. |
+| **Page header** | the real **Page** component instance (`Header` + `Actions`): set `Title content`, `Subtitle content`, and put the screen's primary action in the header's **Actions** slot — hide unused `Secondary action` / `Pagination` children rather than adding your own button. |
+
+**Nav visibility by level** (AppShell `level` prop, same rule in Figma):
+`primary` = no nav (Home is a launcher) · `secondary` = full nav (rail/drawer) ·
+`tertiary` = rail for context; record header leads on mobile.
+
+Responsive variants (mobile / tablet / desktop, Primary / Secondary / Tertiary / Menu) are
+all laid out on the Design Rep page — **consult it before building a screen**, don't invent
+a layout.
+
+In code the equivalent is `AppShell` (supplies TopBar + SideNavigation) wrapping `Page`.
+A prototype that renders only a content column is incomplete.
+
+## Annotation format — house style (BINDING)
+
+Match the existing annotation panels in the file (e.g. `8519:186503`):
+
+- Panel = frame named **`content`**, fill **`#eaf4ff`** (BG_INFO), padding 12, spacing 10,
+  title **Inter Bold 14**, body **Regular 12/18**.
+- Two panel kinds, side by side under the frames:
+  1. **Behaviour panel** — `WHEN IT APPEARS:` · `PURPOSE:` · `WHAT IT DOES:` (bullets) ·
+     `User decision example:` (a quote in the user's voice).
+  2. **Component breakdown** — `Component:` · `Fields` · `Example` · `DS instances used` ·
+     `Rationale`. **Place a live instance of the component inside the panel** — the reader
+     should see the real thing, not only a description.
+- Also used: KPI/tile definition panels (`Definition` / `Derived from` / `User understanding`)
+  and comparison panels (previous vs improved, with the reasoning).
+- Explain **why**, not just what. Annotations teach the next reader the reasoning.
+
 ## Mirror rule — prototype ⇄ Figma parity (BINDING)
 
 The prototype and the project's Figma section must tell the **same story**. Neither side
