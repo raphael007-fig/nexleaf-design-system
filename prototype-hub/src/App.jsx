@@ -89,7 +89,9 @@ function ProjectPage({ project }) {
         <div className="hub-empty">No prototypes yet. Run <code>npm run new -- {project.slug} &lt;slug&gt; "Title"</code>.</div>
       )}
       {project.prototypes.length > 0 && (
+        <div className="hub-tablewrap">
         <IndexTable
+          bare
           columns={[
             {
               key: 'title',
@@ -134,7 +136,16 @@ function ProjectPage({ project }) {
                 </TagGroup>
               ),
             },
-            { key: 'updated', label: 'Updated', sortable: true, align: 'right' },
+            { key: 'updated', label: 'Updated', sortable: true },
+            {
+              key: 'open',
+              label: '',
+              render: (row) => (
+                <a className="hub-open-link" href={`#/${project.slug}/${row.slug}`}>
+                  Open →
+                </a>
+              ),
+            },
           ]}
           rows={sorted.map((p, i) => ({ id: p.slug || i, ...p }))}
           sortKey={sortKey}
@@ -144,6 +155,7 @@ function ProjectPage({ project }) {
             else { setSortKey(key); setSortDir('asc'); }
           }}
         />
+        </div>
       )}
     </div>
   );
