@@ -38,6 +38,24 @@ body { margin: 0; background: var(--hub-bg); color: var(--hub-text);
 .hub-topbar-title { font-weight: 600; font-size: 14px; }
 .hub-loading { padding: 40px; color: var(--hub-sub); }
 
+/* ── Prototype table (project page) ── */
+.hub-tablewrap { background: var(--hub-surface); border: 1px solid var(--hub-border);
+  border-radius: 12px; overflow-x: auto; }
+.hub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.hub-table th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--hub-sub); padding: 10px 16px;
+  border-bottom: 1px solid var(--hub-border); white-space: nowrap; }
+.hub-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
+.hub-table tbody tr:last-child td { border-bottom: none; }
+.hub-row { cursor: pointer; transition: background .1s; }
+.hub-row:hover { background: #fafafa; }
+.hub-row-title { font-weight: 600; color: var(--hub-text); text-decoration: none; }
+.hub-row-title:hover { color: #005bd3; }
+.hub-row-desc { font-size: 12px; color: var(--hub-sub); line-height: 1.45; margin-top: 2px;
+  max-width: 420px; }
+.hub-row-none { color: #9e9e9e; }
+.hub-th-right, .hub-td-right { text-align: right; }
+
 .hub-type { font-size: 11px; font-weight: 550; color: var(--hub-sub); background: #f1f1f1;
   padding: 2px 8px; border-radius: 100px; text-transform: capitalize; }
 .hub-activity-btn { margin-left: auto; font-size: 12px; font-weight: 550; color: #005bd3;

@@ -69,23 +69,65 @@ function ProjectPage({ project }) {
       {project.prototypes.length === 0 && (
         <div className="hub-empty">No prototypes yet. Run <code>npm run new -- {project.slug} &lt;slug&gt; "Title"</code>.</div>
       )}
-      <div className="hub-grid">
-        {project.prototypes.map((p) => (
-          <a key={p.slug} className="hub-card" href={`#/${project.slug}/${p.slug}`}>
-            <div className="hub-card-top">
-              <span className="hub-status" style={{ color: STATUS_COLOR[p.status] || '#616161' }}>● {p.status}</span>
-              <span className="hub-type">{p.type}</span>
-              {p.jiraKey && <span className="hub-jira">{p.jiraKey}</span>}
-            </div>
-            <div className="hub-card-title">{p.title}</div>
-            <div className="hub-card-desc">{p.description}</div>
-            <div className="hub-card-foot">
-              <div className="hub-tags">{(p.tags || []).map((t) => <span key={t} className="hub-tag">{t}</span>)}</div>
-              <span className="hub-updated">{p.updated}</span>
-            </div>
-          </a>
-        ))}
-      </div>
+      {project.prototypes.length > 0 && (
+        <div className="hub-tablewrap">
+          <table className="hub-table">
+            <thead>
+              <tr>
+                <th>Prototype</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Jira</th>
+                <th>Tags</th>
+                <th className="hub-th-right">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              {project.prototypes.map((p) => (
+                <tr
+                  key={p.slug}
+                  className="hub-row"
+                  onClick={() => { window.location.hash = `#/${project.slug}/${p.slug}`; }}
+                >
+                  <td>
+                    <a className="hub-row-title" href={`#/${project.slug}/${p.slug}`} onClick={(e) => e.stopPropagation()}>
+                      {p.title}
+                    </a>
+                    <div className="hub-row-desc">{p.description}</div>
+                  </td>
+                  <td><span className="hub-type">{p.type}</span></td>
+                  <td>
+                    <span className="hub-status" style={{ color: STATUS_COLOR[p.status] || '#616161' }}>
+                      ● {p.status}
+                    </span>
+                  </td>
+                  <td>
+                    {p.jiraKey ? (
+                      <a
+                        className="hub-jira"
+                        href={jiraUrl(p.jiraKey)}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {p.jiraKey}
+                      </a>
+                    ) : (
+                      <span className="hub-row-none">—</span>
+                    )}
+                  </td>
+                  <td>
+                    <div className="hub-tags">
+                      {(p.tags || []).map((t) => <span key={t} className="hub-tag">{t}</span>)}
+                    </div>
+                  </td>
+                  <td className="hub-td-right"><span className="hub-updated">{p.updated}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
