@@ -4,6 +4,6 @@ export default {
   status: 'Active',
   jiraEpic: 'PD-30',
   prd: null,
-  figma: null,
+  figma: 'https://www.figma.com/design/YzbXqlrKTcGbWxwzGkLTct/MultiEquipment-Management--UI-Design?node-id=8507-224793',
   updated: '2026-07-31',
 };
