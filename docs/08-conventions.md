@@ -36,6 +36,13 @@ ds(<Component>): <what> — <why> [JIRA-KEY]
 - Breaking component changes bump major; new components/props bump minor; fixes bump patch.
 - Note notable changes so consumers (and the hub) know what moved.
 
+## Project links
+
+Raf provides the **Figma link for every project** when it starts (plus the PRD link when
+one exists). They're recorded in the project's `project.js` (`figma`, `prd`, `jiraEpic`) —
+the hub renders them, and the mirror rule / audits read them. No link = no parity checks,
+so this is part of starting a project.
+
 ## Figma canvas discipline
 
 Binding rules for any design written into Figma (full list in [`../FIGMA-MAP.md`](../FIGMA-MAP.md)):
