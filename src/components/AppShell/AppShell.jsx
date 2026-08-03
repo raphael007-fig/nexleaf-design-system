@@ -104,11 +104,16 @@ export function AppShell({
   onProfile,
   userInitials = 'NA',
   userAvatar,
+  // Start the docked rail collapsed (icon-only, 60px). The user can still
+  // expand it with the RailCollapseToggle — this only seeds the initial state,
+  // so screens that are designed against the collapsed rail (see the Design Rep
+  // desktop layouts) render as drawn without a manual click.
+  defaultRailCollapsed = false,
   children,
 }) {
   const { width } = useViewport();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [railCollapsed, setRailCollapsed] = useState(false);
+  const [railCollapsed, setRailCollapsed] = useState(defaultRailCollapsed);
 
   // Hybrid: dock the SideNavigation rail on desktop (≥lg); use the MenuDrawer
   // below. Same nav tree + activeId drive both — only the surface swaps.

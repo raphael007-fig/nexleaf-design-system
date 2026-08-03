@@ -52,7 +52,9 @@ export default function TemperatureReadings() {
       activeItemId={activeId}
       onNavSelect={setActiveId}
       homeCrumb={{ id: 'home', label: 'Home' }}
-      contentWidth="fluid"
+      // Matches the Figma frames: collapsed rail + 1280 content column.
+      defaultRailCollapsed
+      contentWidth={1280}
     >
       <div ref={anchorRef}>
         <Page
@@ -85,7 +87,7 @@ export default function TemperatureReadings() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '16px 0' }}>
         <MetricCard title="Facilities reporting" metric="42" badge={{ tone: 'info', label: '42 of 46 total' }} />
         <MetricCard title="Complete today" metric="38" badge={{ tone: 'success', label: '92% of target' }} />
-        <MetricCard title="Needs attention" metric="4" badge={{ tone: 'warning', label: '4 incomplete' }} selected />
+        <MetricCard title="Needs attention" metric="4" badge={{ tone: 'warning', label: '4 incomplete' }} />
       </div>
 
       <Banner tone="warning" title="4 facilities have incomplete readings">
