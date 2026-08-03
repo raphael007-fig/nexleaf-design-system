@@ -36,11 +36,42 @@ strictest standard — it is the showcase of the system.
    adding/extending a DS component (folder + stories per repo convention), raise a Jira
    ticket (`ds(<Component>): ...`). The screen uses it only after it exists in the DS.
 
+
+## Search properly BEFORE concluding anything is missing
+
+Broad multi-word queries miss things. Run several **short, single-concept** searches
+(`"metric"`, then `"card"`, then `"tile"`, then `"KPI"`) scoped to the library key, and also
+scan the product files for the pattern used as a *design* rather than a component (the
+**Design Rep** page is the canonical layout/tile resource). Only after both come up empty is
+something genuinely missing. (A broad query missed `Metric Card`, which does exist.)
+
+## Layout & spacing
+
+Match the Design Rep reference: Top bar 1440x56 (+1px divider at y=57) - collapsed nav rail
+56px at x=0 - content at **x=80, y=72**, width 1280 - **no extra top padding on the content
+column** (y=72 already gives the 16px gap; padding double-spaces the header). Wrap screens in
+`AppShell` containing a `Page`; a bare content column is incomplete.
+
+## When something is genuinely missing
+
+Do not hand-roll a lookalike and do not open a new ticket. Build the component properly in
+the design-system Figma file (`Nexleaf Design System v2.1`, fileKey `y4XdS2kaiS8eMHY3z8wORP`)
+following its conventions, ask Raf to publish the library, and **comment on PD-16 "Design
+System V2.1 Updates"** - the running log for DS component work.
+
+## Nested-instance defaults
+
+A placed Figma instance keeps placeholder text ("Label", "Content", "Heading",
+"0 High Priority"). Set every visible string via `setProperties` on the nested instance.
+
 ## Self-audit (mandatory before presenting any UI)
 
 Scan your own output for: raw `<button>`, `<table>`, `<input>`, `<select>`, links styled
 as buttons/pills, custom badge/chip divs, hardcoded colors, non-Polaris icons.
-Any hit = replace with the DS component before showing the result.
+Any hit = replace with the DS component before showing the result. Also check for leftover
+placeholder strings, inconsistent sizing across sibling elements, wrapping text, spacing that
+deviates from the reference, and global edits that hit unintended nodes (matching a common
+name like `content` also matches annotation panels).
 
 ## Compliance audits
 

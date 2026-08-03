@@ -71,6 +71,18 @@ Before filing anything as a new ticket:
 3. If a ticket was filed in error: comment explaining why, move it to Done, and put the
    content where it belonged.
 
+## Design-system component work → PD-16
+
+[**PD-16 "Design System V2.1 Updates"**](https://nexleaf.atlassian.net/browse/PD-16) (under the
+Product Design epic PD-4) is the **running log for design-system component work**. When a
+component is added to or changed in the Figma library — or when using the library surfaces a
+limitation — **comment on PD-16**. Do not open new tickets for component work.
+
+## Notifications
+
+Completed work is announced to Raf in **Slack** (DM) when Jira, Figma, or prototype work
+lands: what changed, the links, and anything still blocked on his machine.
+
 ## Definition of Done (per ticket)
 
 1. Built from real Poltail components (no hand-rolled UI).
