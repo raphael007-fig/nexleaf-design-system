@@ -1,5 +1,11 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { IndexTable, LinkCell, Badge, Tag, TagGroup, TEXT_SUBDUED } from '@ds';
+// RULE: every visible element in the hub is a Poltail design-system component.
+// No hand-rolled UI. See .claude/skills/ds-components-only + FIGMA-MAP.md.
+import {
+  IndexTable, LinkCell, Badge, Tag, TagGroup,
+  NavCard, Page, SlideOver, Btn, Card,
+  TEXT_SUBDUED,
+} from '@ds';
 import { projects } from './projects.js';
 
 // Tiny hash router — no dependency.
@@ -17,13 +23,9 @@ function useHashPath() {
   return path;
 }
 
-const STATUS_COLOR = {
-  Active: '#005bd3', Draft: '#616161', 'In Progress': '#005bd3',
-  'In Review': '#856404', Done: '#0c5132', Archived: '#9e9e9e',
-};
-
-// Poltail Badge tones per prototype status
+// Poltail Badge tones per status
 const STATUS_TONE = {
+  Active: 'info',
   Draft: 'default',
   'In Progress': 'info',
   'In Review': 'attention',
@@ -32,31 +34,28 @@ const STATUS_TONE = {
 };
 
 const jiraUrl = (key) => `https://nexleaf.atlassian.net/browse/${key}`;
+const go = (hash) => { window.location.hash = hash; };
 
 function ProjectsIndex() {
   return (
     <div className="hub">
-      <header className="hub-head">
-        <div className="hub-brand">🌿 Nexleaf Prototype Hub</div>
-        <p className="hub-sub">Projects, each with its prototypes — all built from the Poltail design system.</p>
-      </header>
+      <Page
+        title="Nexleaf Prototype Hub"
+        subtitle="Projects, each with its prototypes — all built from the Poltail design system."
+      />
       {projects.length === 0 && (
-        <div className="hub-empty">No projects yet. Run <code>npm run new-project</code> to create one.</div>
+        <Card>No projects yet. Run <code>npm run new-project</code> to create one.</Card>
       )}
       <div className="hub-grid">
         {projects.map((p) => (
-          <a key={p.slug} className="hub-card" href={`#/${p.slug}`}>
-            <div className="hub-card-top">
-              <span className="hub-status" style={{ color: STATUS_COLOR[p.status] || '#616161' }}>● {p.status}</span>
-              {p.jiraEpic && <span className="hub-jira">{p.jiraEpic}</span>}
-            </div>
-            <div className="hub-card-title">{p.title}</div>
-            <div className="hub-card-desc">{p.description}</div>
-            <div className="hub-card-foot">
-              <span className="hub-tag">{p.prototypes.length} prototype{p.prototypes.length === 1 ? '' : 's'}</span>
-              <span className="hub-updated">{p.updated}</span>
-            </div>
-          </a>
+          <NavCard
+            key={p.slug}
+            title={p.title}
+            description={p.description}
+            buttonLabel="Enter"
+            onButtonClick={() => go(`#/${p.slug}`)}
+            onClick={() => go(`#/${p.slug}`)}
+          />
         ))}
       </div>
     </div>
@@ -73,20 +72,29 @@ function ProjectPage({ project }) {
     return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
   });
 
+  const links = [
+    project.jiraEpic && { label: `Jira epic ${project.jiraEpic}`, href: jiraUrl(project.jiraEpic) },
+    project.prd && { label: 'PRD', href: project.prd },
+    project.figma && { label: 'Figma', href: project.figma },
+  ].filter(Boolean);
+
   return (
     <div className="hub">
-      <header className="hub-head">
-        <a href="#/" className="hub-back">← All projects</a>
-        <div className="hub-brand" style={{ marginTop: 8 }}>{project.title}</div>
-        <p className="hub-sub">{project.description}</p>
+      <Page
+        title={project.title}
+        subtitle={project.description}
+        backAction={{ label: 'All projects', onClick: () => go('#/') }}
+        metadata={[{ label: project.status, tone: STATUS_TONE[project.status] || 'default' }]}
+      />
+      {links.length > 0 && (
         <div className="hub-links">
-          {project.jiraEpic && <a className="hub-link" href={jiraUrl(project.jiraEpic)} target="_blank" rel="noreferrer">Jira epic {project.jiraEpic}</a>}
-          {project.prd && <a className="hub-link" href={project.prd} target="_blank" rel="noreferrer">PRD</a>}
-          {project.figma && <a className="hub-link" href={project.figma} target="_blank" rel="noreferrer">Figma</a>}
+          <LinkCell items={links} visible={links.length} />
         </div>
-      </header>
+      )}
       {project.prototypes.length === 0 && (
-        <div className="hub-empty">No prototypes yet. Run <code>npm run new -- {project.slug} &lt;slug&gt; "Title"</code>.</div>
+        <Card>
+          No prototypes yet. Run <code>npm run new -- {project.slug} &lt;slug&gt; "Title"</code>.
+        </Card>
       )}
       {project.prototypes.length > 0 && (
         <div className="hub-tablewrap">
@@ -171,25 +179,6 @@ function parseChangelog(md) {
     });
 }
 
-function ActivityPanel({ proto, onClose }) {
-  const entries = parseChangelog(proto.changelog);
-  return (
-    <aside className="hub-activity" aria-label="Activity log">
-      <div className="hub-activity-head">
-        <span>Activity — {proto.title}</span>
-        <button className="hub-activity-close" onClick={onClose} aria-label="Close">✕</button>
-      </div>
-      {entries.length === 0 && <div className="hub-activity-empty">No activity recorded yet.</div>}
-      {entries.map((e, i) => (
-        <div key={i} className="hub-activity-entry">
-          <div className="hub-activity-title">{e.heading}</div>
-          <pre className="hub-activity-body">{e.body}</pre>
-        </div>
-      ))}
-    </aside>
-  );
-}
-
 export default function App() {
   const [projectSlug, protoSlug] = useHashPath();
   const [showActivity, setShowActivity] = useState(false);
@@ -203,21 +192,41 @@ export default function App() {
   if (!proto) return <ProjectPage project={project} />;
 
   const Proto = React.lazy(proto.load);
+  const entries = parseChangelog(proto.changelog);
+
   return (
     <div>
       <div className="hub-topbar">
-        <a href={`#/${project.slug}`} className="hub-back">← {project.title}</a>
+        <Btn variant="tertiary" onClick={() => go(`#/${project.slug}`)}>← {project.title}</Btn>
         <span className="hub-topbar-title">{proto.title}</span>
-        <span className="hub-type">{proto.type}</span>
+        <Badge>{proto.type}</Badge>
         {proto.jiraKey && (
-          <a className="hub-jira" href={jiraUrl(proto.jiraKey)} target="_blank" rel="noreferrer">{proto.jiraKey}</a>
+          <LinkCell items={[{ label: proto.jiraKey, href: jiraUrl(proto.jiraKey) }]} />
         )}
-        <button className="hub-activity-btn" onClick={() => setShowActivity((v) => !v)}>
+        <div className="hub-topbar-spacer" />
+        <Btn variant="secondary" onClick={() => setShowActivity((v) => !v)}>
           {showActivity ? 'Hide activity' : 'Activity'}
-        </button>
+        </Btn>
       </div>
-      {showActivity && <ActivityPanel proto={proto} onClose={() => setShowActivity(false)} />}
-      <Suspense fallback={<div className="hub-loading">Loading prototype…</div>}>
+      <SlideOver
+        open={showActivity}
+        onClose={() => setShowActivity(false)}
+        title={`Activity — ${proto.title}`}
+        width={420}
+      >
+        {entries.length === 0 && <Card>No activity recorded yet.</Card>}
+        <div className="hub-activity-list">
+          {entries.map((e, i) => (
+            <Card key={i}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6 }}>{e.heading}</div>
+              <pre style={{ fontSize: 12, color: TEXT_SUBDUED, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0, lineHeight: 1.5 }}>
+                {e.body}
+              </pre>
+            </Card>
+          ))}
+        </div>
+      </SlideOver>
+      <Suspense fallback={<Card>Loading prototype…</Card>}>
         <Proto />
       </Suspense>
     </div>

@@ -1,78 +1,29 @@
-:root { --hub-bg: #f1f1f1; --hub-surface: #fff; --hub-text: #303030; --hub-sub: #616161; --hub-border: #e0e0e0; }
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--hub-bg); color: var(--hub-text);
-  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+/* Hub chrome — LAYOUT ONLY. Every visible element is a Poltail design-system
+   component (Page, NavCard, IndexTable, LinkCell, Badge, Tag, Btn, SlideOver,
+   Card). This file may position DS components; it must never re-style or
+   re-create them. See .claude/skills/ds-components-only. */
 
-.hub { max-width: 1080px; margin: 0 auto; padding: 40px 24px; }
-.hub-head { margin-bottom: 28px; }
-.hub-brand { font-size: 22px; font-weight: 650; }
-.hub-sub { color: var(--hub-sub); font-size: 14px; margin: 6px 0 0; }
-.hub-empty { background: var(--hub-surface); border: 1px solid var(--hub-border);
-  border-radius: 12px; padding: 32px; text-align: center; color: var(--hub-sub); }
-.hub-empty code { background: #f1f1f1; padding: 2px 6px; border-radius: 4px; }
+.hub { max-width: 1080px; margin: 0 auto; padding: 24px 24px 48px; }
 
-.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-.hub-card { display: block; background: var(--hub-surface); border: 1px solid var(--hub-border);
-  border-radius: 12px; padding: 18px; text-decoration: none; color: inherit;
-  transition: box-shadow .15s, transform .15s; }
-.hub-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,.08); transform: translateY(-2px); }
-.hub-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.hub-status { font-size: 12px; font-weight: 550; }
-.hub-jira { font-size: 11px; font-weight: 600; color: #005bd3; background: #eaf4ff;
-  padding: 2px 8px; border-radius: 100px; }
-.hub-card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
-.hub-card-desc { font-size: 13px; color: var(--hub-sub); line-height: 1.45; min-height: 38px; }
-.hub-card-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
-.hub-tags { display: flex; gap: 6px; flex-wrap: wrap; }
-.hub-tag { font-size: 11px; color: var(--hub-sub); background: #f1f1f1; padding: 2px 8px; border-radius: 100px; }
-.hub-updated { font-size: 11px; color: #9e9e9e; }
+/* Project cards grid (NavCard) */
+.hub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px; margin-top: 16px; }
 
-.hub-links { display: flex; gap: 10px; margin-top: 10px; }
-.hub-link { font-size: 12px; font-weight: 550; color: #005bd3; background: #eaf4ff;
-  padding: 4px 10px; border-radius: 100px; text-decoration: none; }
-.hub-link:hover { background: #d6eaff; }
+/* Project links row (LinkCell) */
+.hub-links { margin: 4px 0 16px; }
 
-.hub-topbar { display: flex; align-items: center; gap: 14px; padding: 10px 20px;
-  background: var(--hub-surface); border-bottom: 1px solid var(--hub-border); position: sticky; top: 0; z-index: 100; }
-.hub-back { color: #005bd3; text-decoration: none; font-size: 13px; font-weight: 550; }
-.hub-topbar-title { font-weight: 600; font-size: 14px; }
-.hub-loading { padding: 40px; color: var(--hub-sub); }
-
-/* ── Prototype table (project page) ── */
-.hub-tablewrap { background: var(--hub-surface); border: 1px solid var(--hub-border);
-  border-radius: 12px; overflow-x: auto; }
-.hub-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.hub-table th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .04em;
-  text-transform: uppercase; color: var(--hub-sub); padding: 10px 16px;
-  border-bottom: 1px solid var(--hub-border); white-space: nowrap; }
-.hub-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
-.hub-table tbody tr:last-child td { border-bottom: none; }
-.hub-row { cursor: pointer; transition: background .1s; }
-.hub-row:hover { background: #fafafa; }
-/* Minimal, non-invasive adjustments only: alignment + wrap behavior.
-   All cell CONTENT is DS components (LinkCell, Badge, Tag) — no custom pills. */
+/* IndexTable container: layout-only adjustments (alignment + wrap) */
+.hub-tablewrap { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px;
+  overflow-x: auto; }
 .hub-tablewrap table th, .hub-tablewrap table td { vertical-align: top; text-align: left; }
 .hub-tablewrap td:last-child, .hub-tablewrap th:last-child,
 .hub-tablewrap td:nth-last-child(2), .hub-tablewrap th:nth-last-child(2) { white-space: nowrap; }
-.hub-row-desc { font-size: 12px; color: var(--hub-sub); line-height: 1.45; margin-top: 2px;
-  max-width: 420px; }
-.hub-row-none { color: #9e9e9e; }
-.hub-th-right, .hub-td-right { text-align: right; }
 
-.hub-type { font-size: 11px; font-weight: 550; color: var(--hub-sub); background: #f1f1f1;
-  padding: 2px 8px; border-radius: 100px; text-transform: capitalize; }
-.hub-activity-btn { margin-left: auto; font-size: 12px; font-weight: 550; color: #005bd3;
-  background: #eaf4ff; border: none; padding: 6px 12px; border-radius: 100px; cursor: pointer; }
-.hub-activity-btn:hover { background: #d6eaff; }
+/* Prototype view top bar: flex layout of DS components (Btn, Badge, LinkCell) */
+.hub-topbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px;
+  background: #fff; border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 100; }
+.hub-topbar-title { font-weight: 600; font-size: 14px; }
+.hub-topbar-spacer { margin-left: auto; }
 
-.hub-activity { position: fixed; top: 49px; right: 0; width: 360px; max-width: 90vw;
-  height: calc(100vh - 49px); background: var(--hub-surface); border-left: 1px solid var(--hub-border);
-  box-shadow: -8px 0 24px rgba(0,0,0,.08); z-index: 200; overflow-y: auto; padding: 16px; }
-.hub-activity-head { display: flex; justify-content: space-between; align-items: center;
-  font-weight: 600; font-size: 13px; margin-bottom: 12px; }
-.hub-activity-close { border: none; background: none; cursor: pointer; font-size: 14px; color: var(--hub-sub); }
-.hub-activity-empty { color: var(--hub-sub); font-size: 13px; }
-.hub-activity-entry { border: 1px solid var(--hub-border); border-radius: 10px; padding: 12px; margin-bottom: 10px; }
-.hub-activity-title { font-size: 12.5px; font-weight: 600; margin-bottom: 6px; }
-.hub-activity-body { font-size: 12px; color: var(--hub-sub); white-space: pre-wrap;
-  font-family: inherit; margin: 0; line-height: 1.5; }
+/* Activity entries inside SlideOver (Cards in a column) */
+.hub-activity-list { display: flex; flex-direction: column; gap: 10px; }
