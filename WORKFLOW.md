@@ -56,6 +56,8 @@ Built and live: Figma ingest · FIGMA-MAP bridge (top 12) · barrel export · pr
 - [x] Hub production build verified (Vite 8, `✓ built` — caught & fixed a duplicate `RadioButton` barrel export; generator now dedupes globally).
 - [x] Committed (`7f499fe`, workflow files only — component WIP left for Raf).
 
+- [x] Figma component library confirmed via Figma desktop — full inventory + gap lists in `FIGMA-MAP.md`.
+
 Open:
-- [ ] Confirm Figma-side component names + map the remaining 35 components (blocked on the design-system file being open in Figma desktop — remote access only exposes the cover page; verified).
+- [ ] Raf: `git push` + restart the deploy watcher.
 - [x] Deploy wired into the **deploy-hub watcher** (GCS → design.nexleaf.org/prototype-hub/; base-path build verified). Restart the watcher to pick it up.
