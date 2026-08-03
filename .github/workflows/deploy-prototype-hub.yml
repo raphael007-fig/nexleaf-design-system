@@ -1,0 +1,66 @@
+name: Deploy Prototype Hub
+
+# Deploys the prototype hub to design.nexleaf.org/prototype-hub/ on every push
+# that touches the hub or the design system it imports.
+#
+# WHY: the local deploy watcher depends on Raf's laptop being awake AND having
+# macOS Full Disk Access. When it breaks, prototypes silently stop updating.
+# CI removes the machine from the loop entirely — push and it ships.
+#
+# ONE-TIME SETUP (Raf, in GitHub → Settings → Secrets and variables → Actions):
+#   GCP_SA_KEY  — JSON key for a service account with Storage Object Admin on
+#                 the nexleaf-design-content bucket.
+# Create it in Google Cloud Console → IAM → Service Accounts → Keys.
+# (Do not paste the key into chat — add it directly in GitHub.)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prototype-hub/**'
+      - 'src/**'
+      - '.github/workflows/deploy-prototype-hub.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install deps
+        run: npm ci || npm install
+
+      - name: Build prototype hub
+        working-directory: prototype-hub
+        run: npx vite build --base=/prototype-hub/
+
+      - name: Auth to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Upload to GCS
+        run: |
+          gcloud storage cp --recursive prototype-hub/dist/* \
+            gs://nexleaf-design-content/prototype-hub/
+
+      - name: Verify live bundle
+        run: |
+          EXPECTED=$(grep -o 'assets/index-[^"]*\.js' prototype-hub/dist/index.html | head -1)
+          echo "Expected: $EXPECTED"
+          sleep 5
+          LIVE=$(curl -s https://design.nexleaf.org/prototype-hub/index.html \
+                 | grep -o 'assets/index-[^"]*\.js' | head -1 || true)
+          echo "Live:     ${LIVE:-<none>}"
+          if [ "$EXPECTED" = "$LIVE" ]; then
+            echo "✓ Deployed and verified"
+          else
+            echo "⚠ Live differs (CDN cache?) — check design.nexleaf.org/prototype-hub/"
+          fi
