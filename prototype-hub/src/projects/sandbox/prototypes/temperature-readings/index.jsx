@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 // Built ONLY from Poltail design-system components (via the @ds barrel).
-import { Page, MetricCard, Banner, IndexTable, Badge } from '@ds';
+import { Page, MetricCard, Banner, IndexTable, Badge, Btn, Popover, OptionList, Toast } from '@ds';
 
 const COLUMNS = [
   { key: 'date', label: 'Date', sortable: true },
@@ -20,11 +20,56 @@ const ROWS = [
   { id: 5, date: 'Apr 27, 2026', facility: 'Nakuru Provincial', region: 'Nakuru', morning: '8.9', evening: '—', status: 'Incomplete', statusTone: 'warning', submittedBy: 'Peter M.' },
 ];
 
+const RECORD_OPTIONS = [
+  { id: 'manual', label: 'Enter manually' },
+  { id: 'rtmd', label: 'Get from attached RTMD device' },
+];
+
 export default function TemperatureReadings() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const recordBtnRef = useRef(null);
+
+  const handleRecordChoice = (id) => {
+    setMenuOpen(false);
+    setToast(
+      id === 'manual'
+        ? 'Manual entry — opens the temperature recording form.'
+        : 'Reading from attached RTMD device…'
+    );
+  };
+
   return (
     <div style={{ background: '#f1f1f1', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: 24 }}>
-        <Page title="Temperature Readings" subtitle="Cold-chain submissions across facilities" />
+        {/* Header row: Page (left) + Record reading disclosure action (right) */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <Page title="Temperature Readings" subtitle="Cold-chain submissions across facilities" />
+          </div>
+          <div ref={recordBtnRef} style={{ paddingTop: 4 }}>
+            <Btn variant="primary" disclosure onClick={() => setMenuOpen((v) => !v)}>
+              Record reading
+            </Btn>
+          </div>
+        </div>
+        <Popover
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          anchorRef={recordBtnRef}
+          placement="bottom-end"
+          minWidth={280}
+          ariaLabel="Record reading options"
+        >
+          <OptionList
+            flush
+            dense
+            options={RECORD_OPTIONS}
+            onChange={handleRecordChoice}
+            ariaLabel="How do you want to record the reading?"
+          />
+        </Popover>
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '16px 0' }}>
           <MetricCard title="Facilities reporting" metric="42" />
           <MetricCard title="Complete today" metric="38" />
@@ -36,6 +81,12 @@ export default function TemperatureReadings() {
         <div style={{ marginTop: 16 }}>
           <IndexTable columns={COLUMNS} rows={ROWS} />
         </div>
+
+        {toast && (
+          <Toast tone="info" onDismiss={() => setToast(null)}>
+            {toast}
+          </Toast>
+        )}
       </div>
     </div>
   );
