@@ -1,4 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
+import { IndexTable, Badge, Tag, TagGroup } from '@ds';
 import { projects } from './projects.js';
 
 // Tiny hash router — no dependency.
@@ -19,6 +20,15 @@ function useHashPath() {
 const STATUS_COLOR = {
   Active: '#005bd3', Draft: '#616161', 'In Progress': '#005bd3',
   'In Review': '#856404', Done: '#0c5132', Archived: '#9e9e9e',
+};
+
+// Poltail Badge tones per prototype status
+const STATUS_TONE = {
+  Draft: 'default',
+  'In Progress': 'info',
+  'In Review': 'attention',
+  Done: 'success',
+  Archived: 'default',
 };
 
 const jiraUrl = (key) => `https://nexleaf.atlassian.net/browse/${key}`;
@@ -54,6 +64,15 @@ function ProjectsIndex() {
 }
 
 function ProjectPage({ project }) {
+  const [sortKey, setSortKey] = useState('updated');
+  const [sortDir, setSortDir] = useState('desc');
+
+  const sorted = [...project.prototypes].sort((a, b) => {
+    const av = String(a[sortKey] ?? '');
+    const bv = String(b[sortKey] ?? '');
+    return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+  });
+
   return (
     <div className="hub">
       <header className="hub-head">
@@ -70,63 +89,61 @@ function ProjectPage({ project }) {
         <div className="hub-empty">No prototypes yet. Run <code>npm run new -- {project.slug} &lt;slug&gt; "Title"</code>.</div>
       )}
       {project.prototypes.length > 0 && (
-        <div className="hub-tablewrap">
-          <table className="hub-table">
-            <thead>
-              <tr>
-                <th>Prototype</th>
-                <th>Type</th>
-                <th>Status</th>
-                <th>Jira</th>
-                <th>Tags</th>
-                <th className="hub-th-right">Updated</th>
-              </tr>
-            </thead>
-            <tbody>
-              {project.prototypes.map((p) => (
-                <tr
-                  key={p.slug}
-                  className="hub-row"
-                  onClick={() => { window.location.hash = `#/${project.slug}/${p.slug}`; }}
-                >
-                  <td>
-                    <a className="hub-row-title" href={`#/${project.slug}/${p.slug}`} onClick={(e) => e.stopPropagation()}>
-                      {p.title}
-                    </a>
-                    <div className="hub-row-desc">{p.description}</div>
-                  </td>
-                  <td><span className="hub-type">{p.type}</span></td>
-                  <td>
-                    <span className="hub-status" style={{ color: STATUS_COLOR[p.status] || '#616161' }}>
-                      ● {p.status}
-                    </span>
-                  </td>
-                  <td>
-                    {p.jiraKey ? (
-                      <a
-                        className="hub-jira"
-                        href={jiraUrl(p.jiraKey)}
-                        target="_blank"
-                        rel="noreferrer"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {p.jiraKey}
-                      </a>
-                    ) : (
-                      <span className="hub-row-none">—</span>
-                    )}
-                  </td>
-                  <td>
-                    <div className="hub-tags">
-                      {(p.tags || []).map((t) => <span key={t} className="hub-tag">{t}</span>)}
-                    </div>
-                  </td>
-                  <td className="hub-td-right"><span className="hub-updated">{p.updated}</span></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <IndexTable
+          columns={[
+            {
+              key: 'title',
+              label: 'Prototype',
+              sortable: true,
+              render: (row) => (
+                <div>
+                  <a className="hub-row-title" href={`#/${project.slug}/${row.slug}`}>{row.title}</a>
+                  <div className="hub-row-desc">{row.description}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'type',
+              label: 'Type',
+              render: (row) => <Badge>{row.type}</Badge>,
+            },
+            {
+              key: 'status',
+              label: 'Status',
+              sortable: true,
+              render: (row) => (
+                <Badge tone={STATUS_TONE[row.status] || 'default'}>{row.status}</Badge>
+              ),
+            },
+            {
+              key: 'jiraKey',
+              label: 'Jira',
+              render: (row) =>
+                row.jiraKey ? (
+                  <a className="hub-jira" href={jiraUrl(row.jiraKey)} target="_blank" rel="noreferrer">
+                    {row.jiraKey}
+                  </a>
+                ) : ('—'),
+            },
+            {
+              key: 'tags',
+              label: 'Tags',
+              render: (row) => (
+                <TagGroup gap={6}>
+                  {(row.tags || []).map((t) => <Tag key={t} label={t} />)}
+                </TagGroup>
+              ),
+            },
+            { key: 'updated', label: 'Updated', sortable: true, align: 'right' },
+          ]}
+          rows={sorted.map((p, i) => ({ id: p.slug || i, ...p }))}
+          sortKey={sortKey}
+          sortDir={sortDir}
+          onSort={(key) => {
+            if (key === sortKey) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+            else { setSortKey(key); setSortDir('asc'); }
+          }}
+        />
       )}
     </div>
   );
