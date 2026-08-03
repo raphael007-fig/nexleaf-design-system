@@ -139,8 +139,59 @@ is allowed to drift ahead silently — whichever side moved, the other catches u
 4. Parity gaps found during an audit are reported to Raf with what was added/fixed —
    never silently ignored.
 
+## Figma library inventory — CONFIRMED (from "Nexleaf Design System v2.1", file `y4XdS2kaiS8eMHY3z8wORP`)
+
+Read live from the file via Figma desktop. Each Figma component has its own page; page
+node IDs below let tools jump straight to a component.
+
+**Top-12 names confirmed:** Button `7:3` → Btn · Card `75727:31140` (+ Card Component
+`84989:44873`) → Card · Text field `376:12` → TextInput · Select `364:2186` → SelectInput ·
+Badge `367:343` → Badge · Tag `364:1477` → Tag · Banner `20:21` → Banner · Modal `358:0` →
+Modal · Index table `44707:19512` → IndexTable · Navigation `48:108` → SideNavigation ·
+Top bar `434:2197` → TopBar · Toast `364:1236` → Toast.
+
+**Rest of the Figma library → Poltail:**
+
+| Figma page (node) | Poltail component |
+|---|---|
+| Breadcrumbs `84703:5713` | Breadcrumbs |
+| Checkbox `341:1996` | Checkbox |
+| Choice list `1317:4361` | ChoiceList (Checkbox.jsx) |
+| Date picker `1334:566` | DatePicker (+ DateField for input) |
+| Divider `72951:34134` | Divider |
+| Drop zone `657:219` | Upload |
+| Empty state `7534:0` | IndexTable `emptyState` prop |
+| Inline error `50638:21000` | TextInput/SelectInput `error` prop |
+| Option list `441:3720` | OptionList |
+| Page `345:1992` + Page actions `922:4327` | Page (`primaryAction`/`secondaryActions`) |
+| Pagination `931:125` | Pagination |
+| Popover `395:4226` | Popover |
+| Progress bar `5540:54` / Spinner `7913:9305` | Skeleton / Btn `loading` |
+| Radio button `395:2170` | RadioButton |
+| Select `364:2186` | SelectInput |
+| Skeleton body/display/thumbnail `62007:*` | Skeleton / SkeletonGroup |
+| Step Grid `84893:4317` | Stepper |
+| Tabs `898:0` | Tabs / TabPanel |
+| Toggle `84937:19912` | Toggle |
+| Tooltip `2098:94` | Tooltip |
+| Listbox `110421:5092` | SearchSelect |
+| Avatar `462:3886` | TopBar `userAvatar`/`userInitials` |
+| Action List `254:440` | TertiaryActions / MenuDrawer items |
+| Data table `5504:1727` | IndexTable (prefer it) |
+
+**Figma-only (no Poltail equivalent yet — using one in a design = DS ticket):**
+Account Connection, Callout card, Color picker, Contextual save bar, Description list,
+Exception list, Filters / Index filters, Footer help, Fullscreen bar, Keyboard key,
+Media card, Range slider, Resource list, Thumbnail / Video thumbnail, WYSIWYG.
+
+**Poltail-only (no Figma page yet — design-side gap, mirror rule applies):**
+Accordion, AiChat, AppShell, BottomSheet, Cell, EquipmentCard, MenuDrawer, MetricCard,
+NavCard, NumberInput, OptionCard, Overlay, SlideOver, SubmissionSuccessCard,
+TemperatureTasksCard, TextareaInput, Toolbar.
+
 ## TODO
-- [ ] Confirm Figma-side component names against the published Figma library (open "Nexleaf Design System v2.1" in Figma desktop for a full pass).
-- [ ] Map the remaining 35 components (Accordion, AppShell, BottomSheet, Breadcrumbs, Cell, Checkbox, DateField, DatePicker, Divider, EquipmentCard, MenuDrawer, MetricCard, NavCard, NumberInput, OptionCard, OptionList, Overlay, Page, Pagination, PolarisIcon, Popover, RadioButton, SearchSelect, Skeleton, SlideOver, Stepper, SubmissionSuccessCard, Tabs, TemperatureTasksCard, TertiaryActions, TextareaInput, Toggle, Toolbar, Tooltip, Upload).
-- [ ] Add a barrel export (`src/index.js`) so prototypes import `@nexleaf/design-system` instead of deep paths.
+- [x] Confirm Figma-side component names against the library (done via Figma desktop, full page inventory above).
+- [x] Barrel export `src/index.js` (done; regenerate via `npm run gen-barrel`).
+- [ ] Per-component variant→prop mapping for the newly confirmed components (fill in as each is first used).
+- [ ] Decide whether the Poltail-only components get Figma pages (mirror-rule backlog).
 - [ ] Expand the Phosphor→Polaris table as icons are encountered.
