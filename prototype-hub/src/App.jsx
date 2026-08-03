@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react';
-import { IndexTable, Badge, Tag, TagGroup } from '@ds';
+import { IndexTable, LinkCell, Badge, Tag, TagGroup, TEXT_SUBDUED } from '@ds';
 import { projects } from './projects.js';
 
 // Tiny hash router — no dependency.
@@ -99,8 +99,10 @@ function ProjectPage({ project }) {
               sortable: true,
               render: (row) => (
                 <div>
-                  <a className="hub-row-title" href={`#/${project.slug}/${row.slug}`}>{row.title}</a>
-                  <div className="hub-row-desc">{row.description}</div>
+                  <LinkCell items={[{ label: row.title, href: `#/${project.slug}/${row.slug}` }]} />
+                  <div style={{ fontSize: 12, color: TEXT_SUBDUED, lineHeight: 1.45, marginTop: 2, maxWidth: 420 }}>
+                    {row.description}
+                  </div>
                 </div>
               ),
             },
@@ -121,11 +123,9 @@ function ProjectPage({ project }) {
               key: 'jiraKey',
               label: 'Jira',
               render: (row) =>
-                row.jiraKey ? (
-                  <a className="hub-jira" href={jiraUrl(row.jiraKey)} target="_blank" rel="noreferrer">
-                    {row.jiraKey}
-                  </a>
-                ) : ('—'),
+                row.jiraKey
+                  ? <LinkCell items={[{ label: row.jiraKey, href: jiraUrl(row.jiraKey) }]} />
+                  : '—',
             },
             {
               key: 'tags',
@@ -141,9 +141,7 @@ function ProjectPage({ project }) {
               key: 'open',
               label: '',
               render: (row) => (
-                <a className="hub-open-link" href={`#/${project.slug}/${row.slug}`}>
-                  Open →
-                </a>
+                <LinkCell items={[{ label: 'Open →', href: `#/${project.slug}/${row.slug}` }]} />
               ),
             },
           ]}
