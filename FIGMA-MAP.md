@@ -136,8 +136,35 @@ Responsive variants (mobile / tablet / desktop, Primary / Secondary / Tertiary /
 all laid out on the Design Rep page — **consult it before building a screen**, don't invent
 a layout.
 
-In code the equivalent is `AppShell` (supplies TopBar + SideNavigation) wrapping `Page`.
-A prototype that renders only a content column is incomplete.
+### Code side — copy `src/pages/ApplicationLayout` exactly
+
+`src/pages/ApplicationLayout/ApplicationLayout.stories.jsx` (Sectioned layout) is the
+**canonical reference for screen placement in code**. Read it before building a screen; do
+not invent spacing.
+
+```jsx
+<AppShell level="secondary" navItems={…} activeItemId={…} contentWidth="full">
+  {/* Horizontal 16px matches the Toolbar's padding so content edges line up with
+      the breadcrumb (left) and avatar (right). TOP PADDING IS 0 — <Page> already
+      owns 24px of top padding; adding more stacks two gaps and pushes the header
+      way down the screen. */}
+  <div style={{ padding: '0 16px 32px', boxSizing: 'border-box' }}>
+    <Page title="…" subtitle="…" primaryAction={{ content: '…', disclosure: true, onAction }} />
+    <div style={{ …grid…, marginBottom: 24 }}>{/* metrics */}</div>
+    <div style={{ marginBottom: 24 }}>{/* banner */}</div>
+    <IndexTable … />
+  </div>
+</AppShell>
+```
+
+Rules that follow from it:
+- **`contentWidth="full"`** — not a fixed px value; the content fills the right column.
+- **Wrapper top padding 0**, horizontal 16 (12 on the smallest viewport), bottom 32.
+- **24px section rhythm** via `marginBottom: 24` on each section (Page's own bottom padding
+  provides the first gap) — not a flex/grid `gap` on a wrapper.
+- A prototype that renders only a content column, with no `AppShell`, is incomplete.
+- Hub/tooling chrome must never overlap product controls (the top bar's Ask AI, region,
+  apps, notifications, avatar).
 
 ## Annotation format — house style (BINDING)
 

@@ -45,7 +45,37 @@ scan the product files for the pattern used as a *design* rather than a componen
 **Design Rep** page is the canonical layout/tile resource). Only after both come up empty is
 something genuinely missing. (A broad query missed `Metric Card`, which does exist.)
 
-## Layout & spacing
+## Layout & placement — copy the canonical references, don't invent
+
+**Code:** `src/pages/ApplicationLayout/ApplicationLayout.stories.jsx` (Sectioned layout) is
+THE reference for screen placement. Read it before building any screen.
+
+```jsx
+<AppShell level="secondary" navItems={...} activeItemId={...} contentWidth="full">
+  <div style={{ padding: '0 16px 32px', boxSizing: 'border-box' }}>
+    <Page title="..." subtitle="..." primaryAction={{ content: '...', disclosure: true, onAction }} />
+    <div style={{ ...grid..., marginBottom: 24 }}>{/* metrics */}</div>
+    <div style={{ marginBottom: 24 }}>{/* banner */}</div>
+    <IndexTable ... />
+  </div>
+</AppShell>
+```
+
+- `contentWidth="full"` — never a fixed px width; content fills the right column so its edges
+  align with the toolbar's breadcrumb (left) and avatar (right).
+- **Wrapper top padding MUST be 0** — `Page` already owns 24px top padding. Adding more stacks
+  two gaps and visibly shoves the header down the screen (a real bug Raf caught).
+- **24px section rhythm** via `marginBottom: 24` per section, not a wrapper `gap`.
+- Wrap every screen in `AppShell`; a bare content column is incomplete.
+- Tooling/hub chrome must never overlap product top-bar controls (Ask AI, region, apps,
+  notifications, avatar).
+
+## After a correction
+
+When Raf corrects something, encode it in this skill AND `FIGMA-MAP.md` / `docs/` in the SAME
+turn — not just in the code. A fix that isn't written down gets repeated.
+
+## Figma layout & spacing
 
 Match the Design Rep reference: Top bar 1440x56 (+1px divider at y=57) - collapsed nav rail
 56px at x=0 - content at **x=80, y=72**, width 1280 - **no extra top padding on the content
