@@ -52,10 +52,18 @@ export default function TemperatureReadings() {
       activeItemId={activeId}
       onNavSelect={setActiveId}
       homeCrumb={{ id: 'home', label: 'Home' }}
-      // Matches the Figma frames: collapsed rail + 1280 content column.
+      // Matches the Figma frames: collapsed rail.
       defaultRailCollapsed
-      contentWidth={1280}
+      // Canonical shell config — see src/pages/ApplicationLayout (Sectioned layout):
+      // contentWidth="full" so the content fills the right column and its edges
+      // line up with the toolbar's breadcrumb (left) and avatar (right).
+      contentWidth="full"
     >
+      {/* Content wrapper per ApplicationLayout: horizontal 16px to match the
+          Toolbar's padding, bottom 32px, and TOP PADDING 0 — <Page> already has
+          its own 24px top padding, so adding more stacks two gaps and pushes the
+          header too far down. */}
+      <div style={{ padding: '0 16px 32px', boxSizing: 'border-box' }}>
       <div ref={anchorRef}>
         <Page
           title="Temperature Readings"
@@ -84,18 +92,22 @@ export default function TemperatureReadings() {
         />
       </Popover>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, margin: '16px 0' }}>
+      {/* Sections stack directly — Page's built-in bottom padding spaces it from
+          the metrics; the metrics row carries marginBottom 24 so every vertical
+          gap (toolbar→header, header→metrics, metrics→table) reads as 24px. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
         <MetricCard title="Facilities reporting" metric="42" badge={{ tone: 'info', label: '42 of 46 total' }} />
         <MetricCard title="Complete today" metric="38" badge={{ tone: 'success', label: '92% of target' }} />
         <MetricCard title="Needs attention" metric="4" badge={{ tone: 'warning', label: '4 incomplete' }} />
       </div>
 
-      <Banner tone="warning" title="4 facilities have incomplete readings">
-        Follow up before end of day to keep the cold-chain log complete.
-      </Banner>
+      <div style={{ marginBottom: 24 }}>
+        <Banner tone="warning" title="4 facilities have incomplete readings">
+          Follow up before end of day to keep the cold-chain log complete.
+        </Banner>
+      </div>
 
-      <div style={{ marginTop: 16 }}>
-        <IndexTable columns={COLUMNS} rows={ROWS} />
+      <IndexTable columns={COLUMNS} rows={ROWS} />
       </div>
 
       {toast && (
