@@ -4,8 +4,29 @@ import React, { useRef, useState } from 'react';
 // rail; Page supplies the header + primaryAction. See FIGMA-MAP.md § layout anatomy.
 import {
   AppShell, Page, MetricCard, Banner, IndexTable, Badge, Btn,
-  Popover, OptionList, Toast, COLDTRACE_NAV_ITEMS,
+  Popover, OptionList, Toast, PolarisIconImg,
 } from '@ds';
+
+// Navigation for this surface — mirrors the "Side Navigation" reference frame Raf
+// added to the Figma section (Home · RTMDs/Devices · Record Temperature ·
+// Summaries[Daily/Weekly/Monthly] · Event Logs · Settings). This is the
+// temperature-recording tree, NOT the generic ColdTrace equipment nav.
+const ico = (name) => <PolarisIconImg name={name} size={20} color="#303030" />;
+const TEMPERATURE_NAV_ITEMS = [
+  { id: 'home', label: 'Home', icon: ico('HomeFilledIcon') },
+  { id: 'rtmds', label: 'RTMDs/Devices', icon: ico('MobileIcon') },
+  { id: 'record-temperature', label: 'Record Temperature', icon: ico('ClipboardCheckFilledIcon') },
+  {
+    id: 'summaries', label: 'Summaries', icon: ico('ChartVerticalFilledIcon'),
+    children: [
+      { id: 'daily', label: 'Daily' },
+      { id: 'weekly', label: 'Weekly' },
+      { id: 'monthly', label: 'Monthly' },
+    ],
+  },
+  { id: 'event-logs', label: 'Event Logs', icon: ico('NoteIcon') },
+  { id: 'settings', label: 'Settings', icon: ico('SettingsFilledIcon') },
+];
 
 const COLUMNS = [
   { key: 'date', label: 'Date', sortable: true },
@@ -33,7 +54,7 @@ const RECORD_OPTIONS = [
 export default function TemperatureReadings() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
-  const [activeId, setActiveId] = useState('temperature-monitoring');
+  const [activeId, setActiveId] = useState('daily');
   const anchorRef = useRef(null);
 
   const handleRecordChoice = (id) => {
@@ -48,7 +69,7 @@ export default function TemperatureReadings() {
   return (
     <AppShell
       level="secondary"
-      navItems={COLDTRACE_NAV_ITEMS}
+      navItems={TEMPERATURE_NAV_ITEMS}
       activeItemId={activeId}
       onNavSelect={setActiveId}
       homeCrumb={{ id: 'home', label: 'Home' }}
@@ -101,8 +122,10 @@ export default function TemperatureReadings() {
         <MetricCard title="Needs attention" metric="4" badge={{ tone: 'warning', label: '4 incomplete' }} />
       </div>
 
+      {/* Matches the Figma Banner instance: Tone=warning, In card=true, Title=false
+          — a single compact line, no title, not dismissable. */}
       <div style={{ marginBottom: 24 }}>
-        <Banner tone="warning" title="4 facilities have incomplete readings">
+        <Banner tone="warning" inCard>
           Follow up before end of day to keep the cold-chain log complete.
         </Banner>
       </div>
