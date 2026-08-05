@@ -130,7 +130,9 @@ export default function TemperatureReadings() {
         </Banner>
       </div>
 
-      <IndexTable columns={COLUMNS} rows={ROWS} />
+      {/* `bare` matches the Figma table: no selection checkboxes / bulk-action
+          chrome, keeping the plain bordered container. */}
+      <IndexTable bare columns={COLUMNS} rows={ROWS} />
       </div>
 
       {toast && (

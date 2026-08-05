@@ -166,7 +166,7 @@ export function Page({
             ? <span key={i} style={{ display: 'inline-flex' }}>{action.node}</span>
             : <Btn key={i} variant="secondary" size={isMobileRecord ? 'large' : 'medium'} onClick={handleSecondary(action)} disclosure={action.disclosure}>{action.content}</Btn>
         ))}
-        {primaryAction && <Btn variant="primary" size={isMobileRecord ? 'large' : 'medium'} onClick={handlePrimary}>{primaryAction.content}</Btn>}
+        {primaryAction && <Btn variant="primary" size={isMobileRecord ? 'large' : 'medium'} onClick={handlePrimary} disclosure={primaryAction.disclosure} tone={primaryAction.tone}>{primaryAction.content}</Btn>}
       </>
     ) : null);
 
@@ -372,7 +372,11 @@ export function Page({
               )
             ))}
             {primaryAction && (
-              <Btn variant="primary" size={autoMobile ? 'large' : 'medium'} onClick={handlePrimary}>
+              // `disclosure` / `tone` are forwarded so a header action can open a
+              // menu (caret) or carry a critical/success tone — matching what the
+              // Figma Page component's Actions slot supports.
+              <Btn variant="primary" size={autoMobile ? 'large' : 'medium'} onClick={handlePrimary}
+                disclosure={primaryAction.disclosure} tone={primaryAction.tone}>
                 {primaryAction.content}
               </Btn>
             )}
