@@ -55,6 +55,7 @@ export default function TemperatureReadings() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const [activeId, setActiveId] = useState('daily');
+  const [selected, setSelected] = useState(new Set());
   const anchorRef = useRef(null);
 
   const handleRecordChoice = (id) => {
@@ -130,9 +131,13 @@ export default function TemperatureReadings() {
         </Banner>
       </div>
 
-      {/* `bare` matches the Figma table: no selection checkboxes / bulk-action
-          chrome, keeping the plain bordered container. */}
-      <IndexTable bare columns={COLUMNS} rows={ROWS} />
+      {/* Selection column ON — rows are selectable (Figma is being brought in line). */}
+      <IndexTable
+        columns={COLUMNS}
+        rows={ROWS}
+        selectedRows={selected}
+        onSelectionChange={setSelected}
+      />
       </div>
 
       {toast && (
