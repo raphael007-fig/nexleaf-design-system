@@ -5,5 +5,5 @@ export default {
   status: 'In Review',
   jiraKey: 'PD-31',
   tags: ['dashboard', 'cold-chain', 'IndexTable'],
-  updated: '2026-08-03',
+  updated: '2026-08-05',
 };

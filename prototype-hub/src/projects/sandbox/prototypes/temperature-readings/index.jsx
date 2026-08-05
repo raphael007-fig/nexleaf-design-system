@@ -28,10 +28,12 @@ const TEMPERATURE_NAV_ITEMS = [
   { id: 'settings', label: 'Settings', icon: ico('SettingsFilledIcon') },
 ];
 
+// Columns mirror the Figma table exactly: selection checkbox + 6 data columns.
+// Region is intentionally omitted — the Figma Index table allows 7 columns total
+// (one taken by the checkbox) and region is already implied by the facility name.
 const COLUMNS = [
   { key: 'date', label: 'Date', sortable: true },
   { key: 'facility', label: 'Facility', sortable: true },
-  { key: 'region', label: 'Region' },
   { key: 'morning', label: 'Morning °C', sortable: true, align: 'right' },
   { key: 'evening', label: 'Evening °C', sortable: true, align: 'right' },
   { key: 'status', label: 'Status', render: (row) => <Badge tone={row.statusTone}>{row.status}</Badge> },
