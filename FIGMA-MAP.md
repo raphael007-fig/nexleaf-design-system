@@ -182,7 +182,24 @@ Match the existing annotation panels in the file (e.g. `8519:186503`):
   and comparison panels (previous vs improved, with the reasoning).
 - Explain **why**, not just what. Annotations teach the next reader the reasoning.
 
-## Mirror rule — prototype ⇄ Figma parity (BINDING)
+## Mirror rule — the handshake (BINDING)
+
+Prototype and Figma must tell the same story, **but neither side is changed silently**:
+
+- **Prototype changed → Figma must follow.** Claude does *not* write to Figma unprompted. It
+  **tells Raf what diverged and asks** first, e.g.
+  > The prototype now does X; your Figma frames still show Y. Want me to update Figma?
+  On approval, mirror it per the canvas discipline (new versioned frame, annotated) and comment
+  on the Jira ticket.
+- **Figma changed → Raf says "go check it."** He edits Figma himself and tells Claude to look;
+  Claude then reads the frames, reports what changed, and updates the prototype to match.
+- **Every correction counts.** A fix made in the prototype (spacing, copy, a new control, a
+  state) is a divergence until it exists in Figma too. Track it and raise it — don't let it
+  drift.
+- Report parity findings as a short list: what's on each side, what's missing where, and the
+  proposed fix — then wait for the go-ahead.
+
+## Mirror rule — parity details
 
 The prototype and the project's Figma section must tell the **same story**. Neither side
 is allowed to drift ahead silently — whichever side moved, the other catches up.
