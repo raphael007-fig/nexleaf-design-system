@@ -57,8 +57,17 @@ Load `prototype-review-then-publish`.
 | Preview | `/prototype-hub-preview/` | **auto** (watcher + CI) |
 | Team | `/prototype-hub/` | **approval only** — `npm run deploy` |
 
-**Always give the localhost URL. Always ask before publishing.** Claude cannot deploy or push
-(no gcloud/GitHub credentials) — hand over the command and confirm the "Verified live" line.
+**Always give the localhost URL** — first line of the response, every time, no exceptions.
+**Always ask before publishing.**
+
+Claude (Cowork) cannot deploy or push — no gcloud/GitHub credentials in the sandbox. Raf keeps a
+**dedicated Claude Code session for deploys**, which has them. So hand the deploy off as a
+ready-to-paste prompt for that session, e.g.:
+
+> Push and publish the prototype hub: `cd ~/Documents/Design\ System && git push`, then
+> `cd prototype-hub && npm run deploy`. Report the "Verified live" line and the bundle hash.
+
+Then confirm the reported hash matches the local build.
 Record: Slack DM + Jira comment + `CHANGELOG.md` + commit `proto(<slug>): <what> — <why> [PD-XX]`.
 
 ## Standing rules from his corrections
