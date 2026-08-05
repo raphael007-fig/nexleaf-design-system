@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "new": "node scripts/new-prototype.mjs",
     "new-project": "node scripts/new-project.mjs",
-    "deploy": "bash scripts/deploy.sh",
+    "deploy": "bash scripts/deploy.sh live",
+    "deploy:preview": "bash scripts/deploy.sh preview",
     "gen-barrel": "node scripts/gen-barrel.mjs"
   },
   "devDependencies": {

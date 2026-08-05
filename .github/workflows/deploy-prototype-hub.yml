@@ -13,6 +13,9 @@ name: Deploy Prototype Hub
 # Create it in Google Cloud Console → IAM → Service Accounts → Keys.
 # (Do not paste the key into chat — add it directly in GitHub.)
 
+# Pushes deploy the PREVIEW path only (/prototype-hub-preview/). Publishing to the
+# team's URL (/prototype-hub/) is a manual run — Run workflow → target: live — so it
+# stays an approval decision, matching the local `npm run deploy` behaviour.
 on:
   push:
     branches: [main]
@@ -21,10 +24,19 @@ on:
       - 'src/**'
       - '.github/workflows/deploy-prototype-hub.yml'
   workflow_dispatch:
+    inputs:
+      target:
+        description: 'Where to deploy'
+        type: choice
+        default: preview
+        options: [preview, live]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      # push → preview; manual run → whatever was chosen (default preview)
+      SUBPATH: ${{ (github.event_name == 'workflow_dispatch' && inputs.target == 'live') && 'prototype-hub' || 'prototype-hub-preview' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +49,7 @@ jobs:
 
       - name: Build prototype hub
         working-directory: prototype-hub
-        run: npx vite build --base=/prototype-hub/
+        run: npx vite build --base="/$SUBPATH/"
 
       - name: Auth to Google Cloud
         uses: google-github-actions/auth@v2
@@ -49,18 +61,19 @@ jobs:
       - name: Upload to GCS
         run: |
           gcloud storage cp --recursive prototype-hub/dist/* \
-            gs://nexleaf-design-content/prototype-hub/
+            "gs://nexleaf-design-content/$SUBPATH/"
 
       - name: Verify live bundle
         run: |
           EXPECTED=$(grep -o 'assets/index-[^"]*\.js' prototype-hub/dist/index.html | head -1)
+          echo "Target: $SUBPATH"
           echo "Expected: $EXPECTED"
           sleep 5
-          LIVE=$(curl -s https://design.nexleaf.org/prototype-hub/index.html \
+          LIVE=$(curl -s "https://design.nexleaf.org/$SUBPATH/index.html" \
                  | grep -o 'assets/index-[^"]*\.js' | head -1 || true)
           echo "Live:     ${LIVE:-<none>}"
           if [ "$EXPECTED" = "$LIVE" ]; then
             echo "✓ Deployed and verified"
           else
-            echo "⚠ Live differs (CDN cache?) — check design.nexleaf.org/prototype-hub/"
+            echo "⚠ Live differs (CDN cache?) — check design.nexleaf.org/$SUBPATH/"
           fi

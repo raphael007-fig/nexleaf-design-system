@@ -76,10 +76,16 @@ in one project.
 - **Every meaningful change is logged** — CHANGELOG entry (what + why + source) + commit `proto(<slug>): <what> — <why> [PD-XX]`. Small tweaks batch into checkpoints; see [Conventions](08-conventions.md).
 - `meta.js` carries the prototype's Jira key; `project.js` carries the epic — the hub renders both as links.
 
-## Review then publish — the two-step flow
+## Three surfaces — auto-deploy AND an approval gate
 
-Everything is hosted on **design.nexleaf.org**. Prototypes are **reviewed locally first and
-only published when Raf approves** — nothing reaches the team automatically.
+Everything is hosted on **design.nexleaf.org**. Auto-deploy stays on, but it feeds a
+**preview** path so unreviewed prototypes never reach the team's URL.
+
+| Surface | URL | Updated by |
+|---|---|---|
+| **Local review** | `localhost:5173/#/<project>/<slug>` | `npm run dev` — hot-reloads on every edit |
+| **Preview** | `design.nexleaf.org/prototype-hub-preview/` | **auto** — deploy-hub watcher on save; CI on push |
+| **Team** | `design.nexleaf.org/prototype-hub/` | **approval only** — `npm run deploy` |
 
 **1. Review on localhost** (start once, leave running):
 
@@ -88,20 +94,21 @@ cd ~/Documents/Design\ System/prototype-hub
 npm run dev            # → http://localhost:5173
 ```
 
-Vite hot-reloads, so any change Claude makes to a prototype appears in the browser
-immediately — no restart, no rebuild, no repeated commands.
+Vite hot-reloads, so any change Claude makes appears immediately — no restart, no rebuild.
+**Claude always provides this URL** after prototype work.
 
-**2. Publish when satisfied:**
+**2. Publish when satisfied** (Claude asks first, never publishes unreviewed work):
 
 ```bash
-npm run deploy         # build + upload + verify the live bundle
+npm run deploy         # → /prototype-hub/  (build + upload + verify live bundle)
+npm run deploy:preview # → /prototype-hub-preview/  (what the watcher/CI do automatically)
 ```
 
-→ live at **design.nexleaf.org/prototype-hub/**.
+**Auto-deploy is preserved.** `~/Documents/deploy-hub/watch.sh` watches `prototype-hub/src`
+(and `src/`, since the hub imports the design system) and deploys to the **preview** path.
+The team's `/prototype-hub/` path only changes on approval — that's the whole point of the
+split. Never repoint auto-deploy at the team path.
 
-**Claude's obligation:** after making prototype changes, tell Raf the localhost URL to review
-and **ask before publishing**. Never publish unreviewed work.
-
-The prototype hub is deliberately **excluded from the deploy-hub auto-watcher** — auto-deploy
-would push unreviewed prototypes live and defeat the approval gate. (The watcher still
-auto-deploys the other projects: website, Storybook, maps, etc.)
+**CI** (`.github/workflows/deploy-prototype-hub.yml`) mirrors this: pushes deploy **preview**;
+publishing live is a manual *Run workflow → target: live*. Needs a `GCP_SA_KEY` secret that
+Raf adds in GitHub.
