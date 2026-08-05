@@ -3,10 +3,9 @@
 // (Figma node 8048-203702): scan a QR code OR type an equipment serial number.
 // The body lives in ScanQrCodeBody.jsx.
 //
-// This page OWNS the whole entry experience: the live scan screen, the failed
-// serial-search / unassigned-QR pop-ups, and the monitoring-method modal that
-// opens over the scanner. Continuing past the method choice enters the wizard
-// — those states live under Pages/Add Equipment.
+// This page owns the entry SURFACE only. The Add Equipment wizard that
+// continues from here is prototype work and lives in the standalone
+// "3rd Party Equipment flow" app (localhost:5180), not in the design system.
 
 import { useState } from 'react';
 import { AppShell } from '../../components/AppShell/AppShell.jsx';
@@ -14,8 +13,6 @@ import { AiChatDemo } from '../../components/AiChat/AiChatDemo.jsx';
 import { PolarisIconImg } from '../../components/PolarisIcon/PolarisIcon.jsx';
 import { TEXT_SUBDUED } from '../../tokens/index.js';
 import { ScanQrCodeBody } from './ScanQrCodeBody.jsx';
-import { AddEquipmentFlow } from '../AddEquipment/AddEquipmentFlow.jsx';
-import { AssembledFlow, StateFrame } from '../AddEquipment/flowHarness.jsx';
 
 export default {
   title: 'Pages/Scan QR Code',
@@ -28,63 +25,9 @@ const BREADCRUMBS = [
   { id: 'scan', label: 'Scan QR Code' },
 ];
 
-// ── Live page — wired to the Add Equipment flow ──────────────────────────────
-// The production behavior: an unknown serial raises the "no equipment found"
-// pop-up, the simulated scanner reads an unassigned QR label, a known serial
-// (e.g. EQ1-001) shows the found toast — and the primary actions lead into the
-// Add Equipment wizard (Pages/Add Equipment). Fixed-height card and level
-// switching (secondary here → tertiary in the wizard) included.
-export const ScanToAddEquipment = {
-  name: 'Scan QR Code (live)',
-  render: () => <AssembledFlow initialStep="search" />,
-};
-
-// ── Full journeys that begin at this page ─────────────────────────────────────
-
-export const FullFlowFromSerialSearch = {
-  name: 'Full flow · from failed serial search',
-  render: () => <AssembledFlow entryContext="serial-search" entrySerial="CCE-30977-KLF" />,
-};
-
-export const FullFlowFromQrScan = {
-  name: 'Full flow · from unassigned QR scan',
-  render: () => <AssembledFlow entryContext="qr-scan" entryQr="QR-30977" />,
-};
-
-// ── Pop-ups over the scanner ──────────────────────────────────────────────────
-
-export const EntryNoEquipmentFound = {
-  name: 'Entry · no equipment found (serial)',
-  render: () => (
-    <StateFrame>
-      <AddEquipmentFlow entryContext="serial-search" entrySerial="CCE-30977-KLF" />
-    </StateFrame>
-  ),
-};
-
-export const EntryUnassignedQrCode = {
-  name: 'Entry · unassigned QR code',
-  render: () => (
-    <StateFrame>
-      <AddEquipmentFlow entryContext="qr-scan" entryQr="QR-30977" />
-    </StateFrame>
-  ),
-};
-
-export const MonitoringMethodSelection = {
-  name: 'Monitoring-method selection (modal)',
-  render: () => (
-    <StateFrame>
-      <AddEquipmentFlow entryContext="serial-search" entrySerial="CCE-30977-KLF" initialStep="method" />
-    </StateFrame>
-  ),
-};
-
-// ── Static variants ───────────────────────────────────────────────────────────
-
 // The scan screen with inert callbacks — layout reference without flow logic.
 export const ScanQrCodePage = {
-  name: 'Scan QR Code (static)',
+  name: 'Scan QR Code',
   render: () => {
     const [chatOpen, setChatOpen] = useState(false);
     const [lastAction, setLastAction] = useState(null);

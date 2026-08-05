@@ -212,8 +212,44 @@ function DropdownBody({ filtered, multiple, selectedSet, onSingle, onMulti }) {
   ));
 }
 
-function Dropdown({ options, query, multiple, selected, onSelectSingle, onReplaceMulti }) {
+// Case-insensitive check for an existing option label (walks nested sections).
+function hasExactLabel(opts, q) {
+  const ql = q.toLowerCase();
+  return opts.some((o) =>
+    (getItemLabel(o) || '').toLowerCase() === ql
+    || (o.options ? hasExactLabel(o.options, q) : false));
+}
+
+// The "+ Add …" row — adopts the typed query as a new value (creatable select).
+function CreateRow({ label, onMouseDown }) {
+  const [hov, setHov] = useState(false);
+  return (
+    <div
+      role="button"
+      onMouseDown={onMouseDown}
+      onMouseEnter={() => setHov(true)}
+      onMouseLeave={() => setHov(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
+        borderRadius: 8, cursor: 'pointer', userSelect: 'none',
+        background: hov ? '#f1f1f1' : 'transparent', transition: 'background 0.1s',
+        fontFamily: 'Inter, sans-serif',
+      }}
+    >
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+        <path d="M10 4.5v11M4.5 10h11" stroke="#005bd3" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+      <span style={{ fontSize: 13, fontWeight: 550, lineHeight: '20px', color: '#005bd3' }}>{label}</span>
+    </div>
+  );
+}
+
+function Dropdown({ options, query, multiple, selected, onSelectSingle, onReplaceMulti, onCreate, createLabel = 'Add' }) {
   const filtered = filterTree(options, query);
+  const q = query.trim();
+  // Offer to create when the field is creatable, something is typed, and it
+  // isn't already an option.
+  const showCreate = !!onCreate && q.length > 0 && !hasExactLabel(options, q);
   return (
     <div style={{
       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 999,
@@ -223,19 +259,28 @@ function Dropdown({ options, query, multiple, selected, onSelectSingle, onReplac
       overflow: 'hidden',
     }}>
       <div style={{ maxHeight: 280, overflowY: 'auto', padding: 4 }}>
-        {filtered.length === 0 ? (
+        {filtered.length === 0 && !showCreate ? (
           <div style={{ padding: '12px 14px', fontSize: 13, color: '#9e9e9e',
             fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
             No results for "{query}"
           </div>
         ) : (
-          <DropdownBody
-            filtered={filtered}
-            multiple={multiple}
-            selectedSet={selected}
-            onSingle={onSelectSingle}
-            onMulti={onReplaceMulti}
-          />
+          <>
+            {filtered.length > 0 && (
+              <DropdownBody
+                filtered={filtered}
+                multiple={multiple}
+                selectedSet={selected}
+                onSingle={onSelectSingle}
+                onMulti={onReplaceMulti}
+              />
+            )}
+            {showCreate && (
+              // onMouseDown (not onClick) so it fires before the input blur
+              // closes the dropdown.
+              <CreateRow label={`${createLabel} “${q}”`} onMouseDown={(e) => { e.preventDefault(); onCreate(q); }} />
+            )}
+          </>
         )}
       </div>
     </div>
@@ -262,7 +307,7 @@ function getFieldStyles({ focused, hovered, open, disabled, error }) {
 
 // ─── SearchSelect — Single ────────────────────────────────────────────────────
 
-export function SearchSelect({ label, required, placeholder = 'Select…', options = [], value, onChange, disabled, error }) {
+export function SearchSelect({ label, required, placeholder = 'Select…', options = [], value, onChange, disabled, error, onCreate, createLabel = 'Add' }) {
   const [open,    setOpen]    = useState(false);
   const [query,   setQuery]   = useState('');
   const [hovered, setHovered] = useState(false);
@@ -290,6 +335,13 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
     // Single select: OptionList only emits leaf ids (branch headers are plain).
     if (id == null) return;
     onChange && onChange(id);
+    setOpen(false);
+    setQuery('');
+  };
+
+  const handleCreate = (text) => {
+    if (!onCreate || !text.trim()) return;
+    onCreate(text.trim());
     setOpen(false);
     setQuery('');
   };
@@ -328,6 +380,13 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
               type="text"
               value={query}
               onChange={e => setQuery(e.target.value)}
+              onKeyDown={e => {
+                // Enter adopts the typed value when it isn't already an option.
+                if (e.key === 'Enter' && onCreate && query.trim() && !hasExactLabel(options, query.trim())) {
+                  e.preventDefault();
+                  handleCreate(query);
+                }
+              }}
               placeholder={selectedLabel || placeholder}
               style={{
                 flex: 1, border: 'none', outline: 'none', background: 'transparent',
@@ -369,6 +428,8 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
             multiple={false}
             selected={selectedSet}
             onSelectSingle={handleSelectSingle}
+            onCreate={onCreate ? handleCreate : undefined}
+            createLabel={createLabel}
           />
         )}
       </div>

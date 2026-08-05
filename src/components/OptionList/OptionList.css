@@ -3,7 +3,10 @@
  * Requires tokens.css.
  *
  * .nx-option-list           — container (card)
+ * .nx-option-list--flush    — borderless, full-width (embedded in a dropdown/sheet)
+ * .nx-option-list--dense    — compact rows (dropdown-menu size; combine with --flush)
  * .nx-option-list__section-title — section header text
+ * .nx-option-list__section-title--selectable — branch-toggle header (multi-select)
  * .nx-option                — individual option row
  * .nx-option--selected      — selected state
  * .nx-option--disabled      — disabled state
@@ -12,6 +15,11 @@
  * .nx-option__badge         — inline badge
  * .nx-option__check         — check tick (single-select selected)
  * .nx-option-list__error    — error message
+ *
+ * Row sizes (mirror the React component):
+ *   • standalone (default) → 6px padding, 13px label      (~32px rows)
+ *   • --flush              → 12px/14px padding, 48px min,  14px label (touch)
+ *   • --flush --dense      → 6px/8px padding, 13px label   (~32px dropdown rows)
  */
 
 .nx-option-list {
@@ -32,6 +40,23 @@
   line-height: var(--nx-line-height-normal);    /* 20px */
   color: var(--nx-text-default);
   user-select: none;
+}
+
+/* Branch-toggle header — a section that selects/clears all its children in
+ * multi-select (e.g. Region → all Facilities). Same row metrics as an option
+ * so the checkbox column lines up; label keeps the 650 heading weight. */
+.nx-option-list__section-title--selectable {
+  display: flex;
+  align-items: center;
+  gap: var(--nx-space-2);                        /* 8px */
+  padding: 6px;
+  border-radius: var(--nx-radius-sm);
+  cursor: pointer;
+  outline: none;
+  transition: background 0.1s;
+}
+.nx-option-list__section-title--selectable:hover {
+  background: #f1f1f1;
 }
 
 /* ─── Option row ────────────────────────────────────────────────── */
@@ -142,4 +167,41 @@
   font-size: var(--nx-font-size-label);
   color: var(--nx-color-critical);              /* #d92d20 */
   line-height: var(--nx-line-height-normal);
+}
+
+/* ─── Flush — borderless, full-width (embedded in a dropdown / sheet) ─── */
+.nx-option-list--flush {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  width: 100%;
+  min-width: 0;
+  display: flex;
+}
+/* Touch-height rows with 14px body text (selected → 550, not the 650 heading). */
+.nx-option-list--flush .nx-option {
+  padding: 12px 14px;
+  min-height: 48px;
+  border-radius: var(--nx-radius-lg);           /* 12px */
+}
+.nx-option-list--flush .nx-option__label {
+  font-size: var(--nx-font-size-body);          /* 14px */
+  white-space: normal;
+}
+.nx-option-list--flush .nx-option--selected .nx-option__label {
+  font-weight: var(--nx-font-weight-semibold);  /* 550 */
+}
+
+/* ─── Dense — compact dropdown-menu rows (~32px); combine with --flush ─── */
+.nx-option-list--dense .nx-option {
+  padding: 6px 8px;
+  min-height: 0;
+  border-radius: var(--nx-radius-sm);           /* 8px */
+}
+.nx-option-list--dense .nx-option__label {
+  font-size: var(--nx-font-size-label);         /* 13px */
+}
+.nx-option-list--dense .nx-option-list__section-title--selectable {
+  padding: 6px 8px;
 }

@@ -73,6 +73,28 @@ export const WithSections = {
   },
 };
 
+export const WithSelectableSections = {
+  name: 'With Selectable Sections (branch toggle)',
+  render: () => {
+    const [val, setVal] = useState(['coast-general']);
+    // A section with an `id` becomes a toggleable branch in multi-select:
+    // its header checkbox reflects checked / indeterminate / none and toggles
+    // every child at once (e.g. a Region that selects all its Facilities).
+    const sections = [
+      { id: 'coast', title: 'Coast Region', options: [
+        { id: 'coast-general', label: 'Coast General Teaching & Referral Hospital' },
+        { id: 'mombasa-north', label: 'Mombasa North Health Centre' },
+        { id: 'likoni',        label: 'Likoni Sub-County Hospital' },
+      ]},
+      { id: 'nairobi', title: 'Nairobi Region', options: [
+        { id: 'knh',      label: 'Kenyatta National Hospital' },
+        { id: 'mbagathi', label: 'Mbagathi County Referral Hospital' },
+      ]},
+    ];
+    return <OptionList allowMultiple sections={sections} selected={val} onChange={setVal} />;
+  },
+};
+
 export const WithDisabled = {
   render: () => {
     const [val, setVal] = useState('a');

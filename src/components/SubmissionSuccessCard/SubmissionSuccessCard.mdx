@@ -1,0 +1,84 @@
+import { Meta, Canvas } from '@storybook/addon-docs/blocks';
+import * as SubmissionSuccessCardStories from './SubmissionSuccessCard.stories.jsx';
+
+<Meta title="Components/SubmissionSuccessCard/Docs" />
+
+# Submission Success Card
+
+A **generic submission-confirmation layout**: an icon in a tinted circle, a centered title, an info-surface detail panel (sections of lines, any of which can carry a tone dot), an optional footer line, and an action row. Any flow that ends in "your submission was recorded" composes it — service requests, installations, maintenance logs — not just temperature readings.
+
+<Canvas of={SubmissionSuccessCardStories.Generic} />
+
+---
+
+## Two ways to use it
+
+1. **`SubmissionSuccessCard`** — the generic layout. You pass `sections` as plain data; the component owns the visual system.
+2. **`TemperatureSubmissionSuccessCard`** — the cold-chain preset. Derives the four morning/complete × today/past states from its data so recording flows never branch on which "success screen" to show.
+
+## The temperature preset's four states
+
+| State | Trigger | Title | Status line | Primary CTA |
+|-------|---------|-------|-------------|-------------|
+| Morning (today) | `morning` only | Morning Temperature Recorded | 🟡 Evening Pending | Record Evening Temperature |
+| Complete (today) | `morning` + `evening` | Daily Temperature Record Completed | 🟢 Daily Record Complete | Record Another CCE |
+| Morning (past entry) | + `pastEntry` | Morning Temperature Recorded | 🟠 Past Entry — Morning Recorded | Record Evening Temperature |
+| Complete (past entry) | + `pastEntry` | Daily Temperature Record Completed | 🟠 Past Entry — Complete | Record Another CCE |
+
+Past-entry states additionally render a **Submitted On** line beneath the Recording Date, so a back-filled record's audit trail is visible at a glance.
+
+<Canvas of={SubmissionSuccessCardStories.DailyRecordComplete} />
+
+## Interaction states
+
+- **Primary action** — a standard `Btn variant="primary"`; inherits Btn's hover / pressed / focus states.
+- **Secondary actions** — `Btn variant="secondary"`; render only when passed.
+- **Home link** — a plain-link escape hatch, top right; hidden when `homeAction` is omitted.
+- **Alarm variant (preset)** — when the morning reading tripped an alarm, the panel grows `Duration` and `Action Taken` lines:
+
+<Canvas of={SubmissionSuccessCardStories.WithAlarm} />
+
+## Reuse, not reinvention
+
+| Piece | Reused component / token |
+|-------|--------------------------|
+| Card surface | Card / Cell edge-shadow recipe, `RADIUS_XL` |
+| Detail panel | info Banner surface (`BG_INFO` / `BORDER_INFO` / `TEXT_INFO`) |
+| Status dots | `success` → `COLOR_SUCCESS` · `warning` → `BORDER_WARNING` · `attention` → `COLOR_MORNING` (Badge tone vocabulary) |
+| Buttons | `Btn` primary / secondary |
+| Icons | inline SVG (doc-with-check, folder) — no icon package |
+
+## Props — `SubmissionSuccessCard`
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `title` | string | — | centered heading |
+| `icon` / `panelIcon` | ReactNode | doc-check / folder | slots for other domains |
+| `sections` | `Array<{heading?, lines}>` | `[]` | a line is `'text'`, `{label, value}`, or `{dot: tone, text}` |
+| `footer` | `{label, value}` | — | line under the panel |
+| `primaryAction` | `{label, onClick}` | — | `Btn primary` |
+| `secondaryActions` | `{label, onClick}[]` | `[]` | `Btn secondary` |
+| `homeAction` | `{label?, onClick}` | — | top-right link, label defaults to "Go to Home Page" |
+| `maxWidth` | number | `640` | |
+
+## Props — `TemperatureSubmissionSuccessCard`
+
+| Prop | Type | Default | Notes |
+|------|------|---------|-------|
+| `equipment` | `{ name, serial, facility }` | — | required |
+| `recordingDate` | string | — | display date the record belongs to |
+| `pastEntry` | boolean | `false` | switches to the orange past-entry states |
+| `submittedOn` | string | — | shown only when `pastEntry` |
+| `morning` | `{ temp, prevMax?, prevMin?, alarms?, alarmDuration?, alarmActions?, recordedBy, recordedAt }` | — | required |
+| `evening` | `{ temp, equipmentStatus, recordedBy, recordedAt }` | — | presence ⇒ record complete |
+| `equipmentStatus` | string | evening's status, else `"Functional"` | footer line |
+| `onPrimary` / `onViewLogs` / `onServiceRequest` / `onHome` | `() => void` | — | buttons render only when passed |
+
+## Other stacks
+
+- **CSS layer** — `SubmissionSuccessCard.css` ships the `.nx-submission-success` block (bundled into `@nexleaf/angular/styles.css`).
+- **Angular** — `<nx-submission-success-card>` from `NxSubmissionSuccessCardModule`, same sections model with `[sections]`, `primaryLabel`/`(primary)`, `[secondaryActions]`, `homeLabel`/`(home)`.
+
+## Provenance
+
+Promoted from the Temperature Recording prototypes (Prototype C's success screen, reused by Prototypes D and E), where all four preset states were verified in live flows before extraction, then generalised into this layout.

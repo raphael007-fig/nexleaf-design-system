@@ -166,6 +166,24 @@ Rules that follow from it:
 - Hub/tooling chrome must never overlap product controls (the top bar's Ask AI, region,
   apps, notifications, avatar).
 
+## Primary buttons — emphasis blue (DECIDED)
+
+Primary buttons use the **emphasis** token family, not the library Button's black default:
+
+| Purpose | Figma variable (Nexleaf Styles → Semantic tokens) | Code token |
+|---|---|---|
+| Primary bg | `Color/bg/fill/fill-emphasis` | `COLOR_PRIMARY` `#005bd3` |
+| Hover | `Color/bg/fill/fill-emphasis-hover` | `COLOR_PRIMARY_HOVER` |
+| Pressed | `Color/bg/fill/fill-emphasis-active` | `COLOR_PRIMARY_PRESSED` |
+
+- In Figma, **bind the variable** (`setBoundVariableForPaint`) — never paste a hex.
+- The code's `Btn variant="primary"` already matches; **no code change needed**.
+- When placing a library Button instance whose primary variant renders black, rebind its fill
+  to `fill-emphasis`.
+- **Scope the change to the intended button only.** Selecting "any INSTANCE named Button" also
+  matches breadcrumb buttons in the Top bar — verify by checking the node's text and ancestry
+  (`Actions` → `Page` for a header action) before writing, and sanity-check the count.
+
 ## Annotation format — house style (BINDING)
 
 Match the existing annotation panels in the file (e.g. `8519:186503`):

@@ -91,7 +91,7 @@ export function ScanQrCodeBody({ onScan, onSubmit, style }) {
           onChange={(e) => setSerial(e.target.value)}
         />
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <Btn variant="primary" onClick={() => onSubmit?.(serial)}>Submit</Btn>
+          <Btn variant="primary" onClick={() => onSubmit?.(serial)}>Search</Btn>
         </div>
       </div>
     </Card>

@@ -141,7 +141,7 @@ export const AllStates = {
       </div>
 
       <div>
-        <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>In-card — compact tinted</div>
+        <div style={{ fontSize: 11, fontWeight: 600, color: '#9e9e9e', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>In-card · compact tinted</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Banner tone="info" inCard>Your session expires in 10 minutes.</Banner>
           <Banner tone="success" inCard>Reading saved successfully.</Banner>

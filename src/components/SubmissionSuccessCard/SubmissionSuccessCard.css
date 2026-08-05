@@ -1,0 +1,139 @@
+/*
+ * Nexleaf Design System — SubmissionSuccessCard (submission confirmation layout)
+ * CSS class implementation for non-React stacks (Angular, Django, vanilla HTML).
+ * Requires tokens.css first. Mirrors SubmissionSuccessCard.jsx 1:1.
+ *
+ * A GENERIC confirmation layout — not temperature-specific. Any flow that ends
+ * in "your submission was recorded" composes it: an icon in a tinted circle,
+ * a centered title, an info-surface detail panel (sections of label lines with
+ * an optional status-dot line), an optional footer line, and an action row.
+ *
+ * .nx-submission-success                — card surface (Card edge-shadow family)
+ * .nx-submission-success__home          — top-right plain-link escape hatch
+ * .nx-submission-success__icon          — 64px tinted circle around the icon
+ * .nx-submission-success__title         — centered 16/650 heading
+ * .nx-submission-success__panel         — info-Banner surface detail panel
+ * .nx-submission-success__panel-icon    — leading 18px panel icon slot
+ * .nx-submission-success__lines         — the panel's line stack
+ * .nx-submission-success__line          — one 13/450 info line
+ * .nx-submission-success__line--bold    — section heading line (650)
+ * .nx-submission-success__gap           — 12px spacer between sections
+ * .nx-submission-success__status        — line carrying the status dot
+ * .nx-submission-success__dot           — 10px status dot
+ * .nx-submission-success__dot--success / --warning / --attention — dot tone
+ * .nx-submission-success__footer        — line under the panel (label + value)
+ * .nx-submission-success__actions       — button row (compose with .nx-btn)
+ */
+
+.nx-submission-success {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 640px;
+  padding: 28px 40px 32px;
+  background: var(--nx-bg-surface);
+  border-radius: var(--nx-radius-xl);
+  box-shadow:
+    0 1px 0 rgba(26, 26, 26, 0.07),
+    inset 1px 0 0 rgba(0, 0, 0, 0.13),
+    inset -1px 0 0 rgba(0, 0, 0, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.17),
+    inset 0 1px 0 rgba(204, 204, 204, 0.5);
+  font-family: Inter, sans-serif;
+}
+
+.nx-submission-success__home {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--nx-color-primary);
+}
+
+.nx-submission-success__icon {
+  width: 64px;
+  height: 64px;
+  margin: 12px auto 16px;
+  border-radius: var(--nx-radius-circle);
+  background: var(--nx-bg-info);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nx-submission-success__title {
+  margin: 0 0 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 650;
+  color: var(--nx-text-default);
+}
+
+.nx-submission-success__panel {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  background: var(--nx-bg-info);
+  border: 1px solid var(--nx-border-info);
+  border-radius: var(--nx-radius-sm);
+}
+
+.nx-submission-success__panel-icon { flex-shrink: 0; margin-top: 2px; }
+
+.nx-submission-success__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.nx-submission-success__line {
+  font-size: 13px;
+  font-weight: 450;
+  line-height: 20px;
+  color: var(--nx-text-info);
+}
+.nx-submission-success__line--bold { font-weight: 650; }
+
+.nx-submission-success__gap { height: 12px; }
+
+.nx-submission-success__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--nx-text-info);
+}
+
+.nx-submission-success__dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--nx-radius-circle);
+}
+.nx-submission-success__dot--success   { background: var(--nx-color-success); }
+.nx-submission-success__dot--warning   { background: var(--nx-border-warning); }
+.nx-submission-success__dot--attention { background: var(--nx-color-morning); }
+
+.nx-submission-success__footer {
+  margin: 16px 0;
+  font-size: 13px;
+  color: var(--nx-text-default);
+}
+.nx-submission-success__footer strong { font-weight: 650; }
+
+.nx-submission-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

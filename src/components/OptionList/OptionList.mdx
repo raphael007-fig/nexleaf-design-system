@@ -166,3 +166,21 @@ const [selected, setSelected] = useState('morning');
 ---
 
 <Canvas of={OptionListStories.WithSections} />
+
+## Selectable sections (branch toggle)
+
+In multi-select, a `sections` entry with an `id` renders a **selectable header** — a
+checkbox that reflects its children (checked / indeterminate / none) and toggles all of
+them at once. This powers grouped pickers like Region → select all Facilities. Sections
+without an `id` stay plain, non-interactive headers.
+
+<Canvas of={OptionListStories.WithSelectableSections} />
+
+## Size variants
+
+OptionList renders at three sizes. `SelectInput` and `SearchSelect` open OptionList in a
+popover with `flush dense` so every dropdown menu shares one row size.
+
+- **standalone** (default) — 6px padding, 13px label, ~32px rows
+- **`flush`** — borderless full-width, 12/14px padding, 48px touch rows, 14px label
+- **`flush dense`** — borderless, compact ~32px dropdown-menu rows, 13px label

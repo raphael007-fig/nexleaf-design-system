@@ -52,6 +52,29 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
     return 'transparent';
   }
 
+  // Branch (section) selection — only when the section carries an `id` AND the
+  // list is multi-select. Toggling the header selects/clears every enabled leaf
+  // under it (checked / indeterminate / unchecked reflect the children). This
+  // is the nested Region → Facility "select all" behavior.
+  function sectionLeafIds(section) {
+    return (section.options || []).filter(o => !o.disabled).map(o => getItemId(o, 'OptionList'));
+  }
+  function sectionState(section) {
+    const leaves = sectionLeafIds(section);
+    if (!leaves.length) return 'none';
+    const n = leaves.filter(v => isSelected(v)).length;
+    return n === 0 ? 'none' : n === leaves.length ? 'all' : 'some';
+  }
+  function handleSectionToggle(section) {
+    if (!onChange) return;
+    const leaves = sectionLeafIds(section);
+    const curr = Array.isArray(selected) ? selected : [];
+    const allOn = sectionState(section) === 'all';
+    onChange(allOn
+      ? curr.filter(v => !leaves.includes(v))
+      : Array.from(new Set([...curr, ...leaves])));
+  }
+
   return (
     <div role="listbox"
       aria-multiselectable={allowMultiple || undefined}
@@ -70,12 +93,39 @@ export function OptionList({ title, options = [], selected, onChange, allowMulti
         const groupProps = hasSections && section.title
           ? { role: 'group', 'aria-labelledby': sectionTitleId }
           : {};
+        // A section is a toggleable BRANCH when it has an `id` and the list is
+        // multi-select (e.g. a Region that selects all its Facilities).
+        const branchToggle = allowMultiple && section.id != null && (section.options || []).length > 0;
+        const secState = branchToggle ? sectionState(section) : null;
         return (
         <div key={si} {...groupProps} style={si > 0 ? { borderTop: '1px solid #ebebeb', marginTop: 4, paddingTop: 4 } : {}}>
           {section.title && (
-            <div style={{ padding: '2px 6px 4px', userSelect: 'none' }}>
-              <span id={sectionTitleId ?? listLabelId} style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
-            </div>
+            branchToggle ? (
+              <div
+                role="checkbox"
+                aria-checked={secState === 'all' ? 'true' : secState === 'some' ? 'mixed' : 'false'}
+                tabIndex={0}
+                onClick={() => handleSectionToggle(section)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSectionToggle(section); } }}
+                onMouseEnter={() => setHovKey(`sec-${si}`)}
+                onMouseLeave={() => setHovKey(null)}
+                style={{ display: 'flex', alignItems: 'center', gap: 8,
+                  padding: dense ? '6px 8px' : (flush ? '10px 14px' : 6),
+                  borderRadius: dense ? 8 : (flush ? 12 : 8),
+                  background: hovKey === `sec-${si}` ? '#f1f1f1' : 'transparent',
+                  cursor: 'pointer', outline: 'none', userSelect: 'none',
+                  transition: 'background 0.1s' }}>
+                <div onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                  <Checkbox checked={secState === 'some' ? 'indeterminate' : secState === 'all'}
+                    onChange={() => handleSectionToggle(section)} />
+                </div>
+                <span id={sectionTitleId ?? listLabelId} style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
+              </div>
+            ) : (
+              <div style={{ padding: '2px 6px 4px', userSelect: 'none' }}>
+                <span id={sectionTitleId ?? listLabelId} style={{ fontSize: 13, fontWeight: 650, lineHeight: '20px', color: '#303030' }}>{section.title}</span>
+              </div>
+            )
           )}
           {(section.options || []).map((opt) => {
             // Canonical identity is `id` (falls back to legacy `value`).

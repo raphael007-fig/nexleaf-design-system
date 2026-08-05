@@ -113,7 +113,7 @@ const BannerBtn = ({ onClick, children }) => (
  *                 the tone's own glyph; used e.g. for a QR/search context icon)
  *   children    — message text
  */
-export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, icon, children }) {
+export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, icon, hideIcon = false, children }) {
   const t = TONES[tone] || TONES.info;
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
@@ -177,9 +177,11 @@ export function Banner({ tone = 'info', title, inCard = false, dismissable, onDi
         display: 'flex', alignItems: 'flex-start', gap: 8,
         background: t.inCardBg, borderRadius: 8, padding: 8,
       }}>
-        <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'flex-start', flexShrink: 0 }}>
-          {icon || <t.Icon size={20} color={t.inCardText} />}
-        </div>
+        {!hideIcon && (
+          <div style={{ width: 20, height: 20, display: 'flex', alignItems: 'flex-start', flexShrink: 0 }}>
+            {icon || <t.Icon size={20} color={t.inCardText} />}
+          </div>
+        )}
         <div style={{ flex: 1, paddingRight: dismissable ? 28 : 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: t.inCardText }}>
             {children}
