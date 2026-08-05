@@ -200,6 +200,18 @@ Match the existing annotation panels in the file (e.g. `8519:186503`):
   and comparison panels (previous vs improved, with the reasoning).
 - Explain **why**, not just what. Annotations teach the next reader the reasoning.
 
+## Figma scripting hygiene (learned the hard way)
+
+- **Clean up test nodes with `try/finally`.** A `clone()` whose later `appendChild` throws
+  leaves the clone parented to the PAGE — an orphan floating over the frames. Always
+  `try { ... } finally { clone.remove(); }`.
+- **After any write session, sweep for strays:** list `page.children` and delete anything that
+  isn't an intended section/frame.
+- **Header cells have a `State`** — `blank` renders no label even when `Table content` is set.
+  Set `State = 'rest'` on every data-column header, and verify labels by reading back the text
+  nodes, not by assuming the property took.
+- **Verify by reading back**, then screenshot. Setting a property is not proof it applied.
+
 ## Mirror rule — the handshake (BINDING)
 
 Prototype and Figma must tell the same story, **but neither side is changed silently**:
