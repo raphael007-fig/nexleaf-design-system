@@ -12,7 +12,8 @@
     "new-project": "node scripts/new-project.mjs",
     "deploy": "bash scripts/deploy.sh live",
     "deploy:preview": "bash scripts/deploy.sh preview",
-    "gen-barrel": "node scripts/gen-barrel.mjs"
+    "gen-barrel": "node scripts/gen-barrel.mjs",
+    "new-screen": "node scripts/new-screen.mjs"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.0.1",

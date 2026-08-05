@@ -42,6 +42,29 @@ Load `ds-components-only` (binding) and `nexleaf-design-system`.
   in his house style (`content` panels, `#eaf4ff`, Bold 14 title, behaviour panel + component
   breakdown **containing live component instances**).
 
+### Ticket = flow, screens are shared
+
+His tickets are user stories = **flows**, and several flows usually cross the **same screens**
+("update CCE info" and "export CCE data" both walk the CCE detail screen). So:
+
+```
+projects/<project>/
+  screens/          <- the NOUNS: built once, imported by many flows
+  prototypes/<flow>/  <- the VERBS: one per ticket, meta.js has jiraKey + screens[]
+```
+
+Never duplicate a screen per ticket. `npm run new-screen -- <project> CceDetail` creates a shared
+screen; a flow imports it. Figma mirrors it: shared screen frames, then one left->right frame
+sequence per flow named `<Flow> - v1 (PD-XX)`. See the `prd-to-tickets` skill.
+
+### Every screen gets its states
+
+Use `screen-states-and-interactions` to PRODUCE the state matrix (default, loading, empty first-run
+vs filtered, recoverable + validation errors, success, partial data, permission/read-only,
+offline/stale, edge cases, destructive confirm) - proposed for approval first, then laid out as
+annotated frames and made togglable in the prototype. `design-critique` only *checks* coverage;
+this creates it. A happy-path-only screen is unfinished.
+
 ## 4. Verify — before he sees it
 - **Self-audit:** raw HTML elements, custom pills, hardcoded colors, hand-drawn icons, leftover
   placeholders, inconsistent sibling sizing, wrapping text, spacing vs the reference, canvas

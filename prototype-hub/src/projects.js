@@ -22,7 +22,12 @@ export const projects = Object.entries(projectMetas)
           slug: protoSlug,
           title: protoSlug,
           description: '',
-          type: 'screen',   // screen | flow | exploration | component
+          // flow = a journey through shared screens (the usual case — one per ticket)
+          // screen = a single surface · exploration · component
+          type: 'flow',
+          // Shared screens this flow paths through, from ../screens/. Documents reuse:
+          // two tickets over the same screens are two flows importing the same modules.
+          screens: [],
           status: 'Draft',
           jiraKey: null,
           tags: [],

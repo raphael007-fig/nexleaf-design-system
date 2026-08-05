@@ -28,7 +28,8 @@ const today = new Date().toISOString().slice(0, 10);
 writeFileSync(resolve(dir, 'meta.js'), `export default {
   title: ${JSON.stringify(title)},
   description: '',
-  type: 'screen',   // screen | flow | exploration | component
+  type: 'flow',      // flow (a journey through shared screens) | screen | exploration | component
+  screens: [],       // shared screens this flow uses, e.g. ['CceDetail','CceEditForm']
   status: 'Draft',
   jiraKey: null,
   tags: [],
@@ -45,7 +46,10 @@ export default function ${componentName}() {
     <div style={{ background: '#f1f1f1', minHeight: '100vh' }}>
       <div style={{ maxWidth: 1080, margin: '0 auto', padding: 24 }}>
         <Page title=${JSON.stringify(title)} subtitle="New prototype" />
-        {/* Build here using components from '@ds' */}
+        {/* Build here using components from '@ds'.
+            Reusing a screen across flows? Import it instead of rebuilding:
+              import CceDetail from '../../screens/CceDetail.jsx';
+            Create one with:  npm run new-screen -- <project> CceDetail */}
       </div>
     </div>
   );

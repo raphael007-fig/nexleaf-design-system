@@ -136,6 +136,15 @@ function ProjectPage({ project }) {
                   : '—',
             },
             {
+              key: 'screens',
+              label: 'Screens used',
+              render: (row) => (
+                (row.screens || []).length
+                  ? <TagGroup gap={6}>{row.screens.map((s) => <Tag key={s} label={s} />)}</TagGroup>
+                  : '—'
+              ),
+            },
+            {
               key: 'tags',
               label: 'Tags',
               render: (row) => (
