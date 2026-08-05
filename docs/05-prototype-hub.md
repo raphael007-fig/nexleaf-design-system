@@ -76,12 +76,32 @@ in one project.
 - **Every meaningful change is logged** — CHANGELOG entry (what + why + source) + commit `proto(<slug>): <what> — <why> [PD-XX]`. Small tweaks batch into checkpoints; see [Conventions](08-conventions.md).
 - `meta.js` carries the prototype's Jira key; `project.js` carries the epic — the hub renders both as links.
 
-## Deploy — design.nexleaf.org (auto)
+## Review then publish — the two-step flow
 
-Deployment is handled by the **deploy-hub watcher** (`~/Documents/deploy-hub/watch.sh`):
-it watches `prototype-hub/src`, and on any change builds with
-`vite build --base=/prototype-hub/` and uploads `dist/` to
-`gs://nexleaf-design-content/prototype-hub/` — live at
-**design.nexleaf.org/prototype-hub/**. Design-system component changes also trigger a hub
-redeploy (prototypes import the DS). Save a file → it ships. If the watcher isn't running,
-start it: `~/Documents/deploy-hub/watch.sh &`.
+Everything is hosted on **design.nexleaf.org**. Prototypes are **reviewed locally first and
+only published when Raf approves** — nothing reaches the team automatically.
+
+**1. Review on localhost** (start once, leave running):
+
+```bash
+cd ~/Documents/Design\ System/prototype-hub
+npm run dev            # → http://localhost:5173
+```
+
+Vite hot-reloads, so any change Claude makes to a prototype appears in the browser
+immediately — no restart, no rebuild, no repeated commands.
+
+**2. Publish when satisfied:**
+
+```bash
+npm run deploy         # build + upload + verify the live bundle
+```
+
+→ live at **design.nexleaf.org/prototype-hub/**.
+
+**Claude's obligation:** after making prototype changes, tell Raf the localhost URL to review
+and **ask before publishing**. Never publish unreviewed work.
+
+The prototype hub is deliberately **excluded from the deploy-hub auto-watcher** — auto-deploy
+would push unreviewed prototypes live and defeat the approval gate. (The watcher still
+auto-deploys the other projects: website, Storybook, maps, etc.)

@@ -54,10 +54,14 @@ scripts/
   new-project.mjs · new-prototype.mjs · gen-barrel.mjs
 ```
 
-## Deploy
+## Review → publish
 
-Automatic via the deploy-hub watcher (`~/Documents/deploy-hub/watch.sh`): any change under
-`src/` builds (`--base=/prototype-hub/`) and uploads to GCS → live at
-**design.nexleaf.org/prototype-hub/**.
+```bash
+npm run dev        # http://localhost:5173 — review here (hot-reloads on every change)
+npm run deploy     # publish to design.nexleaf.org/prototype-hub/ (only when approved)
+```
+
+Prototypes are **not** auto-deployed: they're reviewed on localhost first and published
+only on approval. `npm run deploy` builds, uploads, and verifies the live bundle.
 
 Full docs: [`../docs/`](../docs/README.md).
