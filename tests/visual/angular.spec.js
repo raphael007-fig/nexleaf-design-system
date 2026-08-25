@@ -30,6 +30,10 @@ const STORIES = [
   'components-indextable--basic',
   'components-tooltip--placement',
   'components-skeleton--shapes',
+  'components-submissionsuccesscard--morning-recorded',
+  'components-submissionsuccesscard--daily-record-complete',
+  'components-submissionsuccesscard--past-entry',
+  'components-submissionsuccesscard--generic-service-request',
   // Navigation
   'components-navigation-tabs--basic',
   'components-navigation-pagination--types',

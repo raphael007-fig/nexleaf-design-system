@@ -643,8 +643,15 @@ Props: `content`, `position` (above/below), `children`
   { title: 'Actions', options: [{ id: 'edit', label: 'Edit' }] },
   { title: '', options: [{ id: 'delete', label: 'Delete', tone: 'critical' }] },
 ]} onChange={handleChange} />
+// Selectable section (branch toggle): a section with an `id` + allowMultiple
+// renders a header checkbox (checked/indeterminate/none) that toggles all its
+// children — e.g. Region → select all Facilities.
+<OptionList allowMultiple selected={ids} onChange={setIds} sections={[
+  { id: 'coast', title: 'Coast Region', options: [{ id: 'f1', label: 'Facility 1' }] },
+]} />
 ```
-Props: `title`, `options` (`{id, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections`, `error`
+Props: `title`, `options` (`{id, label, badge, media, disabled, description}[]`), `selected`, `onChange`, `allowMultiple`, `sections` (`{id?, title, options}[]` — `id` + `allowMultiple` ⇒ selectable branch header), `error`, `flush`, `dense`
+- This is the ONE canonical dropdown body: `SelectInput` and `SearchSelect` / `SearchSelectMulti` / `SearchSelectButton` all render `OptionList` inside a `Popover` (no native `<select>`, no bespoke option rows).
 
 ### `OptionCard` — Selectable Illustrated Card
 ```jsx

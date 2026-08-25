@@ -130,5 +130,8 @@ export * from './lib/modal/modal.module';
 export * from './lib/popover/popover.component';
 export * from './lib/popover/popover.module';
 
+export * from './lib/submission-success-card/submission-success-card.component';
+export * from './lib/submission-success-card/submission-success-card.module';
+
 // Navigation-sync helpers (single-source engine for nav + breadcrumb + title switcher)
 export * from './lib/nav-sync/nav-sync';

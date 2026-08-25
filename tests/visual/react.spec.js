@@ -18,6 +18,9 @@ const STORIES = [
   // Page header variants
   'components-navigation-header-page--with-title-disclosure',
   'components-navigation-header-page--record-variant',
+  // Submission confirmation (generic layout + temperature preset)
+  'components-submissionsuccesscard--generic',
+  'components-submissionsuccesscard--daily-record-complete',
   // Responsive list + record actions
   'patterns-responsive-equipmentcard--list',
   'patterns-responsive-tertiaryactions--desktop',

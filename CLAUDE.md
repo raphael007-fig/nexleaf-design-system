@@ -1,5 +1,6 @@
 @PoltailDesign.md
 @FIGMA-MAP.md
+@docs/coldtrace-domain.md
 
 HARD RULE — NO EXCEPTIONS: never generate UI components from scratch. Every visible
 element is composed from the Poltail design system (src/components via src/index.js;

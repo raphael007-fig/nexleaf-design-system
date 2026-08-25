@@ -94,9 +94,10 @@ export default function TemperatureReadings() {
           header too far down. */}
       <div style={{ padding: '0 16px 32px', boxSizing: 'border-box' }}>
       <div ref={anchorRef}>
+        {/* No subtitle — Figma's Page header is title-only. Parity: any string that
+            exists on one side must exist on the other. */}
         <Page
           title="Temperature Readings"
-          subtitle="Cold-chain submissions across facilities"
           primaryAction={{
             content: 'Record reading',
             disclosure: true,

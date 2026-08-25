@@ -18,3 +18,18 @@ Mirror each entry in the matching Jira ticket.
 - **What:** Initial prototype — Page header, 3 metric cards, a warning Banner, and a sortable IndexTable of facility readings.
 - **Why:** Seed prototype to validate the hub wiring and the Poltail import path.
 - **Source:** Setup / verbal.
+
+## 2026-08-24 — Top bar corrected in Figma; subtitle removed from prototype
+- **What:** Figma — replaced the top bar in all three state frames with a clone of the canonical
+  Design Rep bar (`8483:64221`): `Right content` restored to an instance, `Actions` (Kenya pill)
+  moved to its correct place as a group-level sibling, home crumb back to a text button, and the
+  breadcrumb retargeted to `Home › Temperature Readings › Daily` with the `...` truncation hidden.
+  Prototype — removed the `<Page subtitle>` "Cold-chain submissions across facilities".
+- **Why:** Raf flagged the Figma top bar as wrong, then flagged that the subtitle existed only in
+  the prototype. Figma's header is title-only, so the prototype was the side to change.
+- **Correction logged:** the bar was first mis-diagnosed as a hand-rolled lookalike because it is a
+  `GROUP` — but the group is the canonical house pattern, and the DS library's `Top bar` is the
+  generic Polaris bar, not the ColdTrace one. Reverted; the real defects were the detached
+  `Right content`, the misplaced `Actions`, and stale breadcrumb text.
+- **Parity:** 48 visible strings, both sides, matching.
+- **Source:** Raf, verbal.

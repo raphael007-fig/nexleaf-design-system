@@ -1,150 +1,100 @@
-<svg viewBox="0 0 900 820" xmlns="http://www.w3.org/2000/svg" role="img" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, sans-serif">
-  <title>Nexleaf design workflow — current state</title>
-  <desc>Collect inputs feed Jira; create bidirectionally between Figma and the prototype hub on the Poltail design system with a two-way handshake; verify with critique and audit; deliver through three surfaces — localhost review, auto-deployed preview, and the team URL which requires approval.</desc>
-
-  <rect x="0" y="0" width="900" height="820" fill="#ffffff"/>
-
-  <text x="34" y="26" font-size="11.5" font-weight="700" fill="#616161" letter-spacing="1.4">FLOW</text>
-  <text x="586" y="26" font-size="11.5" font-weight="700" fill="#616161" letter-spacing="1.4">OPERATIONS · SKILLS</text>
-  <line x1="566" y1="12" x2="566" y2="800" stroke="#e0e0e0" stroke-width="1"/>
-
-  <!-- 1 COLLECT -->
-  <text x="34" y="52" font-size="10.5" font-weight="700" fill="#005bd3" letter-spacing="1">1 · COLLECT</text>
-  <rect x="34" y="60" width="120" height="42" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="94" y="78" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Meetings</text>
-  <text x="94" y="92" font-size="9.5" fill="#616161" text-anchor="middle">verbal · transcript</text>
-  <rect x="164" y="60" width="120" height="42" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="224" y="78" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Slack</text>
-  <text x="224" y="92" font-size="9.5" fill="#616161" text-anchor="middle">threads</text>
-  <rect x="294" y="60" width="120" height="42" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="354" y="78" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">PRD</text>
-  <text x="354" y="92" font-size="9.5" fill="#616161" text-anchor="middle">sent · self-written</text>
-  <rect x="424" y="60" width="118" height="42" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="483" y="78" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Correction</text>
-  <text x="483" y="92" font-size="9.5" fill="#616161" text-anchor="middle">"fix X"</text>
-
-  <path d="M94 102 L94 116 L288 116" fill="none" stroke="#c9c9c9" stroke-width="1.4"/>
-  <path d="M483 102 L483 116 L288 116" fill="none" stroke="#c9c9c9" stroke-width="1.4"/>
-  <path d="M288 116 L288 130" fill="none" stroke="#c9c9c9" stroke-width="1.4" marker-end="url(#a)"/>
-
-  <!-- 2 TRACK -->
-  <text x="34" y="150" font-size="10.5" font-weight="700" fill="#005bd3" letter-spacing="1">2 · TRACK — Jira (PD)</text>
-  <rect x="34" y="158" width="508" height="62" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="288" y="177" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Epic per project · status → In Progress when work starts</text>
-  <text x="288" y="193" font-size="10" fill="#616161" text-anchor="middle">new scope = ticket · observation / revision / correction = comment</text>
-  <text x="288" y="209" font-size="10" fill="#616161" text-anchor="middle">design-system component work → PD-16 (never a new ticket)</text>
-  <path d="M288 220 L288 240" fill="none" stroke="#c9c9c9" stroke-width="1.4" marker-end="url(#a)"/>
-
-  <!-- 3 CREATE -->
-  <text x="34" y="260" font-size="10.5" font-weight="700" fill="#005bd3" letter-spacing="1">3 · CREATE — either direction, never silently</text>
-  <rect x="60" y="270" width="190" height="66" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="155" y="290" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Figma</text>
-  <text x="155" y="305" font-size="9.5" fill="#616161" text-anchor="middle">real library instances</text>
-  <text x="155" y="318" font-size="9.5" fill="#616161" text-anchor="middle">sections · versioned frames</text>
-  <text x="155" y="331" font-size="9.5" fill="#616161" text-anchor="middle">all states · annotated</text>
-
-  <rect x="326" y="270" width="190" height="66" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="421" y="290" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Prototype Hub</text>
-  <text x="421" y="305" font-size="9.5" fill="#616161" text-anchor="middle">projects → prototypes</text>
-  <text x="421" y="318" font-size="9.5" fill="#616161" text-anchor="middle">AppShell + Page layout</text>
-  <text x="421" y="331" font-size="9.5" fill="#616161" text-anchor="middle">activity log per prototype</text>
-
-  <path d="M250 288 L326 288" fill="none" stroke="#005bd3" stroke-width="1.5" marker-end="url(#b)"/>
-  <path d="M326 318 L250 318" fill="none" stroke="#005bd3" stroke-width="1.5" marker-end="url(#b)"/>
-  <text x="288" y="281" font-size="8.5" fill="#005bd3" text-anchor="middle">"go check it"</text>
-  <text x="288" y="331" font-size="8.5" fill="#005bd3" text-anchor="middle">ask first</text>
-
-  <text x="288" y="354" font-size="10" font-weight="600" fill="#005bd3" text-anchor="middle">MIRROR HANDSHAKE — parity audited every touch</text>
-  <text x="288" y="367" font-size="9" fill="#616161" text-anchor="middle">Raf edits Figma → says "go check it" · Claude asks before writing to Figma</text>
-
-  <path d="M288 374 L288 388" fill="none" stroke="#c9c9c9" stroke-width="1.4"/>
-  <rect x="60" y="390" width="456" height="44" rx="8" fill="#f7f7f7" stroke="#c9c9c9"/>
-  <text x="288" y="409" font-size="11.5" font-weight="600" fill="#303030" text-anchor="middle">Poltail Design System — the only building blocks</text>
-  <text x="288" y="424" font-size="9.5" fill="#616161" text-anchor="middle">47 components · tokens · Polaris icons · never build from scratch</text>
-  <path d="M288 434 L288 452" fill="none" stroke="#c9c9c9" stroke-width="1.4" marker-end="url(#a)"/>
-
-  <!-- 4 VERIFY -->
-  <text x="34" y="472" font-size="10.5" font-weight="700" fill="#005bd3" letter-spacing="1">4 · VERIFY</text>
-  <rect x="60" y="480" width="220" height="48" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="170" y="499" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">design-critique</text>
-  <text x="170" y="514" font-size="9.5" fill="#616161" text-anchor="middle">is it good? states · DS · a11y</text>
-  <rect x="296" y="480" width="220" height="48" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="406" y="499" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">figma-design-audit</text>
-  <text x="406" y="514" font-size="9.5" fill="#616161" text-anchor="middle">is it right vs what we agreed?</text>
-  <path d="M288 528 L288 548" fill="none" stroke="#c9c9c9" stroke-width="1.4" marker-end="url(#a)"/>
-
-  <!-- 5 DELIVER -->
-  <text x="34" y="568" font-size="10.5" font-weight="700" fill="#005bd3" letter-spacing="1">5 · DELIVER — three surfaces, all on design.nexleaf.org</text>
-  <rect x="34" y="578" width="160" height="62" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="114" y="597" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">1. localhost</text>
-  <text x="114" y="612" font-size="9" fill="#616161" text-anchor="middle">:5173 — hot reload</text>
-  <text x="114" y="626" font-size="9" font-weight="600" fill="#005bd3" text-anchor="middle">always given to Raf</text>
-
-  <rect x="204" y="578" width="160" height="62" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="284" y="597" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">2. preview</text>
-  <text x="284" y="612" font-size="9" fill="#616161" text-anchor="middle">/prototype-hub-preview/</text>
-  <text x="284" y="626" font-size="9" font-weight="600" fill="#005bd3" text-anchor="middle">auto-deploy</text>
-
-  <rect x="374" y="578" width="168" height="62" rx="8" fill="#fff" stroke="#005bd3" stroke-width="1.6"/>
-  <text x="458" y="597" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">3. team URL</text>
-  <text x="458" y="612" font-size="9" fill="#616161" text-anchor="middle">/prototype-hub/</text>
-  <text x="458" y="626" font-size="9" font-weight="600" fill="#005bd3" text-anchor="middle">approval only</text>
-
-  <path d="M288 640 L288 660" fill="none" stroke="#c9c9c9" stroke-width="1.4" marker-end="url(#a)"/>
-  <rect x="60" y="662" width="456" height="42" rx="8" fill="#fff" stroke="#c9c9c9"/>
-  <text x="288" y="681" font-size="11" font-weight="600" fill="#303030" text-anchor="middle">Record → Slack DM + Jira comment + CHANGELOG</text>
-  <text x="288" y="695" font-size="9.5" fill="#616161" text-anchor="middle">commit: proto(slug): what — why [PD-XX]</text>
-
-  <text x="288" y="730" font-size="10" font-weight="600" fill="#616161" text-anchor="middle">Traceability: ticket ⇄ Figma frame ⇄ commit · unresolved feedback = not Done</text>
-
-  <!-- OPS -->
-  <g font-size="9.8" fill="#616161">
-    <text x="586" y="66" font-weight="600" fill="#303030">Collect</text>
-    <text x="586" y="80">"start a project from this PRD"</text>
-    <text x="586" y="93">"turn this into tickets" · "fix X"</text>
-    <text x="586" y="108" font-style="italic">prd-writer · one-page-prd · product-os</text>
-
-    <text x="586" y="176" font-weight="600" fill="#303030">Track</text>
-    <text x="586" y="190" font-family="monospace" font-size="8.8">labels: discipline:* surface:* source:*</text>
-    <text x="586" y="204">Investigate before filing — search</text>
-    <text x="586" y="217">Figma + repo first</text>
-
-    <text x="586" y="288" font-weight="600" fill="#303030">Create</text>
-    <text x="586" y="302" font-family="monospace" font-size="8.8">npm run new-project -- slug "T" PD-XX</text>
-    <text x="586" y="315" font-family="monospace" font-size="8.8">npm run new -- proj slug "Title"</text>
-    <text x="586" y="329">Layout per src/pages/ApplicationLayout</text>
-    <text x="586" y="342">contentWidth="full" · wrapper top pad 0</text>
-    <text x="586" y="356" font-style="italic">nexleaf-design-system · ds-components-only</text>
-    <text x="586" y="369" font-style="italic">figma-generate-design · figma-use</text>
-
-    <text x="586" y="408" font-weight="600" fill="#303030">Design system</text>
-    <text x="586" y="422">Search short single-concept queries</text>
-    <text x="586" y="435">Missing? build it in the DS file →</text>
-    <text x="586" y="448">comment on PD-16</text>
-
-    <text x="586" y="498" font-weight="600" fill="#303030">Verify</text>
-    <text x="586" y="512">Self-audit before presenting:</text>
-    <text x="586" y="525">placeholders · sibling sizing · spacing</text>
-    <text x="586" y="538">strays on canvas · read back to confirm</text>
-
-    <text x="586" y="596" font-weight="600" fill="#303030">Deliver</text>
-    <text x="586" y="610" font-family="monospace" font-size="8.8">npm run dev</text>
-    <text x="586" y="623" font-family="monospace" font-size="8.8">npm run deploy:preview   (auto)</text>
-    <text x="586" y="636" font-family="monospace" font-size="8.8">npm run deploy           (approved)</text>
-    <text x="586" y="650">"Want me to publish?" — always ask</text>
-
-    <text x="586" y="684" font-weight="600" fill="#303030">Record</text>
-    <text x="586" y="698">Slack DM · Jira comment · CHANGELOG</text>
-    <text x="586" y="711">Corrections encoded into the skills</text>
-    <text x="586" y="724">in the same turn</text>
-  </g>
+<svg viewBox="0 0 900 520" width="900" height="520" xmlns="http://www.w3.org/2000/svg" font-family="Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+  <title>Nexleaf design workflow</title>
+  <desc>Collect to Track to Create to Verify to Deliver, with domain memory feeding Create, a mirror handshake between Figma and prototype, three delivery surfaces, and a correction loop back into the skills.</desc>
 
   <defs>
-    <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto">
-      <path d="M0 0 L8 4 L0 8 Z" fill="#c9c9c9"/>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9" fill="none" stroke="#8a8a8a" stroke-width="1.6"/>
     </marker>
-    <marker id="b" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6.5" markerHeight="6.5" orient="auto">
-      <path d="M0 0 L8 4 L0 8 Z" fill="#005bd3"/>
+    <marker id="arb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M0,1 L9,5 L0,9" fill="none" stroke="#005bd3" stroke-width="1.6"/>
     </marker>
   </defs>
+
+  <rect x="0" y="0" width="900" height="520" fill="#ffffff"/>
+
+  <text x="32" y="38" font-size="18" font-weight="700" fill="#1a1a1a">Nexleaf design workflow</text>
+  <text x="32" y="58" font-size="12.5" fill="#6b6b6b">One source of truth per layer, deterministic bridges between them, and nothing changes silently.</text>
+
+  <!-- domain memory -->
+  <rect x="286" y="84" width="196" height="38" rx="8" fill="#f4f6f8" stroke="#c9ced4" stroke-dasharray="4 3"/>
+  <text x="384" y="102" text-anchor="middle" font-size="11.5" font-weight="600" fill="#4a4a4a">ColdTrace domain memory</text>
+  <text x="384" y="116" text-anchor="middle" font-size="10.5" fill="#8a8a8a">how the product actually behaves</text>
+  <line x1="384" y1="124" x2="384" y2="142" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <!-- five stages -->
+  <g>
+    <rect x="32" y="146" width="146" height="80" rx="9" fill="#ffffff" stroke="#c9ced4"/>
+    <text x="105" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1a1a1a">Collect</text>
+    <text x="105" y="196" text-anchor="middle" font-size="11" fill="#6b6b6b">Meeting · Slack · PRD</text>
+    <text x="105" y="211" text-anchor="middle" font-size="11" fill="#6b6b6b">Correction</text>
+  </g>
+
+  <g>
+    <rect x="204" y="146" width="146" height="80" rx="9" fill="#ffffff" stroke="#c9ced4"/>
+    <text x="277" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1a1a1a">Track</text>
+    <text x="277" y="196" text-anchor="middle" font-size="11" fill="#6b6b6b">Jira PD epic</text>
+    <text x="277" y="211" text-anchor="middle" font-size="11" fill="#6b6b6b">design + eng tickets</text>
+  </g>
+
+  <g>
+    <rect x="376" y="146" width="146" height="80" rx="9" fill="#f5f9ff" stroke="#005bd3" stroke-width="1.6"/>
+    <text x="449" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1a1a1a">Create</text>
+    <text x="449" y="196" text-anchor="middle" font-size="11" fill="#6b6b6b">Figma ⇄ Prototype</text>
+    <text x="449" y="211" text-anchor="middle" font-size="11" fill="#6b6b6b">on Poltail only</text>
+  </g>
+
+  <g>
+    <rect x="548" y="146" width="146" height="80" rx="9" fill="#ffffff" stroke="#c9ced4"/>
+    <text x="621" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1a1a1a">Verify</text>
+    <text x="621" y="196" text-anchor="middle" font-size="11" fill="#6b6b6b">self-audit · critique</text>
+    <text x="621" y="211" text-anchor="middle" font-size="11" fill="#6b6b6b">parity audit</text>
+  </g>
+
+  <g>
+    <rect x="720" y="146" width="146" height="80" rx="9" fill="#ffffff" stroke="#c9ced4"/>
+    <text x="793" y="176" text-anchor="middle" font-size="14.5" font-weight="700" fill="#1a1a1a">Deliver</text>
+    <text x="793" y="196" text-anchor="middle" font-size="11" fill="#6b6b6b">localhost first</text>
+    <text x="793" y="211" text-anchor="middle" font-size="11" fill="#6b6b6b">then ask</text>
+  </g>
+
+  <line x1="180" y1="186" x2="200" y2="186" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="352" y1="186" x2="372" y2="186" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="524" y1="186" x2="544" y2="186" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+  <line x1="696" y1="186" x2="716" y2="186" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+
+  <!-- mirror handshake -->
+  <line x1="449" y1="228" x2="449" y2="264" stroke="#005bd3" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#arb)"/>
+  <rect x="346" y="268" width="206" height="66" rx="9" fill="#f5f9ff" stroke="#005bd3" stroke-dasharray="4 3"/>
+  <text x="449" y="290" text-anchor="middle" font-size="11.5" font-weight="700" fill="#005bd3">Mirror handshake</text>
+  <text x="449" y="308" text-anchor="middle" font-size="10.5" fill="#5a5a5a">prototype changed → I ask before Figma</text>
+  <text x="449" y="323" text-anchor="middle" font-size="10.5" fill="#5a5a5a">Figma changed → you say “go check it”</text>
+
+  <!-- three surfaces -->
+  <line x1="793" y1="228" x2="793" y2="250" stroke="#8a8a8a" stroke-width="1.6" marker-end="url(#ar)"/>
+  <text x="793" y="266" text-anchor="middle" font-size="10" font-weight="700" fill="#8a8a8a" letter-spacing="0.6">THREE SURFACES</text>
+
+  <rect x="612" y="276" width="254" height="28" rx="6" fill="#f4f6f8" stroke="#c9ced4"/>
+  <text x="626" y="294" font-size="11" fill="#3a3a3a">localhost:5173</text>
+  <text x="852" y="294" text-anchor="end" font-size="11" fill="#8a8a8a">always, first</text>
+
+  <rect x="612" y="310" width="254" height="28" rx="6" fill="#f4f6f8" stroke="#c9ced4"/>
+  <text x="626" y="328" font-size="11" fill="#3a3a3a">/prototype-hub-preview/</text>
+  <text x="852" y="328" text-anchor="end" font-size="11" fill="#8a8a8a">auto-deploys</text>
+
+  <rect x="612" y="344" width="254" height="28" rx="6" fill="#f5f9ff" stroke="#005bd3"/>
+  <text x="626" y="362" font-size="11" fill="#3a3a3a">/prototype-hub/  (team)</text>
+  <text x="852" y="362" text-anchor="end" font-size="11" font-weight="600" fill="#005bd3">you approve</text>
+
+  <!-- correction loop -->
+  <line x1="621" y1="228" x2="621" y2="398" stroke="#005bd3" stroke-width="1.6"/>
+  <path d="M 621 398 L 105 398 L 105 230" fill="none" stroke="#005bd3" stroke-width="1.6" marker-end="url(#arb)"/>
+  <rect x="238" y="384" width="250" height="28" rx="6" fill="#ffffff"/>
+  <text x="363" y="403" text-anchor="middle" font-size="11.5" font-weight="700" fill="#005bd3">Every correction → skills + docs, same turn</text>
+
+  <!-- binding rule -->
+  <rect x="32" y="430" width="834" height="66" rx="9" fill="#f4f6f8" stroke="#c9ced4"/>
+  <text x="50" y="453" font-size="12" font-weight="700" fill="#1a1a1a">Binding rule at every stage</text>
+  <text x="50" y="472" font-size="11.5" fill="#4a4a4a">Never build UI from scratch. Code composes Poltail via @ds; Figma places real Nexleaf Design System v2.1 library instances.</text>
+  <text x="50" y="488" font-size="11.5" fill="#4a4a4a">No DS component fits? Build it in the DS Figma file and comment on PD-16 — never hand-roll, never rush a ticket.</text>
 </svg>

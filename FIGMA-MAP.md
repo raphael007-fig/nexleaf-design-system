@@ -308,3 +308,187 @@ TemperatureTasksCard, TextareaInput, Toolbar.
 - [ ] Per-component variant→prop mapping for the newly confirmed components (fill in as each is first used).
 - [ ] Decide whether the Poltail-only components get Figma pages (mirror-rule backlog).
 - [ ] Expand the Phosphor→Polaris table as icons are encountered.
+
+---
+
+## The top bar — canonical source and how to place it  (2026-08-24)
+
+**Corrected finding.** The top bar in this file is a **`GROUP`**, and that is *deliberate* — it is
+Raf's own canonical pattern, used throughout the **Design Rep** page. Do **not** "fix" it by
+swapping in the DS library's `Top bar` component: that component is the generic **Polaris** bar
+(Logo · Search field · User menu) and is **not** the ColdTrace bar. An earlier pass mis-diagnosed
+the group as a hand-rolled lookalike and briefly replaced it — wrong, and reverted.
+
+**Canonical source of truth: the Design Rep top bar group `8483:64221`.** Clone it. Its structure:
+
+```
+Top bar [GROUP]                      1440×56 at y=0
+├── Top bar [FRAME]                  Logo(240) · Search(957) · Right content [INSTANCE](243)
+│                                    Right content ▸ Sidekick · Secondary menu · User menu
+├── Language [INSTANCE]              x=811, y=18, 20×20
+├── Breadcrumb [INSTANCE]            x=80,  y=14
+└── Actions [INSTANCE]               x=1174, y=14, 98×28 — the country pill ("Kenya")
+```
+
+Rendered left→right: **breadcrumb · AI Chat Bot (beta) · Kenya ▾ · apps · notifications · avatar**
+— which matches what `AppShell`/`TopBar` renders in the prototype.
+
+**What was actually wrong in the Sandbox frames** (all three, since state frames are duplicates):
+
+| Defect | Canonical | Sandbox (before) |
+|---|---|---|
+| `Right content` | **INSTANCE** of `Right content` | detached plain `FRAME` |
+| `Actions` (country pill) | sibling inside the group, x=1174, w=98, label `Kenya` | nested *inside* `Right content`, w=78 |
+| Breadcrumb home crumb | text `Button` reading **Home** | `Icon only` instance |
+| Breadcrumb trail | screen-specific | leftover `Equipment Management › Equipment Details` |
+
+**Procedure — clone, don't rebuild:**
+
+1. `setCurrentPageAsync(Design Rep)` → `getNodeById('8483:64221').clone()`.
+2. `setCurrentPageAsync(Sandbox)` → `frame.appendChild(clone)`, `clone.x = clone.y = 0`.
+3. Re-insert at the nav's index so order is **content → Line → Top bar → Closed Navigation** —
+   the side nav must sit **above** the bar so the rail logo shows.
+4. Load `Inter Regular` + `Medium`, then retarget the breadcrumb text to the screen
+   (e.g. `Home › Temperature Readings › Daily`) and hide the `...` truncation frame when there are
+   only three crumbs.
+5. Remove the old group, then **read back every frame** and screenshot to confirm.
+
+**Standing lesson.** Structure that looks wrong may be the house pattern. **Diff against the
+canonical reference before declaring a defect** — compare node types, child order and geometry
+against Design Rep, and only then call something broken. Saying "this is a lookalike" without that
+diff produced a wrong rule that had to be retracted.
+
+## Parity is textual, not just structural  (2026-08-24)
+
+Raf caught a subtitle — `"Cold-chain submissions across facilities"` — that existed in the
+prototype's `<Page>` but **not** in the Figma header. Structure matched; content didn't. His call:
+drop it from the prototype (Figma's header is title-only).
+
+**The gap in my method:** I had been diffing *components and geometry* and calling that parity.
+It isn't. **Every visible string must exist on both sides, and nowhere else.**
+
+**Do this on every parity pass — both directions:**
+
+1. Pull every visible string from the Figma frame, sorted by position:
+   ```js
+   content.findAll(n => n.type === 'TEXT' && isVisible(n))
+     .sort((a,b) => (a.absoluteBoundingBox.y - b.absoluteBoundingBox.y)
+                 || (a.absoluteBoundingBox.x - b.absoluteBoundingBox.x))
+     .map(t => String(t.characters).replace(/\s+/g,' ').trim())
+   ```
+   (`isVisible` must walk **ancestors** — a visible text node inside a hidden parent still returns
+   `visible === true`.)
+2. List the prototype's rendered strings — title, subtitle, action labels, KPI titles/values/badges,
+   banner copy, column headers, every cell, empty-state copy, toast copy.
+3. Diff **both ways**. Extra-in-prototype is as much a defect as missing-in-prototype.
+4. State the count in the report (e.g. "48 strings, both sides") so the check is visibly done.
+
+Temperature Readings baseline: **48 strings**, matching.
+
+**Standing lesson.** "The components match" is not parity. Diff the words too, and say the number.
+
+## Code name ≠ Figma name — search both  (2026-08-24)
+
+I searched the v2.1 library for **"Option card"** (the name the code uses), got nothing, and declared a
+DS gap in an annotation panel. Raf corrected it: the component exists as **`Option list`**
+(`f087159f60fa6e321efd069242fca3ba07671aca`), with variants
+`Allow multiple = false|true` × `Media = false|true`. The `Media=true` variant *is* the icon + label
+tile used on the Scan QR screen.
+
+This is the **second** false-gap claim (after Metric Card / PD-32). The rule "run several short
+single-concept searches" wasn't enough on its own, because I only searched the concept **as the code
+names it**.
+
+**Added rule:** before claiming a gap, search **both vocabularies** —
+- the **code** name (`OptionCard`, `SearchSelect`, `MetricCard`), and
+- the **Figma** name, which tends to be Polaris-flavoured and spaced (`Option list`, `Search field`,
+  `Metric Card`, `Text field`, `Index table`).
+
+Then scan the DS file's **page list** — each component has its own page, so the page names are a
+complete inventory. A gap is only real when both vocabularies and the page list come up empty.
+
+Known code → Figma name pairs:
+`OptionCard` → **Option list** · `TextInput` → **Text field** · `TextareaInput` → **Multiline field** ·
+`NumberInput` → **Number field** · `Btn` → **Button** · `IndexTable` → **Index table** ·
+`MetricCard` → **Metric Card** · `SelectInput` → **Select** · `RadioButton` → **Radio button**.
+
+## Figma generation specs — Raf's guides are the authority  (2026-08-25)
+
+Raf drops **screen-generation specs** for Figma work (first: `PROTOTYPE-C-FIGMA-SPEC.md`, in the
+prototype's own folder). When one exists it **outranks my reading of the prototype, the code, and
+any existing Figma page.** Read it end-to-end *before* generating a single frame.
+
+**Why this rule exists:** on the Add Equipment flow I built 24 frames from field labels, then 7 from
+a borrowed template, before the spec surfaced. It already contained the verbatim copy, the field
+specs, the enable rules, the build order and the deep links. Every frame I'd made had to be redone.
+
+### How to work from a spec
+
+1. **Read §0 product rules first.** They explain *why* screens look the way they do — compose with
+   the logic, not just the pixels.
+2. **Read the "what NOT to draw" section before building.** Older Figma pages still contain removed
+   patterns; without this you will faithfully copy something that was deliberately deleted.
+   For Add Equipment that's: provider/integration pickers, connect screens, **Access code** fields,
+   region select, min/max alarm inputs, compartment selects, free-text sensor serial, hard-stop
+   location gating.
+3. **Follow its build order and frame count** — it is the checklist. Report progress against it.
+4. **Use its deep links** (`?proto=c&state=<id>`) to screenshot-match each frame against the live
+   prototype rather than eyeballing.
+5. **Treat its copy as verbatim.** Don't paraphrase labels, help text or button strings.
+6. If the spec and the canvas disagree, the spec wins — and say so rather than silently picking one.
+
+### Chrome rules this spec established (they generalise)
+
+- **Breadcrumb depends on shell level.** Entry screens render at AppShell **secondary** →
+  `Home / Manual Temp. Recording / Scan QR Code`. Wizard steps render at **tertiary** →
+  `Home / Manual Temp. Recording / Add Equipment`.
+- **The page subtitle varies by branch**, it isn't one string. Add Equipment has three, by
+  monitoring method (rtmd / external / none).
+- **Stepper spine length varies by branch too** — RTMD 4 phases, third-party 4, unmonitored 3.
+  Below 920px the Stepper switches to its compact variant.
+- Each step carries a **title (16/650) *and* a subtitle (13/450 subdued)** — not title alone.
+
+## Figma scripting — the four traps that cost the Add Equipment build  (2026-08-25)
+
+Building 59 frames surfaced four failure modes, each of which silently produced a *wrong but
+plausible* result. All four are now checked automatically before presenting work.
+
+**1. Text inside an instance is a component property, not a text node.**
+`node.characters = "…"` on a nested instance appears to succeed and then renders the old value.
+Page titles, subtitles, breadcrumb chips and button labels are all property-driven.
+→ Find the key matching `/Label content|Title content|Subtitle content|Help content/` and call
+`inst.setProperties({ [key]: value })`. Keep the raw-text write only as a fallback.
+
+**2. `resize()` and `primaryAxisSizingMode` do not grow an auto-layout frame — `layoutSizingVertical
+= 'HUG'` does.** A modal sat at 244px through two attempted fixes while six fields were clipped
+inside it. Order matters: children HUG → stack HUG → content HUG → *then* measure → then resize the
+parent. Setting `layoutSizingHorizontal = 'FILL'` on a banner also collapses it to 1px unless
+vertical HUG is set too.
+
+**3. Nodes invalidate mid-iteration.** `findAll()` then mutating throws
+`Node with id "…" not found` on nested instances (`.button-shine` is a frequent casualty), and the
+script is atomic so the whole batch is lost.
+→ Snapshot `.map(n => n.id)` first, re-fetch with `getNodeById` inside the loop, and skip
+`!node || node.removed`.
+
+**4. Prefix matching hits the wrong node.** Anchoring to "the field whose label starts with
+`Facility`" matched the **stepper step** labelled *Facility & Contacts*, so a derived region line and
+a banner were injected into the stepper. → Match the label **exactly**, and additionally check the
+node's component family (`/Text field|Select/`) before treating it as a form field.
+
+**And the meta-rule:** a returned success value is not evidence. Every one of the above returned a
+clean result object while the canvas was wrong. **Screenshot after every mutation**, and on a
+network or SSE error **re-read state before retrying** — one write landed while its response was
+lost, and a blind retry would have double-applied it.
+
+### Standing audit before presenting any Figma set
+
+Run these over every frame in the section, not a sample:
+- forbidden patterns from the spec's "what NOT to draw"
+- placeholder residue: `^Label$`, `^Value$`, `^Error message$`, `Write here`, template-file names
+- visible template artefacts (`__field_template`, `__form_stack`)
+- content overflow: stack bottom vs frame bottom
+- state count vs the spec's checklist
+
+The Add Equipment run found 15 real issues this way — inherited placeholders and stale footer
+labels — that no screenshot spot-check had caught.
