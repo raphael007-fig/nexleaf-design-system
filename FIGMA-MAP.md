@@ -1198,6 +1198,9 @@ File `YzbXqlrKTcGbWxwzGkLTct` unless stated.
 | `8925:23135` | **A9 mobile**, 375×1180 | Mobile success card — padding `32/16`, content 311, `Go to Home Page` top-right inside the card |
 | `8925:23332` | **A10 mobile**, 375×871 | **Mobile compact stepper** — 68px row, full run of unlabelled circles, 29px dashed connectors, counter line at the gutter. NOT a single circle. |
 | `8925:24270` | **A14 mobile**, 375×1186 | Submission toast visible, clear of the top nav |
+| **`8331:99736`** | Manual Temp Recording — List view, 1440×1082 (in section `6166:28445`) | **Workspace LAYOUT (2026-08-26).** Governs arrangement + rhythm only: 16px below top bar → Page header 44 → 16 → filter row (fields 256 wide, 12 gaps) → 16 → card; date row 28×28 steppers, Pick Date h28, search 320×28; breadcrumb trail Home › module › current-chip. **RAPHAEL'S RULING (same day): the top bar and side nav COMPONENTS come from Storybook, NOT from this frame's pixels** — DS TopBar (Ask AI pill, 40×40 icon buttons, 36 avatar, `#f1f1f1`) and DS SideNavigation (collapsed 60px `#f1f1f1`, dark icons; expanded 240). The frame's white 56px rail and "AI Chat Bot (beta)" pill are stale/off-system — do not copy them. |
+| `8573:46422` | Manual Temp Recording — Calendar view (Today), 1440 | Same chrome as `8331:99736`; calendar surface with facility group rows + S/M/T day columns |
+| `8575:35326` | Manual Temp Recording — Calendar view (Past Entry), 1440 | Same chrome; past-entry banner placement below legend |
 | `8483:120121` | Design Rep tertiary mobile page, 375×812 | **Tertiary pages carry no Mobile Top Nav** — back arrow lives in the header |
 | `8483:118168` | Design Rep status bar, 375×44 | Mobile status bar source |
 | `8483:121743` | Design Rep `Mobile Top Nav`, 375×52 | Secondary-page nav source |
@@ -1232,6 +1235,50 @@ That happened. Match on the exact width, or on the node's role, never on a loose
 
 Frame height = `max(900, bottom-most visible child + 24)`, counting things that live *outside* the
 card — X11's below-card banner, A14's toast — not just the card itself.
+
+## Breadcrumb — the collapse rule  (spec sheet `9134:323533`, page "Design")
+
+Raphael keeps a four-example spec sheet for this. **The leading node is always an icon — never a
+text crumb reading "Home".** Text crumbs are *additional* levels on top of it.
+
+| Levels | Renders | Component properties |
+|---|---|---|
+| 1 | `[icon]` | all crumbs false |
+| 2 | `[icon] › Label` | `Crumb 2` |
+| 3 | `[icon] › Label › Label` | `Crumb 2` + `Crumb 3` |
+| **>3** | `[icon] › Label › … › Label` | `Crumb 2` + **`Page List`** + `Crumb 3` |
+
+Past three levels the **middle collapses into `…`**; the first level after home and the current page
+stay visible. `Crumb 1` is the text-Home slot and stays **false** on this product — switching it on
+puts "Home" next to the home icon, which is the duplication Raphael flagged.
+
+Add Equipment's trail is `Home › Coldchain Equipment › Add Equipment › <step>` — four levels — so
+every frame collapses: **`[icon] › Coldchain Equipment › … › <step>`**, with `Add Equipment` inside
+the `…`. Frames that stop at Add Equipment (the entry-context screens E11–E13) show three levels and
+no `…`.
+
+Step labels in use: `Scan QR Code` · `Search Results` · `Monitoring Method` · `Facility & Contacts` ·
+`Equipment Details` · `RTMD & Sensor` · `Monitoring Device` · `Review & Submit` · `Success`.
+
+The old `__crumb4` / `__crumb4_chevron` sibling workaround is **retired** — it existed only because
+the DS Breadcrumb had three slots and nobody had read the collapse rule. Deleted from all 66 frames.
+If you find one, it is a leftover.
+
+## Side navigation — full height, always
+
+The reference frames carry `Closed Navigation` at **56 × the full frame height, at `0,0`**, sitting
+*under* the top bar in z-order. It was missing entirely on 53 desktop frames and only 282px tall on
+12 more — Raphael: *"the side navigation needs to be updated, its short in most pages"*.
+
+```js
+nav.x = 0; nav.y = 0;
+nav.resize(56, f.height);
+nav.constraints = { horizontal: 'MIN', vertical: 'STRETCH' };   // grows with the frame
+f.insertChild(f.children.indexOf(topBar), nav);                 // below the top bar
+```
+
+Because it is frame-height, **any frame resize must re-resize the nav** — add it to the refit pass,
+alongside `Loader` / `Overlay` / `Scrim`.
 
 ## Decisions already settled — do not re-ask
 
