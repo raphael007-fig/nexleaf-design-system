@@ -1171,3 +1171,53 @@ for (const o of overlays) { o.x = 0; o.y = 0; o.resize(f.width, f.height); }
   clamped to 50% of the row, then a non-removable `+ N others`, then the clear-all ✕.
 - Chip labels and counts are **read from the frame's own contact rows**, so the field can't drift
   from the list beneath it.
+
+---
+
+# CANONICAL REFERENCE FRAMES — read these before asking Raphael anything
+
+**Why this section exists (2026-08-26).** Raphael sent the scan reference frame `8060:289695`
+repeatedly across several sessions, and each time I treated it as new — re-diffing it and, worse,
+asking him to re-decide things the frame already answered. His words: *"have i not sent it many
+times, dont you use memory properly?"* He is right. This registry is the fix.
+
+**The rule:** when Raphael points at a frame, or when a layout question comes up that one of these
+frames covers, **read the frame and follow it.** Do not ask him to choose. Do not fall back on
+`PROTOTYPE-C-FIGMA-SPEC.md` — a reference frame he has touched **outranks the written spec**, always.
+Add any new frame he sends to this table **in the same turn**, with what it governs.
+
+File `YzbXqlrKTcGbWxwzGkLTct` unless stated.
+
+| Node | What it is | What it governs |
+|---|---|---|
+| **`8060:289695`** | Scan / entry screen, 1440×900, page **Changes** | **THE scan layout.** Heading `Select an Option`; subtitle `Scan QR Code or Enter Equipment Serial No.`; a 600-wide centred column holding a 100×100 QR tile + `Scan QR Code` label + icon button, a 600 divider, the serial **Text field at 600 (fills the column)**, and a right-aligned primary labelled **`Submit`**. Governs E1–E13. |
+| `8061:293315` | Secondary reference, 1440×900, Changes | Wizard shell / results layout |
+| `8603:189417` | Secondary reference, 1440×900, Changes | Wizard shell / results layout |
+| `8925:21154` | **A1 mobile**, 375×812 | Mobile wizard step 1 baseline |
+| `8925:21722` | **A3 mobile**, 375×812 | **Mobile wizard card padding `0/16/0/16`, children 311.** Rolled to all 65 mobile cards. |
+| `8925:23135` | **A9 mobile**, 375×1180 | Mobile success card — padding `32/16`, content 311, `Go to Home Page` top-right inside the card |
+| `8925:23332` | **A10 mobile**, 375×871 | **Mobile compact stepper** — 68px row, full run of unlabelled circles, 29px dashed connectors, counter line at the gutter. NOT a single circle. |
+| `8925:24270` | **A14 mobile**, 375×1186 | Submission toast visible, clear of the top nav |
+| `8483:120121` | Design Rep tertiary mobile page, 375×812 | **Tertiary pages carry no Mobile Top Nav** — back arrow lives in the header |
+| `8483:118168` | Design Rep status bar, 375×44 | Mobile status bar source |
+| `8483:121743` | Design Rep `Mobile Top Nav`, 375×52 | Secondary-page nav source |
+| `8483:121973` | Design Rep `Bottom sheet`, 375×296 | Mobile modal → bottom sheet source |
+
+## Decisions already settled — do not re-ask
+
+| Question | Answer | Settled |
+|---|---|---|
+| Scan serial field width | **600**, fills the column | 2026-08-26, from `8060:289695` |
+| Scan primary button label | **`Submit`** (supersedes the spec's *Search*) | 2026-08-26, from `8060:289695` |
+| Breadcrumb trail | `Home › Coldchain Equipment › Add Equipment` + current step | 2026-08-25 |
+| Max alarm contacts | **10** — the live platform's 5 is a known, deliberate divergence | 2026-08-26 |
+| Contacts list page size | **5 rows, both viewports** | 2026-08-26 |
+| Contacts field at the cap | **Never hidden** — only the helper row swaps to the limit banner | 2026-08-26 |
+| Chips on A16/A17 | **Keep them**, even though the rows are visible beneath | 2026-08-26 |
+| Mobile compact stepper | Full run of circles + counter line | 2026-08-25 |
+| Primary button colour | `fill-emphasis` #005bd3 | 2026-08-25 |
+| B3 and X14 | Keep both | 2026-08-25 |
+
+**Before asking Raphael a layout question, check both tables.** If the answer is here, act on it and
+say which reference you followed. Only ask when the reference frames genuinely disagree with each
+other, or when he is choosing between two things neither has covered.
