@@ -1203,6 +1203,36 @@ File `YzbXqlrKTcGbWxwzGkLTct` unless stated.
 | `8483:121743` | Design Rep `Mobile Top Nav`, 375×52 | Secondary-page nav source |
 | `8483:121973` | Design Rep `Bottom sheet`, 375×296 | Mobile modal → bottom sheet source |
 
+## Desktop card geometry — from all three reference frames
+
+`8060:289695`, `8061:293315` and `8603:189417` **all three** carry the page card at exactly:
+
+```
+1328 x 804   @ x=80, y=72        # 80 gutter · 56 top bar + 16
+```
+
+That is the standard. Two things follow from it:
+
+- **The card is a slab, not a hug.** Its height is `max(804, contentBottom + 32)` — the reference has
+  deliberate breathing room under short content. Hugging the card to its children is what shrank E1
+  to `1328x550` and produced the dead band Raphael flagged: *"you have not updated this layout"*.
+- **Never derive `y` from a refit.** Set `card.y = 72`, resize the frame, then **set `card.y = 72`
+  again**. Frame resizes move children.
+
+Three card families on desktop, and a bulk edit must tell them apart **by width**:
+
+| Width | What it is | Position |
+|---|---|---|
+| **1328** | page card (wizard, scan, forms) | `@80,72`, height `max(804, content+32)` |
+| **752** | success card | `@344,72`, hugs its content |
+| **620** | modal dialog | **vertically centred** — `y = (frame.height - modal.height) / 2` |
+
+Selecting "cards" as `width > 600 && width < 1000` catches the modals and yanks them to the top.
+That happened. Match on the exact width, or on the node's role, never on a loose range.
+
+Frame height = `max(900, bottom-most visible child + 24)`, counting things that live *outside* the
+card — X11's below-card banner, A14's toast — not just the card itself.
+
 ## Decisions already settled — do not re-ask
 
 | Question | Answer | Settled |
