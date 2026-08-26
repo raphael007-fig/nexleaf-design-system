@@ -492,3 +492,615 @@ Run these over every frame in the section, not a sample:
 
 The Add Equipment run found 15 real issues this way — inherited placeholders and stale footer
 labels — that no screenshot spot-check had caught.
+
+## Sections — moving one does NOT move its children  (2026-08-25)
+
+The single worst trap of the Add Equipment build, because it silently destroys other people's work.
+
+```js
+section.x = 27000;   // moves the SECTION RECTANGLE ONLY
+```
+
+Children keep their absolute coordinates. The result: an empty section rectangle in the new
+position, and every frame still sitting where it was — in our case directly **on top of Raf's
+existing Changes-page designs**, which is what he saw as "blank white" sections.
+
+**Always move children by the same delta:**
+
+```js
+const kids = section.children;
+const minX = Math.min(...kids.map(c => c.x));
+const minY = Math.min(...kids.map(c => c.y));
+const dx = (section.x + PAD) - minX;
+const dy = (section.y + PAD) - minY;
+for (const c of kids) { c.x += dx; c.y += dy; }
+// then re-hug the section around its children
+```
+
+**Before placing anything on a shared page**, compute the right edge of everything already there
+and start well clear of it:
+
+```js
+const others = page.children.filter(c => !mine.includes(c));
+const startX = Math.ceil(Math.max(...others.map(c => c.x + c.width)) / 1000) * 1000 + 3000;
+```
+
+Then assert zero overlap between every new section and every pre-existing node, and report the
+number. Do not rely on the canvas looking right in a screenshot — `get_screenshot` on a section
+renders from page origin, so a section far to the right looks like a mostly-empty image either way.
+
+### Section layout conventions that came out of this
+
+- **One section per user-facing flow**, stacked top→bottom, not one section per build-group.
+  For Add Equipment: shared entry · MONITORED (Nexleaf RTMD) · BUILT-IN/3RD PARTY · UNMONITORED ·
+  ERRORS & EDGE CASES · SHARED modals.
+- **Within a section, rows read left→right as a journey.** Happy path is the first row; variants and
+  edge cases go in rows beneath it.
+- **On-canvas row labels** (Inter Bold 28, grey) so the board is scannable without reading layer names.
+- **Annotation panel pinned top-right of each section**, and it must explain *what makes this flow
+  different from the others* — not just what the screen does.
+- **A frame can only live in one place.** If a screen belongs to two flows, clone it; otherwise
+  moving it into the second section silently removes it from the first. This cost two frames
+  (B3, S7) that vanished from their rows.
+
+## Hidden nodes are not "fine" — they are the defect  (2026-08-25)
+
+Three separate audits passed while the frames were visibly wrong, because the checks counted
+`findAll` results (which include hidden nodes) and the fixes only touched visible ones. One pass
+deleted **127 hidden leftover fields** — `Installation Date`, `Installed By`, `Facility Name`,
+`Country`, `Follow up action?`, plus duplicate `Configuration date` and `Facility` instances.
+
+Rules:
+
+- Compute **effective visibility** by walking to the frame, not `node.visible` alone.
+- An audit reports hidden children of a form container as a **failure**, not a pass.
+- Delete strays rather than hiding them. Hidden ones come back in the next audit as phantom
+  duplicates and waste a whole cycle.
+- `findAll` snapshots go stale the moment you remove a node. Snapshot **ids**, re-fetch with
+  `getNodeByIdAsync`, and skip `removed`. Nodes whose id contains `;` are inside an instance —
+  they can be re-propertied but never removed or resized.
+
+## Text field anatomy — the five things that are always wrong  (2026-08-25)
+
+The DS `Text field` set: `Label` · `Help text` · `Prefix` · `Suffix` · `Clear button` · `Label
+action` (booleans) + `↪️ Label content` / `↪️ Help content` (text) + variants
+`State: rest|hover|active|focus|disabled|read only|error` · `Tone` · `Borderless` · `Size`.
+The value lives on a nested `Input text` instance: `Type: value|placeholder` +
+`↪️ Value content` / `↪️ Placeholder content`.
+
+1. **`Prefix` defaults on in cloned instances** and renders a location pin on every field. Set it
+   `false`. `Suffix` (chevron) belongs only on selects and dates.
+2. **Placeholder ≠ value.** Set `Type` as well as the string, or a filled field reads grey and an
+   empty one reads as data.
+3. **Help text is `textAutoResize = NONE`** — two-line help overlaps the next label. Set
+   `textAutoResize = 'HEIGHT'` and `layoutSizingVertical = 'HUG'` on the help TEXT.
+4. **Resizing the instance does not widen the input.** Set the instance
+   `layoutSizingHorizontal = 'FIXED'` + `resize(w, h)`, *then* set each child FRAME
+   (`Label`, `Input`) to `FILL`. Pick one width for every control on a screen — 480 here.
+5. **`State: error` renders its own message.** Don't also switch on Help text or the error prints
+   twice.
+
+Node **names go stale** after reordering — always read the `Label content` property, never
+`node.name`, and rename the node to match once you're done.
+
+## Screens grow; the chrome doesn't follow  (2026-08-25)
+
+After content is fixed, four things still need re-fitting, in this order:
+
+1. card column → `layoutSizingVertical = 'HUG'`
+2. screen frame → `resize(w, 56 + column.height + 32)` (frames are `layoutMode: NONE`)
+3. left rail → `resize(56, frame.height - 56)`
+4. modal overlay → the dim layer is inside a top-level **`Loader`** instance; resize *that*,
+   not the `Overlay` rectangle inside it (which is instance-nested and refuses). Then recentre
+   the `Modal` frame, and move anything you anchored to it by the same delta.
+
+Then re-flow the section rows — heights changed, so the next row will be sitting inside the
+previous one. Assert zero overlap between every pair of section children afterwards.
+
+**Cloned buttons inherit `opacity: 0`** if you happened to clone a hidden one (`Save Draft` in the
+footer is the usual culprit). Set `opacity = 1` on the clone *and* its descendants, and turn
+`Icon` off unless you meant to keep the source's icon.
+
+## Modal slots DO take real component instances  (2026-08-25) — corrects an earlier assumption
+
+I believed a frame inside a `Modal` couldn't accept children, and floated a `Button` over the
+modal as a sibling of the screen frame instead. **Wrong.** Raf fixed it by hand and told me to
+look at what he did: he dragged the buttons **into `.slot examples`**.
+
+The reason is the node types, and they must be checked before assuming anything:
+
+```
+Modal            FRAME      ← plain frame assembly, not an instance
+├── Title bar    INSTANCE
+├── Content      FRAME      ← accepts children
+│   └── .slot examples FRAME  ← accepts children — put DS instances HERE
+├── Footer       INSTANCE   (Secondary action / Primary action inside it)
+└── Cancel button INSTANCE  (the X)
+```
+
+Only nodes whose **id contains `;`** are instance-nested and closed to structural edits. The
+`.slot examples` children read `id=top`, so `appendChild` / `insertChild` works normally.
+
+Rule: **read `node.type` and the id before concluding you can't place a component.** Floating a
+control over a modal is a bodge — it breaks the moment the modal is recentred or resized.
+
+Related: modal footers ship with both a `Secondary action` and a `Primary action`. Cancelling is
+a secondary action — don't leave `Cancel` + `Cancel scan` side by side, and hide the `Cancel
+button` X where the spec says the dialog has no dismiss.
+
+## Field value colour is a bound variable, and it does NOT follow the `Type` variant  (2026-08-25)
+
+The `Input text` sub-instance has `Type: value|placeholder`, but the `Value` text node's fill is
+bound to a colour variable that stays wherever it was last set. Result: **55 placeholders were
+rendering in the value colour** (they read as real data) and **7 real values were rendering in the
+disabled colour** (they read as placeholders). Raf spotted it as "Sensor A" looking greyed on the
+*selected* frame.
+
+- value → `Color/text/text-secondary` (97,97,97)
+- placeholder → `Color/text/text-disabled` (181,181,181)
+
+Set both the variant **and** the bound variable:
+
+```js
+const fills = JSON.parse(JSON.stringify(t.fills));
+fills[0] = figma.variables.setBoundVariableForPaint(fills[0], 'color', wantedVar);
+t.fills = fills;
+```
+
+Audit rule: compare `Type` against the rendered fill on every field. They disagree silently.
+
+## `get_screenshot` caches per node id  (2026-08-25)
+
+After a mutation, requesting the same `nodeId` can return the **previous** image — twice in a row,
+including with `contentsOnly` toggled. I nearly "re-fixed" a modal that was already correct.
+
+- Confirm a write by **reading the geometry back**, not by looking at a screenshot.
+- To force a fresh render, screenshot a **different** node — the parent section is ideal, and it
+  doubles as the row-layout check.
+
+## Add Equipment breadcrumb trail  (2026-08-25) — corrects the spec
+
+Raf: *"the breadcrumbs in all these screens are wrong — it's meant to be Home, Coldchain
+Equipment, Add Equipment."*
+
+**Every screen in the Add Equipment flow reads the same trail:**
+
+```
+Home › Coldchain Equipment › Add Equipment
+```
+
+All three crumbs are text `Button` instances (`Variant=tertiary`), the last one `State=active`.
+No icon-only Home, no per-step last crumb.
+
+This supersedes `PROTOTYPE-C-FIGMA-SPEC.md` §1, which said entry screens use
+`Home / Manual Temp. Recording / Scan QR Code` and wizard steps use
+`Home / Manual Temp. Recording / Add Equipment`. Both were wrong on two counts: the middle crumb
+is **Coldchain Equipment** (the module the flow is entered from), and the scan/entry pages do
+**not** get their own last crumb — scanning is a step *inside* Add Equipment, not a sibling
+destination. The success pages get the full trail too; they previously showed a lone `Home` chip.
+
+Applies to the prototype as well — `BREADCRUMBS` in `states.jsx` / `statesB.jsx` / `statesC.jsx`.
+Keep the two in parity; the shell level still switches secondary→tertiary by step, only the trail
+is now constant.
+
+## Primary buttons are BLUE — `fill-emphasis`, not `fill-brand`  (2026-08-25)
+
+Raf: *"fix all the black buttons to be blue."* 33 enabled primaries across the Add Equipment set
+were bound to **`Color/bg/fill/fill-brand`** (48,48,48 — near-black) instead of
+**`Color/bg/fill/fill-emphasis`** (0,91,211). They had been inherited from a cloned source.
+
+This is not a preference call — the code side settles it:
+
+```js
+// src/tokens/index.js
+COLOR_PRIMARY = '#005bd3';   // = rgb(0,91,211) = fill-emphasis
+```
+
+`Btn` variant `primary` renders `COLOR_PRIMARY`, so the prototype was always blue and **Figma was
+the side out of step**. Whenever a colour looks off in Figma, resolve the code token before
+deciding which side is wrong.
+
+Leave alone — these are *meant* to look dark-but-faint:
+
+| Token | Where | Renders |
+|---|---|---|
+| `fill-brand-disabled` @ 17% | disabled + loading primaries | light grey |
+| `fill-transparent-active` | breadcrumb current-page chip | light grey pill |
+
+A raw RGB check flags all three as "dark". Filter by the **bound variable name**, not the colour.
+
+## Mobile: 375 conversion recipe  (2026-08-25)
+
+Canonical source is the **Design Rep → “Mobile And Ipad Screen Layout”** section. Don't invent
+mobile chrome; clone these:
+
+| Part | Node | Size |
+|---|---|---|
+| Status bar (`Component 2`) | `8483:118168` | 375×44 at y=0 |
+| `Mobile Top Nav` | `8483:121743` | 375×52 at y=44 |
+| `Bottom sheet` (notch / `Sheet header`) | `8483:121973` | 375 wide |
+
+Layout: content column **x=16, width 343**, starting at **y=96**. Frame height
+`max(812, column bottom + 24)`.
+
+Conversion steps, in order:
+
+1. Clone the desktop frame, `resize(375, h)`.
+2. Remove the `Top bar` GROUP and the 56px `Closed Navigation` rail.
+3. Append the status bar and `Mobile Top Nav` clones.
+4. Move the content column to 16,96 and resize to 343.
+5. **Stepper → compact.** Keep **every** step circle visible with its dashed connectors, blank
+   each step's `Details` so the circles are unlabelled, and add a separate
+   `Step N of T · <label>` line beneath, indented to the card's 24px gutter.
+   **Do NOT reduce this to a single circle** — I tried that on 2026-08-25 and Raf sent back the
+   reference: the whole run stays visible on mobile so progress is legible at a glance.
+   The connector `LINE` nodes are absolutely positioned and keep their desktop geometry — re-span
+   each one between adjacent circle centres (`cx + r + 8` → `next.cx − r − 8`) or they shoot off
+   the right edge.
+6. **Recursive fit.** Anything wider than its container gets `layoutSizingHorizontal = 'FILL'`.
+   A single pass on the column is not enough — entry screens nest three levels of fixed-width
+   frames, and they bleed outside the card until you recurse.
+7. **Review rows must stack.** The desktop row is HORIZONTAL with a FIXED 220px label column, so
+   at 343 the value gets ~51px and shreds. Flip each row to VERTICAL, both texts `FILL` + `HUG` —
+   label above value.
+8. **Page header:** hide the page-level `Actions` slot (it's HUG 248 and empty on these screens),
+   set `Header` and `Title wrapper` to `FILL`, subtitle `textAutoResize = 'HEIGHT'`. Without this
+   the subtitle clips; hide `Actions` *after* setting FILL or the title wraps to one word per line.
+9. **Modals → bottom sheets:** width 375, `x=0`, `y = frame.height − sheet.height`, top corners
+   16 / bottom 0, prepend the cloned `Sheet header` notch, hide the `Cancel button` X.
+10. Resize the `Loader` overlay to the final frame height, then re-pin the sheet.
+
+## Overlay + layout order — Raf's reference  (2026-08-25)
+
+He sent **E2 (Scanner running, mobile)** as the model and said "adjust all". Child order on a
+screen frame, **back → front**:
+
+```
+0  content column        (x=16 mobile / x=80 desktop)
+1  status bar            375×44 at 0,0        ← mobile only
+2  Mobile Top Nav        375×52 at 0,44       ← mobile only  (desktop: Top bar GROUP)
+3  Loader                full frame at 0,0    ← the dim overlay, ABOVE the chrome
+4  Modal / sheet         frontmost
+```
+
+Two things this pins down:
+
+- **The dim layer covers the chrome too.** The `Loader` sits above the top nav and status bar, not
+  behind them. Resize it to the *final* frame height — it is the node to resize, not the `Overlay`
+  rectangle inside it, which is instance-nested and refuses.
+- **The modal is always the last child.** Mobile: `x=0, y = frame.height − sheet.height` (pinned
+  bottom, top corners 16). Desktop: centred both axes.
+
+Re-assert this order after any height change — `appendChild(loader)` then `appendChild(modal)` is
+the cheap way to do it.
+
+## Annotation panels carry the tone of what they describe  (2026-08-25)
+
+Raf: *"any annotation tied to error or warning should be in red or yellow light fill."*
+Use the DS Banner surfaces so the board matches the components:
+
+| Tone | Fill | Use on |
+|---|---|---|
+| info | `234,244,255` | default — behaviour, rules, flow explanations |
+| warning | `255,241,227` | blocked permissions, offline, not-found, "no readings yet", open decisions |
+| critical | `254,233,232` | validation conflicts, submit failure, and the ERRORS section panel |
+
+A note explaining a red screen should not be blue.
+
+## Horizontal padding is the #1 thing that survives a desktop→mobile clone  (2026-08-26)
+
+Three separate corrections from Raf, all the same defect: an inner frame kept a desktop-scale side
+padding, so the mobile content was squeezed.
+
+| Where | Was | Should be | Content width |
+|---|---|---|---|
+| Success card | `32/48/32/48` | `32/16/32/16` | 247 → **311** |
+| Entry card inner frame | `0/40/0/40` | `0/0/0/0` | 231 → **311** |
+| Wizard card | — | `0/24/0/24`, children at 0 | **295** |
+
+The gutter belongs on **the card**, never on its children. After any clone, walk the subtree and
+check `paddingLeft` / `paddingRight` at every level — the visible symptom is text wrapping far
+earlier than the card edge.
+
+**And don't over-correct.** Zeroing every padding ≥ 24 also wiped the legitimate 24px wizard
+gutter. Fix the specific frames you diffed, not everything that matches a threshold.
+
+## Mobile chrome differs by shell level — tertiary has NO top nav  (2026-08-26)
+
+Raf: *"this is a tertiary mobile page, we don't need the mobile top nav there… most tertiary pages
+have a back button in their headers."* Reference: Design Rep `8483:120121`.
+
+| Level | Mobile chrome | Used by |
+|---|---|---|
+| **secondary** | status bar 375×44 **+ `Mobile Top Nav` 375×52** · content at y=96 | entry / scan / method / success |
+| **tertiary** | status bar 375×44 **only** · content at y=52 | every wizard step |
+
+On tertiary the **back arrow in the `Page` header is the only way back** — that's why the nav is
+redundant. Don't add both.
+
+This matches the prototype exactly: `SECONDARY_STEPS = new Set(['search','entry','method','success'])`
+in `states*.jsx`, with `level = onScanPage ? 'secondary' : 'tertiary'`. **The code already encodes
+the answer** — check it before deciding chrome by eye.
+
+## A phone frame is 812 — the content behind a sheet CLIPS  (2026-08-26)
+
+Raf's rule, from his corrected S1: *"the frame should not be too long when the bottom sheet is
+small… it should take the height of the actual mobile frame size."*
+
+Mobile frames with a bottom sheet had been grown to fit the whole underlying form (1493–1513px),
+which is not what a phone shows. Correct:
+
+```js
+frame.height = Math.max(812, sheet.height + 96);   // 96 keeps some backdrop visible
+frame.clipsContent = true;                          // the form behind simply scrolls off
+sheet.y = frame.height - sheet.height;              // pinned bottom
+loader.resize(375, frame.height);                   // dim layer follows
+```
+
+The long underlying column is fine — it is *meant* to be clipped. Only grow past 812 when the
+**sheet itself** needs the room.
+
+Same principle for the contacts list: **paginate rather than stretch.** More than **5** contacts on
+mobile, more than **10** on desktop → show one page plus the DS `Pagination` component and a
+`Showing 1–N of T` line. A screen that scrolls for 1,500px is a layout failure, not a long list.
+
+## Text nodes contain NON-BREAKING SPACES  (2026-08-25)
+
+A copy fix reported success and changed nothing, twice. The cause: the text was
+`1 registered record…` — **char 160, not char 32** — so `/registered record/` never matched,
+`find()` returned `undefined`, and the guarded write was skipped silently.
+
+**Normalise before matching, always:**
+
+```js
+const norm = (s) => String(s).replace(/[   ]/g, ' ').trim();
+```
+
+This also means every content audit written with literal spaces has a blind spot. The placeholder
+sweep, the copy checks, the duplicate-label checks — all of them need `norm()`.
+
+And the deeper rule it proves: **a guarded write that finds nothing looks identical to a guarded
+write that succeeded.** Return the value you just wrote, not a "done" string.
+
+## Cloning: check `visible` AND `opacity` on the source  (2026-08-25)
+
+Two separate hours lost to the same trap. Cloning a node that is hidden or transparent produces a
+clone that is also hidden or transparent, and the script reports success:
+
+- `Save Draft` in the footer is `opacity: 0` → 84 invisible button clones
+- the `Badge` in A8 is `visible: false` → 52 invisible "Added" badges
+
+Before cloning: assert the source renders. After cloning: set `visible = true`, `opacity = 1` on
+the clone **and its descendants**, then read back the rendered size.
+
+## Screenshots only render the desktop app's ACTIVE TAB  (2026-08-25)
+
+`get_screenshot` on a node that lives on a **non-active page** either returns a blank render or
+errors with *“No node could be found … make sure the document containing the node is the active
+tab.”* `figma.setCurrentPageAsync()` inside the plugin does **not** make that page the app's
+active tab.
+
+So: build on the page that's currently open, verify visually there, then **reparent the finished
+sections** to their destination page at the end. `page.appendChild(section)` moves the whole
+subtree — unlike setting `section.x`, which leaves children behind.
+
+## Toasts belong to one frame only  (2026-08-25)
+
+A generic `Form Submitted Successfully` banner had been cloned onto **all five** success frames,
+and on A14 it sat on top of the real submission toast — two toasts, one of them tone `warning`.
+The submission toast fires only on the post-submit frame, tone `success`, top-right. Everywhere
+else: no toast. Check for stacked overlays at the top-right of every frame, not just the one you
+are editing.
+
+## Only reflow sections you own  (2026-08-26)
+
+The board auto-layout loop selected *every* `SECTION` on the page. Raf's own scratch section,
+**Update**, got swept into the 6-per-row grid and repositioned — 16 frames moved, its 3 loose
+`INSTANCE` children left behind (the loop only iterated frames), so it came out scattered.
+
+Rules now:
+
+- Reflow operates on an **explicit allow-list** of the Prototype C sections, never `all sections`.
+- Any section that is not mine carries `setSharedPluginData('nexleaf.parity','owner','raf-scratch-do-not-reflow')`
+  and is skipped.
+- A reflow that moves frames must move **all child types**, not just `type === 'FRAME'`.
+- Park foreign sections clear of the board (`x = 12000`); the Prototype C board starts at `x = 24100`.
+
+Exact restore for a section that has already been re-gridded: Figma **version history** → pick the
+version from before the run → copy that section → paste. Nothing in the Plugin API recovers prior
+positions.
+
+## `CENTER/CENTER` constraints were the cause of the recurring column drift  (2026-08-26)
+
+Every mobile column had `constraints = CENTER/CENTER` inherited from the desktop clone. So each
+time `frame.resize()` ran to refit the height, Figma **moved the column** to keep it centred — the
+column crept down, the frame was refit against the new position, and the drift compounded. This is
+what I kept "fixing" and kept coming back (A9 at y=99, U4 135, B7 140, X11 2, E11–E13 28/36/44).
+
+Fix, applied to all 66 mobile frames:
+
+```js
+col.constraints = { horizontal: 'MIN', vertical: 'MIN' };      // page body pins top-left
+chrome.constraints = { horizontal: 'STRETCH', vertical: 'MIN' }; // status bar + top nav
+```
+
+and **re-assert `col.y` after every `f.resize()`**, never before only.
+
+### Mobile column offset convention
+
+| screen | column `y` |
+|---|---|
+| tertiary (wizard step, no top nav) | **52** |
+| secondary (has Mobile Top Nav) | **172** |
+| secondary with a toast | **198** |
+
+48 frames already agreed on 52 and 10 on 172 — the outliers were drift, not intent. Derive the
+convention from the majority before "fixing" anything.
+
+## Classify chrome by content, not by frame-name prefix  (2026-08-26)
+
+I asserted secondary/tertiary from the key prefix (`E*`, `X*`, `S*`, `U*`) and produced 20 false
+positives. The real test is **does the screen carry a wizard stepper**:
+
+```js
+const tertiary = !!f.findOne(n => n.name === '__step_counter_row' || /Stepper/i.test(n.name))
+              || !!f.findOne(n => n.type === 'TEXT' && /^Step \d+ of \d+/.test(norm(n.characters)));
+```
+
+Tertiary → no Mobile Top Nav, back arrow lives in the header. Secondary → Mobile Top Nav.
+Run that check before reporting; a prefix is a naming habit, not a contract.
+
+B9 and U5 turned out to have their stepper circles but **no `__step_counter_row`** — the run of
+circles alone is not the compact stepper, the "Step X of Y · Label" line is part of it.
+
+## Component property keys carry a literal `↪️ ` prefix  (2026-08-26)
+
+Exposed nested properties are keyed with the arrow glyph **in the string**:
+
+```
+"↪️ Placeholder content#108611:12"   ← the real key
+"Placeholder content#108611:12"      ← throws: Could not find a component property with name
+```
+
+Never hardcode these. Resolve by regex against the live instance:
+
+```js
+const keyOf = (n, re) => Object.keys(n.componentProperties || {}).find(k => re.test(k));
+it.setProperties({ [keyOf(it, /Placeholder content/)]: '' });
+```
+
+## Mixed-font text: `loadFontAsync(t.fontName)` throws  (2026-08-26)
+
+`__step_counter` is two runs — `Step 3 of 4 · ` Inter Regular + `Monitoring Device` Inter Semi Bold
+— so `t.fontName` is `figma.mixed` and passing it to `loadFontAsync` fails with
+*“Cannot unwrap symbol”*. Load each face, set the string, then restore the runs:
+
+```js
+await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+await figma.loadFontAsync({ family: 'Inter', style: 'Semi Bold' });
+t.characters = lead + bold;
+t.setRangeFontName(0, lead.length, { family: 'Inter', style: 'Regular' });
+t.setRangeFontName(lead.length, t.characters.length, { family: 'Inter', style: 'Semi Bold' });
+```
+
+Inspect runs first with `t.getStyledTextSegments(['fontName'])`.
+
+A plugin run that throws **rolls back the whole run** — earlier successful edits in the same call
+are discarded. Re-read state after a failure rather than assuming a partial apply.
+
+## Tag input: a real DS gap  (2026-08-26)
+
+`Text field` has no multi-select / tag variant, and its `Input` row is inside the instance, so
+`appendChild` fails with *“New parent is an instance or is inside of an instance.”*
+
+Interim composition used on **A20** (desktop + mobile): blank the field's placeholder via its
+property, then overlay a `__contact_tags` auto-layout frame of real `Badge` instances positioned
+inside the input box. `Badge` has a **`Cancel` variant** — `Cancel=true` is the removable ✕ tag.
+
+- desktop: `John Zulu · +254 711 100 100` (Cancel=true) + `+ 2 others` (Cancel=false)
+- mobile: `John Z…` (Cancel=true) + `+ 2 others` (Cancel=true) — name truncates to fit 311px
+
+Assert `insideBox`, `vCentred`, and an ≥8px gap to the suffix chevron. Proper fix — a tag-input
+Text field variant — is on **PD-16**.
+
+## The board layout bug that made everything look scrambled  (2026-08-26)
+
+Two defects in the same reflow helper, and together they wrecked the whole page:
+
+**1. Section width came from the last row, not the widest row.**
+
+```js
+for (const f of frames) { …; x += f.width + 80; }
+sec.resizeWithoutConstraints(x + 64, …);   // ← WRONG: x is the final partial row
+```
+
+A section whose content reached x=9104 got sized to 3168. Frames rendered *outside* their own
+section boundary, and because the next section was positioned with `desktop.x + desktop.width + 600`,
+the mobile sections landed **on top of** the desktop frames. Track `maxRight` across every row.
+
+**2. Frames were sorted by their current `(y, x)`.**
+
+After the first bad reflow that order is arbitrary, so each subsequent pass scrambled it further and
+interleaved `note ·` frames between screens. Sort by **semantic code**, never by position:
+
+```js
+const parse = n => { const m = /^([A-Z]+)(\d+)\s·/.exec(n.name); return m && { p: m[1], i: +m[2] }; };
+screens.sort((a,b) => parse(a).p === parse(b).p ? parse(a).i - parse(b).i
+                                               : parse(a).p.localeCompare(parse(b).p));
+```
+
+### The board layout contract
+
+Every section now reads top to bottom:
+
+```
+content            ← the flow intro card ("Flow A — MONITORED… WHEN: user picks…"), y = 112
+§ group heading    ← the TEXT node, e.g. "Happy path — 4 steps"
+A1 A2 A3 A4 A5     ← screens in code order, 5 per row desktop / 8 per row mobile
+  ↳ note · A1      ← the annotation sits 16px under the screen it annotates
+§ next heading
+…
+```
+
+Spacing: `PADX 64 · PADY 112 · COLGAP 80 · ROWGAP 140 · NOTEGAP 16 · HEADGAP 28 · GROUPGAP 180 ·
+INTROGAP 120`. Row wrap is by **width budget** (`64 + 5×1440 + 4×80` desktop, `64 + 8×375 + 7×80`
+mobile), not a fixed count, so mixed-width children still wrap correctly.
+
+Group membership is read off the frame codes, not guessed:
+
+| section | groups |
+|---|---|
+| 0 · Shared entry | Happy path E1–E8 · Edge cases E9–E13 |
+| A · Monitored | Happy path — 4 steps A1–A9 · Variants A10–A20 |
+| B · Built-in / 3rd party | Happy path — 4 steps B1–B7 · Variants B8–B9 |
+| C · Unmonitored | Happy path — 3 steps U1–U5 |
+| Errors & edge cases | Validation & conflicts X1–X5 · Permission/submission X6–X10 · Empty / first-run X11–X14 |
+| Shared | QR assign sequence S1–S4 · Shared modals & responsive S5–S6 |
+
+Mobile pairs sit at `desktop.x + desktop.width + 600`, same `y`. Section pairs stack with a 500 gap.
+
+**Always assert after a layout pass**: no child outside its section
+(`c.x + c.width > sec.width`), and no section-to-section overlap. Both must come back empty.
+
+## Read the code component BEFORE filing a DS gap  (2026-08-26)
+
+I filed "Text field has no tag variant, there is no Tag component" on PD-16 and composed the
+alarm-contact chips from `Badge`. Both claims were wrong, and thirty seconds of reading would have
+shown it:
+
+- **`Tag` exists** — 18 variants in the v2.1 library (`Removable`, `Tone`, `State`, `Label content`),
+  and in code at `src/components/Tag/`.
+- **The pattern already shipped** — `SearchSelectMulti` has a `tagsInside` prop and the alarm-contacts
+  field in `AddEquipmentFlow.jsx` already passes it. Figma was the stale side, not the library.
+
+The code contract for `tagsInside`, which the Figma frames must match:
+
+| | rule |
+|---|---|
+| chip component | **`Tag`**, not `Badge` |
+| first chip | label = the option label (`` `${name} · ${phone}` ``), **removable**, `truncate` |
+| first chip width | **clamped to 50% of the input row**, ellipsised past that |
+| overflow chip | `+ N others` — **never removable** |
+| clear-all | a ✕ before the chevron whenever `selected.length > 0` (Text field's `Clear button` prop) |
+
+That clear-all is what appeared as a "second ✕" in a mobile screenshot; I copied it onto the overflow
+chip instead. **When a screenshot shows an affordance, find which element in the code owns it before
+redrawing it.**
+
+Standing rule, now proven twice (this and the black-vs-blue primaries): **when Figma and code
+disagree, read the code first — it has usually been right.** File the gap only after the component
+source says the gap is real.
+
+## Build the state that exists; don't invent a new frame  (2026-08-26)
+
+Asked for "a state showing selected contacts as tags", I cloned A1 and made a new frame **A20**. It
+duplicated A17 (`John Zulu + 2 others` *is* three contacts) and contradicted itself — three chips in
+the field, zero contact rows beneath, because A1 has no rows. Deleted.
+
+The real defect was on the frames that already existed: A16 and A17 had contacts listed while their
+field still read the placeholder. The rule from the workflow applies exactly — **work the whole set,
+not the first item; a defect in one is a defect in all of them.**
+
+Before adding a frame, ask: *does an existing frame already represent this state?* If yes, the task is
+a fix, not a build. And derive the content from the frame's own data — the chips are now read from
+each frame's top contact row, so the field cannot drift from the list beneath it.

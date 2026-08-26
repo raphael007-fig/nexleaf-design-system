@@ -14,8 +14,11 @@
 //
 // Two variants:
 //   • full (default) — numbered circles with labels below, dashed connectors
-//   • compact        — circles only + a "Step X of Y · Label" line beneath;
-//                      use when five labeled phases can't fit (< ~900px)
+//   • compact        — the same run of numbered circles, unlabelled, above a
+//                      "Step X of Y · Label" line; use below ~900px.
+//                      Do NOT reduce this to a single circle — the whole run
+//                      stays visible on mobile so progress is legible at a
+//                      glance. (Tried it 2026-08-25, reverted same day.)
 //
 //   <Stepper
 //     phases={[{ label: 'Select RTMD' }, { label: 'Configure RTMD' }]}
@@ -90,6 +93,13 @@ export function Stepper({ phases = [], activeIndex = 0, compact = false, navigab
     };
   };
 
+  // Compact — the full run of numbered circles with dashed connectors, and a
+  // "Step X of Y · Label" line beneath. The circles carry no labels here; the
+  // line names the current phase. This is the agreed mobile treatment.
+  //
+  // (2026-08-25: briefly reduced to a single circle on a misread of Raf's
+  // feedback, then reverted the same day. He wants the whole run visible on
+  // mobile — the user can see how far through they are at a glance.)
   if (compact) {
     return (
       <div style={{ width: '100%', fontFamily: 'Inter, sans-serif' }}>
