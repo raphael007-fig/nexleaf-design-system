@@ -1323,6 +1323,27 @@ if (f.children.some(c => Math.round(c.width) === 56 && !/Navigation/i.test(c.nam
   add('legacy nav stub still present');
 ```
 
+## The top bar carries no line — ever
+
+Raphael's rule: **there is no divider, border or shadow under the top bar.** It meets the page flush.
+
+The culprit is a `DROP_SHADOW 0,1 r0` on the *inner* `Top bar` frame — a 1px offset with zero blur,
+which renders as a hairline rule, not a shadow. It was live on 52 desktop frames; he had already
+hidden it by hand on the rest. Cleared from all 66, desktop and mobile.
+
+```js
+// bar chrome only — the group, its inner frame, and Search / Right content
+t.effects = t.effects.filter(e => !/SHADOW/.test(e.type));
+```
+
+**Do not strip effects from the logo.** The mark contains its own `INNER_SHADOW` on a "Mask group";
+that is artwork, not chrome. Scope the clear to the bar frame and its direct children, never a blind
+recursive sweep of the whole subtree.
+
+A hairline can arrive three ways — a `LINE` node, a stroke (watch `strokeBottomWeight`), or a
+zero-blur offset shadow. Check all three before concluding the bar is clean; the first two came back
+empty here and the third was the answer.
+
 ## Decisions already settled — do not re-ask
 
 | Question | Answer | Settled |
