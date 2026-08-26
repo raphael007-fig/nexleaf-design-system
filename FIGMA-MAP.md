@@ -1174,6 +1174,116 @@ for (const o of overlays) { o.x = 0; o.y = 0; o.resize(f.width, f.height); }
 
 ---
 
+# THE FIVE FAILURE MODES — read this before any Figma pass
+
+Everything below this line in the incident log is one of **five** mistakes wearing different
+clothes. On 2026-08-26 alone I made all five, several twice. Check these before acting, not after.
+
+### 1. Loose selector — the edit hit things I never inspected
+`sections.forEach` swept Raphael's `Update` scratch section into the board grid. `width > 600 &&
+width < 1000` dragged ten centred modals to the top of their frames. "Any horizontal padding ≥ 24"
+wiped a legitimate gutter. A card lookup matched the wrong node and narrowed E1's title block.
+
+> **Build an explicit allow-list, or match an exact value / a name you set yourself. Never a range,
+> never "all of type X". Print the target list and count before writing.**
+
+### 2. Replaced a thing without deleting what it replaced
+53 frames carried a `56x156` nav stub *under* the new full-height rail for hours. That is what
+Raphael saw as "the side navigation is short in most pages".
+
+> **A replacement is two operations: add the new one AND remove the old one, in the same pass. Then
+> assert the old one is gone.**
+
+### 3. Asked him something the source already answered
+He sent the scan reference repeatedly; I re-diffed it each time and then asked him to re-decide
+field width and button label. *"have i not sent it many times, dont you use memory properly??"*
+
+> **Check the reference registry and the settled-decisions table first. Only ask when two references
+> genuinely conflict.**
+
+### 4. Claimed something without reading the code
+Filed "there is no Tag component" on PD-16 — `Tag` had 18 variants and `SearchSelectMulti` already
+shipped `tagsInside`. Same class as the black-vs-blue buttons, where the code was also right.
+
+> **When Figma and code disagree, read the code first. It has been right every time so far.**
+
+### 5. Built new instead of fixing the set
+Asked for "a state showing contacts as tags", I created frame A20 — which duplicated A17 and
+contradicted itself. The real defect was on four screens that already existed.
+
+> **Ask "does a frame already represent this?" A defect in one state frame is a defect in all its
+> siblings and in its desktop/mobile twin. Fix the set.**
+
+### The verification rule that catches all five
+A returned success value proves nothing. **Read the result back and count it**: how many nodes did I
+touch, how many now conform, and what did I *not* check? Report all three. Any defect "fixed" more
+than twice is not a defect, it is a mechanism — stop patching and find what is moving it.
+
+---
+
+# DESIGN SYSTEM COMPONENTS BUILT 2026-08-26  (file `y4XdS2kaiS8eMHY3z8wORP`)
+
+Built for PD-16, **not yet published** — they reach consuming files only when Raphael publishes the
+library. Use these instead of hand-composing.
+
+| Component | Key | Notes |
+|---|---|---|
+| **`Cell`** (new page "Cell") | `d8b23b411b463dd9b611709512df332f2733ecdb` | `Tone = success/critical/warning/info/neutral` · booleans `Icon` `Description` `Badge` `Button` `Chevron` · text `Title content` `Description content`. Built from `src/components/Cell/Cell.jsx` — 64px row, 12 padding, 8 gap, 32px tile at radius 6. Replaces the hand-composed alarm-contact rows. |
+| **`QR code`** (new page "QR code") | `60fa70ab10c98a66824268810823ebf10a5fb5fb` | `Size = 192 (preview) / 88 / 40` · `Caption` boolean + `Caption content`. Fixed-seed module grid so instances never drift. |
+| `Breadcrumb` | `9f68747f71cf0cfe834c19853e9c30313430c30d` | Gained `Crumb 4` + `Crumb 5` (default **false**). Chevrons now bound to the crumb that follows them, and the missing chevron after the `…` was added. |
+| `Button` | `948893e290c1b1e39e2e9a8c48d38548f49b188a` | All **9** `State=loading` variants had no text node — the label vanished and the button collapsed to 44px. Each now carries its label bound to `Label content`. |
+| `Text field` | `f3637d27412a13a61fc24f777e1313772bcda6d9` | Gained `Tags` (default false) and `Placeholder` (default true) — booleans, **not** a `Type` variant, so 26 variants did not become 52. `Tags` reveals a chip row inside `Input`. |
+| `Tag` (existing) | `273eaf2c4ec0b5fd37803f75dd3ccbf928acf195` | 18 variants, `Removable`. **This is the chip component — never use `Badge` for chips.** |
+
+Every additive change defaults to off, so no existing instance in any file changed appearance.
+
+# LIBRARY COLOUR VARIABLES — how to bind, and when NOT to
+
+The DS file has **one local collection** (11 sizing "figma-only" hacks). **All colour variables are
+remote**, imported from another library, so `getLocalVariableCollectionsAsync()` returns none of
+them. To get a handle, harvest them off a component that already binds them:
+
+```js
+const v = await figma.variables.getVariableByIdAsync(node.boundVariables.fills[0].id);
+// then
+const paint = figma.variables.setBoundVariableForPaint(node.fills[0], 'color', v);
+node.fills = [paint];
+```
+
+70 colour variables are reachable this way, under `Color/bg/*`, `Color/text/*`, `Color/border/*`,
+`Color/icon/*`, `Color/input/*`.
+
+### Binding is not free — check the resolved value first
+
+Binding `Cell`'s tone tints to the library's `fill-*-secondary` variables **changed four of the five
+colours**, and one catastrophically:
+
+| tone | code `ICON_TONES` | library `fill-*-secondary` |
+|---|---|---|
+| success | `#cdfee1` | `#cdfee1` ✓ |
+| critical | `#fde2e1` | `#fedad9` ✗ |
+| warning | `#fff3cd` | `#ffef9d` ✗ |
+| info | `#eaf4ff` | `#e0f0ff` ✗ |
+| **neutral** | `rgba(0,0,0,0.06)` | **solid `#000000`** ✗✗ |
+
+`fill-transparent-secondary` resolves opaque, so a 6% tint became a solid black tile.
+
+> **Read the resolved colour back after binding and compare it to what you had.** A variable whose
+> *name* matches your intent may not carry the *value* your component needs. Where they diverge, the
+> code's token wins and the fill stays raw — then log the divergence rather than silently restyling.
+
+`Cell`'s card surface is bound (`Color/bg/surface/surface`, `#ffffff` both ways). Its five tone tints
+are intentionally **raw**, matching `ICON_TONES` in `src/components/Cell/Cell.jsx`.
+
+**Open for Raphael:** should the library gain proper soft-tint variables matching `ICON_TONES`, or
+should the code adopt the library's `fill-*-secondary` values? Until decided, the code wins.
+
+### Two component sets in the library are broken already
+
+`Drop zone » Drop zone` (`109178:44479`) and `Toggle » Toggle_main` (`84937:20756`) throw
+*"Component set has existing errors"* on `componentPropertyDefinitions`. **Pre-existing, not mine** —
+guard any library-wide enumeration in `try/catch` or the whole pass dies on them.
+
 # CANONICAL REFERENCE FRAMES — read these before asking Raphael anything
 
 **Why this section exists (2026-08-26).** Raphael sent the scan reference frame `8060:289695`
