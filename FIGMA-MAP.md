@@ -1280,6 +1280,49 @@ f.insertChild(f.children.indexOf(topBar), nav);                 // below the top
 Because it is frame-height, **any frame resize must re-resize the nav** — add it to the refit pass,
 alongside `Loader` / `Overlay` / `Scrim`.
 
+## Frame chrome — layer order and the fixed / scrolls split
+
+Raphael's corrected E1 sets the pattern. In the Figma layer panel it reads:
+
+```
+FIXED     Closed Navigation
+          Top bar
+SCROLLS   Frame            <- the page content
+```
+
+That grouping comes from **`frame.numberOfFixedChildren`**, which marks the *last N children in the
+API array* (= the top N in the layer panel) as fixed. There is **no `scrollBehavior` property** in
+this runtime — reading it throws.
+
+Order, bottom to top in `frame.children`:
+
+```
+[ page content, __dropdown, __contact_tags, below-card Banner ]   <- scrolls
+[ Top bar, Closed Navigation ]                                     <- chrome, fixed
+[ Loader, Overlay, Scrim, Modal, Toast ]                           <- overlays, fixed
+frame.numberOfFixedChildren = chrome.length + overlays.length
+```
+
+`__dropdown` and `__contact_tags` stay in the **scrolls** group — they anchor to a field and must
+travel with it. Modals and loaders sit above the chrome so they dim the top bar too.
+
+Before this pass the board had five different child orders and `numberOfFixedChildren` of 1, 3, 4
+and 5 — several frames had a *content* frame marked fixed.
+
+### The legacy nav stub
+
+Adding the full-height `Closed Navigation` did not remove the old short rail: **53 desktop frames
+carried a leftover plain `Frame` at `56x156 @0,56`** underneath it. That is what Raphael kept seeing
+as *"the side navigation is short in most pages"* — the new nav was correct, the stub was showing
+through.
+
+When replacing chrome, **delete the thing you are replacing in the same pass**, and add a check:
+
+```js
+if (f.children.some(c => Math.round(c.width) === 56 && !/Navigation/i.test(c.name)))
+  add('legacy nav stub still present');
+```
+
 ## Decisions already settled — do not re-ask
 
 | Question | Answer | Settled |
