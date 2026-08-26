@@ -1,5 +1,6 @@
 @PoltailDesign.md
 @FIGMA-MAP.md
+@DESIGN-SYSTEM-INVENTORY.md
 @docs/coldtrace-domain.md
 
 HARD RULE — NO EXCEPTIONS: never generate UI components from scratch. Every visible
