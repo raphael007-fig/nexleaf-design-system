@@ -1104,3 +1104,70 @@ not the first item; a defect in one is a defect in all of them.**
 Before adding a frame, ask: *does an existing frame already represent this state?* If yes, the task is
 a fix, not a build. And derive the content from the frame's own data — the chips are now read from
 each frame's top contact row, so the field cannot drift from the list beneath it.
+
+## Deleting a row: find the row, don't count parents  (2026-08-26)
+
+To trim a contact list to five rows I located each row by walking **three parents up** from its
+`Added` badge and called `remove()`. That node was not the row. The result: the name, badge and
+description vanished but the row frame and its `Remove` button survived — **five hollow rows** with
+nothing but a Remove link, sitting under the real list. The script reported `removed: 5` and the
+sweep passed.
+
+In the same pass I appended the pager to `rows[0].parent`, which I had assumed was the list. It was
+the *first row*, so `Showing 1–5 of 10` and the ‹ › buttons rendered **inside John Zulu's card**,
+next to his Remove link.
+
+Both were visible instantly to Raf and invisible to every check I had.
+
+**Rules:**
+
+- Name structural nodes and target them **by name**, never by parent-hop count. These rows are
+  `__contact · <Name>`; the pager footer is `__contacts_pager`.
+  ```js
+  const rows = []; const st=[f];
+  while (st.length) { const n = st.pop();
+    if (/^__contact\s·/.test(n.name)) { rows.push(n); continue; }   // stop descending
+    if (n.children) for (const c of n.children) st.push(c); }
+  const list = rows[0].parent;   // only safe because rows[0] IS the row
+  ```
+- After removing part of a composite, **assert the remainder is gone too**. A row is only intact if
+  it still carries its identifying content.
+- Insert siblings by index against a known anchor, not by appending to a guessed parent:
+  ```js
+  list.insertChild(list.children.indexOf(rows[rows.length-1]) + 1, footer);
+  ```
+
+Two checks added to the sweep, both of which now catch this class:
+
+```js
+// hollow row — the container survived but its content didn't
+if (/^__contact\s·/.test(x.name) && !x.findOne(q => q.type==='TEXT' && /^Added$/i.test(norm(q.characters))))
+  add('hollow contact row ' + x.name);
+// a pager must never be nested inside a row
+if (pagerAncestors.some(p => /^__contact\s·/.test(p.name))) add('pager inside a contact row');
+```
+
+## Refit a frame to ALL its children, not just the form column
+
+Hugging desktop frames to the form column alone clipped the full-bleed `Loader` overlays on six
+frames and X11's below-card banner. Take the max bottom across every visible non-overlay child, then
+resync overlays to the new frame box:
+
+```js
+const overlays = f.children.filter(c => /^(Loader|Overlay|Scrim)$/i.test(c.name));
+const bottom = Math.max(...f.children.filter(c => c.visible && !overlays.includes(c)).map(c => c.y + c.height));
+f.resize(1440, Math.max(900, bottom + 40));
+for (const o of overlays) { o.x = 0; o.y = 0; o.resize(f.width, f.height); }
+```
+
+## Alarm contacts — the settled behaviour  (2026-08-26)
+
+- The contacts field is **never hidden**, including at and over the cap. Only the helper row swaps
+  from *"Search and select contacts, or Create a new contact"* to the **Contact limit reached**
+  banner. (Figma had it hidden on A18/A19; the code never did.)
+- The list **pages at 5 rows on both viewports** — `CONTACTS_PER_PAGE = 5`, with a
+  `Showing X–Y of N` label. Ten stacked rows push the wizard footer off-screen on mobile.
+- The field summarises the selection as chips: first contact `` `${name} · ${phone}` `` removable and
+  clamped to 50% of the row, then a non-removable `+ N others`, then the clear-all ✕.
+- Chip labels and counts are **read from the frame's own contact rows**, so the field can't drift
+  from the list beneath it.
