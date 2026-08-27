@@ -1284,6 +1284,27 @@ should the code adopt the library's `fill-*-secondary` values? Until decided, th
 *"Component set has existing errors"* on `componentPropertyDefinitions`. **Pre-existing, not mine** —
 guard any library-wide enumeration in `try/catch` or the whole pass dies on them.
 
+# A FLOW IS DONE WHEN FIVE NUMBERS SAY SO
+
+Raphael, 2026-08-27: *"did we not create the rules that every flow should be in rows and then must
+add annotations for all states?"* We did — in three places. **Nothing checked any of them.** The
+board measured 34/132 annotated (26%) while the sweep reported "0 issues".
+
+**Report these five every time. Never "looks complete".**
+
+| # | Assertion | Add Equipment, 2026-08-27 |
+|---|---|---|
+| 1 | **Annotation coverage** — every state frame has a `note · <CODE>` | 132/132 |
+| 2 | **Note placement** — same `x`, `y + height + 16` | 132/132 |
+| 3 | **Matrix coverage** — each of the 12 states DRAWN or DECLARED on canvas | 11 drawn · 1 declared |
+| 4 | **Viewport parity** — every state has a desktop and a mobile twin | 66 / 66, no gaps |
+| 5 | **Registry parity** — every prototype state has a frame, and vice versa | 33/33 bound |
+
+The 12-state matrix lives in the `screen-states-and-interactions` skill. **A state that does not
+apply must be declared on the canvas with a reason** — Add Equipment carries a `note · matrix` in
+every section declaring *partial data* N/A, because a creation flow never renders a partly-populated
+record. Absence must be a decision, not an omission.
+
 # ANNOTATION COVERAGE IS 100% OR THE BOARD IS NOT DONE
 
 The rule "all states, annotated in his house style" was written in three places —
@@ -1726,3 +1747,91 @@ cloned glyphs — condition as fill, completion as glyph — 620 cells, 495 glyp
 
 **Still outstanding and NOT done:** the prototype side. The skill's parity bar is that every state
 drawn in Figma is reachable in the prototype; none of these 18 are yet.
+
+## RETRACTION — the Recording Date row is NEVER tinted  (2026-08-27)
+
+Earlier today I wrote this into the settled-decisions table:
+
+> *Past Entry mode — the **Recording Date row itself turns amber** (`255,241,227`, radius 8) and its pill reads `Past Entry`.*
+
+**Wrong.** Raphael: *"NO NEED TO HAVE THIS SECTION YELLO, ITS ONLY THE PAST HISTORY BADGE THAT
+CHANGES TO YELLOW, TODAYS BADGE IS BLUE."*
+
+The row stays white. **Only the badge carries the state:**
+
+| Recording date | Badge | Tone |
+|---|---|---|
+| today | `Today` | `info` (blue) |
+| a past date | `Past Entry` | `attention` (yellow) |
+
+Where the mistake came from: prototype J's own description says "the bar itself turns amber in Past
+Entry mode", and I treated a prototype blurb as a design decision. **A sentence in a prototype
+description is not a ruling** — the reference frames and Raphael are. Amber fill cleared from
+`W1h`, `W3` and `W3a`; the tint now lives only on the Past Entry banner, which is a Banner component
+doing its own job.
+
+## One section PER FLOW — not one section with headings inside  (2026-08-27)
+
+I built the state set as a single section with three `heading ·` text nodes marking the flows.
+Raphael: *"I THOUGHT ALL PATHS AND FLOWS HAD THEIR OWN SECTION… YOU ARE NOT FOLLOWING."* He is right,
+and the Prototype C board already showed the pattern (`0 · Shared entry`, `A · MONITORED`,
+`B · BUILT-IN or 3RD PARTY`, `C · UNMONITORED`, `ERRORS & EDGE CASES`, `SHARED`).
+
+**Rule: one `SECTION` per flow / path. The section name carries the flow and its Jira key. No
+in-section heading text nodes — the section title is the heading.** Sections stack vertically at the
+same `x` with a **500** gap. Current shape:
+
+| Section | Frames |
+|---|---|
+| `D · HOME DASHBOARD ENTRY — states  (PD-36)` | D1 · D1a · D1b · D1c · D2 · D2a · D2b |
+| `W1 · WORKSPACE LIST VIEW — states  (PD-34)` | W1 · W1a–W1i |
+| `W2 · WORKSPACE CALENDAR — states  (PD-35)` | W2 · W2a · W2b · W2c · W3 · W3a |
+| `MODULE NOTES — states not applicable  (PD-39)` | the section-wide N/A note |
+
+Each tagged `nexleaf.parity/owner = cowork-v2-2026-08-27` and `jira = <key>`. Inside each:
+5 per row, `PADX 64 · COLGAP 80 · ROWGAP 140 · NOTEGAP 16`, note under its own frame on the row's
+shared baseline.
+
+## There is no DS loading table — and the skeleton bars need `FILL`, not `resize`  (2026-08-27)
+
+My first loading state was a narrow stack of stubs. Two causes:
+
+1. **`Index cell` has no loading or skeleton state.** Its `State` variant is
+   `default · hover · selected · selected + hover` only. `Index header cell` has
+   `rest · hidden · visible · blank · disabled`. So a "loading table" cannot be built by switching
+   the real table's cells into a skeleton state — that variant does not exist. Worth adding.
+2. **`Skeleton body text`'s internal bars ship `FIXED` at 250×8 and are instance-nested.**
+   `resize()` refuses them, which is why every bar stayed 250 wide inside a 1296-wide parent.
+   `layoutSizingHorizontal` **is** allowed on instance-nested nodes:
+
+```js
+const inst = skeletonLines1.createInstance();
+wrap.appendChild(inst);
+inst.layoutSizingHorizontal = 'FILL';
+for (const bar of inst.children) bar.layoutSizingHorizontal = 'FILL';   // 250 -> 1304
+```
+
+**The loading pattern that is right for this table:** keep the real `Table` visible and hide only
+its data cells, so the header row and its real column labels stay truthful, then put the skeleton
+rows beneath. `W1a` hides 110 cells, `W2a` hides 476, each with 10 full-width bars.
+
+## Amendment vs past recording — TWO independent windows  (2026-08-27, settled)
+
+Recorded in `docs/coldtrace-domain.md`. This resolves what looked like a contradiction between
+Prototype H (7 days) and Prototype I (3-day cap) — they are two different windows, not one:
+
+| Window | Length | Governs |
+|---|---|---|
+| **Past recording** | 7 days | entering a reading that was **never** recorded |
+| **Amendment** | 3 days | changing a reading that **already exists** |
+
+A reading from 5 days ago is inside the 7-day window and outside the 3-day one: you can fill a
+missing entry, but not alter an existing one. They expire independently, and collapsing them into
+"the edit window" is wrong. It also separates the two marks — **Past Entry** = recorded late inside
+7 days; **Amended** = changed inside 3 days.
+
+Still open, and each changes the design (do not guess): whether each window counts from the
+reading's date or from when it was saved; whether boundaries are inclusive; whether an amendment
+needs a reason or audit entry and who can see it; and whether a supervisor can override either
+window and whether that is its own screen. The amendment **journey** is also undrawn — opening a
+saved reading, editing, confirming, the Amended mark, the audit trail. PD-38.
