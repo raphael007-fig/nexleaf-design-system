@@ -124,15 +124,25 @@ Video thumbnail          | a4a9574dcf2b30f6 | 1
 QR code                  | 60fa70ab10c98a66 | 3v  | Size=192 (preview)/88/40 · Caption:B
 Keyboard key             | 4a795d7626a1e4d1 | 2v
 Account Connection       | 151fa980a85dba5f | 2v
-Drop zone                | 0d74fd249363a9ba | 21v | ⚠ BROKEN SET
-Toggle_main              | f1fc3dc44840af38 | 10v | ⚠ BROKEN SET
+Drop zone                | 0d74fd249363a9ba | 21v | State=rest/hover/focus/disabled/dragging/error/Uploaded Image/Option Uploaded/Select Uploaded · Size=default/medium/small
+Toggle_main              | f1fc3dc44840af38 | 10v | State=rest/hover/focus/error/disabled · Checked=false/true
 .slot examples           | 336dc8bf882aa1b4 | 4v  | Type=Card/Modal/modal-2/Popover — slots DO accept real instances
 ```
 
 ## Gotchas
 
-- **`Drop zone`** and **`Toggle_main`** throw *"Component set has existing errors"* on
-  `componentPropertyDefinitions`. Pre-existing. Guard any library-wide loop in `try/catch`.
+- **`Drop zone` and `Toggle_main` were broken and are now fixed (2026-08-26).** Both threw
+  *"Component set has existing errors"*. Causes and repairs:
+  - `Drop zone` — three variants (`Uploaded Image`, `Option Uploaded`, `Select Uploaded`) declared
+    only `State`, while the other 18 declared `State` + `Size`. **A variant missing an axis breaks
+    the whole set.** All three are 590x120, so they were renamed `…, Size=default`.
+  - `Toggle_main` — two variants both named `State=rest, Checked=true`, and no `Checked=false` rest
+    state at all. Index 5 had a light `#e3e3e3` track with the knob at x=2, i.e. the off state
+    mislabelled. Renamed to `State=rest, Checked=false`, which also completes the matrix.
+  - Diagnosing a broken set: parse every variant name into key/value pairs, then look for (a) a
+    property missing from some variants, (b) duplicate combinations, (c) children that aren't
+    `COMPONENT`. Verify the value against the artwork before renaming — don't guess which duplicate
+    is wrong.
 - **Property keys carry a literal `↪️ ` prefix** for exposed nested properties. Resolve by regex,
   never hardcode.
 - **`DatePicker` is the calendar surface**, not a date field. A date input is a `Text field` with a
