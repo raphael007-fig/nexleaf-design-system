@@ -1284,6 +1284,44 @@ should the code adopt the library's `fill-*-secondary` values? Until decided, th
 *"Component set has existing errors"* on `componentPropertyDefinitions`. **Pre-existing, not mine** —
 guard any library-wide enumeration in `try/catch` or the whole pass dies on them.
 
+# ANNOTATION COVERAGE IS 100% OR THE BOARD IS NOT DONE
+
+The rule "all states, annotated in his house style" was written in three places —
+`nexleaf-design-workflow` §3, the `screen-states-and-interactions` skill, and the board contract
+here — and **enforced in none of them**. On 2026-08-26 the board measured **34/132 (26%)** while my
+sweep reported "0 issues", because the sweep never counted notes. Raphael had to ask.
+
+> **A rule that nothing checks is a wish. Every rule in this file must have a matching assertion in
+> the sweep, or it will rot.**
+
+### The contract
+
+- **Every state frame carries a `note · <CODE>` frame.** No exceptions, both viewports.
+- It sits **directly beneath its screen**, same `x`, `y + height + 16`.
+- Width 440 desktop, 375 mobile. Title Bold 16 + body 13/20, from the note template.
+- **Fill carries the tone of what it describes** — `ℹ` info `#EAF4FF` · `⚠` warning `#FFF1E3` ·
+  `⛔` critical `#FEE9E8`. An error state never gets a blue note.
+- Content says **what the screen is and the rule it carries** — the commit boundary, why a control
+  is a dropdown and not free text, what recovery exists. Not a restatement of the title.
+
+### The assertions, now in the sweep
+
+```js
+const note = notes.find(c => c.name === 'note · ' + code);
+if (!note) add('NO ANNOTATION');
+else if (Math.abs(note.x - f.x) > 1 || Math.abs(note.y - (f.y + f.height + 16)) > 1)
+  add('note misplaced');
+```
+
+Report both numbers every time: `annotationCoverage 132/132 · notesCorrectlyPlaced 132/132`.
+
+### Section structure, for completeness
+
+Each section is `content` intro card → `§ group heading` → screens in code order → note under each
+screen. Groups are the journey: **happy path first, then variants, then edges.** A flow is not
+complete until every state in the prototype registry has a frame, a twin on the other viewport, and
+a note.
+
 # CANONICAL REFERENCE FRAMES — read these before asking Raphael anything
 
 **Why this section exists (2026-08-26).** Raphael sent the scan reference frame `8060:289695`
@@ -1472,3 +1510,124 @@ empty here and the third was the answer.
 **Before asking Raphael a layout question, check both tables.** If the answer is here, act on it and
 say which reference you followed. Only ask when the reference frames genuinely disagree with each
 other, or when he is choosing between two things neither has covered.
+
+---
+
+# MANUAL TEMPERATURE RECORDING — v2 pass  (2026-08-27)  [PD-33]
+
+Page **Daily Temp Recording**. Raf's originals live in section `9165:153497`
+(`Manual Temperature Recording`) and are **untouched**. The corrected set is a new owned section:
+
+| Node | What it is |
+|---|---|
+| **`9175:34937`** | Section `Manual Temp Recording — v2 (2026-08-27)` @ `50915,3070`, tagged `nexleaf.parity/owner = cowork-v2-2026-08-27`, `jira = PD-33` |
+| `9175:34938` | **D1 · Home — dashboard entry**, 1440×1000 |
+| `9175:35096` | **D2 · Home — Today's Temperature Tasks drawer**, 1440×1000 |
+| `9175:35447` | **W1 · Workspace — List view**, 1440×958, card 1328×862 @80,72 |
+| `9175:35616` | **W2 · Workspace — Calendar (Today)**, 1440×1271 |
+| `9175:36695` | **W3 · Workspace — Calendar (Past Entry)**, 1440×1338 |
+
+Board layout inside the section: `PADX 64 · PADY 112 · COLGAP 80 · ROWGAP 140`, row 1 = D1 D2,
+row 2 = W1 W2 W3. Section sized from `maxRight` across every row, asserted with "no child outside
+its own section" (came back empty).
+
+## The canonical fixture — 10 CCEs, 4 facilities  (BINDING)
+
+Inconsistent sample data across a flow is a defect in its own right, so the workspace frames, the
+dashboard card, the dashboard drawer and the prototype's `dashboard-entry` flow now all draw on this
+one set. Equipment → type is consistent wherever a model recurs. Short facility labels
+(`Nairobi` / `Mombasa` / `Kisumu` / `Nyeri`) are used in the List's 124px Facility column and match
+the serial's facility code.
+
+| # | Facility | Short | Make | Model | Serial | Type | Monitoring |
+|---|---|---|---|---|---|---|---|
+| 1 | Pumwani Maternity Hospital | Nairobi | Vestfrost | VLS 400A Greenline | `CCE-2024-NAI-100` | Cold Room | Nexleaf RTMD |
+| 2 | Pumwani Maternity Hospital | Nairobi | B Medical | TCW 40 SDD | `CCE-2024-NAI-103` | Vaccine Carrier | Nexleaf RTMD |
+| 3 | Pumwani Maternity Hospital | Nairobi | Dometic | TCW 4000 AC | `CCE-2024-NAI-104` | Refrigerator | Third Party/Fridge Tag |
+| 4 | Likoni Clinic | Mombasa | B Medical | TCW 40 SDD | `CCE-2024-MOM-109` | Vaccine Carrier | Nexleaf RTMD |
+| 5 | Likoni Clinic | Mombasa | Haier | HBC-130 | `CCE-2024-MOM-101` | Freezer | Third Party/Fridge Tag |
+| 6 | Likoni Clinic | Mombasa | Zero Appliances | ZLF 30 | `CCE-2024-MOM-105` | Freezer | No Device |
+| 7 | Kisumu District Hospital | Kisumu | Vestfrost | VLS 400A Greenline | `CCE-2024-KIS-106` | Cold Room | Nexleaf RTMD |
+| 8 | Kisumu District Hospital | Kisumu | Aucma | BC/BD-100 | `CCE-2024-KIS-102` | Refrigerator | Third Party/Fridge Tag |
+| 9 | Nyeri Health Center | Nyeri | Aucma | BC/BD-100 | `CCE-2024-NYE-108` | Refrigerator | No Device |
+| 10 | Nyeri Health Center | Nyeri | Haier | HBC-130 | `CCE-2024-NYE-107` | Freezer | Third Party/Fridge Tag |
+
+Calendar grouping: Pumwani · 3 · Likoni · 3 · Kisumu · 2 · Nyeri · 2. Dashboard morning tab = rows
+1–6, evening tab = rows 4–10, so the card badge reads **13 Pending** (6 + 7) and cannot disagree with
+the drawer. The Action Required row points at `CCE-2024-NAI-100 | Pumwani Maternity Hospital`, not the
+unrelated incubator it inherited.
+
+## Decisions settled in this pass — do not re-ask
+
+| Question | Answer | Source |
+|---|---|---|
+| Status filter label | **`Status`** (was `Statuses` on the List frame only) | Raf 2026-08-27; the calendar frames and prototype J already agreed |
+| Recording Date value | a **full date** — `Thu, Aug 27, 2026`, not `August 2026` | it is a date stepper, not a month picker |
+| Monitoring vocabulary | **`Nexleaf RTMD` · `Third Party/Fridge Tag` · `No Device`** | Raf's ruling 2026-08-27 (prototype J's words win over `3rd Party/Fridge Tag` / `No RTMD`) |
+| Breadcrumb trail | `[home] › Temperature Monitoring › … › Manual Temperature Recording` | replaces the inherited `Equipment Management › … › Equipment Details` |
+| Make vs Model | `Make` = manufacturer (Vestfrost), `Model` = unit (VLS 400A Greenline) — they were transposed | Raf 2026-08-27 |
+| Past Entry mode | the **Recording Date row itself turns amber** (`255,241,227`, radius 8) and its pill reads `Past Entry`; the banner stays beneath | prototype J's spec |
+| Today-state frames | carry **no** Past Entry banner (removed from W1) | a banner contradicting the `Today` pill is the defect |
+| Stale AI pill | the frames' `AI Chat Bot (beta)` becomes **`Ask AI`** | extends the 2026-08-26 chrome ruling |
+| List field set | Raf: *"in a way both works, find the better balance, use your discretion"*. Ruling: keep Figma's column set with Make/Model corrected — Facility · Make · Model · Serial Number · Type · Morning · Evening · Recording Status — and express **temperature condition as the colour of the Morning/Evening values** (the legend already defines those colours) rather than as a separate `Temp Condition` column. That keeps every field the prototype shows without a ninth column, and it matches how the Calendar already encodes condition. `Monitoring` stays a Calendar-only column; it is already a filter on the List. | 2026-08-27 |
+
+## The nav is frame-height, so it must NOT count towards the frame's bottom  (2026-08-27)
+
+Refitting W1 after deleting its banner made the frame *grow* 1082 → 1106. Cause: the frame height
+was computed as `max(900, bottom-most visible child + 24)` over **all** children — and
+`Closed Navigation` is resized to the frame height, so it is always the bottom-most child. Each pass
+therefore adds 24px, for ever.
+
+```js
+const CHROME = /^(Closed Navigation|Side Navigation|Top bar)$/;
+const content = f.children.filter(c => c.visible !== false && !CHROME.test(c.name) && c.type !== 'LINE');
+let bottom = 0; for (const c of content) bottom = Math.max(bottom, c.y + c.height);
+f.resizeWithoutConstraints(1440, Math.max(900, bottom + 24));
+card.x = 80; card.y = 72;                       // resize moves children — re-assert AFTER
+nav.resizeWithoutConstraints(56, f.height);     // and only THEN re-grow the nav
+```
+
+Order matters: measure content → resize frame → re-assert the card origin → re-resize the nav.
+
+## Setting text: prefer the component property, and read it back
+
+The reliable recipe, now used for all 168 string edits in this pass (all verified):
+
+```js
+// walk up to the nearest INSTANCE whose TEXT property currently equals the old string
+for (const key of Object.keys(inst.componentProperties)) {
+  const p = inst.componentProperties[key];
+  if (p.type === 'TEXT' && norm(p.value) === before) { inst.setProperties({ [key]: next }); }
+}
+// only if no property drives it:
+for (const f of t.getRangeAllFontNames(0, t.characters.length)) await figma.loadFontAsync(f);
+t.characters = next;
+```
+
+`getRangeAllFontNames` avoids the mixed-font throw that `loadFontAsync(t.fontName)` hits.
+Property keys seen here: `↪️ Label content#105632:28` (Select), `Label content#108693:192`
+(Breadcrumb crumb), `Search content#111489:19` (top-bar pill), `Table content#68064:0`
+(Index-table cell), `Content#108256:19` (Badge). Always re-read the node afterwards — a silent
+no-op on a property-driven node is the classic failure.
+
+## `variantOptions` is empty for REMOTE component sets  (2026-08-27)
+
+Tried to switch the Past Entry pill's Badge from info to warning. `inst.componentProperties.Tone`
+exists and reports `type: 'VARIANT'`, but `variantOptions` came back **`[]`** because the component
+set is remote (library), not local. So a tone swap cannot be driven from the property name alone —
+you need `importComponentByKeyAsync` on the specific variant, or the swap done by hand. Recorded so
+the next attempt doesn't read the empty array as "no tone axis".
+
+## Still open on this module — needs Raf
+
+- **Calendar column count.** Figma shows a 21-day window, prototype J shows all 31. Full month at
+  1328 needs narrower cells or horizontal scroll — a design decision, so nothing was forced. PD-35.
+- **Facility column width.** 124px on the List cannot hold `Pumwani Maternity Hospital`; the short
+  labels above are the stopgap. The table is already exactly 1329 wide against a 1328 card, so
+  widening means taking px from another column. PD-34.
+- **Module tile artwork.** The nine home tiles use bespoke illustrations in Figma; the code side has
+  Polaris icons only, so the prototype uses tinted icon discs. Export the assets or accept icons. PD-36.
+- **Recording Status variety.** Every row still reads `Pending` on both sides. Varying it means
+  setting Badge tones per row, which the remote-variant limitation above blocks programmatically.
+  Belongs with the states set. PD-39.
+- No `QrCodeIcon` in `POLARIS_ICON_DATA` (533 icons) — the Quick Action row uses `BarcodeIcon`.
