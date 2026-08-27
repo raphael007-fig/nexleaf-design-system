@@ -1527,3 +1527,42 @@ No route exists for: **funding sources**, the **equipment make/model catalogue**
 catalogue**, **API keys / integrations**, or **gateway creation** (no create CTA). `/spares` is
 operational (request/restock), not catalogue admin. These are presumably Django-admin-only — worth
 confirming. **No 2FA surface was found anywhere.**
+
+---
+
+## Manual temperature recording — the time windows  (recorded 2026-08-27, from Raphael)
+
+Two separate windows. They are **not** the same rule and must not be collapsed into one.
+
+| Window | Length | What it governs |
+|---|---|---|
+| **Past recording** | **7 days** | How far back a user may go to *enter a reading that was never recorded*. A missed day can be filled in for up to 7 days. |
+| **Amendment** | **3 days** | How long an *already-saved* reading stays editable. After 3 days the reading is frozen. |
+
+So a reading from 5 days ago: the day is still inside the **7-day past-recording** window, but a
+value already saved for it is **outside the 3-day amendment window** — you could record a missing
+reading, but not change one that exists. The two windows expire independently.
+
+### What this means on screen
+
+- **Past Entry mode** (`W1h`, `W3`) is the 7-day window. The Recording Date bar names the date being
+  recorded against, so a user cannot mistake it for today.
+- **Amendment window expired** (`W3a`) is the 3-day window closing. Saved readings become read-only;
+  the copy already on canvas points the user at a supervisor.
+- The **`Amended`** badge in the legend marks a reading that was changed inside its 3-day window.
+  `Past Entry` marks one recorded late inside the 7-day window. **Different badges, different rules.**
+
+### ⚠ Gap — the amendment / edit flow itself is not designed
+
+The state set covers *entering* past readings and the *expiry* of the amendment window. It does not
+cover the amendment journey: opening a saved reading, editing the value, confirming the change,
+seeing it marked `Amended`, and whatever audit trail the change leaves. Raphael flagged this as
+missing on 2026-08-27.
+
+### Open questions — do not guess these
+
+1. Is each window counted from the **reading's date** or from **when it was saved**? For a reading
+   entered late, those differ.
+2. Are the boundaries inclusive — is day 7 the last day you can record, or the first day you cannot?
+3. Does an amendment need a **reason or an audit entry**, and who can see it?
+4. Can a **supervisor override** either window, and is that a different screen?

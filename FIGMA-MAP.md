@@ -1631,3 +1631,98 @@ the next attempt doesn't read the empty array as "no tone axis".
   setting Badge tones per row, which the remote-variant limitation above blocks programmatically.
   Belongs with the states set. PD-39.
 - No `QrCodeIcon` in `POLARIS_ICON_DATA` (533 icons) — the Quick Action row uses `BarcodeIcon`.
+
+## Section children use SECTION-RELATIVE coordinates  (2026-08-27) — RETRACTION
+
+I built the v2 section, set each child's `x`/`y` to absolute page values, and asserted
+"no child outside its section" with `c.x < sec.x || c.x + c.width > sec.x + sec.width`.
+**Both were wrong, and the assertion passed for the wrong reason** — it compared a relative
+coordinate against an absolute one. Every frame was sitting ~26,000px outside its own section and
+Raphael saw an empty white rectangle: *"ITS AN EMPTY SPACE IM SEEING"*.
+
+```js
+// A section's children are positioned RELATIVE to the section origin.
+child.x = 64;                       // 64px from the section's left edge
+child.absoluteTransform[0][2]       // section.x + 64
+// Assert in the section's LOCAL box:
+c.x < 0 || c.y < 0 || c.x + c.width > sec.width || c.y + c.height > sec.height
+```
+
+Corollary, already in the map but now with the reason: setting `section.x` moves the section box
+only. The children keep their relative coordinates, so they move *with* it — which is why the
+"strands the children" note was itself imprecise. What strands children is mixing the two coordinate
+systems, not the move.
+
+**Rule: never assert geometry with a comparison you have not unit-tested against a known-good and a
+known-bad case.** A green check on a broken board is worse than no check.
+
+## Reading variant options: go through `mainComponent.parent`  (2026-08-27) — RETRACTION
+
+Earlier today I wrote that `variantOptions` is empty for remote component sets and concluded a tone
+swap "cannot be driven from the property name alone". **That was wrong.**
+`instance.componentProperties.Tone.variantOptions` is indeed empty, but the component set knows:
+
+```js
+const main = await inst.getMainComponentAsync();
+const set  = main.parent.type === 'COMPONENT_SET' ? main.parent : null;
+set.componentPropertyDefinitions.Tone.variantOptions   // the real list
+```
+
+Harvested this way:
+
+| Component | Variant | Real options |
+|---|---|---|
+| **Badge** | `Tone` | `default` · `info` · `info-strong` · `success` · `success-strong` · `attention` · `attention-strong` · `warning` · `warning-strong` · `critical` · `critical-strong` · `enabled` · `read only` · `new` |
+| **Banner** | `Tone` | `info` · `success` · `warning` · `critical` |
+| **Banner** | `In card` | `false` · `true` |
+| **Banner** | `Title` | `true` · `false` |
+| **Index cell** | `Tone` | `default` · `subdued` · `success` · `warning` · `critical` |
+| **Skeleton body text** | `Lines` | `1` · `2` · `3 (default)` · `4` · `5` · `6` |
+| **Button** | `State` | includes `disabled` — settable, confirmed on 10 instances |
+
+**Component keys in `DESIGN-SYSTEM-INVENTORY.md` are truncated to 16 chars and will NOT import.**
+Real keys are 40 hex chars — get them from `search_design_system`, not the inventory:
+
+```
+Empty state          975245add6b585ff6ded70f83759cbdbe513bf65   (COMPONENT)
+Skeleton body text   7a5daf3c3e4bd03d14138ec126b419393329e50b   (COMPONENT_SET)
+```
+
+## DS gap — Banner has no `In card = true, Title = true`  (2026-08-27)  [PD-16]
+
+The Banner set ships 12 variants. `In card = true` exists **only** with `Title = false`, so an
+in-card banner cannot carry a title and `setProperties({Tone, Title:'true', 'In card':'true'})`
+throws *"Unable to find a variant with those property values"*. Workaround in use: in-card banners
+put everything in `Message content`. The out-of-card critical banner renders a **solid saturated red
+title bar** which reads off-system beside the light in-card ones — that is why D1c was switched back
+to in-card. Both worth fixing in the library.
+
+Also unsettled: the **`Tabs`** component would not accept a selected-state variant
+(`State`/`Selected`/`Active` = `selected`) from the API, so D2a's Completed tab renders unselected.
+
+## Manual Temperature Recording — the state set  (2026-08-27)  [PD-39]
+
+Section `9175:34937`, laid out per the board contract: three flow group headings, screens **5 per
+row left→right in journey order**, each annotation note 440 wide, 16px beneath its frame on a shared
+row baseline. `PADX 64 · COLGAP 80 · ROWGAP 140 · NOTEGAP 16 · HEADGAP 28 · GROUPGAP 180`.
+Section 7648 × 10316 at `50915,3070` — placed right of all page content, no overlap.
+
+| Flow | Frames |
+|---|---|
+| Home dashboard entry (PD-36) | D1 default · D1a loading · D1b all complete · D1c load error · D2 drawer · D2a completed-tab empty · D2b drawer loading |
+| Workspace List (PD-34) | W1 default · W1a loading · W1b empty first-run · W1c empty filtered · W1d load error · W1e offline/stale · W1f read-only · W1g rows selected · W1h past entry · W1i mixed statuses |
+| Workspace Calendar (PD-35) | W2 default · W2a loading · W2b empty filtered · W2c load error · W3 past entry · W3a amendment window expired |
+
+Deliberately **not** drawn, recorded on canvas in the section-wide note: validation error and
+success/confirmation (they belong to the recording form, PD-37); destructive confirm (nothing here is
+irreversible); partial data (folded into W1i — "morning only" *is* the partial case); a second
+first-run empty for the Calendar (identical cause and copy to the List); and all interaction states
+(hover/focus/pressed/disabled come from the DS components, not redrawn per screen).
+
+**Calendar is now the full 31 days at 1440** — Raphael: *"USE FIGMA DESKTOP SIZE, THAT SHOULD NOT BE
+A PROBLEM."* Fits as `285 Equipment + 31 × 33 + 2 × 10 gutters = 1328`. Narrowing Equipment to 254
+first clipped the monitoring badges; 285 is the floor. Cells carry the legend's own colours and
+cloned glyphs — condition as fill, completion as glyph — 620 cells, 495 glyphs across W2 and W3.
+
+**Still outstanding and NOT done:** the prototype side. The skill's parity bar is that every state
+drawn in Figma is reachable in the prototype; none of these 18 are yet.
