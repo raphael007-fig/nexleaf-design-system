@@ -1,4 +1,5 @@
 @PoltailDesign.md
+@DESIGN-LAYOUT-CONTRACT.md
 @FIGMA-MAP.md
 @DESIGN-SYSTEM-INVENTORY.md
 @docs/coldtrace-domain.md
