@@ -28,3 +28,11 @@ Mirror each entry in the matching Jira ticket.
 - **Not verified:** this has not been run in a browser from this session (no dev server reachable
   here). It needs `npm run dev` and a look at `#/manual-temperature-recording/dashboard-entry`
   before it counts as working.
+
+- **2026-08-27** All eight Figma states (`9221:47949`) are now togglable by id: D1, D1a
+  loading, D1b all complete, D1c load error, D1d no alerts, D2 drawer, D2a Completed tab
+  empty, D2b drawer loading. Previously only the default rendered, so 8 of the module's
+  46 states were unreachable in the prototype.
+- **2026-08-27** D1c no longer contradicts itself: when tasks and alerts fail, the urgent
+  count drops to 0 and the task list empties, so the banner and the cards agree.
+- **2026-08-27** Switched to the shared `fixtures.js` and the shared `TaskDrawer` screen.

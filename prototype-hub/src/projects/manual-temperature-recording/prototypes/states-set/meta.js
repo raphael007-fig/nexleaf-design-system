@@ -1,10 +1,10 @@
 export default {
-  title: 'States & interactions set',
-  description: 'Every meaningful state for the module — default, loading, empty, error, offline, role-scoped, past-entry, amended, window-expired — togglable side by side.',
+  title: 'States and interactions set',
+  description: 'The module state register: 46 states across five flows, each keyed by the same id as its Figma frame so parity can be diffed by id.',
   type: 'flow',
-  screens: ['DashboardHome', 'WorkspaceShell', 'RecordingDateBar', 'WorkspaceLegend', 'ReadingsTable', 'RecordingCalendar'],
-  status: 'Draft',
+  screens: ['StateSwitcher'],
+  status: 'In Review',
   jiraKey: 'PD-39',
-  tags: ['states', 'cold-chain'],
+  tags: ['states', 'cold-chain', 'parity'],
   updated: '2026-08-27',
 };

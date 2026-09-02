@@ -1,10 +1,10 @@
 export default {
   title: 'Amendment flow and history',
-  description: 'Morning and evening amendment flows plus their histories; amendment window still to be settled between the Prototype H (7-day + override) and Prototype I (3-day cap) decisions.',
+  description: 'Morning and evening amendment flows plus their audit trails. Two independent windows: past entry 7 days for a reading never recorded, amendment 3 days for changing one that exists. A reason is required and the trail is additive. All seven states togglable.',
   type: 'flow',
-  screens: [],
-  status: 'Draft',
+  screens: ['StateSwitcher'],
+  status: 'In Review',
   jiraKey: 'PD-38',
-  tags: ['amendment', 'cold-chain'],
+  tags: ['amendment', 'cold-chain', 'audit-trail', 'states'],
   updated: '2026-08-27',
 };
