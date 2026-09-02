@@ -183,8 +183,19 @@ export function TemperatureTasksPanel({
   title = "Today's Temp. Tasks",
   pageSize = 6,
   onRecord,
+  // Optional controlled tab. Omit both and the panel manages its own tab as
+  // before; pass activeTab (with onTabChange) to drive it from outside, which is
+  // what a state-set prototype needs to render a specific tab on demand.
+  activeTab,
+  onTabChange,
+  // Skeleton the tabs and body while the task list is in flight, keeping the
+  // header, tabs and counts in place.
+  loading = false,
 }) {
-  const [tabIndex, setTabIndex] = useState(0);
+  const [internalTab, setInternalTab] = useState(0);
+  const controlled = activeTab !== undefined && activeTab !== null;
+  const tabIndex = controlled ? activeTab : internalTab;
+  const setTabIndex = controlled ? (i) => onTabChange && onTabChange(i) : setInternalTab;
   const [page, setPage] = useState(0);
 
   const groups = [
@@ -200,6 +211,8 @@ export function TemperatureTasksPanel({
   const pageRows = active.rows.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
   const selectTab = (_id, _item, i) => { setTabIndex(i); setPage(0); };
+  // eslint-disable-next-line no-unused-expressions
+  void controlled;
 
   return (
     <SlideOver
@@ -221,8 +234,15 @@ export function TemperatureTasksPanel({
           tabs={groups.map((g) => ({ id: g.id, label: g.label, badge: g.rows.length }))}
           activeIndex={tabIndex}
           onSelect={selectTab}
+          loading={loading}
         />
-        {pageRows.length > 0 ? (
+        {loading ? (
+          <SkeletonGroup label="Loading tasks">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[0, 1, 2, 3].map((i) => <Skeleton key={i} height={40} radius={8} />)}
+            </div>
+          </SkeletonGroup>
+        ) : pageRows.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {pageRows.map((task) => (
               <TaskRow key={task.id} task={task} onRecord={onRecord} />
