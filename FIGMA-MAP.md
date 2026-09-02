@@ -3503,3 +3503,10 @@ error`) carrying the exact Figma copy; the order is back to the frames'.
 button (he asked for it explicitly, two turns ago) and drops "Try again
 shortly" so the copy does not contradict the button. The Figma frame needs
 the button added — ask before writing.
+
+**Resolved (same turn):** Raphael — *"the figmas correct, so fix the
+prototype"*. D1c's toast now matches `9196:38686` exactly: no Retry, copy
+*"Today's tasks and alerts couldn't load. Try again shortly."*, `duration={0}`.
+The `inlineActions` / `actions` extensions to Toast and Banner stay in the DS
+(additive, documented in the Banner story) but nothing in this module uses
+them now. Retract the "divergence, Raphael's call" note above — there is none.

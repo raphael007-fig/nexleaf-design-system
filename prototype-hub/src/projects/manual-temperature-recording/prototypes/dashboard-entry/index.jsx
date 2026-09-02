@@ -101,24 +101,19 @@ export default function DashboardEntry() {
         {/* D1c — the launcher itself is fine; only tasks and alerts failed. The
             notice must not claim more than that, and the cards must not still
             show live counts (the self-contradiction Raphael caught on D1c).
-            Raphael: "dont make it full screen, move it to the top right of the
-            page" — so this is the DS Toast (compact in-card Banner, fixed
-            top-right, 480px; icon · text · Retry on one row), NOT a Banner in
-            the content column. Copy follows the D1c frame (9196:38686) — which
-            has NO Retry and says "Try again shortly"; Raphael asked for a Retry
-            button, so the closing sentence is dropped and the frame needs the
-            button added (ask first). Two short sentences keep one row at 480px. duration={0} because it carries a Retry;
-            dismissing hides the notice but leaves the page in its error state,
-            which is what the counts reflect. */}
+            This is the D1c frame (9196:38686) exactly: a compact critical
+            banner fixed top-right — the DS Toast — icon and text on one row,
+            NO Retry ("the figmas correct, so fix the prototype"). duration={0}:
+            an error notice does not time out on its own. Dismissing hides it
+            and leaves the page in its error state, which the "—" cards reflect. */}
         {loadError && !errDismissed && (
           <Toast
             tone="critical"
             placement="top-right"
             duration={0}
-            actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
             onDismiss={() => setErrDismissed(true)}
           >
-            Today's tasks and alerts couldn't load. Recorded readings are safe.
+            Today's tasks and alerts couldn't load. Try again shortly.
           </Toast>
         )}
 
