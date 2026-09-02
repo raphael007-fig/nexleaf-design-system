@@ -64,7 +64,9 @@ export default function DashboardEntry() {
           <DashboardHome
             tasks={tasks}
             loading={loading}
-            urgentCount={noAlerts || loadError || allDone ? 0 : 5}
+            urgentCount={noAlerts ? 0 : 5}
+            alertsMode={allDone ? 'clear' : loadError ? 'error' : 'live'}
+            tasksMode={allDone ? 'complete' : loadError ? 'error' : 'live'}
             alert={
               noAlerts
                 ? { title: 'No equipment in an alarm condition', description: 'Temperature tasks are still outstanding.' }
@@ -102,8 +104,10 @@ export default function DashboardEntry() {
             Raphael: "dont make it full screen, move it to the top right of the
             page" — so this is the DS Toast (compact in-card Banner, fixed
             top-right, 480px; icon · text · Retry on one row), NOT a Banner in
-            the content column. Copy is two short sentences so the one-row toast
-            stays one row at 480px. duration={0} because it carries a Retry;
+            the content column. Copy follows the D1c frame (9196:38686) — which
+            has NO Retry and says "Try again shortly"; Raphael asked for a Retry
+            button, so the closing sentence is dropped and the frame needs the
+            button added (ask first). Two short sentences keep one row at 480px. duration={0} because it carries a Retry;
             dismissing hides the notice but leaves the page in its error state,
             which is what the counts reflect. */}
         {loadError && !errDismissed && (
@@ -114,7 +118,7 @@ export default function DashboardEntry() {
             actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
             onDismiss={() => setErrDismissed(true)}
           >
-            Tasks and alerts are unavailable. Recorded readings are safe.
+            Today's tasks and alerts couldn't load. Recorded readings are safe.
           </Toast>
         )}
 

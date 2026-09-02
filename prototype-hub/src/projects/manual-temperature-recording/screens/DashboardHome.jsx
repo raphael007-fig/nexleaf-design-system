@@ -17,7 +17,7 @@ import React from 'react';
 //   • row content is Cell;
 //   • icons are Polaris only, via PolarisIconImg.
 import {
-  CardLayoutType6, Cell, NavCard, TemperatureTasksCard, PolarisIconImg,
+  CardLayoutType6, Cell, NavCard, TemperatureTasksCard, PolarisIconImg, Badge,
 } from '@ds';
 // The home tile artwork ships WITH the design system (Foundation/Illustrations),
 // it is not Figma-only — see src/foundation/illustrations/index.jsx.
@@ -58,6 +58,8 @@ const FOOTER_LINKS = [
  * @param {object}  tasks         {morning, evening, completed} — drives the tasks card AND its badge.
  * @param {object}  alert         {title, description} for the Action Required row.
  * @param {number}  urgentCount   Action Required badge count.
+ * @param {'live'|'clear'|'error'}     alertsMode  Action Required card state (D1 / D1b / D1c).
+ * @param {'live'|'complete'|'error'}  tasksMode   Temperature Tasks card state (D1 / D1b / D1c).
  * @param {fn}      onScan        Quick Action row.
  * @param {fn}      onRecord      A task row's Record button.
  * @param {fn}      onModule      A module tile.
@@ -71,6 +73,12 @@ export default function DashboardHome({
     description: 'CCE-2024-NAI-100 | Pumwani Maternity Hospital',
   },
   urgentCount = 5,
+  // alertsMode / tasksMode — which of the Figma D-states the two data cards
+  // are in. 'live' is D1; 'clear' + 'complete' is D1b (9196:38561); 'error'
+  // on both is D1c (9196:38686). Quick Action never changes: the launcher is
+  // fine, only tasks and alerts failed.
+  alertsMode = 'live',
+  tasksMode = 'live',
   onScan,
   onRecord,
   onModule,
@@ -89,9 +97,12 @@ export default function DashboardHome({
       </div>
 
       {/* Action row — the SAME .nx-home-grid as the module tiles below, so the
-          three cards sit column-for-column on that grid (3 -> 2 -> 1). This is
-          Home Layout 2 from the App Shell story: Quick Action, Temperature
-          Tasks, Action Required, one card per column, in that order. */}
+          three cards sit column-for-column on that grid (3 -> 2 -> 1).
+          Order is the Figma frames' order: Quick Action · Action Required ·
+          Today's Temperature Tasks (9175:34938 and every D-state). I had
+          swapped Tasks and Action Required to match the App Shell story;
+          Raphael caught it — the story is the LAYOUT reference, the module's
+          own frames are the CONTENT reference. */}
       <div className="nx-home-grid" style={{ marginBottom: 16 }}>
         <div className="nx-home-grid__tiles">
           <CardLayoutType6 icon={ico('BarcodeIcon')} title="Quick Action" loading={loading}>
@@ -105,34 +116,60 @@ export default function DashboardHome({
             />
           </CardLayoutType6>
 
-          {/* The count badge, the tabs and the drawer all derive from `tasks`, so
-              the card and its slide-over can never disagree — which is exactly
-              the 10-vs-13 defect found in the Figma frames. */}
+          {/* Action Required — D1 live row · D1b "No urgent issues" + all-within-
+              range row · D1c "—" badge + muted unavailable text (9196:38686). */}
+          <CardLayoutType6
+            icon={ico('AlertTriangleIcon', '#8e1f0b')}
+            title="Action Required"
+            tone="critical"
+            badge={alertsMode === 'clear' ? 'No urgent issues' : alertsMode === 'error' ? '—' : `${urgentCount} Urgent Issues`}
+            actionLabel="View All"
+            onAction={onViewAlerts}
+            loading={loading}
+          >
+            {alertsMode === 'error' ? (
+              <p style={{ margin: 0, padding: '4px 0 8px', font: '450 13px/20px Inter, sans-serif', color: '#616161' }}>
+                Unavailable — couldn't load
+              </p>
+            ) : alertsMode === 'clear' ? (
+              <Cell
+                icon={ico('ChartVerticalFilledIcon', '#8e1f0b')}
+                iconTone="critical"
+                title="All equipment within range"
+                description="Last checked Thu, Aug 27, 2026 at 06:40"
+                hasChevron
+                onClick={onViewAlerts}
+                ariaLabel="All equipment within range"
+              />
+            ) : (
+              <Cell
+                icon={ico('AlertTriangleIcon', '#8e1f0b')}
+                iconTone="critical"
+                title={alert.title}
+                description={alert.description}
+                hasChevron
+                onClick={onViewAlerts}
+                ariaLabel={alert.title}
+              />
+            )}
+          </CardLayoutType6>
+
+          {/* Today's Temperature Tasks — the count badge, the tabs and the
+              drawer all derive from `tasks`, so the card and its slide-over can
+              never disagree (the 10-vs-13 defect found in the Figma frames).
+              D1b: "All complete" badge + "Nothing left to record today" Cell.
+              D1c: "—" badge + "Unavailable — couldn't load". */}
           <TemperatureTasksCard
             tasks={tasks}
             title="Today's Temperature Tasks"
             onRecord={onRecord}
             loading={loading}
+            badge={tasksMode === 'complete' ? <Badge tone="warning">All complete</Badge> : undefined}
+            emptyState={tasksMode === 'complete'
+              ? { title: 'Nothing left to record today', description: 'Morning and evening complete for all 10 CCEs' }
+              : undefined}
+            errorMessage={tasksMode === 'error' ? "Unavailable — couldn't load" : undefined}
           />
-          <CardLayoutType6
-            icon={ico('AlertTriangleIcon', '#8e1f0b')}
-            title="Action Required"
-            tone="critical"
-            badge={`${urgentCount} Urgent Issues`}
-            actionLabel="View All"
-            onAction={onViewAlerts}
-            loading={loading}
-          >
-            <Cell
-              icon={ico('AlertTriangleIcon', '#8e1f0b')}
-              iconTone="critical"
-              title={alert.title}
-              description={alert.description}
-              hasChevron
-              onClick={onViewAlerts}
-              ariaLabel={alert.title}
-            />
-          </CardLayoutType6>
         </div>
       </div>
 

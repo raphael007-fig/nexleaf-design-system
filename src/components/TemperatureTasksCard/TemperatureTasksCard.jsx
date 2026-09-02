@@ -14,7 +14,7 @@
 
 import { useState } from 'react';
 import { Btn } from '../Btn/Btn.jsx';
-import { StatusBadge } from '../Badge/Badge.jsx';
+import { Badge, StatusBadge } from '../Badge/Badge.jsx';
 import { Cell } from '../Cell/Cell.jsx';
 import { Tabs } from '../Tabs/Tabs.jsx';
 import { Pagination } from '../Pagination/Pagination.jsx';
@@ -91,6 +91,16 @@ export function TemperatureTasksCard({
   onRecord,
   title = "Today's Temp. Tasks",
   loading = false,
+  // ── Additive (PD-16, from the Manual Temperature Recording home states) ──
+  // badge — override the automatic "<n> Pending" badge with any node (e.g.
+  //   <Badge tone="warning">All complete</Badge>). `null` hides the badge.
+  // emptyState — { title, description } rendered as one Cell when there is
+  //   nothing left to preview (Figma D1b "Nothing left to record today").
+  // errorMessage — string; replaces the body with muted text and, unless a
+  //   `badge` is given, shows a "—" badge (Figma D1c "Unavailable — couldn't load").
+  badge,
+  emptyState,
+  errorMessage,
 }) {
   const [viewAllOpen, setViewAllOpen] = useState(false);
 
@@ -146,19 +156,38 @@ export function TemperatureTasksCard({
                 {title}
               </span>
             </div>
-            {pendingCount > 0 && (
+            {badge !== undefined ? (
+              badge != null && <span style={{ flexShrink: 0 }}>{badge}</span>
+            ) : errorMessage ? (
+              <span style={{ flexShrink: 0 }}><Badge tone="warning">—</Badge></span>
+            ) : pendingCount > 0 && (
               <span style={{ flexShrink: 0 }}><StatusBadge status="pending">{`${pendingCount} Pending`}</StatusBadge></span>
             )}
           </div>
           <Btn variant="ghost" onClick={() => setViewAllOpen(true)}>View All</Btn>
         </div>
 
-        {/* Body — preview rows, each with a Record button */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {preview.map((task) => (
-            <TaskRow key={task.id} task={task} onRecord={onRecord} showSession />
-          ))}
-        </div>
+        {/* Body — preview rows, each with a Record button; or the error text;
+            or the empty-state Cell when nothing is left to preview. */}
+        {errorMessage ? (
+          <p style={{ margin: 0, padding: '4px 0 8px', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: '#616161' }}>
+            {errorMessage}
+          </p>
+        ) : preview.length === 0 && emptyState ? (
+          <Cell
+            icon={<IcoGauge />}
+            iconTone="warning"
+            title={emptyState.title}
+            description={emptyState.description}
+            ariaLabel={emptyState.title}
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {preview.map((task) => (
+              <TaskRow key={task.id} task={task} onRecord={onRecord} showSession />
+            ))}
+          </div>
+        )}
       </div>
 
       <TemperatureTasksPanel

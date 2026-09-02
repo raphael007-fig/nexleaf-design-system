@@ -3465,3 +3465,41 @@ one row at 480px.
 
 **Figma:** the DS Banner component (`109293:4284`) has no inline-actions
 variant. Needs adding in the DS file — ask Raphael before writing.
+
+### Home action row: I swapped two cards, and D1b/D1c never matched Figma (2026-09-02)
+
+Raphael: *"you messed with the today's Temperature Tasks / Action Required in
+D1b and D1c of the prototypes"*. Checked against the frames (screenshots of
+`9196:38561` D1b and `9196:38686` D1c) before touching anything. Three defects:
+
+1. **Card order.** The frames are **Quick Action · Action Required · Today's
+   Temperature Tasks** in every D-state. When I moved the row onto
+   `.nx-home-grid` I also reordered it to the App Shell story's Home Layout 2
+   order (Quick Action · Tasks · Action Required). Wrong. **Rule:** the
+   Storybook page layout is the *layout* reference (grid, breakpoints, type
+   ramp); the module's own Figma frames are the *content* reference (which
+   cards, in which order, saying what). Never let one overwrite the other.
+2. **D1b (All complete).** Figma: Action Required badge **"No urgent issues"**
+   + Cell *"All equipment within range / Last checked Thu, Aug 27, 2026 at
+   06:40"*; Tasks badge **"All complete"** (warning/orange) + Cell *"Nothing
+   left to record today / Morning and evening complete for all 10 CCEs"*. The
+   prototype showed "0 Urgent Issues" over the live alarm row, and an empty
+   tasks card with no badge. Pre-existing — never checked against the frame.
+3. **D1c (Load error).** Figma: both data cards show a **"—"** badge and the
+   muted line *"Unavailable — couldn't load"*; Quick Action untouched; the
+   notice is a compact critical banner top-right reading *"Today's tasks and
+   alerts couldn't load. Try again shortly."* with **no Retry**. Prototype
+   showed live-looking cards with zero counts. Pre-existing.
+
+**Fixes.** `TemperatureTasksCard` gained three additive props (PD-16):
+`badge` (node override / `null` hides), `emptyState` (`{title, description}`
+→ one Cell, warning tile), `errorMessage` (string → muted body + "—" badge).
+Stories *All Completed* updated and *Load error* added. `DashboardHome` gained
+`alertsMode` (`live | clear | error`) and `tasksMode` (`live | complete |
+error`) carrying the exact Figma copy; the order is back to the frames'.
+`CardLayoutType6` needed nothing — `badge` + children already cover it.
+
+**Deliberate divergence, Raphael's call:** D1c's toast keeps a **Retry**
+button (he asked for it explicitly, two turns ago) and drops "Try again
+shortly" so the copy does not contradict the button. The Figma frame needs
+the button added — ask before writing.
