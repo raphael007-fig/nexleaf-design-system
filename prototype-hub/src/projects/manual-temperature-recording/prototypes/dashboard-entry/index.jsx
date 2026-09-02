@@ -10,7 +10,7 @@ import React, { useState } from 'react';
 //
 // All eight Figma states are togglable and keyed by the same ids as the frames,
 // so parity is a diff on ids (see .claude/skills/prototype-figma-parity).
-import { AppShell, Toast, Banner } from '@ds';
+import { AppShell, Toast } from '@ds';
 import DashboardHome from '../../screens/DashboardHome.jsx';
 import TaskDrawer from '../../screens/TaskDrawer.jsx';
 import StateSwitcher from '../../screens/StateSwitcher.jsx';
@@ -34,6 +34,7 @@ export default function DashboardEntry() {
   const [state, setState] = useState('D1');
   const [toast, setToast] = useState(null);
   const [tab, setTab] = useState(0);
+  const [errDismissed, setErrDismissed] = useState(false);
 
   const loading    = state === 'D1a';
   const allDone    = state === 'D1b';
@@ -47,7 +48,7 @@ export default function DashboardEntry() {
   const tasks = allDone ? DONE_TASKS : loadError ? EMPTY_TASKS : TASKS;
 
   // D2a opens on the Completed tab; every other drawer state opens on Morning.
-  React.useEffect(() => { setTab(state === 'D2a' ? 2 : 0); }, [state]);
+  React.useEffect(() => { setTab(state === 'D2a' ? 2 : 0); setErrDismissed(false); }, [state]);
 
   return (
     <>
@@ -60,27 +61,6 @@ export default function DashboardEntry() {
           stays 0. */}
       <AppShell level="primary" contentWidth="full">
         <div style={{ padding: '0 16px 32px', boxSizing: 'border-box' }}>
-          {loadError && (
-            <div style={{ paddingTop: 16 }}>
-              {/* The launcher itself is fine; only tasks and alerts failed. The
-                  banner must not claim more than that, and the cards below must
-                  not still show live counts (the self-contradiction Raphael
-                  caught on D1c). `inCard` is Storybook Banner -> "In-card
-                  (compact)": one tinted row, message + actions, NO title slot.
-                  In Banner.jsx the `title` branch is checked BEFORE `inCard`,
-                  so passing both silently renders the solid-header banner —
-                  which is exactly what Raphael saw twice. Never pass `title`
-                  with `inCard`; lead with it in the sentence instead. */}
-              <Banner
-                tone="critical"
-                inCard
-                actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
-              >
-                Tasks and alerts are unavailable. Scanning and the module tiles still work. Recorded readings are safe.
-              </Banner>
-            </div>
-          )}
-
           <DashboardHome
             tasks={tasks}
             loading={loading}
@@ -115,6 +95,28 @@ export default function DashboardEntry() {
           loading={state === 'D2b'}
           onRecord={(task) => setToast('Record ' + task.session.toLowerCase() + ' reading. ' + task.name + '.')}
         />
+
+        {/* D1c — the launcher itself is fine; only tasks and alerts failed. The
+            notice must not claim more than that, and the cards must not still
+            show live counts (the self-contradiction Raphael caught on D1c).
+            Raphael: "dont make it full screen, move it to the top right of the
+            page" — so this is the DS Toast (compact in-card Banner, fixed
+            top-right, 480px; icon · text · Retry on one row), NOT a Banner in
+            the content column. Copy is two short sentences so the one-row toast
+            stays one row at 480px. duration={0} because it carries a Retry;
+            dismissing hides the notice but leaves the page in its error state,
+            which is what the counts reflect. */}
+        {loadError && !errDismissed && (
+          <Toast
+            tone="critical"
+            placement="top-right"
+            duration={0}
+            actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
+            onDismiss={() => setErrDismissed(true)}
+          >
+            Tasks and alerts are unavailable. Recorded readings are safe.
+          </Toast>
+        )}
 
         {toast && <Toast tone="info" onDismiss={() => setToast(null)}>{toast}</Toast>}
       </AppShell>

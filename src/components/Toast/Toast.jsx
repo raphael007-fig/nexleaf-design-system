@@ -30,6 +30,8 @@ const PLACEMENTS = {
  * @param {() => void} onDismiss          Fires on ✕ or when the timer elapses.
  * @param {number} [duration=4500]        Auto-dismiss delay (ms); 0 disables.
  * @param {'top-right'|'top-center'|'bottom-center'|'bottom-right'} [placement='top-right']
+ * @param {boolean} [inlineActions=true]  Actions sit on the same row as the icon and message (a toast is one line). Set false to stack.
+ * @param {{label:string,onClick:()=>void}[]} [actions]  Optional action buttons (e.g. Retry), passed straight to Banner. Pair with duration={0} so a toast carrying an action does not vanish before it can be pressed.
  */
 export function Toast({
   open = true,
@@ -39,6 +41,8 @@ export function Toast({
   onDismiss,
   duration = 4500,
   placement = 'top-right',
+  actions,
+  inlineActions = true,
 }) {
   useEffect(() => {
     if (!open || !duration) return undefined;
@@ -59,7 +63,7 @@ export function Toast({
         borderRadius: RADIUS_SM,
       }}
     >
-      <Banner tone={tone} inCard icon={icon} dismissable onDismiss={onDismiss}>
+      <Banner tone={tone} inCard icon={icon} dismissable onDismiss={onDismiss} actions={actions} inlineActions={inlineActions}>
         {children}
       </Banner>
     </div>

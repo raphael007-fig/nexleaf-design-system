@@ -3436,3 +3436,32 @@ fix by grepping for the prop I added is not verification. Verification is
 reading the code path the prop goes through — or running it. I told Raphael
 "fixed" on the strength of a diff, and the screenshot he sent back was
 pixel-identical to the one before.
+
+### D1c load-error notice: Toast, top-right, one row (2026-09-02)
+
+Raphael, two messages: *"dont make it full screen move it to the top right of
+the page"*, then *"put the retry button and text and icon on the same row"*.
+
+The DS already had the first: **`Toast`** IS the compact in-card Banner, fixed
+top-right (`{top:24,right:24}`), `min(480px, 100vw-32px)`, `SHADOW_OVERLAY`,
+dismiss ✕. D1c now renders `<Toast tone="critical" placement="top-right"
+duration={0} actions={[Retry]}>` — no Banner in the content column at all.
+
+Two additive DS extensions, both logged on PD-16:
+
+- `Toast` gains **`actions`** (passthrough to Banner) and **`inlineActions`**
+  (default `true` on Toast — a toast is one line).
+- `Banner` in-card gains **`inlineActions`**: icon · message (flex 1) · actions
+  on one row, right-aligned, instead of stacking the buttons beneath. Default
+  `false`, so every existing in-card banner is unchanged. Story added to
+  `Components/Banner → In-card (compact)`.
+
+**Rule:** a transient notice about a *part* of the page (a widget failed to
+load) is a `Toast`; a banner in the content column is for a condition the
+whole page is in (offline, read-only, past-entry mode). Pair `actions` with
+`duration={0}` — a toast carrying a button must not vanish before it can be
+pressed. Keep toast copy to two short sentences so the one-row layout stays
+one row at 480px.
+
+**Figma:** the DS Banner component (`109293:4284`) has no inline-actions
+variant. Needs adding in the DS file — ask Raphael before writing.

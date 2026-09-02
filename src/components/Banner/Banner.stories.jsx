@@ -97,6 +97,7 @@ export const InCard = {
       <Banner tone="critical" inCard>Unable to save. Please correct the highlighted fields.</Banner>
       <Banner tone="info" inCard dismissable>Dismissable in-card banner example.</Banner>
       <Banner tone="warning" inCard actions={[{ label: 'Review', onClick: () => {} }]}>Action button inside in-card variant.</Banner>
+      <Banner tone="critical" inCard inlineActions actions={[{ label: 'Retry', onClick: () => {} }]}>Tasks and alerts are unavailable. Recorded readings are safe.</Banner>
     </div>
   ),
 };

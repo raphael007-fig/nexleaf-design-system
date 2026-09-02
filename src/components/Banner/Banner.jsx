@@ -106,6 +106,9 @@ const BannerBtn = ({ onClick, children }) => (
  *   tone        — 'info' | 'success' | 'warning' | 'critical'
  *   title       — string — renders the titled variant (colored header + white body)
  *   inCard      — boolean — renders the compact tinted in-card variant
+ *   inlineActions — boolean — in-card only: put the action buttons on the SAME
+ *                 row as the icon and message (right-aligned) instead of
+ *                 stacking them beneath. For one short action (Retry, Undo).
  *   dismissable — boolean — shows the × dismiss button
  *   onDismiss   — function — called when dismissed
  *   actions     — [{ label, onClick }] — action buttons
@@ -113,7 +116,7 @@ const BannerBtn = ({ onClick, children }) => (
  *                 the tone's own glyph; used e.g. for a QR/search context icon)
  *   children    — message text
  */
-export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, icon, hideIcon = false, children }) {
+export function Banner({ tone = 'info', title, inCard = false, dismissable, onDismiss, actions, icon, hideIcon = false, inlineActions = false, children }) {
   const t = TONES[tone] || TONES.info;
   const [dismissed, setDismissed] = useState(false);
   if (dismissed) return null;
@@ -182,12 +185,18 @@ export function Banner({ tone = 'info', title, inCard = false, dismissable, onDi
             {icon || <t.Icon size={20} color={t.inCardText} />}
           </div>
         )}
-        <div style={{ flex: 1, paddingRight: dismissable ? 28 : 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ margin: 0, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: t.inCardText }}>
+        <div style={{
+          flex: 1, paddingRight: dismissable ? 28 : 0, display: 'flex', gap: 8,
+          // inlineActions: icon · message · actions on one row, message takes the
+          // slack and the buttons hug the right edge. Default stacks them.
+          flexDirection: inlineActions ? 'row' : 'column',
+          alignItems: inlineActions ? 'center' : 'stretch',
+        }}>
+          <p style={{ margin: 0, flex: inlineActions ? 1 : undefined, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 450, lineHeight: '20px', color: t.inCardText }}>
             {children}
           </p>
           {actions?.length > 0 && (
-            <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
               {actions.map((a, i) => <BannerBtn key={i} onClick={a.onClick}>{a.label}</BannerBtn>)}
             </div>
           )}
