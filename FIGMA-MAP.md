@@ -3285,3 +3285,39 @@ and built W1m / W3e for it; the desktop equivalents do not exist.
 
 That is new scope, so it is a ticket rather than something to build unasked: a
 "filters applied" state for desktop W1 and W2, under PD-34 / PD-35.
+
+### Close-out audit against the workflow's definition of done
+
+Ran the Verify order from `nexleaf-design-workflow` properly, including the two checks I had
+never applied to this module. One real defect, found by the check I had been skipping.
+
+**W2a and W2 were pixel-identical.** The workflow rule is explicit: *if two state frames render
+identically, one of them is wrong.* My calendar rebuild gave the **loading** state all ten CCEs
+with live data, destroying it — desktop W2a carries a `__loading` node and 96 visible strings
+against W2's 110; mobile W2a had 123, exactly W2's. I had run a duplicate check earlier and it
+passed, but that was **before** the rebuild, and I never re-ran it after.
+
+Fixed: `Week` block clipped to 208pt with a `__loading` overlay of three real
+`Skeleton body text` instances, matching the D1a treatment. Cloning the desktop `__loading`
+first brought a spinner across, which is the desktop's idiom and reads as a stalled page at
+375 — swapped for skeleton rows. Re-ran duplicates across all 50: **0**.
+
+RULE: **a structural rebuild invalidates every earlier check on that section.** State
+distinctness, in particular, is destroyed precisely by "filling in the missing data" — the fix
+that made W2 correct is the one that broke W2a. Re-run the battery after any rebuild, not once
+at the end of a session.
+
+**Also fixed:** three `Revert to this version` labels in the A6 amendment history were 32pt
+wide and 80pt tall — one word per line. The squeezed-text assertion caught them; before adding
+that check, the overflow test called this frame clean.
+
+**Hidden-node audit.** 624 hidden nodes across the mobile frames. Almost all are legitimate
+component slots switched off by property (`Badge` 195, `ChevronDown` 94, `Location` 94,
+`Thumbnail` 94, `User menu` 50, `Secondary menu` 50). Mine are the small counts —
+`Radio button` 10, `Primary` 6, `Frame`/`Toggle`/`Radio`/`Drop` 5 each, and single hides in the
+A6 panel (`Header`, `Top border`, `Cancel button`, `Scroll`). None sit inside a form container,
+so the delete-strays rule does not bite; recorded here so the next sweep knows which are
+deliberate.
+
+Final: **50 frames · 50 annotations · 0 duplicate states · 0 squeezed · 0 overflow ·
+0 overlaps · 10/10 sheets with overlays · 0 placeholder leaks** on both surfaces.
