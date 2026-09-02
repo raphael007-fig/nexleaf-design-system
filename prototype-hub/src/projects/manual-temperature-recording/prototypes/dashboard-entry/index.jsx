@@ -65,9 +65,12 @@ export default function DashboardEntry() {
               {/* The launcher itself is fine; only tasks and alerts failed. The
                   banner must not claim more than that, and the cards below must
                   not still show live counts (the self-contradiction Raphael
-                  caught on D1c). */}
+                  caught on D1c). `inCard` is the compact in-card variant — the
+                  same one every other banner in this module uses; the full
+                  header banner is reserved for page-level system messages. */}
               <Banner
                 tone="critical"
+                inCard
                 title="Tasks and alerts are unavailable"
                 actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
               >

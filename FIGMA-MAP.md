@@ -3321,3 +3321,80 @@ deliberate.
 
 Final: **50 frames · 50 annotations · 0 duplicate states · 0 squeezed · 0 overflow ·
 0 overlaps · 10/10 sheets with overlays · 0 placeholder leaks** on both surfaces.
+
+---
+
+## Home launcher: the module tile grid was wrong in the prototype (2026-09-02)
+
+Raphael, from the running prototype: *"JUST SAW THIS AT THE PROTOTYPE AND ITS
+WRONG, CAN WE UPDATE IT TO THE RIGHT ONE, ITS IN THE STORY BOOK IN Primary page
+layout in responsive section"* — the nine module tiles were rendering **5 in the
+top row and 4 in the bottom**, each a hand-built 64px tinted disc with a Polaris
+glyph in it.
+
+**The canonical home layout** is Storybook `Patterns/Responsive/App Shell` →
+*"Assembled app (Primary / Secondary / Tertiary)"* (`src/components/AppShell/AppShell.stories.jsx`,
+the `Home()` component, lines 115-205). Three things define it:
+
+1. **`.nx-home-grid` / `.nx-home-grid__tiles`** (`src/global.css` lines 78-104).
+   A **container** query — not a window breakpoint, not `auto-fit` — stepping
+   `1 -> 2 -> 3` columns at 460px / 720px of the *container*, and **capped at 3**.
+   The action row sits on the SAME grid so the cards line up column-for-column
+   with the tiles beneath them.
+2. **`NavCard layout="home"`** with **`media={<Illustration name={...} size={80} />}`**.
+3. Greeting type ramp: `14/450 #616161` over `24/700/32, -0.2px #303030`.
+
+### RETRACTION — "the home illustrations are Figma-only"
+
+`DashboardHome.jsx` carried this note, written by me:
+
+> *"Figma uses bespoke illustrations for these tiles. Those assets live only in
+> the Figma file, and the design system is Polaris-icons-only, so each tile
+> carries its Polaris equivalent in a tinted disc."*
+
+**Both halves are false.** The artwork ships in the design system at
+`src/foundation/illustrations/` with a catalog + renderer in `index.jsx`
+(Storybook: `Foundation/Illustrations`), and `AddEquipmentFlow.jsx` was already
+importing it at `@ds/foundation/illustrations/index.jsx`. The DS is not
+Polaris-icons-only. I invented a divergence, logged it on PD-36 as a deliberate
+one, and hand-drew nine tinted discs — instead of grepping `src/foundation`.
+
+**Rule (again, and this is the fourth time this session):** before drawing
+anything, grep for it. `src/components`, `src/foundation`, `src/pages`, and the
+Storybook `index.json` (`storybook-static/index.json` lists every story title —
+it is the fastest way to answer "does this pattern exist"). A note in a file
+saying an asset does not exist is not evidence; it is usually my own earlier
+guess, hardened into a comment.
+
+**Home tile → illustration map** (catalog id, all 80x80, disc baked into the art):
+
+| Module | Illustration |
+|---|---|
+| Inventory Management | `equipment-management` |
+| Temperature Monitoring | `monitoring` |
+| Learning Hub | `training` |
+| Reports | `reports-hub` |
+| Facility Registry | `facility-management` |
+| Forecasting | `forecasting` |
+| Events | `events` |
+| ColdTrace Transport | `coldtrace-transport` |
+| Service Requests | `health-tech-hub` |
+
+### Banner: `inCard` is the default, the header banner is the exception
+
+Raphael, on D1c's load-error banner: *"it should be the incard component not
+this"*. `Banner` takes **`inCard`** — the compact tinted variant
+(`inCardBg`/`inCardText` per tone, node `109293:4284`); without it you get the
+full solid-header banner. Every other banner in the Manual Temperature Recording
+module already used `inCard`; D1c was the only one that did not.
+
+**Rule:** a banner **inside a page's content** is `inCard`. The solid-header
+banner is reserved for a page-level system message that is about the whole page
+(the parity note at the top of the states register is the one legitimate use in
+this module).
+
+### Also worth noting
+
+`hasButton` on `NavCard` is **dead** — the render gates the button on
+`buttonLabel != null`, not on `hasButton`. Passing `hasButton={false}` does
+nothing. Logged for PD-16.
