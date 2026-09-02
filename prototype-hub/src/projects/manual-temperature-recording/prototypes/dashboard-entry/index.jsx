@@ -65,16 +65,18 @@ export default function DashboardEntry() {
               {/* The launcher itself is fine; only tasks and alerts failed. The
                   banner must not claim more than that, and the cards below must
                   not still show live counts (the self-contradiction Raphael
-                  caught on D1c). `inCard` is the compact in-card variant — the
-                  same one every other banner in this module uses; the full
-                  header banner is reserved for page-level system messages. */}
+                  caught on D1c). `inCard` is Storybook Banner -> "In-card
+                  (compact)": one tinted row, message + actions, NO title slot.
+                  In Banner.jsx the `title` branch is checked BEFORE `inCard`,
+                  so passing both silently renders the solid-header banner —
+                  which is exactly what Raphael saw twice. Never pass `title`
+                  with `inCard`; lead with it in the sentence instead. */}
               <Banner
                 tone="critical"
                 inCard
-                title="Tasks and alerts are unavailable"
                 actions={[{ label: 'Retry', onClick: () => setState('D1') }]}
               >
-                Scanning and the module tiles still work. Recorded readings are safe.
+                Tasks and alerts are unavailable. Scanning and the module tiles still work. Recorded readings are safe.
               </Banner>
             </div>
           )}

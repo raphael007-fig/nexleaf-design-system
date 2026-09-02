@@ -3398,3 +3398,41 @@ this module).
 `hasButton` on `NavCard` is **dead** — the render gates the button on
 `buttonLabel != null`, not on `hasButton`. Passing `hasButton={false}` does
 nothing. Logged for PD-16.
+
+### CORRECTION to the banner rule above (same day, one turn later)
+
+Raphael, with the same screenshot: *"this one was not fixed. it should be In-card
+· compact tinted component in banner section of story book"*.
+
+My fix had been to **add `inCard`** to the D1c banner. That was a no-op. In
+`Banner.jsx` the branches are checked in this order:
+
+```
+if (title)  -> solid-header banner   <- wins
+if (inCard) -> compact tinted row
+else        -> simple icon-pill row
+```
+
+`title` is tested **first**, so `title` + `inCard` renders the header banner
+regardless. The in-card variant (Storybook `Components/Banner` → *"In-card
+(compact)"*) has **no title slot at all**: one tinted row, icon + one `<p>` +
+optional actions. I grepped for the prop name and never read the render.
+
+**The same defect was live in `workspace-list` (W1d/W1e/W1f/W1h) and
+`workspace-calendar` (W2c/W3/W3a)** — every `title={banner.title} inCard` in
+the module was rendering the header banner. All three files fixed: `title`
+dropped, the title text leads the sentence (`{banner.title}. {banner.body}`).
+
+**Rule, corrected:** an in-card banner is `<Banner tone inCard actions?>message</Banner>`
+— **never pass `title` with `inCard`.** If the message needs a lead, make it
+the first sentence.
+
+**Still wrong elsewhere, not touched (different project):** `AddEquipmentFlow.jsx`
+lines 1747, 1753, 1760, 1948 pass `inCard title=` and are rendering header
+banners too. Raphael to decide.
+
+**Meta-lesson, recorded because it is the same failure again:** confirming a
+fix by grepping for the prop I added is not verification. Verification is
+reading the code path the prop goes through — or running it. I told Raphael
+"fixed" on the strength of a diff, and the screenshot he sent back was
+pixel-identical to the one before.

@@ -92,10 +92,13 @@ export default function WorkspaceList() {
 
               <WorkspaceLegend />
 
+              {/* In-card banner: no `title` prop — Banner.jsx checks `title`
+                  before `inCard`, so the two together render the header
+                  banner. The lead sentence carries the title instead. */}
               {banner && (
-                <Banner tone={banner.tone} title={banner.title} inCard
+                <Banner tone={banner.tone} inCard
                   actions={banner.action ? [{ label: banner.action, onClick: () => setState('W1') }] : undefined}>
-                  {banner.body}
+                  {banner.title}. {banner.body}
                 </Banner>
               )}
 
