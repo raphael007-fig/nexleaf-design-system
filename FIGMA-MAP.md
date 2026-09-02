@@ -1370,6 +1370,8 @@ File `YzbXqlrKTcGbWxwzGkLTct` unless stated.
 | **`8331:99736`** | Manual Temp Recording — List view, 1440×1082 (in section `6166:28445`) | **Workspace LAYOUT (2026-08-26).** Governs arrangement + rhythm only: 16px below top bar → Page header 44 → 16 → filter row (fields 256 wide, 12 gaps) → 16 → card; date row 28×28 steppers, Pick Date h28, search 320×28; breadcrumb trail Home › module › current-chip. **RAPHAEL'S RULING (same day): the top bar and side nav COMPONENTS come from Storybook, NOT from this frame's pixels** — DS TopBar (Ask AI pill, 40×40 icon buttons, 36 avatar, `#f1f1f1`) and DS SideNavigation (collapsed 60px `#f1f1f1`, dark icons; expanded 240). The frame's white 56px rail and "AI Chat Bot (beta)" pill are stale/off-system — do not copy them. |
 | `8573:46422` | Manual Temp Recording — Calendar view (Today), 1440 | Same chrome as `8331:99736`; calendar surface with facility group rows + S/M/T day columns |
 | `8575:35326` | Manual Temp Recording — Calendar view (Past Entry), 1440 | Same chrome; past-entry banner placement below legend |
+| **`9252:163800`** | Section "R · RECORDING FORM — states (PD-37)", 15 frames R1–R15 | Recording-form state machine: R1 session-entry modal ("How would you like to proceed?" Morning/Evening w/ Pending badges, over Scan QR/Fridge-ID page); R4/R9 "Confirming your recording" processing overlays (double-submit guard, form + modal level); R8 evening confirm modal; R11 evening-blocked-record-morning-first guard; R15 success-with-alarm-raised variant. (2026-08-27) |
+| **`9252:166562`** | Section "A · AMENDMENT FLOW — states (PD-38)", frames A1–A7 | Amendment states: countdown toast "Saved 2 days ago — you can amend this reading for 1 more day"; A3/A4 Amendment History audit view (original value stays visible; "Amended By" line + "View Amendment History" link on the readings summary); Amended badge DISTINCT from Past Entry (changed inside 3 days vs recorded late inside 7); A7 window-expired read-only. **OPEN decision on the board: A5 vs A6 are two treatments of the same after-change summary — one must be picked, do not silently choose.** (2026-08-27) |
 | `8483:120121` | Design Rep tertiary mobile page, 375×812 | **Tertiary pages carry no Mobile Top Nav** — back arrow lives in the header |
 | `8483:118168` | Design Rep status bar, 375×44 | Mobile status bar source |
 | `8483:121743` | Design Rep `Mobile Top Nav`, 375×52 | Secondary-page nav source |
@@ -1835,3 +1837,1451 @@ reading's date or from when it was saved; whether boundaries are inclusive; whet
 needs a reason or audit entry and who can see it; and whether a supervisor can override either
 window and whether that is its own screen. The amendment **journey** is also undrawn — opening a
 saved reading, editing, confirming, the Amended mark, the audit trail. PD-38.
+
+## THE canonical empty state — reference frame `9223:267413`  (2026-08-27)  [BINDING]
+
+Raphael sent this frame ("THIS IS FOR EMPTY STATE"). It supersedes my use of the library's
+`Empty state` component, which I had used with a Heading + Content pair and up to two buttons, and
+which also hid the table header and the pager. **All three of those were wrong.**
+
+Reference frame: `9223:267413` (ColdChain Equipment, empty). The block itself: **`9223:268613`** —
+clone this, do not rebuild it.
+
+```
+Index table
+├── Index filter                                     stays
+├── Table                    1328 × 32               HEADER ROW ONLY — stays visible
+├── cell  (the empty block)  1328 × 324              VERTICAL, both axes CENTER, gap 8, pad 80, white
+│   ├── Note-Sync--Streamline-Ux   100 × 100         illustration (vector art, not an icon)
+│   ├── Frame 1168 × 20                              cA = CENTER
+│   │   ├── heading  14px/20 Semi Bold #303030       HIDDEN — the pattern is one line, not two
+│   │   └── copy     13px/20 Medium   #616161        e.g. "No data available for your equipments"
+│   └── Actions  HORIZONTAL gap 8
+│       ├── Secondary action  Button                 HIDDEN by default
+│       └── Primary action    Button Variant=default  ← WHITE / secondary, NOT emphasis blue
+└── Pagination                                       stays
+```
+
+Four rules that follow, and that I broke:
+
+1. **The table header row and the pager stay visible.** The empty state sits *inside* the table
+   body, between them. Hiding the whole table turns the screen into a dead end and loses the column
+   vocabulary. Collapse the rows, keep the chrome.
+2. **One line of copy, sentence case, `13px/20 Medium #616161`.** No heading. The heading node
+   exists in the block but ships hidden — leave it hidden.
+3. **One button, and it is `Variant = default`** — white with a border. The empty state is not the
+   place for the emphasis-blue primary. A second slot exists (`Secondary action`) and is hidden by
+   default; only reveal it when a state genuinely has two routes.
+4. **Same block for load-error states**, not just empties — the reference pattern carries the
+   failure too. `W1d` and `W2c` use it under a critical in-card Banner.
+
+The row collapse: on the reference frame's Index table the columns are property-driven instances
+(`Index cell 1 … 25` booleans) so an empty table is one `setProperties` per column. On the older
+Index table used by the Manual Temperature Recording frames the columns are plain FRAMEs, so the
+data cells are hidden individually — 110 per List frame, 476 per Calendar frame. Same result, and
+worth knowing there are two generations of the component in the file.
+
+Copy now in use: `No equipment added for this facility yet` · Add Equipment ·
+`No equipment matches your filters` · Clear Filters · `Readings didn’t load for this recording date`
+· Try Again · `The August calendar didn’t load` · Try Again · `Nothing completed yet today` ·
+Go to Morning.
+
+**Lesson, again:** the library component was not the house pattern. Before reaching for a DS
+component to express a state, look for a frame where Raphael has already expressed it — the frame
+outranks the component.
+
+## Recording Date badge tones — resolved by sampling, not by naming  (2026-08-27)
+
+Raphael: badge only, `Today` blue and `Past Entry` **orange** — *"THIS SHOULD BE ORANGE NOT YELLO"*.
+I had used `attention`, which is the **yellow** one. Sampled every candidate on a real instance and
+read the resolved fill back:
+
+| Badge `Tone` | Resolved fill | Reads as |
+|---|---|---|
+| `attention` | `255,239,157` | pale yellow |
+| `attention-strong` | `255,230,0` | saturated yellow |
+| **`warning`** | **`255,214,164`** | **orange ← this one** |
+| `warning-strong` | `255,184,0` | amber/gold |
+| `info` | `224,240,255` | blue (`Today`) |
+
+**Settled:**
+
+| Recording date | Badge | Tone | Fill |
+|---|---|---|---|
+| today | `Today` | `info` | `224,240,255` |
+| a past date | `Past Entry` | `warning` | `255,214,164` |
+
+Applied to `W1h`, `W3`, `W3a`. **Do not infer a tone from its name** — in this library `attention`
+is yellow and `warning` is orange, which is the opposite of what the words suggest. Sample the
+instance and read the fill.
+
+**Open, and NOT changed without asking:** the legend's own `Past Entry` swatch is a **yellow** dot
+(Raphael's artwork on the source frames), while the badge is now orange for the same concept. Either
+the legend dot moves to orange or the two stay deliberately different. Flagged, not touched — the
+legend is his.
+
+## Toasts are TOP RIGHT and use the in-card Banner  (2026-08-27)  [BINDING]
+
+Raphael: *"this should be a toast on the top right / all toast are top right using the incard
+banner"*. I had used the library's dark `Toast` pill, bottom-centre. Both wrong.
+
+**The rule:**
+
+```js
+const b = bannerSrc.clone();          // the Banner component, NOT the Toast component
+f.appendChild(b);                     // last child = frontmost
+b.setProperties({ Tone, 'In card': 'true', Title: 'false', 'Message content#109293:14': msg });
+b.resize(480, b.height);              // 480 fixed, height hugs
+b.x = f.width - 24 - 480;             // 24px right gutter
+b.y = 56 + 16;                        // clear of the 56px top bar
+b.constraints = { horizontal: 'MAX', vertical: 'MIN' };
+f.numberOfFixedChildren += 1;         // chrome-level, travels with the frame
+```
+
+Tone carries the meaning: `info` for context, `success` for a save, `warning` for past entry,
+`critical` for a failure. The dark `Toast` component
+(`cdbbd95ce283e4ce8149050db7d6ab07739e3766`) is **not** used on this product.
+
+Live on nine frames: `D1c` · `W1h` · `R2` record morning · `R6` record evening · `R5` and `R10`
+record summary · `A1` `A2` amend editable · `A7` amend expired.
+
+## The amend page ANSWERS two of the open PD-38 questions  (2026-08-27)
+
+Reading Raphael's own amend frame (`7820:115554`, cloned as `A1`) rather than asking him again:
+
+- **Does an amendment need a reason?** **Yes.** The form carries `Reason for Change *` as a required
+  Select, plus a `General Comments` textarea placeheld *"Describe why this morning reading was
+  corrected…"*.
+- **Is there an audit trail, and is it visible?** **Yes.** The page subtitle reads *"All amendments
+  are recorded in the audit history"*, and an in-card info banner above the actions states *"The
+  original record will be preserved. Your changes will be saved as a new amendment."* So an
+  amendment is **additive, never destructive** — the original value survives.
+
+The amend form also shows a `Previous Day Temperature Recording` group (max temp, high-alarm
+triggered, min temp, low-alarm triggered), so amendment operates on the full reading, not just the
+single temperature value.
+
+**Still open on PD-38:** whether each window counts from the reading's date or its save time;
+whether the boundaries are inclusive; who can *see* the audit history (that it exists is settled,
+its visibility is not); and whether a supervisor override is its own screen.
+
+---
+
+## Canonical frame shell — rolled across R and A (2026-08-27, approved by Raf)
+
+Raf confirmed **`9270:53384`** (R2 · Record Morning — empty form) as *the* correct frame
+layout and told me to "update the recording form section and amendment flow layout".
+All 15 R frames and all 7 A frames now carry it.
+
+### The shell (measured, not assumed)
+
+```
+FRAME 1440×H  fill 241,241,241
+├── Frame (wrapper)  @80,72  w 1328 FIXED · h HUG · VERTICAL · gap 16 · NO fill
+│   ├── Page INSTANCE              layoutSizingHorizontal FILL → 1328
+│   └── Frame (card) fill 255,255,255  FILL → 1328 · VERTICAL
+│       · padding 24/24/24/24 · gap 16 · primaryAxisSizingMode AUTO
+│       · every direct child ≥600 wide → layoutSizingHorizontal FILL (→1280)
+│       · children <600 wide keep their width (accordions, action rows)
+├── Top bar GROUP 1440×56 @0,0
+└── Closed Navigation 56×H @0,0        ← resize to the FRAME height, every pass
+```
+
+`H = max(900, 72 + wrapper.height + 72)`.
+
+### Rules this pass established
+
+1. **The page header lives OUTSIDE the white card.** Legacy frames had the `Page`
+   instance as the first child *inside* the card at x=64. The rebuild moves it into
+   the wrapper above the card. Both the title and the subtitle sit on the grey ground.
+2. **There is no separate `Footer`/`Actions` row.** The action row is simply the last
+   child of the card, hugging its width (~293). I had flagged the missing footer as a
+   defect on R2 — **that was wrong**, Raf approved R2 as-is. Do not add one.
+3. **Card padding is 24, not 64.** Legacy frames used 64 horizontal padding inside the
+   card (content 1200). Canonical is 24 (content 1280).
+4. **`wrap.resize()` does not always stick.** A3/A4 came out 960 wide after
+   `resize(1328, h)`. Fix: set `counterAxisSizingMode='FIXED'` FIRST, then `resize`,
+   then `primaryAxisSizingMode='AUTO'`, then re-apply FILL to the children. Always
+   read back `wrap.width` and assert it is 1328.
+5. **Skip `LINE` nodes when applying FILL** — a 1200-wide `Line` in the card children
+   list is not a content column.
+6. **Toasts:** `x = 1440 - toast.width - 24`, `y = 72`. Where a page-level `Banner`
+   instance sat at ~933,52 *and* a `__toastBanner` existed, the `Banner` was a
+   duplicate and was removed (R5 `9247:49618`, R10 `9247:50531`). Where it was the
+   only toast it was moved to the top-right instead (R11 `9247:50636`, R15 `9247:51393`).
+7. **Overlays:** full-frame `Loader` scrims → `@80,72`, `1328 × (H-144)` (content box,
+   top bar stays undimmed). `Modal` → centred on the frame. Small "Confirming…" loader
+   cards → centred.
+8. **Right-hand drawers** (A5/A6 `Amendment history view`) → `x = 1440 - 650`,
+   `y = 56`, `h = H - 56`, and the drawer frame itself needs a **white fill** — its
+   inner panel is shorter than the drawer, so a transparent drawer leaks the scrim.
+9. **Frames that had no `Page` instance** (R1, R10, R11, R12, R15) got a clone of
+   `9270:53386`. Titles set: R1/R11/R12 → *Manual Temperature Recording* /
+   "Select a session to record today's readings."; R10 → *Daily Record Summary* /
+   "Both readings are recorded for Thu, 27 Aug 2026."; R15 → *Daily Record Summary* /
+   "Recorded with an alarm raised for Thu, 27 Aug 2026."
+10. **Two empty 624×116 stray frames deleted** — R13 `9247:50822`, R14 `9247:51031`
+    (no text, overlapping the `Page` row).
+
+### Board packing (corrected)
+
+Notes were sitting **on top of** their frames because their `y` was set to the frame
+height instead of `rowY + rowMaxFrameH`. Correct packing, per row:
+
+```
+frame.y = rowY
+note.y  = rowY + rowMaxFrameH + NOTEGAP(16)      ← rowMax, not this frame's height
+nextRowY = rowY + rowMaxFrameH + 16 + rowMaxNoteH + ROWGAP(140)
+sectionH = lastRowY + rowMaxFrameH + 16 + rowMaxNoteH + PADY(112)
+```
+
+### RETRACTION / new hard rule — never re-stack sections I do not own
+
+I ran a "re-stack every section on the page" pass over `figma.currentPage.children`
+filtered to `SECTION`. That swept up **Raf's own sections** — `Manual Temperature
+Recording` (9165:153497), `Temperature Recording MVP` (8127:120909), `Temp Record MVP`
+(8478:143521), `Old` (6448:71834) — normalising their `y` gaps to 500 and pulling my
+sections into their column. Raf: *"i dont see the designs, put all your designs on the
+right side"*.
+
+**Rule:** section layout passes operate on an **explicit allow-list of my own section
+IDs**, never on a type filter over the page. Original `y` values are not recoverable
+through the Plugin API, so this is unfixable after the fact.
+
+**Column contract on page "Daily Temp Recording":**
+
+| column | x | contents |
+|---|---|---|
+| left | **-100** | Raf's sections — do not touch |
+| right | **50915** | my state sections: D → W1 → W2 → R → A → MODULE NOTES, 500 gap, top y 3070 |
+
+My sections (right column, current): D `9221:47949` y3070 · W1 `9221:47950` y6574 ·
+W2 `9221:47951` y10162 · R `9247:48686` y14702 · A `9248:51450` y19402 ·
+MODULE NOTES `9221:47952` y23394.
+
+---
+
+## Blocking-overlay contract — from Raf's own fix to R9 (2026-08-27)
+
+Raf rebuilt **R9 `9247:50188`** himself and said "fixed all affected layout".
+Measured diff against my version — I had the scrim wrong:
+
+| | mine (wrong) | Raf's (correct) |
+|---|---|---|
+| scrim geometry | `@80,72` `1328 × (H-144)` — content box only | **`@0,0` `1440 × H` — the whole frame** |
+| z-order | scrim last, overlay *under* the top bar | wrapper → Top bar → Nav → **scrim** → overlay |
+| top bar / side nav | undimmed | **dimmed with everything else** |
+| primary action behind the scrim | left active/blue | **`State = disabled`** |
+
+The overlay card is centred on the **frame**, not on the content box:
+`x = (1440 - w)/2`, `y = (H - h)/2`. His spinner card: `210×98 @615,412` in a 922-tall
+frame → centre 720/461. ✔
+
+Rolled across every frame that has a full-frame `Loader` scrim: R1, R4, R8, R11, R12,
+A5, A6. Right-hand drawers (A5/A6) sit above the scrim at `x = 1440-650, y = 56,
+h = H-56`, so the dimmed chrome stays visible above the sheet.
+
+### Gotcha — never dump `componentProperties` wholesale
+
+`instance.componentProperties` includes `preferredValues` for every INSTANCE_SWAP
+property: ~190 component keys per Button. Two buttons blew a 20 KB tool response.
+Read only the keys needed: `p.Variant && p.Variant.value`, `p.State && p.State.value`.
+
+### Still open on R1 / R11 / R12
+
+The card keeps its own inner `← Select an Option` heading, so the frame now shows
+**two back arrows** — one in the shell `Page` header, one in the card. The shell header
+owns navigation now, so the inner arrow should probably go. Raf's call — not changed.
+
+---
+
+## Frame = a 1440×900 clipping viewport — from Raf's fix to A5 (2026-08-27)
+
+Raf rebuilt **A5 `9248:52332`** and said "LETS FIX". Measured diff vs my untouched
+A6 twin:
+
+| | mine (wrong) | Raf's (correct) |
+|---|---|---|
+| frame height | grown to fit content (1234) | **fixed 900** |
+| `clipsContent` | true but frame was tall enough to never clip | **true, and it clips** — wrapper 1090 overflows a 900 frame |
+| nav height | = grown frame (1234) | **900** |
+| drawer | `@790,56` `650×1178`, **white fill on the wrapper** | **`@790,0` `650×900`, wrapper fill = none** |
+| drawer `Panel` | `layoutSizingVertical: FIXED` (880, left a gap) | **`FILL`** — the panel stretches, so no fill hack is needed |
+
+### RETRACTION — "frame height = 72 + wrapper.height + 72"
+
+That formula (written into this file earlier today) is **wrong**. The frame is a
+**desktop browser viewport, not a canvas that grows to its content**:
+
+```
+FRAME 1440 × 900 · clipsContent = true
+Closed Navigation 56 × 900
+full-frame scrim  1440 × 900 @0,0
+right-hand drawer 650 × 900 @(1440-650),0 · fill none · Panel layoutSizingVertical FILL
+overlay card centred on the VIEWPORT: x=(1440-w)/2, y=(900-h)/2
+```
+
+Content taller than 900 is simply cut at the frame edge — that is what scrolling looks
+like. Also **retract the white fill I put on the A5/A6 drawer wrappers**; the fix is
+`Panel.layoutSizingVertical = 'FILL'`.
+
+Applied to all 15 R frames and all 7 A frames. Content now below the fold (px clipped):
+R8 22 · R9 22 · R13 126 · R14 294 · A1 54 · A2 86 · A3 394 · A4 334 · A5 334 · A6 334.
+**R9 went 922 → 900** — the 922 was my formula's output, not Raf's choice; he had only
+fixed R9's scrim and overlay.
+
+Board after the pass: R section h 3884 (3 uniform rows), A section h 2764 (2 rows).
+`D`, `W1`, `W2` frames have **not** been converted to the 900 viewport yet.
+
+### Section fill
+
+All six of my sections read **`234,229,228`** — Raf's section colour. Matched, nothing
+to propagate. Re-stack used the explicit allow-list (see the rule above), not a type
+filter.
+
+### A5 vs A6 — the actual difference (for Raf's pending decision)
+
+A6's drawer carries **`Revert to this version`** actions per amendment entry; A5's is
+read-only history. That is the decision, not a layout variant.
+
+---
+
+## Scan / entry page shell — from Raf's fix to R11 (2026-08-27)
+
+Raf rebuilt **R11 `9247:50541`** then said "FIX ALL AFFECTED PAGES". The scan/entry
+page does **not** use the wrapper-plus-`Page`-header shell. The white card *is* the page:
+
+```
+FRAME 1440×900  fill 241,241,241 · clipsContent
+├── Frame (card)  @80,72  1328×804  FIXED/FIXED  fill 255,255,255
+│   · padding 32/16/48/16 · gap 40
+│   · primaryAxisAlignItems MIN · counterAxisAlignItems CENTER
+│   ├── Frame 2 (heading block)  FILL · HUG · pad 0 · gap 10 · paa CENTER · caa CENTER
+│   │     └── "← Select an Option" + subtitle — this is the page header
+│   └── Frame (content)          FILL · HUG · pad 0/40/0/40 · gap 24
+├── Top bar GROUP 1440×56
+├── Closed Navigation 56×900
+├── Loader (scrim) 1440×900 @0,0
+├── Modal 620×344 @410,278            ← centred on the viewport
+└── Banner (toast) @(1440-w-24),72
+```
+
+`CARD_H 804 = 900 − 72 (top) − 24 (bottom)`. The card is FIXED on both axes — it fills
+the viewport rather than hugging its content.
+
+### RETRACTION — I should not have cloned a `Page` header onto the scan pages
+
+Earlier today I gave R1, R10, R11, R12 and R15 a cloned `Page` instance
+(`9270:53386`) because they had none. For the **scan/entry pages that was wrong** — the
+card's own centred `← Select an Option` heading is the header, and adding the shell
+header produced the **two back arrows** I had flagged and left for Raf. Raf's fix
+removes the header and the wrapper entirely. Deleted: R1 `9283:54618` + wrapper
+`9283:54613`, R12 `9283:54681` + wrapper `9283:54616`.
+
+**Rule:** a frame gets the wrapper + `Page` header shell only if the page has a
+title/subtitle above the card. A page whose heading lives inside a centred card
+(scan, entry, option-picker) uses this shell instead.
+
+R10 and R15 (success / summary) keep their cloned headers — they are content pages, not
+entry pages. Applied to R1 and R12; R11 was Raf's own.
+
+---
+
+## Frame height — the actual rule, from Raf's fix to R13 (2026-08-27)
+
+Raf resized **R13 `9247:50820`** to **1440×976** rather than let it clip. That
+contradicts the flat "always 900" I took from A5, and resolves the contract properly:
+
+```
+blocking-overlay state (scrim + modal / drawer / spinner)
+    → frame is EXACTLY 1440×900, clipsContent, content below the fold is cut
+
+plain content page (no scrim)
+    → frameH = max(900, 72 + contentH + 24)      ← grows to fit, never clips
+       contentH = the wrapper column (or, on scan pages, the card)
+```
+
+Evidence: R11 (modal) 900 · A5 (drawer) 900 · R13 (plain form) 976 = 72 + 882 + 24
+(he dragged to 976; the formula gives 978). R2, approved as the reference, has content
+722 → `max(900, 818)` = 900, so the min covers it.
+
+### RETRACTION — "every frame is a fixed 900 clipping viewport" was wrong
+
+I had just clipped 10 frames on that basis. Corrected — grown back to fit:
+R14 900→1146 · A1 900→906 · A2 900→938 · A3 900→1246 · A4 900→1186 · A7 900→906.
+Overlay states correctly stay at 900: R1, R4, R8, R12, A6 (plus Raf's own R9, R11, A5).
+
+**Frames Raf has fixed himself — do not resize:** R9 `9247:50188`,
+R11 `9247:50541`, R13 `9247:50820`, A5 `9248:52332`. Any sweep must carry this
+exclusion set, the same way section re-stacks carry the allow-list.
+
+Board after: R section h 4130 (rows 900 / 900 / 1146), A section h 3116 (rows 1246 / 906).
+
+---
+
+## Three shells, and the misclassification that broke R5 (2026-08-27)
+
+Raf's fixes to R10 and A4 completed the shell set. Every frame in R/A uses exactly one:
+
+### 1 · FORM shell — a page with a title above the card
+`wrapper @80,72 · 1328 FIXED · HUG · gap 16 · no fill`
+→ `Page` instance (FILL) + white card (FILL, pad 24, gap 16, HUG)
+R2 R3 R4 R6 R7 R8 R9 R13 R14 · A1 A2 A3 A4 A5 A6 A7
+
+### 2 · SCAN / ENTRY shell — heading lives inside a centred card, no page title
+card direct on the frame `@80,72 · 1328×804` FIXED/FIXED · `pad 32/16/48/16` · `gap 40`
+· `paa MIN` · `caa CENTER`; heading block gap 10 centred; content block `pad 0/40/0/40` gap 24
+R1 R11 R12
+
+### 3 · SUCCESS shell — a confirmation card, no page title
+card direct on the frame `@240,180 · 960 wide` FIXED width / HUG height · `pad 24` ·
+`gap 16` · `paa MIN` · `caa CENTER`  (240 = (1440−960)/2)
+R10 R15
+
+### Page-level actions live in the header, not the card
+
+From A4: `Print Page` belongs in the `Page` instance's nested `Actions` slot —
+set `Primary Action#111691:35 = true` and the revealed Button's `Label content`.
+Right-aligns to `x 1226, w 102`. The card's trailing `Line` + button row is deleted.
+Applied to A3, A5, A6. **Form** actions (Cancel + primary) stay at the card bottom.
+
+### MISTAKE — R5 is not a success page
+
+I put R5 on the SUCCESS shell because it is named "Record Morning — success". Wrong:
+R10/R15 are **confirmation cards** (check icon + "Temperature Readings Recorded" +
+route-onward buttons); R5 is the **record form** in a saved state with a green toast and
+a `Record Evening Temperature` primary. Squeezing it into the 960 centred card and
+stripping its header broke it — Raf: "this is not looking right? what did you do?"
+
+**Rule: classify by card CONTENT, never by the frame's name.**
+- confirmation card = icon + title + summary panel + route-onward buttons → SUCCESS shell
+- form fields / banner / submit row → FORM shell
+- centred option picker or scanner → SCAN shell
+
+R5 rebuilt on the FORM shell: wrapper `9307:53312`, header `9307:53313`
+("Record Daily Temperature" / "Morning reading saved. The evening reading is still to
+record."), card 1328, frame 900.
+
+### Conformance sweep result (all 22 frames)
+
+Fixed: R3/R6/R7/R14/A1/A2/A7 wrapper → 1328 · R13/A2 card child → FILL ·
+A3 frame 1246 → 1182 (shorter after the Print Page row was removed).
+Already conformant: R1 R2 R4 R8 R9 R10 R11 R12 R15 A4 A5 A6.
+Board: R h 4130 (rows 900/900/1146) · A h 3052 (rows 1182/906).
+
+---
+
+## Field column — the temperature row is a fixed 624, not FILL (2026-08-27)
+
+From Raf's R2 `9270:53384` and A2 `9248:51675`. The editable temperature row is a
+**`FIXED` 624-wide** direct child of the card, NOT `FILL` 1280:
+
+```
+card child · Frame · HORIZONTAL · gap 8 · layoutSizingHorizontal FIXED · w 624
+├── Text field  FILL  (→516)   label + Info icon
+└── Frame       HUG   (100)    input + °C
+```
+
+624 is the same column width as the `Previous Day Temperature Recording` /
+`Current Day Alarm` accordion below it, so the temperature input lines up with the
+Max/Min inputs. At `FILL` 1280 the input is flung to the card's right edge — wrong.
+
+Fixed on R3 R4 R5 R6 R7 R8 R9 R13 R14 A1 A2 (1280 → 624) and **A7** (1280 → 624; A7 was
+missed on the first pass because I built the target list from a text query that had not
+matched it — build sweep lists from the **shell classification**, not from a text match).
+
+Read-only rows inside a `cell` (e.g. "Morning temperature (°C):" in the R6/R7/A2
+accordion summary) are a different thing and stay as they are.
+
+## Purged 47 hidden legacy strays
+
+`Add more issues` · `Signed in as` · `tom@example.com` · `Low Impact` · `90/100` and the
+hidden `Button` / `On` toggle frames that carried them — leftovers from whatever the
+frames were cloned from. Removed from 18 frames (all of R3–R15 and A1–A7). They were
+invisible so they never showed in a render, but they polluted the layer tree.
+
+Guards used: skip anything whose id contains `;` (inside an instance — cannot be
+removed), skip anything actually visible, and **collect the target list into an array
+before removing** — mutating during a `query()` iteration threw
+`in get_characters: The node with id "…" does not exist` and the whole atomic script
+rolled back.
+
+## Frames Raf has hand-fixed — never resize or restructure
+
+R2 `9270:53384` · R9 `9247:50188` · R10 `9247:50377` · R11 `9247:50541` ·
+R13 `9247:50820` · A2 `9248:51675` · A4 `9248:52118` · A5 `9248:52332`
+
+---
+
+## Annotation copy style — no em dashes (2026-08-27)
+
+Raf: "remove the m dash on the annotations". All em (`—`) and en (`–`) dashes are gone
+from every annotation note. 83 text nodes rewritten across 47 notes in the six sections;
+verified 0 remaining over 94 text nodes.
+
+**Rule for every future note:**
+- **Note title** (single line): the dash becomes a colon.
+  `D1 · Home — dashboard entry` → `D1 · Home: dashboard entry`
+- **Body copy**: the dash becomes a sentence break, next word capitalised. A comma
+  reads muddy where the notes already use commas heavily.
+  `keep the drawer usable — header, tabs and counts stay`
+  → `keep the drawer usable. Header, tabs and counts stay`
+- If the text before the dash already ends in punctuation, no extra stop is added.
+
+Hyphens inside words stay (`read-only`, `cold-chain`, `happy-path`, `3-day`).
+Also tidied `W1h · List: Past entry mode -7 Day window` → `…(7-day window)`.
+
+This is a **house style rule, not a one-off cleanup** — do not write em dashes into
+annotations, Jira comments, or note frames for this project.
+
+---
+
+## Workflow close-out, 27 Aug 2026
+
+### Loader component set — RESOLVED (retracts the earlier "unresolved" note)
+
+| | |
+|---|---|
+| real set key | `6da407eef97425d2991e8402a0731538ca338bcf` (COMPONENT_SET `3305:33517`) |
+| inventory key (WRONG) | `ad581cfbf5ca5be55741671ffee2f9bafb547d05` = the `Type=Full screen` **variant's** key |
+| variants | `Type = Loader icon | Full screen | Overlay` |
+
+Resolved via `instance.getMainComponentAsync()` then `.parent` on an on-canvas
+instance. **`search_design_system` returns nothing for "Loader"**, so for this component
+the on-canvas route is the only one that works.
+
+`DESIGN-SYSTEM-INVENTORY.md` is not a source for import calls: keys are truncated to
+16 chars, and at least one entry stores a variant key where a set key is needed.
+Logged on PD-16.
+
+**Where each type belongs.** `Full screen` = the 8 blocking scrims. `Loader icon` =
+the spinner cards, and now D2b and W2a in place of skeleton bars. `Overlay` is
+deliberately **unused**: with no content beneath it, it renders as a solid grey block
+(tried it on W2a, it was worse than the skeletons). It only belongs on a
+refresh-over-existing-content state, which this module does not have.
+
+### Frame height rule applied to D / W1 / W2
+
+Three real defects, not cosmetics:
+- **W3a was clipping 20px of live content** (content bottom 1358 in a 1338 frame) → 1382
+- W2 1271 → 1266, W3 1338 → 1314
+
+D frames are all `1440x1000` and were already conformant: nav = frame height, drawer
+scrims `1440x1000 @0,0` above the chrome, toast at `936,72`.
+
+### Verify pass, all 46 frames
+
+- **0 visible placeholders.** No `Title` / `Label` / `Content` / `Option 1` / `Error message`.
+- **1 duplicate pair — A5 and A6 are identical on visible copy.** Both drawers carry
+  3 visible `Revert to this version` links. **RETRACTION:** I told Raphael and wrote on
+  PD-38 that "A6 has Revert, A5 is read-only". That was inferred from a screenshot taken
+  before he rebuilt A5's drawer, and it is wrong. The open question is whether amendment
+  rollback exists at all.
+- **52 more hidden strays removed** across 20 frames (on top of the earlier 47):
+  `Learners will receive the selected training under this assignment.` (wrong product,
+  R10/R15), `A summary of facilities this equipment has been assoicated with` (11 frames,
+  with a typo), `Help text`, `5/120`, `Action`, and in the A5/A6 drawers
+  `This RTMD is marked as Faulty...`, `Alll filters`, `Advanced filter`,
+  `Available resources`.
+- **Not a stray:** ~7 hidden text nodes per frame are the collapsed side-nav labels
+  (`Performance`, `Equipment Management`). Leave them.
+
+### Names
+
+All em/en dashes gone from the 46 frame names and the 6 section names (52 renames),
+matching the annotation rule. `X — Y` becomes `X: Y`; doubled spaces collapsed.
+
+### Prototype hub — the five scaffold flows are built
+
+`prototype-hub/src/projects/manual-temperature-recording/`
+
+| Flow | States | Jira |
+|---|---|---|
+| `workspace-list` | 10 (W1, W1a–W1i) | PD-34 |
+| `workspace-calendar` | 6 (W2, W2a–W2c, W3, W3a) | PD-35 |
+| `recording-form` | 15 (R1–R15) | PD-37 |
+| `amendment` | 7 (A1–A7) | PD-38 |
+| `states-set` | the 46-state register | PD-39 |
+
+New shared screens: `WorkspaceShell`, `RecordingDateBar`, `WorkspaceLegend`,
+`ReadingsTable`, `RecordingCalendar`, `TaskDrawer`, `StateSwitcher`, and **`fixtures.js`
+— one source of sample data for the whole module**, which is what makes the
+count-disagreement class of defect impossible.
+
+**State ids are the parity join key.** Every entry in a flow's `STATES` array uses the
+same id as its Figma frame, and `states-set` exports `REGISTER` so a parity check
+imports the list instead of re-deriving it.
+
+### DS API corrections found while building (worth remembering)
+
+| Component | I assumed | Actually |
+|---|---|---|
+| `Cell` | `subtitle`, `action` | `description`, `buttonLabel` + `onButtonClick` |
+| `Banner` | `actions: [{content, onAction}]` | `actions: [{label, onClick}]` |
+| `Btn` | `variant="tertiary"` | primary / secondary / ghost / destructive / strong |
+| `OptionCard` | `badge`, `badgeTone`, `onClick` | `media`, `description`, `selected`, `onSelect` |
+| `SubmissionSuccessCard` | `fields`, `actions`, `onHome` | `sections`, `primaryAction`, `homeAction` — and `TemperatureSubmissionSuccessCard` is the purpose-built one for this module |
+| `BtnGroupSegmented` | has an active/pressed state | it does **not** — use a `Btn` pair when the current view must read as selected |
+
+### Verification honesty
+
+The prototype **has not been run**. `npx vite build` fails here with
+`Cannot find module './rolldown-binding.linux-arm64-gnu.node'` — the repo's
+`node_modules` holds macOS-native binaries and this VM is linux-arm64. That is an
+environment limit, not a code result.
+
+What did pass: **22/22 files parse as valid JSX** (`@babel/parser`, which is pure JS and
+does run here), **every `@ds` import name exists** in the 211-export barrel, and **every
+relative import resolves**. Runtime behaviour is unverified until `npm run dev`.
+
+---
+
+## Parity pass, 27 Aug 2026 (second sweep)
+
+Ran the real diff instead of assuming the earlier build was complete. It found three gaps.
+
+### 1. Frames were bound to nothing
+
+No frame carried a `stateId`, so parity rested on frame names, which renames break.
+All **46 frames now carry shared plugin data** in namespace `nexleaf.parity`:
+`stateId`, `frameCode`, `viewport` (`desktop`), `flow`, `jira`. Read back and verified:
+46 distinct ids, 0 duplicates, 0 unbound.
+
+**Section owner tag.** All five of my sections carry
+`owner = 'cowork-v2-2026-08-27'` and `jira = PD-3x`. The parity rule says skip a section
+with an `owner` tag, but that rule is for **Raf's** marker
+(`raf-scratch-do-not-reflow`). Read the value before honouring it: my own tag is not a
+reason to skip.
+
+### 2. `dashboard-entry` had ZERO togglable states
+
+Figma had 8 D states; the flow rendered only the default, so **8 of the module's 46
+states were unreachable in the prototype**. The earlier report of "five scaffold flows
+built" was true but incomplete: `dashboard-entry` was already a real screen, so it never
+appeared in the scaffold list and was never given a switcher. Now all 8 are togglable
+(D1, D1a–D1d, D2, D2a, D2b).
+
+D1c also contradicted itself the same way the Figma frame once did: the banner said tasks
+failed while the cards still showed a live urgent count. Fixed by dropping the count to 0
+and emptying the list in that state.
+
+### 3. I had hand-rolled a component the DS already ships — RETRACTION
+
+`TaskDrawer.jsx` was built from `SlideOver` + `Tabs` + `Cell` + `Pagination`. The DS
+already ships **`TemperatureTasksPanel`** (`open`, `onClose`, `tasks`, `title`,
+`pageSize`, `onRecord`) with the pending badge, the three tabs, per-tab empty copy and
+pagination. That was a ds-components-only violation and the lookalike is deleted;
+`TaskDrawer` is now a thin adapter.
+
+The panel could not express D2a (Completed tab) or D2b (loading), so it was **extended**
+rather than worked around: `activeTab`, `onTabChange`, `loading`, all optional and
+additive. Logged on PD-16.
+
+`StateSwitcher` had the same problem in miniature: it imported `Btn` and then used a raw
+`<button>`. Rewritten on `Btn`. **The rule is binding for tooling too.**
+
+### Static verification now covers unused imports
+
+The check that found the `Btn` violation was an unused-import scan. Worth keeping in the
+loop: parse → `@ds` names exist → relative imports resolve → **no unused imports**.
+Current state across 23 files: 0 hard problems, 0 unused imports.
+
+Also caught before it landed: `<SkeletonGroup rows={4} />` renders **nothing**. The real
+signature is `{label, children, style}` — it needs `Skeleton` children.
+
+### Open: no mobile viewport exists for this module
+
+All 46 frames are `viewport: desktop`. There are **zero mobile twins**, so the parity
+`desktopOnly` count is 46. Mobile was never requested for this module and 46 twins at
+375 wide is a large build, so it is surfaced as a question, not started.
+
+---
+
+## Gaps closed, 27 Aug 2026 (third pass)
+
+### 1. Banner `In card = true, Title = true` — BUILT
+
+DS file `y4XdS2kaiS8eMHY3z8wORP`, set `109293:4284`. Was 12 variants with an incomplete
+matrix; now **16** (4 tones x In card x Title). Each new variant is a clone of its tone's
+`In card=true, Title=false`, so the tint, radius 8, padding 8, icon and close button are
+the originals; the title is a `Heading` text inserted above the message in the already
+`VERTICAL` in-card `Content` frame.
+
+**No new component property.** The Heading references the set's existing
+`↪️ Title content#109293:15`, the same key the standalone Title variants use.
+
+Verified by running the call that used to throw, for all four tones, then removing the
+scratch instances in a `finally`. **Not published** — library edits do not reach
+consuming files until Raf publishes.
+
+### 2. A5 vs A6 — RESOLVED: rollback exists
+
+Raf's decision: amendment rollback is real. **A5 deleted** (it was a byte-identical
+duplicate of A6), A6 kept as the single post-amendment summary with the revertable
+history. Registry and Figma both went 46 → **45 states**.
+
+Rule recorded: **a revert is itself a change**, so on an additive trail it is written as a
+further amendment rather than erasing history. The prototype's revert toast says exactly
+that.
+
+### 3. Mobile — 45 twins BUILT, parity is now zero-gap
+
+Reference: `Mobile And Ipad Screen Layout` (`8483:118081`) on page **Design Rep**.
+
+```
+FRAME 375 × H  fill 241,241,241 · clipsContent
+├── status bar   375×44  @0,0     (cloned from Home//Mobile)
+├── Mobile Top Nav 375×52 @0,44
+└── Content column @16,112 · 343 wide · VERTICAL · gap 16 · hug
+```
+
+`H = max(812, 112 + content + 24)`. Content column constraints pinned `MIN/MIN` **before**
+resize, per the parity skill's drift warning.
+
+**Adaptations, because a reflow is not a mobile design:**
+
+| Desktop | Mobile |
+|---|---|
+| IndexTable, 9 columns | `Mobile/Index table` stacked row cards (`.Mobile/Subcomponents/Row`, 343 wide) |
+| Month grid, 31 day columns | **week strip** — 7 day pills per CCE, month in the header |
+| Modal, centred | **bottom sheet** pinned to the frame bottom |
+| Blocking scrim over 1440 | full-viewport scrim, chrome included |
+| Two-column form, 624 field column | single column, fields and actions full width |
+| Module tiles, 3 across | 2 across |
+
+Sections (mobile column at **x 59063**): `D-M` 9366:56547 · `W1-M` 9355:88923 ·
+`W2-M` 9365:56141 · `R-M` 9363:54860 · `A-M` 9362:54348.
+
+### Parity, measured
+
+```
+frames 90 · registry 45 · desktop bound 45 · mobile bound 45
+statesWithNoFrame 0 · desktopOnly 0 · mobileOnly 0
+notInRegistry 0 · duplicates 0 · unbound 0
+```
+
+### DS API traps found this pass (all cost a wrong render first)
+
+| Component | Wrong assumption | Truth |
+|---|---|---|
+| `Btn` State | `'default'` | `rest │ hover │ active │ focus │ disabled │ loading │ pressed` |
+| `Btn` Variant | `'secondary'` | `default │ primary │ tertiary │ plain` — and `plain` has no variant at `Size=large`, so Revert uses `tertiary` |
+| `SkeletonGroup` | `rows={4}` | `{label, children, style}` — needs real `Skeleton` children |
+| `Cell` | `subtitle`, `action` | `description`, `buttonLabel`, `onButtonClick` |
+| `Banner` actions | `{content, onAction}` | `{label, onClick}` |
+| `BtnGroupSegmented` | has a pressed state | it has none — use a `Btn` pair |
+
+**Every one of these failed silently inside a `try/catch`**, leaving 63 buttons grey. The
+lesson is the skill's own: do not swallow errors in a bulk pass, and read the variant
+options before setting them (`componentPropertyDefinitions.variantOptions` on the SET).
+
+Also: scope a button sweep to the **content column**, not the frame — the Mobile Top Nav
+contains an `Ask AI` Button that otherwise counts as index 0 and steals the primary.
+
+### Annotation coverage — a gap I nearly signed off on
+
+Asked "all done?", the honest check found **45 mobile frames with zero annotations**
+(desktop 45/45, mobile 0/45). Building the twins is not the same as finishing them: the
+standing rule is *all states, annotated*, and a viewport is a state set.
+
+Fixed by cloning each desktop note to its mobile twin, keyed by `stateId`, narrowing it
+to 375, suffixing the heading with `(mobile)` and appending an **ON MOBILE:** paragraph
+naming that section's adaptation. Re-verified: **90 frames, 90 notes, 0 unannotated,
+0 em dashes**.
+
+**Rule: after any bulk frame build, assert annotation coverage as part of the same pass,
+the same way parity is asserted.** A frame without its note is an unfinished frame.
+
+---
+
+## Mobile rework after Raf's review, 27 Aug 2026
+
+He said the mobile was not right, that some frames were **missing back navigation**, and
+that some were **not giving complete info**. Both were true. Measured, not argued:
+
+### Back navigation
+
+19 desktop frames carry an `ArrowLeft` back action; **0 of 45 mobile frames did**.
+Added to exactly those 19 (R1–R9, R11–R14, A1–A4, A6, A7) as an arrow + title row at the
+top of the content column, mirroring the desktop `Page` header. **Verified 19/19.**
+
+D, W1, W2 correctly have none: on desktop they are top-level surfaces reached from the
+nav, and on mobile the hamburger is that nav.
+
+### Content completeness — the real failure
+
+A string-level diff of every desktop frame against its mobile twin found **1,061 missing
+strings**. The mobile build was not a thin version of the desktop, it was a *different,
+poorer* screen. What had been silently dropped:
+
+- the **five named filters** (Region, Facility, Monitoring, Equipment Type, Status),
+  replaced by a generic `All ▾` chip bar that named none of them
+- the **List / Calendar toggle** — the whole reason the workspace has two views
+- the **entire legend**, both TEMPERATURE and COMPLETION rows
+- **Pick Date**, the date steppers and **Jump to Today**
+- the real **search field**
+- the **bulk selection bar** on W1g (`3 selected`, `Record 3 readings`, `Clear selection`)
+- **rows 5–10** — the list showed 4 of 10 CCEs
+- the **monitoring type** per row
+- on the dashboard: `5 Urgent Issues`, `13 Pending`, per-task **Record** buttons,
+  **3 of 9 module tiles**, and the **entire footer**
+- the auto-record footnote, `Go to Home Page`, and the previous-day block on summaries
+
+All restored. **1,061 → 454.**
+
+### Classify the residual, do not chase it to zero
+
+```
+454 = 226 intentional adaptation + 228 genuine
+```
+
+**Intentional** is the 31 day-column headers of the desktop month grid (a 343 screen gets
+a 7-day week strip instead) and the table column headers `Make / Model / Type /
+Recording Status` (a stacked card has no column headers). Faking either would be worse
+design, not better parity. **228 genuine remain**, mostly exact empty/error copy on
+D1b and D1c that is still paraphrased rather than lifted.
+
+**Rule: a viewport twin is measured, not eyeballed.** Diff the copy sets and classify the
+delta; "it looks right" hid a thousand missing strings here.
+
+### Two mistakes inside the fix
+
+1. I "corrected" the W1 Facility column to full facility names. **Desktop shows the
+   region** (`Nairobi`), so that was a regression I introduced and then reverted. Copy
+   the desktop string; do not improve it.
+2. `getRangeAllFontNames(0, 0)` **throws** on an empty text node — the loading-state
+   placeholders. Guard with `if (t.characters.length)` and fall back to `t.fontName`.
+
+Also: a `fieldSrc` lookup returned null and the guarded block that used it **skipped
+silently**, so the search field was never created on 16 frames while the script reported
+success. A falsy source must be an error, not a skip.
+
+---
+
+## Mobile rebuild against the submitted reference (session close-out)
+
+### What triggered it
+Raf: "ADJUST SPACING IN MOBILE SCREENS, LOOKING CRAMPED", then "FIX THE HOME PAGE LAYOUT ...
+FOR MOBILE HOME LOOK FOR ALREADY MADE DESIGNS SUBMITTED AS REFERENCE, UPDATE THE WHOLE WORK FLOW".
+
+### The reference is the authority for mobile layout
+Page **Design Rep** > section **Mobile And Ipad Screen Layout** `8483:118081`.
+Home reference frames: `8483:118082`, `8483:118170`, `8483:118254` (all 375x812).
+Reusable parts taken from `8483:118082`:
+
+| part | node | notes |
+|---|---|---|
+| greeting | `8483:118084` | V gap 4 |
+| Quick Action card | `8483:118088` | cell pad 12, gap 8 |
+| Immediate Action card | `8483:118116` | header row + rows list |
+| alert/task row | `8483:118128` | icon tile + title + subtitle + chevron |
+| footer | `8483:118145` | two link rows |
+
+RULE: for any mobile screen, check the **Design Rep** page for a submitted reference BEFORE
+composing a layout. The module's desktop frame stays the authority for *copy*; the reference is
+the authority for *layout*. Do not invent a mobile pattern when one has been submitted.
+
+### Mobile spacing contract (replaces the cramped first pass)
+- Content column: x=16, w=343, y=112, `itemSpacing 24` (was 16)
+- Card padding 16 (was 12); card `itemSpacing` 16 when it holds 2+ groups, else 12 (was 8)
+- Gap bump map applied recursively: 2->4, 4->6, 6->8, 8->12, 12->16, 16->20
+- Horizontal rows: vertical padding 14 only; horizontal padding and gap left alone
+  (bumping them overflowed the table and week-strip children)
+- Module tiles: 2 across, row gap 16, tiles `layoutSizingVertical = FILL` so a wrapped
+  label does not leave a short sibling
+- Frame height: `max(812, colY + colH + 32)`. Drawer states (`Bottom sheet` present) are
+  exactly **812** and clipped, scrim 375x812 at y=0, sheet pinned to `812 - sheet.height`,
+  and BOTH must be the last children or they render behind the page.
+
+### Retractions
+- RETRACTED: "mobile cards use padding 12 / gap 8". That produced the cramped result Raf
+  rejected. Use 16 / 12-16.
+- RETRACTED: "a mobile twin may paraphrase desktop copy where space is tight". Raf's
+  "SOME ARE NOT GIVING COMPLETE INFO" means paraphrase is a defect. Lift copy verbatim;
+  adapt *layout*, never *wording*.
+- RETRACTED: "classify a missing string by exact set difference". Exact-set diff reported
+  1061 -> 454 -> 801 -> 191 on the same file because the classifier, not the design, kept
+  changing. Use the audit below.
+
+### The parity audit that is actually correct
+1. Collect text per frame, skipping **top-level** chrome only
+   (`Top bar|Closed Navigation|Breadcrumb|Language|Actions|Logo|Nav items|__mobileStatusBar|__mobileTopNav|__toastBanner|Footer`).
+   Skipping those names at *every* depth was a bug: it hid the mobile `Actions` row holding
+   the primary buttons and the `Search` field, inventing ~60 phantom gaps.
+2. Join the mobile strings with a **single space** and test by **substring containment**,
+   case-insensitively as a second chance. A desktop `"Morning temperature (deg C): 1 C"`
+   is satisfied by a mobile label + value pair; requiring an exact node match is wrong and
+   tempts you to concatenate labels into values, which corrupts the design.
+3. Only then classify the remainder: day cells, pure punctuation/numbers, and the desktop
+   table column header set are adaptation. Everything else is a genuine gap.
+
+Result: **0 genuine missing strings across all 45 mobile frames**, 232 classified adaptations.
+
+### What the audit found and what was built
+- **Dashboard (8 frames)** rebuilt from the reference: real module tiles cloned from the
+  desktop D1 (`Home Cards` instances carry the right icon per module), reference card
+  anatomy, `SPACE_BETWEEN` header rows, badge `Tone` per state
+  (critical / attention / success / default), alarm icon hidden on healthy and
+  unavailable states. D1a is now a true skeleton: card children hidden, `__loading`
+  overlay with an opaque white fill, mirroring desktop `__loading` + `Skeleton body text`.
+- **Recording forms R1-R14** had label-only `Field` frames with **no input controls at all**.
+  Controls cloned from the desktop DS instances: `Text field` `9247:48942`,
+  Yes/No radio pair `9247:48947`, `Multiline field` `9247:48971`. Evening forms R6-R9 and
+  amendment A2 gained the morning readout block `9247:49624`.
+- **Amendment summaries A3/A4/A6** rebuilt from desktop `9248:51894` / `9248:52119` /
+  `9248:52582`; A6 also carries the amendment history panel `9248:52796`.
+- **Calendar W2/W3** gained the desktop equipment index column (facility groups, names,
+  serials, monitoring badges). Removed from W2a/W2b/W2c, where the desktop column is
+  collapsed and the clone came through clipped but text-bearing - which silently inflated
+  the parity score.
+- **Equipment rows W1** gained explicit `Make: / Model: / Serial Number: / Facility: /
+  Recording Status:` labels and a per-row `Record` action.
+
+### Reflowing a desktop block into the 343 column
+Clone the desktop node, `appendChild`, then `layoutSizingHorizontal = 'FILL'`, then walk
+descendants: FIXED-width children of a VERTICAL parent become FILL; HORIZONTAL frames get
+`layoutWrap = 'WRAP'`. A HORIZONTAL row of `[TEXT, INSTANCE]` under 250pt must become
+VERTICAL or the label collapses to ~50pt and wraps one character per line.
+Always finish with an overflow sweep: any node whose
+`absoluteBoundingBox.x + width > frame.x + 375` is a defect. FILL can silently fail
+(instance-nested, non-auto-layout parent) so fall back to `resize(availableWidth, height)`
+and re-check in a loop.
+
+### Mistakes made inside this rework, recorded so they are not repeated
+- A **fuzzy near-match repair** (rewrite a mobile string to the desktop string when the
+  normalised prefix matches >= 14 chars) fixed 28 strings but also hijacked A2's form field
+  label `"High Temperature Alarm triangle triggered?"` into the readout label
+  `"High Temperature Alarm Triggered?:"`, because A2 legitimately contains both. Fuzzy repair
+  must exclude candidates that already exactly match some other desktop string - it did -
+  AND must not fire when the desktop contains two strings with the same prefix.
+- Setting `counterAxisAlignItems = 'STRETCH'` throws; the valid values are
+  `MIN | MAX | CENTER | BASELINE`. Stretch is per-child `layoutSizingVertical = 'FILL'`.
+- Cloned TEXT nodes carried `textAutoResize = 'NONE'` with a stale 100pt height, which
+  inflated a drawer sheet to 1541pt. Set `textAutoResize = 'HEIGHT'` after cloning text.
+- Cloned desktop tiles dragged in an off-canvas `New Update` panel. Any node whose
+  `absoluteBoundingBox.x` is beyond the frame's right edge is stray - remove the outermost
+  such node, not each descendant.
+
+### Critique + audit pass on the mobile sections (both skills, run properly this time)
+
+`design-critique` and `figma-design-audit` had never been run on this module. Running them
+found nine things the content-parity audit is structurally blind to, six of which I had
+introduced in the rebuild itself.
+
+**Annotation overlap (Raf reported it directly).** Frames grew during the rebuild, so notes
+positioned under the old shorter frames ended up inside the frame below, and tall frames
+overlapped the next row: 36 overlaps across the five sections. Fixed by re-running the board
+layout on an **explicit allow-list of my own five section ids** (PADX 64 · PADY 112 ·
+COLGAP 80 · ROWGAP 140 · NOTEGAP 16 · SECGAP 500, 5 per row), pairing each note to its frame
+by the frame code printed in the note text rather than by index, then re-stacking the
+sections vertically. 0 overlaps, 45/45 notes paired.
+
+RULE: any change that alters a frame's height invalidates the note positions below it.
+Re-run the board layout in the same turn, and verify with a pairwise overlap test - do not
+assume it still fits.
+
+**Design-system violations I introduced (lens 1).** 82 nodes carried hardcoded greys that
+are not Poltail values: `#6b737d` and `#4a5463` (46 + 6 nodes) instead of `#616161`,
+`#121721` (14) instead of `#303030`, `#e5e8eb` (16) instead of `#e3e3e3`. This file has
+**no local variable collections** - colour variables live in the DS library - so the fix is
+the exact hex the rest of the design already uses, taken by sampling the desktop twin's own
+text fills. Sample the neighbouring frame for the token value; do not invent a grey.
+
+Eight `__loading` overlays used hand-drawn `RECTANGLE` bars. Replaced with real
+`Skeleton body text` instances cloned from desktop D1a `9211:47968`. Hand-drawing a skeleton
+is a `ds-components-only` violation even when it looks identical.
+
+**Presence-rule violation (audit class 4).** W1f is the view-only state - "you can review,
+filter and export, but not enter readings" - and I had given its 10 rows `Record` buttons at
+`State=rest`. The desktop twin has them at `State=disabled`. Fixed, plus a general sweep
+that matched every mobile Button's `Variant`/`State` to its desktop twin by label: 11
+corrections (R1/R11/R12 `Continue` -> disabled, R8 `Submit` -> rest, R13/R14 primary ->
+disabled, A6 `Go to Home Page` -> plain).
+
+RULE: after cloning an action into a mobile twin, copy the desktop twin's `State` and
+`Variant` too. A permission or empty state that offers an enabled action is a logic bug,
+not a styling nit.
+
+**Placeholder leakage (class 8).** To satisfy the parity audit's demand for `Pending` and
+`Completed` on R1/R11/R12 I had appended bare text nodes named `Status tab`. On desktop those
+strings are **`Badge` instances on the equipment result card**, not tabs. Replaced with real
+Badge clones, `Tone=attention` for Pending and `Tone=success` for Completed.
+
+RULE: before adding a string to satisfy parity, find where the desktop *puts* it. Satisfying
+a text diff with a bare text node manufactures a DS violation out of a copy gap.
+
+**Self-inflicted copy corruption, caught only by the toggle-consistency check.** The W2c
+verbatim banner lift wrote the error copy into the **`Calendar` view-toggle button label**,
+because the regex matched that node first. Nothing in the parity audit could see it - the
+string was present, just in the wrong node. Found by checking that every list frame has
+`List=primary` and every calendar frame has `Calendar=primary`: W2c read
+`Calendar="The August calendar didn't load..."=primary`.
+
+RULE: a targeted copy lift must assert the node it is about to write - its name, its role, or
+its current text - not just the first regex hit. And add an invariant check per component
+family (toggle selection, badge tone, one primary per surface); those catch what a string
+diff cannot.
+
+**Over-correction, then reverted.** Demoting W1g's `List` toggle to `default` "to fix two
+primaries" broke sibling consistency with the other nine W1 frames. Reverted. W1g legitimately
+has two primaries: the toggle's selected state and the bulk `Record 3 readings` action.
+R8 and R11 likewise carry two, on two surfaces (card + modal), matching desktop.
+
+**Phantom parity gap - the audit's own blind spot.** W2c appeared to be missing 8 equipment
+strings. The desktop W2c *has* those text nodes, but inside cells collapsed to **0 height**,
+so they never render. Building a mobile equipment list to match produced a 32pt empty box.
+Removed it and added a zero-height filter to the audit collector: a desktop string counts only
+if the node and every ancestor have a non-zero box. This is a **desktop-side QA flag for W2c**
+(collapsed equipment column), not a mobile gap.
+
+RULE: the parity collector must require `rendered(node)` - non-zero width and height on the
+node and every ancestor - or it will send you chasing content nobody can see.
+
+**Final state of the mobile sections**
+
+```
+45 frames · 45 annotations · 45/45 notes paired
+genuine missing strings   0
+layout issues             0   (width, height, back nav, scrim, overflow)
+frame/note overlaps       0
+off-token colours         0
+hand-drawn skeletons      0
+stray off-canvas nodes    0
+```
+
+Open, deliberately not changed: Poltail buttons are 28-32pt tall, below the 44pt mobile tap
+target. Raf's own submitted mobile reference (`8483:118082`) uses them at that size, so this
+is a **design-system question, not a frame fix** - candidate DS ticket against PD-16 for a
+mobile button size, not a unilateral change to 384 instances.
+
+### Past-entry colour rule, and the mobile filter pattern
+
+**Raf's rule: anything past entry is ORANGE, unless the thing is an error.**
+
+Verified against Polaris tokens (Poltail is Polaris-based), because Polaris renamed these
+across versions and guessing is how the yellow/orange mix-up happened:
+`color-bg-fill-caution` = yellow palette, `color-bg-fill-warning` = orange palette,
+`color-bg-fill-critical` = red. Measured in this file's own Badge component set:
+
+| tone | surface | text | reads as |
+|---|---|---|---|
+| attention | `#ffef9d` | `#4f4700` | yellow |
+| attention-strong | `#ffe600` | `#332e00` | yellow |
+| **warning** | **`#ffd6a4`** | `#5e4200` | **orange** |
+| warning-strong | `#ffb800` | `#5e4200` | amber |
+| critical | `#fedad9` | `#8e1f0b` | red |
+
+So **past entry = `Tone: warning`**. `attention` is NOT orange - it is yellow, and using it
+for past entry was the bug. Amended moves to `attention` (yellow) so the two never collide.
+
+Fixed: W1h-M / W3-M / W3a-M badges `attention -> warning`; W3a-M past-entry banner
+`critical -> warning` (it had inherited critical from the banner it was cloned from). The
+second W3a banner - the closed amendment window - **stays critical**, which is the exemption
+in the rule. Verified: 46 past-entry signals, 46 correct, 0 wrong, across desktop and mobile.
+
+RULE: never infer a tone from a colour name. Read the component set's variant fills, or the
+upstream token table, before assigning one.
+
+**The legend was rebuilt twice and the first attempt was wrong.** Cloning the desktop legend
+brought its mixed indicators across - a checkmark for Complete, a slashed circle for Morning
+Only, a bare dot for Past Entry - which looked broken at 343 and put past entry on the amber
+`#ffb800` dot rather than orange. Rebuilt from real **Badge instances**, one per legend item,
+uniform pills, tone carrying the meaning. That is also the `ds-components-only` answer:
+a legend swatch is a Badge, not a hand-drawn square.
+
+**Mobile filters: one select, one bottom sheet.** Desktop lays the five filters out as a row
+of `Text field` selects (`9175:35457`-`9175:35461`). Two wrong attempts before the right one:
+
+1. Five stacked label/Select rows - Raf: "IT CAN JUST BE ONE ROW".
+2. A row of pills cloned from the **Kenya country picker** (`Secondary action`) - Raf: "THESE
+   ARE NOT THE SAME". Correct: it is a different component with different anatomy. Cloning a
+   visually-similar instance is not the same as using the right one.
+
+The answer came from Storybook, `Patterns/Responsive/BottomSheet` -> **Filter / sort** story:
+`BottomSheet` with a `title`, content, and one full-width primary action. So:
+
+- On the list and calendar frames: **one** `Text field` select labelled `Filters`, full width,
+  cloned from the desktop filter so the control is identical.
+- New state **`W1j · Workspace list: Filter sheet (mobile)`** (`9477:62918`): scrim over the
+  live page, `Bottom sheet` titled Filters, the same five desktop selects inside, then
+  `Clear all` (tertiary) + `Apply` (primary). Registry 45 -> 46 states; parity data bound
+  (`stateId=W1j`, `flow=workspace-list`, `jira=PD-34`), annotated, notes re-paired 46/46.
+
+RULE: before composing a mobile pattern, check Storybook for it. `BottomSheet`, `Tag`,
+`OptionList`, `SelectInput` and `SearchSelect` all exist; the responsive patterns are
+documented under `Patterns/Responsive/`.
+
+**Two API traps hit here**
+
+- A BOOLEAN component property takes the boolean `false`, not the string `'false'`.
+  `setProperties({ 'Icon#108641:0': 'false' })` fails with "Property value is incompatible
+  with component property type". Read `componentPropertyDefinitions[key].type` first.
+- `setProperties` **replaces the instance subtree**, so any node list collected before the
+  call goes stale and the next `.name`/`.children` read throws "node does not exist". Collect
+  ids, set properties, then re-fetch by id.
+- A cloned instance can arrive with `layoutSizingVertical = 'FILL'` and collapse to 1pt in an
+  auto-height parent; and cloned TEXT keeps `textAutoResize = 'HEIGHT'` at a stale narrow
+  width, so `Apply` renders as "Appl / y". Set `HUG` on the clone and
+  `WIDTH_AND_HEIGHT` on its labels.
+
+Final: **46 frames · 46 annotations · 0 structural issues · 0 overlaps · 46/46 past-entry
+signals correct.**
+
+### Raf's two hand-fixes, the bottom-sheet overlay rule, and the fill states
+
+**Hand-fix 1: the Filters field.** He fixed it on **W1d** and said "FIX THIS ACROSS". His
+version is 56pt, not the 100pt mine was, and the **Prefix pin is gone entirely**. My mistake
+was hiding the Prefix (`visible = false`) instead of turning the component property off, which
+left its layout slot occupying 44pt of dead space. Propagated his exact block to the other 15
+list and calendar frames plus the sheet's Region select. Verified: 20 filter fields, all 56pt,
+no visible Prefix anywhere.
+
+RULE: hiding a component's sub-node is not the same as switching the property off. `visible =
+false` keeps the layout slot. Check the rendered height after, not just that the pixels went.
+
+**Hand-fix 2: the bulk selection bar (W1g).** Canonical version, recorded so it is not
+re-derived:
+
+```
+Bulk actions   343x85   fill #e0f0ff   r8   pad 14/12   gap 8   VERTICAL
+  "3 selected"                    fs12  #303030
+  row (gap 8)
+    Button "Record 3 readings"    Variant=primary  fill #303030  label #ffffff
+    Button "Clear selection"      Variant=default  fill #ffffff  label #303030
+```
+
+Only W1g carries it in this module. The desktop-match sweep had already moved
+`Clear selection` tertiary -> default, which agrees with his version, so nothing was reverted.
+
+**RULE (new, from Raf): every bottom sheet has an overlay.** Audited all 10 sheets across the
+mobile sections. Four had none: **R1, R8, R11, R12** - the scan-entry and submit sheets. Added,
+and fixed the contract for all ten:
+
+```
+__scrim   375 x frame.height   at (0,0)   fill #0f172a @ 45%
+Bottom sheet   pinned to frame.height - sheet.height   topLeft/topRight radius 16
+               drop shadow 0/-4/16 @ 18%
+z-order: scrim immediately before sheet, sheet LAST child
+```
+
+The z-order half matters as much as the scrim: a sheet that is not the last child renders
+*behind* the page content, which is exactly how the D2 drawer failed earlier in the session.
+The verifier now asserts both.
+
+**Fill states for the sheet (Raf: "YOU NEED TO SHOW THE SCREEN FOR BOTTOM SHEETS HOW THEY FILL
+IT AND FILLED STATES TOO").** Three new mobile states, registry 46 -> 49:
+
+| state | node | what it proves |
+|---|---|---|
+| `W1k` Filter sheet, choosing an option | `9479:89567` | how a filter gets filled - Option list opens **inline inside the sheet**, checkboxes not radios (all five filters are multi-select), pushing fields down rather than floating a popover |
+| `W1l` Filter sheet, filled | `9482:63573` | all five chosen, values in body colour not placeholder grey, title carries the count, Apply the only primary |
+| `W1m` List, filters applied | `9482:65380` | the filled state of the **list** - Filters select summarises the count, each value a removable Badge (`Cancel` property), result count above the list, only matching CCEs shown |
+
+`W1m` closes a real flow hole: without it the journey went from an empty filter straight to
+`W1c`, the no-match state, and never showed a successful narrowing.
+
+**Gotcha: a cloned instance can keep `layoutPositioning = 'ABSOLUTE'`.** The Option list
+cloned from the Equipment Management page came in absolute and rendered ~1090pt to the right
+of the frame, inside a `clipsContent` wrapper - so it read as a blank white gap, and
+`layoutSizingHorizontal = 'FILL'` silently did nothing because the node was not in the flow.
+Set `layoutPositioning = 'AUTO'` on any cross-page clone before sizing it, and check
+`absoluteBoundingBox.x` against the frame's own x.
+
+**Self-contradiction caught in my own new frame.** W1m filtered on `Status = Not started` but
+the surviving row still carried its `Complete` badge with a check icon. Fixed to
+`Not started` / `Tone=default`, icon hidden. Audit class 2 - cross-check facts *within* a
+frame after changing the data around them.
+
+Final: **49 frames · 49 annotations · 10 sheets / 10 overlays · 20 filter fields all 56pt ·
+26/26 past-entry tones correct · 0 structural issues · 0 overlaps.**
+
+### The overlay is a component, not a rectangle (Raf: "THATS THE RIGHT COMPONENT")
+
+He pointed at **`9247:50635`** on desktop R11: a **`Loader` instance with `Type = Overlay`**.
+The Loader set's variants are `Loader icon | Full screen | Overlay`, and the Overlay variant is
+a full-bleed rect at **`#1e1f26`, opacity 0.5**.
+
+I had been hand-drawing `__scrim` rectangles at `#0f172a` @ 0.45 - both a
+`ds-components-only` violation and the wrong colour. Replaced on all 10 sheets with real
+`Loader` instances set to `Type = Overlay`, resized to 375 x frame height.
+
+**RETRACTION.** Earlier this session I recorded that the Loader `Overlay` variant "rendered as
+a solid grey block with no content beneath" and left it "deliberately unused". That judgement
+was correct for a *loading* frame, where the overlay hid the page with nothing on top of it,
+and wrong as a general rule. Behind a bottom sheet it is exactly the right component. The
+retracted rule was "do not use Loader/Overlay"; the correct rule is:
+
+> Loader `Type = Overlay` is the scrim component. Use it behind any sheet, drawer or modal.
+> Do not use it alone on a loading frame - there, `Loader icon` over skeletons.
+
+### Bottom sheet contract, from Raf's submitted mobile reference
+
+Source: **Design Rep > Mobile And Ipad Screen Layout > `Bottom sheet` `8483:121973`** (and its
+two siblings). My sheets were wrong on three counts, now fixed on all 10:
+
+```
+__overlay      Loader instance, Type=Overlay, 375 x frame.height at (0,0)
+Bottom sheet   375 wide · topLeft/topRight radius 12 (I had 16) · fill #ffffff
+               NO drop shadow (I had added one) · gap 8
+  Sheet header   360x16 containing Notch 32x4 · #b9bcc8 · r8   <- I had no drag handle at all
+  ...content
+z-order        overlay immediately before the sheet · sheet is the LAST child
+sheet.y        frame.height - sheet.height
+```
+
+The `Notch` is not decoration: it is the affordance that says the sheet is draggable, and
+`BottomSheet` in code sets `dragHandle` by default (it renders `SlideOver` with
+`placement="bottom"`). A Figma sheet without it contradicts the component.
+
+Also swept the leftover **`Prefix` pin** out of all 22 filter selects, including the five
+inside each sheet - the same fix Raf made on W1d, which I had only applied to the outer field.
+
+Final: **49 frames · 49 annotations · 10 sheets · 10 real Overlay instances · 10 notch headers ·
+0 structural issues · 0 overlaps.**
+
+### Standing rule this keeps proving
+
+Three times this session I reached for a hand-drawn shape or a lookalike instance when the
+system already had the right component: the skeleton bars (should have been
+`Skeleton body text`), the filter pills (should not have been the Kenya `Secondary action`),
+and the scrim (should have been `Loader / Overlay`). Before drawing ANY rectangle, check:
+the component list in `src/components`, Storybook under `Patterns/`, and the Design Rep page.
+
+### The gap I kept missing: filter sheets existed on the list only
+
+Raf: "YOU HAVE STILL NOT CREATED THE BOTTOM SHEETS FOR THE FILTERS IN THE DASHBOARD."
+
+Measured it instead of guessing which section he meant:
+
+| section | frames with a Filters select | filter sheet states |
+|---|---|---|
+| W1-M list | 14 | 3 (W1j, W1k, W1l) |
+| **W2-M calendar** | **6** | **0** |
+
+So six calendar frames carried a Filters select that opened nothing. Built the calendar set,
+cloning the calendar default as the base so what sits behind the scrim is the calendar - not
+the list - and lifting the overlay and sheet across from the list twins:
+
+| state | node | mirrors |
+|---|---|---|
+| `W3b` Calendar: Filter sheet | `9496:64324` | W1j |
+| `W3c` Calendar: Filter sheet, choosing an option | `9496:64588` | W1k |
+| `W3d` Calendar: Filter sheet, filled | `9496:64854` | W1l |
+| `W3e` Calendar: Filters applied | `9497:64866` | W1m |
+
+Registry 49 -> 53 states. All four annotated, parity-bound (`flow=workspace-calendar`,
+`jira=PD-35`).
+
+RULE: a control that opens something must have its opened state on **every** screen that
+carries the control. When a component is propagated across sections, its states have to be
+propagated too - count control instances against state count per section, not per module.
+The check is one query: frames with the control vs frames with the resulting state.
+
+### Legend indicators: use the desktop icons
+
+Raf: "USE THE RIGHT ICONS FROM THE DESKTOP." My Badge-based legend rebuild was uniform but
+icon-less. The desktop legend items carry real component instances, resolved by key:
+
+| legend item | component | key |
+|---|---|---|
+| Complete | `Check` (Mobile=false) | `e4eca107eeaf7cb44aef4ebbf47492f104deaabb` |
+| Morning Only | `Progress Indicator` (Progress=partially complete) | `e43212720293dd99b1c399b40ca100006a613a26` |
+| Past Entry | `Progress Indicator` (Progress=complete) | `7232b2e7078cb9dae60c2ba561b251100ff0f966` |
+| Amended | `Progress Indicator` (Progress=complete) | same, tone differentiates |
+| Not Started / Today / the three ranges | no indicator | icon property off |
+
+Applied by `importComponentByKeyAsync(key)` then setting the Badge's `Icon` BOOLEAN true and
+its `↪️ Icon instance` INSTANCE_SWAP to the imported component's **id**. 80 icons set, 120
+deliberately cleared where the desktop has none.
+
+RULE: INSTANCE_SWAP takes a component **id**, not a key. To use a library component, import it
+by key first and pass `imported.id`. And read the desktop twin's icon instance rather than
+picking a Polaris icon that looks close.
+
+Final: **53 frames · 53 annotations · 13 sheets · 6 filter sheets · 24 frames with a Filters
+select · 0 structural issues · 0 overlaps.**
+
+### Retraction: I duplicated the filter sheet per view for no reason
+
+Raf: "ARE THEY NOT THE SAME????" They were. Proved it by signature-diffing the sheet subtrees:
+
+```
+W1j / W3b   sheet identical: true
+W1k / W3c   sheet identical: true
+W1l / W3d   sheet identical: true
+W1m / W3e   no sheet; page content differs by 9 vs 77 strings
+```
+
+The three calendar sheet states were byte-identical to the list ones. The only difference was
+the page underneath - and that page sits under a 50% overlay, so it carries no design
+decision a reader could act on. Deleted `W3b`, `W3c`, `W3d` and their notes. Registry 53 -> 50.
+
+`W3e` stays: the applied *result* genuinely differs - the list shows filtered row cards, the
+calendar redraws its month grid and equipment index for the matching CCEs.
+
+**RETRACTION of the rule I wrote one turn earlier.** I had written: "a control that opens
+something must have its opened state on EVERY screen that carries the control." That is wrong
+as stated, and I applied it mechanically to manufacture four frames. Corrected:
+
+> A control that opens something needs its opened state **once per distinct opened state**,
+> not once per screen carrying the control. Duplicate a state only when something inside the
+> new frame differs: the sheet content, the available options, or the result. If the only
+> difference is the page behind an overlay, it is the same state - annotate it as shared.
+>
+> Before adding a state, signature-diff the candidate against the nearest existing one. If the
+> subtree matches, do not create the frame.
+
+The underlying error is worth naming: I turned a real gap (six calendar frames whose Filters
+select opened nothing) into a frame-count problem instead of a coverage problem. The gap was
+that the calendar had no *route* into the sheet, not that it lacked its own *copy* of it.
+
+A frame that adds no information is a cost: it inflates the registry, the prototype parity
+target, the annotation load, and every future propagation pass has one more place to go wrong.
+
+Final: **50 frames · 50 annotations · 0 duplicate frames · 0 overlaps.**
+
+### Retraction: the legend is a key, and I replaced it with pills I invented
+
+Raf, twice: "USE THE RIGHT ICONS FROM THE DESKTOP", then "you still have not gotten the right
+things from the desktop layout."
+
+What actually happened, in order:
+
+1. I cloned the desktop legend items - **correctly**.
+2. I looked at the result, decided the mixed indicators "looked broken at 343", and replaced
+   them with `Badge` instances carrying a tone per item.
+3. Raf pushed back. I added icons to the badges. Still wrong, because the badges themselves
+   were the error.
+
+**A legend is a key.** Each item's swatch shows the exact colour used in the calendar cells, so
+the reader can map swatch to cell. Wrapping the label in a tinted pill breaks that mapping -
+the pill colour is not the grid colour - and it produced incoherent items like a grey dot
+inside an orange pill. Step 2 was the mistake, and it was mine, not the design's.
+
+The real desktop anatomy, which my first probe missed because it skipped `FRAME` nodes and so
+reported the range items as having no indicator at all:
+
+| item | mark | fill / stroke |
+|---|---|---|
+| Within Range | `Checkbox` 20x20 r2.5 | `#cdfee1` / `#29845a` |
+| Above Range | `Checkbox` | `#fee9e8` / `#8e1f0b` |
+| Below Range | `Checkbox` | `#eaf4ff` / `#005bd3` |
+| AM/PM Conditions | two 8x8 dots | `#92fec2`/`#29845a` + `#e51c00`/`#8e1f0b` |
+| Complete | `Check` instance | `#4a4a4a` |
+| Morning Only | `Progress Indicator` (partially complete) | `#616161` |
+| Not Started | `Checkbox` | `#f7f7f7` / `#8a8a8a` |
+| **Past Entry** | `Progress Indicator` (complete) | **`#ffb800` / `#ffb800`** |
+| Amended | `Progress Indicator` (complete) | `#616161` |
+| Today | `Checkbox` | `#ffffff` / `#005bd3` |
+
+Rebuilt all 42 legend rows across 21 frames by cloning these ten item frames whole. The only
+mobile adaptation is dropping the `|` dividers, which cannot survive wrapping - gap 16 /
+counterAxisSpacing 8 carries the separation instead.
+
+Verified by signature: **210 legend items checked, 0 mismatches, 0 missing** against the
+desktop reference above. Past Entry is `#ffb800`, which is `warning-strong` - the orange.
+
+**RULE.** When a probe reports "no indicator", suspect the probe. Walk **every** node type -
+`FRAME` and `INSTANCE` carry marks as often as `VECTOR` and `RECTANGLE` do. My first pass
+concluded four items had no mark and I then "filled the gap" with a pill.
+
+**RULE.** Cloning the desktop element is the answer, and my own reaction that it "looks
+broken" is not evidence that it is. If a cloned reference looks wrong at mobile width, the fix
+is reflow - wrap, gap, drop dividers - not substitution with a different component. Three
+times this session I replaced a correct clone with an invention: the legend twice, and the
+filter row once.
+
+### The mobile calendar was broken in three ways at once
+
+Raf: "this does not look right." He was looking at W3. Three separate defects, all mine:
+
+1. **A `Facility groups` chip row.** Four facility names in a wrapping horizontal row, each box
+   55-80pt wide, so "Pumwani Maternity Hospital" rendered as "Pumw / ani / Matern / ity /
+   Hospi / tal" - six lines, one word each. I had invented this row; the desktop has no such
+   thing. Facility is a **group header**, not a chip.
+2. **Only 4 of 10 CCEs** in the week strip, with no indication the other six existed.
+3. **A duplicate `Equipment list`** below it - the desktop index column I had bolted on in an
+   earlier turn - listing all 10 again with their monitoring badges. So the screen showed four
+   CCEs with data, then ten CCEs without.
+
+Rebuilt the `Week` block as the calendar actually reads:
+
+```
+Week (white card, gap 20)
+  "Week of Aug 24 – Aug 30"
+  Facility group (VERTICAL, gap 12, FILL)
+    "Pumwani Maternity Hospital · 3"      full-width header, fs12 #616161
+    CCE card  · name fs13 · "CCE-2024-NAI-100 · Nexleaf RTMD" fs11 · Days row (7 x 41pt)
+    CCE card  ...
+  Facility group ...
+```
+
+All 10 CCEs, grouped under 4 full-width facility headers, with the monitoring type folded into
+the serial line so the deleted list's information survives without a second table. Applied to
+W2, W2a, W3, W3a; W3e carries only the CCE its filters match.
+
+**Also fixed a data contradiction I had authored.** W1m and W3e applied
+`Region Nairobi + Pumwani + Nexleaf RTMD + Refrigerator + Not started`, and **no CCE in the
+dataset matches all five** - NAI-104 is the only Refrigerator at Pumwani and it is
+Third Party/Fridge Tag. I had shown Dometic NAI-104 as the match while its own row said
+Nexleaf RTMD. Changed the applied type to `Cold Room` and the matching row to
+Vestfrost VLS 400A Greenline / NAI-100, which genuinely satisfies all five.
+
+RULE: when inventing a filter set for a filled state, resolve it against the real fixture data
+first. A filled state that matches nothing, or matches a row contradicting its own fields, is
+worse than no filled state - it teaches the reader a rule the data does not support.
+
+**New assertion added to the verifier: squeezed text.** Any visible TEXT with more than 12
+characters in a box under 60pt wide and over 30pt tall is being wrapped to death. That single
+check would have caught the facility chips immediately. Now: **0 squeezed, 0 overflow,
+0 overlaps across 50 frames.**
+
+RULE: a wrapping container does not make narrow content safe. `layoutWrap = 'WRAP'` wraps the
+*items*; it does nothing for an item whose own box is too narrow for its text. Check rendered
+text width, not just whether anything crosses the frame edge.
+
+### The "5-state prototype gap" I kept reporting did not exist
+
+I told Raf three times that the prototype was "5 states behind Figma". Then I read the
+prototype instead of asserting, and it was wrong:
+
+| surface | count |
+|---|---|
+| Figma **desktop** sections (`9221:47949`, `9221:47950`, `9221:47951`, `9247:48686`, `9248:51450`) | 45 |
+| Figma **mobile** sections | 50 = 45 twins + W1j W1k W1l W1m W3e |
+| Prototype register + flows | 45, every `node` id a **desktop** section |
+
+The prototype is a **desktop** prototype - `grep` for viewport/mobile/375 across every flow
+and shared screen returns nothing. So the register at 45 was in **exact parity with the
+desktop**, and the five extras are mobile-only states with no desktop frame to pair with:
+desktop lays the five filters out inline as a row of selects, so a filter *sheet* has nothing
+to be a twin of.
+
+Had I "closed the gap" as promised I would have invented five desktop prototype states for a
+sheet that does not exist on desktop - the same error class as the four duplicate calendar
+frames, one layer further down.
+
+**What I actually changed** (`prototypes/states-set/index.jsx`):
+- every section now carries `mobileNode` beside its desktop `node`, so the twin is one click away
+- new `MOBILE_ONLY` export + rendered card, badged "mobile only", for W1j/W1k/W1l/W1m/W3e
+- subtitle and banner state both surfaces and name the exception, instead of claiming
+  "every state here exists as a Figma frame" while silently omitting a whole surface
+- syntax verified with `@babel/parser` (esbuild in this repo is a macOS binary and cannot run
+  in the linux VM - same environment limit as `vite build`)
+
+RULE: **parity is per surface.** Before reporting a count gap, establish what each side is a
+register OF. A desktop register and a mobile section are not the same contract, and a mobile
+frame is only "missing from the prototype" if the prototype has a mobile surface at all.
+
+RULE: a number I have quoted several times is not thereby verified. I repeated "5 states
+behind" across three turns without once opening the register.
+
+### Genuine gap this surfaced, on the DESKTOP side
+
+Desktop W1 has `W1c · Empty (filtered)` and W2 has `W2b · Empty (filtered)` - the no-match
+result - but **neither surface has a "filters applied, results narrowed" state**. Applying a
+filter on desktop must produce something, and no frame shows it. I found this hole on mobile
+and built W1m / W3e for it; the desktop equivalents do not exist.
+
+That is new scope, so it is a ticket rather than something to build unasked: a
+"filters applied" state for desktop W1 and W2, under PD-34 / PD-35.
