@@ -247,6 +247,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
           <Card>
             <CardSectionTitle title="Record" />
             <CardField label="Asset tag" value={COLD_ROOM.assetTag} />
+            <CardField label="QR code" value={COLD_ROOM.qrCode || '—'} />
             <CardField label="Serial" value={COLD_ROOM.serial || '—'} />
             <CardField label="Condition" value={COLD_ROOM.condition} />
             <CardField label="Acquired" value={formatDate(COLD_ROOM.acquired)} />

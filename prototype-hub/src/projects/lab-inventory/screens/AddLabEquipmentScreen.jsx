@@ -19,29 +19,30 @@ import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 import { LabShell } from './LabShell.jsx';
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
-  isMonitorableNow, isMonitorableLater, facilityLabel,
+  isMonitorableNow, isMonitorableLater,
 } from './labData.js';
 
 const TRAIL = [{ id: 'add', label: 'Add Lab Equipment' }];
 
 /**
+ * §5.2 success behaviour: save → return to the register with a success Toast
+ * and the new row highlighted; when the Type is monitorable the Toast carries
+ * the "Set up monitoring" action. There is no interstitial confirmation panel.
+ *
  * @param {'lead'|'tech'} persona
- * @param {'default'|'errors'|'saved'} state  'errors' pre-fills the validation
- *   failure; 'saved' opens on the post-save panel with the monitoring CTA.
- * @param {(record)=>void} [onSaved]     Return to the register (highlighted row).
- * @param {()=>void} [onSetUpMonitoring] Route into the Phase-2 install flow.
+ * @param {'default'|'errors'} state  'errors' pre-fills the validation failure.
+ * @param {(record)=>void} [onSaved]  Return to the register — record carries
+ *   `monitorable` so the register can arm the Toast action.
  */
 export function AddLabEquipmentScreen({
-  persona = 'tech', state = 'default', onSaved, onSetUpMonitoring, onCancel, onCrumb,
+  persona = 'tech', state = 'default', onSaved, onCancel, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[1];
   const scopedFacilities = LAB_FACILITIES.filter((f) => personaDef.facilities.includes(f.id));
 
   const [form, setForm] = useState(() => (state === 'errors'
     ? { facilityId: '', type: '', name: 'Reagent refrigerator', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }
-    : state === 'saved'
-      ? { facilityId: 'ccs', type: 'walk-in-cold-room', name: 'Walk-in Cold Room (reagent store)', make: 'Foster Refrigerator', model: 'PROB1100H', assetTag: 'MOH/DLS/NPHL/CCS/WICR-002', serial: '', location: 'Central cold store, Block C', condition: 'Functional', acquired: null, notes: '' }
-      : { facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '', type: '', name: '', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }));
+    : { facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '', type: '', name: '', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }));
   const [errors, setErrors] = useState(() => (state === 'errors'
     ? {
       facilityId: 'Choose the facility that owns this equipment.',
@@ -50,7 +51,6 @@ export function AddLabEquipmentScreen({
       condition: 'Choose the equipment’s condition.',
     }
     : {}));
-  const [saved, setSaved] = useState(state === 'saved');
 
   const set = (key) => (v) => {
     const value = v && v.target ? v.target.value : v;
@@ -70,7 +70,9 @@ export function AddLabEquipmentScreen({
     if (!form.condition) next.condition = 'Choose the equipment’s condition.';
     setErrors(next);
     if (Object.keys(next).length) return;
-    setSaved(true);
+    // §5.2: toast + return to list with the row highlighted (the register owns
+    // both); monitorable types get the Set-up-monitoring action in the toast.
+    onSaved?.({ ...form, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -85,35 +87,7 @@ export function AddLabEquipmentScreen({
         backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
       />
 
-      {saved ? (
-        <Card style={{ maxWidth: 720 }}>
-          <Banner tone="success" title={`${form.name || 'Equipment'} was added to the register`} inCard>
-            Asset tag {form.assetTag} · {facilityLabel(form.facilityId)}. The record is
-            cataloged{monitorableNow ? ' and its type supports monitoring' : ''}.
-          </Banner>
-          {monitorableNow && (
-            <Banner tone="info" title="This type can be monitored now" inCard
-              actions={[{ label: 'Set up monitoring', onClick: onSetUpMonitoring }]}>
-              Walk-in cold rooms are monitored with a Nexleaf base station and multiple
-              sensors on this one record. Thresholds follow the Walk-in Cold Room
-              configuration (2–8 °C) — nothing to enter here.
-            </Banner>
-          )}
-          {monitorableLater && (
-            <Banner tone="info" title="Monitoring for fridges and freezers is coming later" inCard>
-              This record stays cataloged for now; it can be connected without re-registering
-              when fridge/freezer monitoring lands.
-            </Banner>
-          )}
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <Btn variant="primary" onClick={() => onSaved?.(form)}>Back to Lab Equipment</Btn>
-            <Btn variant="secondary" onClick={() => { setSaved(false); setForm((f) => ({ ...f, name: '', assetTag: '', serial: '', notes: '' })); }}>
-              Add another
-            </Btn>
-          </div>
-        </Card>
-      ) : (
-        <Card style={{ maxWidth: 720 }}>
+      <Card style={{ maxWidth: 720 }}>
           <CardSectionTitle title="Ownership" />
           <SearchSelect
             label="Facility"
@@ -141,6 +115,12 @@ export function AddLabEquipmentScreen({
             <Banner tone="info" inCard hideIcon>
               <b>Walk-in Cold Room supports monitoring.</b> Finish this catalog record first —
               you’ll be offered the monitoring setup right after saving.
+            </Banner>
+          )}
+          {monitorableLater && (
+            <Banner tone="info" inCard hideIcon>
+              <b>Fridge/freezer monitoring is coming later.</b> This record stays cataloged for
+              now and can be connected without re-registering when it lands.
             </Banner>
           )}
 
@@ -213,7 +193,6 @@ export function AddLabEquipmentScreen({
             <Btn variant="primary" onClick={save}>Add equipment</Btn>
           </div>
         </Card>
-      )}
     </LabShell>
   );
 }

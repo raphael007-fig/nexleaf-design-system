@@ -66,9 +66,15 @@ function tabMatch(row, tabIndex) {
  * @param {()=>void} [onAdd]      Add equipment CTA.
  * @param {()=>void} [onImport]   Bulk import CTA.
  */
+/**
+ * initialToast — §5.2 return-from-Add: { text, monitorable } shows a success
+ * Toast on arrival; when the added type is monitorable it carries the
+ * "Set up monitoring" action (duration 0 — a toast with a button must not
+ * vanish before it can be pressed).
+ */
 export function LabRegisterScreen({
-  persona = 'lead', state = 'default', highlightId = null,
-  onView, onAdd, onImport, onCrumb,
+  persona = 'lead', state = 'default', highlightId = null, initialToast = null,
+  onView, onAdd, onImport, onSetUpMonitoring, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[0];
   const loading = state === 'loading';
@@ -83,7 +89,8 @@ export function LabRegisterScreen({
   // Applied vs draft filters — the drawer edits a draft; Apply commits it.
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [draft, setDraft] = useState(EMPTY_FILTERS);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast] = useState(initialToast ? initialToast.text : null);
+  const toastHasAction = Boolean(initialToast?.monitorable && toast === initialToast.text);
 
   // Facility scope control — only the facilities this persona is granted.
   const scopedFacilities = LAB_FACILITIES.filter((f) => personaDef.facilities.includes(f.id));
@@ -378,7 +385,14 @@ export function LabRegisterScreen({
       </SlideOver>
 
       {toast && (
-        <Toast tone="success" onDismiss={() => setToast(null)}>{toast}</Toast>
+        <Toast
+          tone="success"
+          onDismiss={() => setToast(null)}
+          duration={toastHasAction ? 0 : undefined}
+          actions={toastHasAction ? [{ label: 'Set up monitoring', onClick: onSetUpMonitoring }] : undefined}
+        >
+          {toast}
+        </Toast>
       )}
     </LabShell>
   );

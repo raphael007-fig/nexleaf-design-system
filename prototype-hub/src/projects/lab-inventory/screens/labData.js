@@ -80,7 +80,8 @@ export const LAB_EQUIPMENT = [
     assetTag: 'MOH/DLS/NPHL/CCS/WICR-001',
     type: 'walk-in-cold-room', name: 'Walk-in Cold Room (reagent store)',
     make: 'Foster Refrigerator', model: 'PROB1100H',
-    serial: 'FR-PROB-2019-4471', location: 'Central cold store, Block C',
+    serial: 'FR-PROB-2019-4471', qrCode: 'QR-70021',
+    location: 'Central cold store, Block C',
     condition: 'Functional', acquired: '2019-11-02',
     monitored: true,
     device: {

@@ -30,6 +30,7 @@ import { ColdRoomDetailScreen } from './ColdRoomDetailScreen.jsx';
 function AssembledLabApp({ initialView = 'home', persona = 'lead' }) {
   const [view, setView] = useState(initialView);
   const [highlightId, setHighlightId] = useState(null);
+  const [returnToast, setReturnToast] = useState(null);
   const toRegister = () => { setView('register'); };
   const onCrumb = (id) => {
     if (id === 'home') setView('home');
@@ -42,8 +43,16 @@ function AssembledLabApp({ initialView = 'home', persona = 'lead' }) {
     return (
       <AddLabEquipmentScreen
         persona={persona === 'qa' ? 'tech' : persona}
-        onSaved={() => { setHighlightId('ccs-wicr-001'); toRegister(); }}
-        onSetUpMonitoring={() => setView('flow')}
+        onSaved={(record) => {
+          // §5.2: toast + return to list, new row highlighted. The prototype
+          // backend has one pre-seeded row to stand in for the created record.
+          setHighlightId('ccs-wicr-001');
+          setReturnToast({
+            text: `${record.name || 'Equipment'} (${record.assetTag}) was added to the register`,
+            monitorable: record.monitorable,
+          });
+          toRegister();
+        }}
         onCancel={toRegister}
         onCrumb={onCrumb}
       />
@@ -67,11 +76,14 @@ function AssembledLabApp({ initialView = 'home', persona = 'lead' }) {
   }
   return (
     <LabRegisterScreen
+      key={returnToast ? 'returned' : 'plain'}
       persona={persona}
       highlightId={highlightId}
+      initialToast={returnToast}
+      onSetUpMonitoring={() => setView('flow')}
       onView={(id) => { if (id === 'ccs-wicr-001') setView('detail'); }}
-      onAdd={() => setView('add')}
-      onImport={() => setView('import')}
+      onAdd={() => { setReturnToast(null); setView('add'); }}
+      onImport={() => { setReturnToast(null); setView('import'); }}
       onCrumb={onCrumb}
     />
   );
@@ -112,7 +124,20 @@ export const STATE_SECTIONS = [
     states: [
       { id: 'add-default', label: 'Form — technician scope', render: () => <AddLabEquipmentScreen persona="tech" /> },
       { id: 'add-errors', label: 'Validation errors', render: () => <AddLabEquipmentScreen persona="tech" state="errors" /> },
-      { id: 'add-saved-monitorable', label: 'Saved — “Set up monitoring” CTA', render: () => <AddLabEquipmentScreen persona="lead" state="saved" /> },
+      {
+        // §5.2 success: back on the register — toast with the monitoring
+        // action (duration 0), new row highlighted "Just added".
+        id: 'add-saved-monitorable',
+        label: 'Saved — toast + “Set up monitoring”',
+        render: () => (
+          <LabRegisterScreen
+            persona="lead"
+            highlightId="ccs-wicr-001"
+            initialToast={{ text: 'Walk-in Cold Room (reagent store) (MOH/DLS/NPHL/CCS/WICR-001) was added to the register', monitorable: true }}
+            onSetUpMonitoring={() => {}}
+          />
+        ),
+      },
     ],
   },
   {

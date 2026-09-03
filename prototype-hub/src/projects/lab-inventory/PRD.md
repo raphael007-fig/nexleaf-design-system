@@ -39,6 +39,19 @@ data model w/ Lucas) · D3 seeded type list, no admin UI · D4 hard cap 5 contac
 counter · D5 inherit WICR 2–8 °C bands (confirm durations on site) · D6 build with the
 4 known labs, config-driven · D7 web-only.
 
+## Interpretations (where the brief and a ratified source diverged)
+
+- **Breadcrumb labels:** brief says `Home › Inventory › Lab`; built as
+  `Home › Inventory Management › Lab Equipment` because the ratified module-nav
+  registry (`src/foundation/moduleNavs.jsx`) carries those names and outranks the
+  brief's shorthand. Change the registry to change the trail.
+- **QR code:** the brief's §7 `LabEquipment` model has no QR field, but the CCE
+  install convention (Aug 25) requires a QR before details completes — applied to
+  the cold-room install pending Ednah's confirmation (logged on PD-41).
+- **§5.2 success:** toast + return-to-list with the row highlighted; a monitorable
+  type's toast carries the "Set up monitoring" action (duration 0 per the house
+  Toast rule) instead of an interstitial confirmation panel.
+
 ## Out of scope (V1)
 
 Fridge/freezer monitoring, maintenance & service requests for lab kit, calibration/cert

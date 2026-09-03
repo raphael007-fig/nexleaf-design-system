@@ -5,3 +5,7 @@
 - **Why:** Sep 2 Raf ↔ Ednah meeting — NPHL lab inventory MVP, cold-room-first. Built to the §10 recommended decisions (D1–D7).
 - **Source:** Implementation brief (PRD.md in this project) · epic PD-41.
 - **States:** driven from screens/states.jsx (shared registry) — deep-linkable via ?state=<id>.
+
+## 2026-09-03 — Divergence fixes (Raf: "fix all one by one")
+- **What:** (1) QR code is now required in Equipment Details — same rule as the CCE install flow (Aug 25 decision), shown in Review; pending Ednah's confirm that lab assets carry QR codes (PD-41). (2) The wizard chrome (StepFrame / FormSection / ReviewRows / ReviewSection) is now IMPORTED from AddEquipmentFlow's exported layer 1 instead of cloned — the two flows can no longer drift.
+- **Source:** self-audit against the Aug 24/25 decisions log + Raf's go, 2026-09-03.

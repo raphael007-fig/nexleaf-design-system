@@ -11,10 +11,8 @@
 //   • Alarm contacts hard-cap at 5 with a visible counter (D4).
 //   • Type comes from the managed lab list (cold rooms are not in PQS);
 //     no compartment question.
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import { Page } from '@ds/components/Page/Page.jsx';
-import { useIsMobile, useViewport } from '@ds/foundation/useViewport.js';
-import { Card, CardSectionTitle } from '@ds/components/Card/Card.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
@@ -23,12 +21,15 @@ import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect, SearchSelectMulti } from '@ds/components/SearchSelect/SearchSelect.jsx';
-import { Stepper } from '@ds/components/Stepper/Stepper.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
 import { SubmissionSuccessCard } from '@ds/components/SubmissionSuccessCard/SubmissionSuccessCard.jsx';
+import { TEXT_SUBDUED } from '@ds/tokens/index.js';
+// The generic addition-flow wizard system (layer 1 of the Add Equipment flow,
+// designed for reuse by other "add X" flows) — imported, not cloned, so the
+// two flows can never drift.
 import {
-  TEXT_DEFAULT, TEXT_SUBDUED, TEXT_CRITICAL, BORDER_LIGHT,
-} from '@ds/tokens/index.js';
+  StepFrame, FormSection, ReviewRows, ReviewSection,
+} from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
   LAB_FACILITIES, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS,
@@ -45,132 +46,15 @@ const PHASES = [
 ];
 const STEP_ORDER = ['facility', 'details', 'device', 'review'];
 
-// ── Wizard chrome cloned from AddEquipmentFlow (layer 1) ──────────────────────
-function useFixedFrame(deps = []) {
-  const ref = useRef(null);
-  const [top, setTop] = useState(184);
-  const [bottomInset, setBottomInset] = useState(16);
-  useEffect(() => {
-    const measure = () => {
-      const el = ref.current;
-      if (!el) return;
-      setTop(Math.round(el.getBoundingClientRect().top));
-      let inset = 0;
-      for (let n = el.parentElement; n && n !== document.body; n = n.parentElement) {
-        const cs = getComputedStyle(n);
-        inset += (parseFloat(cs.paddingBottom) || 0) + (parseFloat(cs.marginBottom) || 0);
-      }
-      setBottomInset(Math.max(16, Math.round(inset)));
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
-  return { ref, height: `calc(100dvh - ${top + bottomInset}px)` };
-}
-
-function StepFrame({ stepper, title, subtitle, children, footerLeft, footerRight }) {
-  const isMobile = useIsMobile();
-  const { width: viewportWidth } = useViewport();
-  const compactStepper = viewportWidth < 920;
-  const { ref: frameRef, height: frameHeight } = useFixedFrame([]);
-  return (
-    <div ref={frameRef}>
-      <Card style={{
-        height: frameHeight, overflow: 'hidden',
-        padding: isMobile ? '20px 16px 12px' : '32px 40px 20px',
-        gap: 0,
-      }}>
-        {stepper && (
-          <div style={{ flexShrink: 0 }}>
-            <Stepper
-              phases={stepper.phases}
-              activeIndex={stepper.activeIndex}
-              compact={compactStepper}
-              navigable={stepper.navigable}
-              onSelect={stepper.onSelect}
-            />
-          </div>
-        )}
-        <div style={{
-          flex: '1 1 auto', minHeight: 0, overflowY: 'auto',
-          marginTop: stepper ? (isMobile ? 20 : 28) : 0, paddingRight: 8,
-        }}>
-          <div style={{ width: '100%', maxWidth: 620, display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 20 }}>
-              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>{title}</h2>
-              {subtitle && (
-                <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>{subtitle}</p>
-              )}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20, paddingBottom: 8 }}>
-              {children}
-            </div>
-          </div>
-        </div>
-        {(footerLeft || footerRight) && (
-          <div style={{ flexShrink: 0, paddingTop: isMobile ? 12 : 16, borderTop: `1px solid ${BORDER_LIGHT}` }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>{footerLeft}</div>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>{footerRight}</div>
-            </div>
-          </div>
-        )}
-      </Card>
-    </div>
-  );
-}
-
-function FormSection({ title, required, children }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${BORDER_LIGHT}`, paddingBottom: 8 }}>
-        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 650, lineHeight: '20px', color: TEXT_DEFAULT }}>
-          {title}{required && <span style={{ color: TEXT_CRITICAL, marginLeft: 2 }}>*</span>}
-        </h3>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function ReviewRows({ rows }) {
-  const visible = rows.filter(Boolean);
-  return (
-    <div>
-      {visible.map(([label, value], i) => (
-        <div key={label} style={{
-          display: 'flex', gap: 24, alignItems: 'baseline', padding: '12px 0',
-          borderBottom: i < visible.length - 1 ? `1px solid ${BORDER_LIGHT}` : 'none',
-        }}>
-          <span style={{ width: 180, flexShrink: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>{label}</span>
-          <span style={{ flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500, lineHeight: '20px', color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>{value}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function ReviewSection({ title, status, onEdit, children }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-          <CardSectionTitle title={title} />
-          {status}
-        </div>
-        {onEdit && <Btn variant="ghost" small onClick={onEdit}>Edit</Btn>}
-      </div>
-      {children}
-    </div>
-  );
-}
-
 // ── The flow ──────────────────────────────────────────────────────────────────
 const DEFAULT_EQUIPMENT = {
   name: 'Walk-in Cold Room (reagent store)',
   make: 'Foster Refrigerator', model: 'PROB1100H',
   assetTag: 'MOH/DLS/NPHL/CCS/WICR-001', serial: 'FR-PROB-2019-4471',
+  // Per the CCE install convention (Aug 25): a QR code is required before the
+  // details step can complete. Applied to lab assets pending Ednah's confirm
+  // (logged on PD-41).
+  qrCode: 'QR-70021',
   location: 'Central cold store, Block C', condition: 'Functional', acquired: null,
 };
 
@@ -330,8 +214,9 @@ export function ColdRoomFlow({
               onClick={() => {
                 const next = {};
                 if (!equipment.assetTag.trim()) next.assetTag = 'Enter the asset tag — it is how this record is found.';
+                if (!equipment.qrCode.trim()) next.qrCode = 'Assign a QR code — the step cannot complete without one.';
                 setErrors(next);
-                if (!Object.keys(next).length) go('device');
+                if (!Object.values(next).some(Boolean)) go('device');
               }}
             >
               Next
@@ -353,10 +238,21 @@ export function ColdRoomFlow({
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
               <TextInput label="Asset tag" required value={equipment.assetTag} error={errors.assetTag}
-                onChange={(e) => { setEquipment((q) => ({ ...q, assetTag: e.target.value })); setErrors({}); }} />
+                onChange={(e) => { setEquipment((q) => ({ ...q, assetTag: e.target.value })); setErrors((er) => ({ ...er, assetTag: undefined })); }} />
               <TextInput label="Serial number" placeholder="Optional" value={equipment.serial}
                 onChange={(e) => setEquipment((q) => ({ ...q, serial: e.target.value }))} />
             </div>
+          </FormSection>
+          <FormSection title="QR code" required>
+            <TextInput
+              label="QR code"
+              required
+              placeholder="Scan or type the code on the sticker"
+              value={equipment.qrCode}
+              error={errors.qrCode}
+              onChange={(e) => { setEquipment((q) => ({ ...q, qrCode: e.target.value })); setErrors((er) => ({ ...er, qrCode: undefined })); }}
+              helpText="Required before this step can complete — same rule as the cold-chain install flow. The code links the physical asset to this record."
+            />
           </FormSection>
           <FormSection title="Placement & condition">
             <TextInput label="Location / room" value={equipment.location}
@@ -470,6 +366,7 @@ export function ColdRoomFlow({
               ['Name', equipment.name],
               ['Make / Model', `${equipment.make} ${equipment.model}`],
               ['Asset tag', equipment.assetTag],
+              ['QR code', equipment.qrCode],
               equipment.serial ? ['Serial number', equipment.serial] : null,
               ['Location', equipment.location],
               ['Condition', equipment.condition],

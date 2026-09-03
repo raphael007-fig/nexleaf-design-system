@@ -368,7 +368,7 @@ const FIELD_STACK = { display: 'flex', flexDirection: 'column', gap: 20 };
 // bottom (level with the nav's Collapse button) and the page itself never
 // scrolls — ancestor paddings below the card are measured and absorbed.
 // The frame is fixed at every breakpoint — tertiary pages sync the card to the screen.
-function useFixedFrame(deps = []) {
+export function useFixedFrame(deps = []) {
   const fixed = true; // tertiary page: the card syncs to the screen height at every breakpoint
   const ref = useRef(null);
   const [top, setTop] = useState(184);
@@ -393,7 +393,7 @@ function useFixedFrame(deps = []) {
   return { ref, fixed, height: `calc(100dvh - ${top + bottomInset}px)` };
 }
 
-function StepFrame({ header, onBack, stepper, title, subtitle, children, footerLeft, footerRight }) {
+export function StepFrame({ header, onBack, stepper, title, subtitle, children, footerLeft, footerRight }) {
   const isMobile = useIsMobile();
   // The labeled stepper needs ~900px before five phases fit without clipping;
   // below that the compact variant (circles + "Step X of Y" line) takes over.
@@ -511,7 +511,7 @@ function ResultPanel({ title, lines, selectable = false, selected = false, onSel
 
 // Form section header — icon + title over a hairline, grouping detail fields
 // exactly like the production Create New Equipment modal.
-function FormSection({ icon, title, required, children }) {
+export function FormSection({ icon, title, required, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: `1px solid ${BORDER_LIGHT}`, paddingBottom: 8 }}>
@@ -528,7 +528,7 @@ function FormSection({ icon, title, required, children }) {
 // Summary rows — a two-column definition list (label left, value right) with
 // comfortable rhythm; hairlines only BETWEEN rows. Pass rows as
 // [label, value] tuples; falsy entries are skipped (conditional rows).
-function ReviewRows({ rows }) {
+export function ReviewRows({ rows }) {
   const visible = rows.filter(Boolean);
   return (
     <div>
@@ -555,7 +555,7 @@ function ReviewRows({ rows }) {
 
 // Review-section header: CardSectionTitle + an optional completion status Badge
 // + a ghost Edit action.
-function ReviewSection({ icon, title, status, onEdit, children }) {
+export function ReviewSection({ icon, title, status, onEdit, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>

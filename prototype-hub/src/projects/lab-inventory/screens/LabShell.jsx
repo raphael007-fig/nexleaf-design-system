@@ -17,6 +17,12 @@ export const HOME_CRUMB = {
   iconOnly: true,
 };
 
+// Label reconciliation (2026-09-03): the brief's §5.1 writes the trail as
+// "Home › Inventory › Lab" — shorthand. The RATIFIED module registry
+// (src/foundation/moduleNavs.jsx) names the module "Inventory Management" and
+// the nav item "Lab Equipment", and the registry outranks a brief's shorthand
+// (same rule as "a frame Raphael touched outranks the written spec"). If the
+// short labels are wanted, they change in moduleNavs.jsx — one line — not here.
 const MODULE_CRUMB = { id: '__module', label: 'Inventory Management' };
 const LAB_CRUMB = { id: 'lab', label: 'Lab Equipment' };
 
