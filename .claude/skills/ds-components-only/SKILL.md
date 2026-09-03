@@ -221,3 +221,19 @@ explicitly** — say what was believed, what's true, and why the diff was missed
 `FIGMA-MAP.md` · `docs/08-conventions.md` · skills `nexleaf-design-system`, `design-critique`,
 `figma-design-audit`, `prototype-review-then-publish`.
 
+
+## Banner: `title` beats `inCard` — the in-card variant never takes a title
+
+Raf (2026-09-03, NPHL import screen): *"the cards there should be the incard component
+banner instead."* Six banners had been written `<Banner title="…" inCard>` — and the
+component checks **`title` first**, so every one rendered the big colored-header page
+banner inside a Card.
+
+- **Use `inCard` with NO `title` — EVERYWHERE, page level included** (Raf, same day,
+  seeing the titled variant on the register error: "use incard banner component
+  everywhere"). Put the lead line in children:
+  `<span style={{ display: 'block', fontWeight: 650 }}>Lead</span>` then body.
+  The titled colored-header Banner is not used on these screens at all.
+- Transient part-of-page notice → `Toast` (see FIGMA-MAP D1c) — that rule stands.
+- The inCard variant DOES support `actions` (and `inlineActions`) — no titled variant
+  needed just to get a Retry button.

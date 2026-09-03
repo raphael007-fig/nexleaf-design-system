@@ -202,6 +202,18 @@ export const LAB_EQUIPMENT = [
     condition: 'Functional', acquired: '2020-05-19', monitored: false,
   },
   {
+    // Edge-case row (deliberate): longest asset tag + name + location in the
+    // register, so truncation/wrapping is exercised by real data, not lorem.
+    id: 'nfsnrl-93', facilityId: 'nfsnrl',
+    assetTag: 'MOH/DLS/NPHL/NFSNRL/CHEM/BAY2/EQP-2021-0093-A',
+    type: 'analyser',
+    name: 'High-performance liquid chromatography system with autosampler, column oven and diode-array detector',
+    make: 'Shimadzu', model: 'Nexera LC-40 (LC-40D XR, SIL-40C XR, CTO-40C, SPD-M40)',
+    serial: null,
+    location: 'Chemistry lab, Bay 2, bench 4 (shared with microbiology overflow)',
+    condition: 'Functional', acquired: '2021-04-14', monitored: false,
+  },
+  {
     id: 'nfsnrl-90', facilityId: 'nfsnrl', assetTag: 'S/NO 90',
     type: 'it-facility', name: 'Results workstation + UPS',
     make: 'Dell / APC', model: 'OptiPlex 7010 / BX950',

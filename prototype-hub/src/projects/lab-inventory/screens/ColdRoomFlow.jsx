@@ -61,10 +61,11 @@ const DEFAULT_EQUIPMENT = {
 /**
  * @param {string} [initialStep]   'facility'|'details'|'device'|'review'|'success'
  * @param {object} [initialData]   Partial {facilityId, contacts, equipment, deviceId, sensors}.
+ * @param {object} [initialErrors] Field errors shown immediately (prototype states).
  * @param {'submitting'|'submit-failed'|'offline'|null} [simulate]
  */
 export function ColdRoomFlow({
-  initialStep = 'facility', initialData = {}, simulate = null,
+  initialStep = 'facility', initialData = {}, initialErrors = {}, simulate = null,
   onDone, onViewRecord, onCancel, onCrumb,
 }) {
   const [step, setStep] = useState(initialStep);
@@ -83,7 +84,7 @@ export function ColdRoomFlow({
   const [equipment, setEquipment] = useState({ ...DEFAULT_EQUIPMENT, ...(initialData.equipment || {}) });
   const [deviceId, setDeviceId] = useState(initialData.deviceId ?? '');
   const [sensors, setSensors] = useState(initialData.sensors ?? []);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState(initialErrors);
 
   const device = BASE_STATIONS.find((d) => d.id === deviceId) || null;
   const sensorOptions = (device?.kind === 'CTX' ? CTX_SENSORS : CT5_SENSORS)
@@ -156,7 +157,10 @@ export function ColdRoomFlow({
           </FormSection>
           <FormSection title={`Alarm contacts · ${contacts.length} of ${MAX_ALARM_CONTACTS}`} required>
             {atCap ? (
-              <Banner tone="warning" title={`Contact limit reached (${MAX_ALARM_CONTACTS} of ${MAX_ALARM_CONTACTS})`} inCard>
+              <Banner tone="warning" inCard>
+                <span style={{ display: 'block', fontWeight: 650 }}>
+                  Contact limit reached ({MAX_ALARM_CONTACTS} of {MAX_ALARM_CONTACTS})
+                </span>
                 A facility can hold {MAX_ALARM_CONTACTS} RTMD alarm contacts. To add someone,
                 remove a contact first — the limit is enforced by the platform.
               </Banner>
@@ -309,7 +313,8 @@ export function ColdRoomFlow({
               onChange={setSensors}
               disabled={!deviceId}
             />
-            <Banner tone="info" title="One record, many sensors" inCard>
+            <Banner tone="info" inCard>
+              <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
               A walk-in cold room needs 3–4 sensors, and every reading lands on this one
               record — it stays one piece of equipment in every count. Sensor IDs are picked
               from the system, never typed{device?.kind === 'CT5' ? '; Sensor D is ambient and may sit outside the cold room' : ''}.
@@ -341,14 +346,15 @@ export function ColdRoomFlow({
           )}
         >
           {simulate === 'offline' && (
-            <Banner tone="warning" title="You're offline — submission is paused">
+            <Banner tone="warning" inCard>
+              <span style={{ display: 'block', fontWeight: 650 }}>You're offline — submission is paused</span>
               Everything entered here is kept on this device. Submit becomes available as soon
               as the connection returns; nothing needs re-entering.
             </Banner>
           )}
           {submitState === 'failed' && (
-            <Banner tone="critical" title="Submission failed — nothing was created"
-              actions={[{ label: 'Try again', onClick: submit }]}>
+            <Banner tone="critical" inCard actions={[{ label: 'Try again', onClick: submit }]}>
+              <span style={{ display: 'block', fontWeight: 650 }}>Submission failed — nothing was created</span>
               The server rejected the request. Your entries are unchanged — retry, or come
               back later; the record is not partially saved.
             </Banner>

@@ -134,7 +134,8 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
         {/* ── Main column ── */}
         <div style={{ flex: '3 1 420px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
           {state === 'partial' && (
-            <Banner tone="warning" title="Sensor B has not reported for 6 hours">
+            <Banner tone="warning" inCard>
+              <span style={{ display: 'block', fontWeight: 650 }}>Sensor B has not reported for 6 hours</span>
               The other sensors are reporting normally, so the cold room is still covered.
               Check Sensor B's placement and cable — its last reading was at 07:12 today.
             </Banner>
@@ -179,8 +180,8 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
                 <Skeleton width="100%" height={210} />
               </SkeletonGroup>
             ) : state === 'chart-error' ? (
-              <Banner tone="critical" title="Couldn't load temperature history" inCard
-                actions={[{ label: 'Retry', onClick: () => {} }]}>
+              <Banner tone="critical" inCard actions={[{ label: 'Retry', onClick: () => {} }]}>
+                <span style={{ display: 'block', fontWeight: 650 }}>Couldn't load temperature history</span>
                 The data request failed — the record and its sensors are unaffected.
               </Banner>
             ) : state === 'no-readings' ? (

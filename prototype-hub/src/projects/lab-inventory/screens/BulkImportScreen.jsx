@@ -189,20 +189,25 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
         {step === 'preview' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
             <CardSectionTitle title="Preview & validation" />
+            {/* In-card compact banners (Raf, 2026-09-03) — the titled Banner
+                variant renders its own colored-header card and is for page
+                level; inside a Card the tinted inCard variant is the pattern.
+                Note: `title` wins over `inCard` in the component, so the lead
+                line lives in children. */}
             {phase === 'error' && (
-              <Banner tone="critical" title="Import failed — no records were created"
+              <Banner tone="critical" inCard
                 actions={[{ label: 'Try again', onClick: () => setPhase('idle') }]}>
+                <span style={{ display: 'block', fontWeight: 650 }}>Import failed — no records were created</span>
                 The server rejected the batch before writing anything. The file and your
                 mapping are unchanged — retry when connectivity is back.
               </Banner>
             )}
-            <Banner
-              tone={withIssues.length ? 'warning' : 'success'}
-              title={withIssues.length
-                ? `${clean} of ${parsed.length} rows are ready · ${withIssues.length} need attention`
-                : `All ${parsed.length} rows are ready to import`}
-              inCard
-            >
+            <Banner tone={withIssues.length ? 'warning' : 'success'} inCard>
+              <span style={{ display: 'block', fontWeight: 650 }}>
+                {withIssues.length
+                  ? `${clean} of ${parsed.length} rows are ready · ${withIssues.length} need attention`
+                  : `All ${parsed.length} rows are ready to import`}
+              </span>
               Flagged rows are still imported — they are marked for review so nothing from
               the lab’s register is silently dropped.
             </Banner>

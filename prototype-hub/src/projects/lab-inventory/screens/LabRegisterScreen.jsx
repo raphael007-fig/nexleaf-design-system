@@ -74,14 +74,15 @@ function tabMatch(row, tabIndex) {
  */
 export function LabRegisterScreen({
   persona = 'lead', state = 'default', highlightId = null, initialToast = null,
-  onView, onAdd, onImport, onSetUpMonitoring, onCrumb,
+  initialSearch = '',
+  onView, onEdit, onAdd, onImport, onSetUpMonitoring, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[0];
   const loading = state === 'loading';
   const allRows = state === 'empty' ? [] : rowsForPersona(persona);
 
   const [activeTab, setActiveTab] = useState(0);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const [page, setPage] = useState(0);
   const [selected, setSelected] = useState(new Set());
   const [activeMetric, setActiveMetric] = useState(null);
@@ -238,11 +239,9 @@ export function LabRegisterScreen({
 
       {state === 'error' && (
         <div style={{ marginBottom: 24 }}>
-          <Banner
-            tone="critical"
-            title="Couldn't load the lab register"
-            actions={[{ label: 'Retry', onClick: () => {} }]}
-          >
+          {/* inCard everywhere (Raf, 2026-09-03) — never the titled variant. */}
+          <Banner tone="critical" inCard actions={[{ label: 'Retry', onClick: () => {} }]}>
+            <span style={{ display: 'block', fontWeight: 650 }}>Couldn't load the lab register</span>
             The request failed before any records arrived. Check connectivity and retry —
             nothing has been changed.
           </Banner>
@@ -291,10 +290,14 @@ export function LabRegisterScreen({
             { label: 'Columns', icon: <IcoAdjust size={16} />, onClick: () => {} },
           ]}
           bulkActions={[{ label: 'Export', onAction: () => {} }]}
-          rowActions={[
-            { label: 'View', onAction: (row) => onView?.(row.id) },
-            { label: 'Edit', onAction: () => {} },
-          ]}
+          rowActions={personaDef.canInstall
+            // Read-only scopes get View only — actions are removed with the
+            // permission, not rendered dead.
+            ? [
+              { label: 'View', onAction: (row) => onView?.(row.id) },
+              { label: 'Edit', onAction: (row) => onEdit?.(row.id) },
+            ]
+            : [{ label: 'View', onAction: (row) => onView?.(row.id) }]}
           emptyState={{
             heading: 'No equipment matches this view',
             description: 'Data exists in your scope, but the current tab, search, or filters exclude all of it. Clear the search or reset the filters to get back.',

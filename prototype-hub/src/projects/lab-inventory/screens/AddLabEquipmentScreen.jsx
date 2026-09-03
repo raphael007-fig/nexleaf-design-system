@@ -22,7 +22,6 @@ import {
   isMonitorableNow, isMonitorableLater,
 } from './labData.js';
 
-const TRAIL = [{ id: 'add', label: 'Add Lab Equipment' }];
 
 /**
  * §5.2 success behaviour: save → return to the register with a success Toast
@@ -30,19 +29,34 @@ const TRAIL = [{ id: 'add', label: 'Add Lab Equipment' }];
  * the "Set up monitoring" action. There is no interstitial confirmation panel.
  *
  * @param {'lead'|'tech'} persona
- * @param {'default'|'errors'} state  'errors' pre-fills the validation failure.
+ * @param {'default'|'errors'|'dup'} state  'errors' pre-fills the validation
+ *   failure; 'dup' pre-fills a duplicate asset tag (unique-within-region).
+ * @param {'add'|'edit'} mode  'edit' prefills from `record` and saves changes
+ *   instead of creating — same form, one source of field truth.
+ * @param {object} [record]   The LAB_EQUIPMENT row being edited (edit mode).
  * @param {(record)=>void} [onSaved]  Return to the register — record carries
- *   `monitorable` so the register can arm the Toast action.
+ *   `monitorable` (and `edited` in edit mode) so the register arms the Toast.
  */
 export function AddLabEquipmentScreen({
-  persona = 'tech', state = 'default', onSaved, onCancel, onCrumb,
+  persona = 'tech', state = 'default', mode = 'add', record = null,
+  onSaved, onCancel, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[1];
   const scopedFacilities = LAB_FACILITIES.filter((f) => personaDef.facilities.includes(f.id));
+  const isEdit = mode === 'edit' && record;
 
-  const [form, setForm] = useState(() => (state === 'errors'
-    ? { facilityId: '', type: '', name: 'Reagent refrigerator', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }
-    : { facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '', type: '', name: '', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }));
+  const [form, setForm] = useState(() => (isEdit
+    ? {
+      facilityId: record.facilityId, type: record.type, name: record.name || '',
+      make: record.make || '', model: record.model || '', assetTag: record.assetTag || '',
+      serial: record.serial || '', location: record.location || '',
+      condition: record.condition || '', acquired: record.acquired || null, notes: record.notes || '',
+    }
+    : state === 'errors'
+      ? { facilityId: '', type: '', name: 'Reagent refrigerator', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }
+      : state === 'dup'
+        ? { facilityId: 'nhrl', type: 'ultra-cold', name: 'Ultra-low freezer −86 °C', make: 'Eppendorf New Brunswick', model: 'Innova U535', assetTag: 'NHRL/EQP/022', serial: '', location: 'Molecular lab, Room 12', condition: 'Functional', acquired: null, notes: '' }
+        : { facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '', type: '', name: '', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }));
   const [errors, setErrors] = useState(() => (state === 'errors'
     ? {
       facilityId: 'Choose the facility that owns this equipment.',
@@ -50,7 +64,9 @@ export function AddLabEquipmentScreen({
       assetTag: 'Enter the lab’s own asset tag — it is how this record is found.',
       condition: 'Choose the equipment’s condition.',
     }
-    : {}));
+    : state === 'dup'
+      ? { assetTag: 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.' }
+      : {}));
 
   const set = (key) => (v) => {
     const value = v && v.target ? v.target.value : v;
@@ -58,8 +74,11 @@ export function AddLabEquipmentScreen({
     setErrors((e) => (e[key] ? { ...e, [key]: undefined } : e));
   };
 
+  // Unique-within-region check — in edit mode the record's own tag is not a
+  // duplicate of itself.
   const dupTag = form.assetTag.trim()
-    && LAB_EQUIPMENT.some((r) => r.assetTag.toLowerCase() === form.assetTag.trim().toLowerCase());
+    && LAB_EQUIPMENT.some((r) => r.assetTag.toLowerCase() === form.assetTag.trim().toLowerCase()
+      && (!isEdit || r.id !== record.id));
 
   function save() {
     const next = {};
@@ -72,18 +91,24 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
   const monitorableLater = isMonitorableLater(form.type);
 
   return (
-    <LabShell level="secondary" trail={TRAIL} onCrumb={onCrumb}>
+    <LabShell
+      level="secondary"
+      trail={[{ id: 'add', label: isEdit ? `Edit ${record.assetTag}` : 'Add Lab Equipment' }]}
+      onCrumb={onCrumb}
+    >
       <Page
         flushTop
-        title="Add Lab Equipment"
-        subtitle="Register a piece of lab equipment in the NPHL inventory. This creates a catalog record — monitoring, where supported, is set up afterwards."
+        title={isEdit ? 'Edit Lab Equipment' : 'Add Lab Equipment'}
+        subtitle={isEdit
+          ? `${record.name} · ${record.assetTag}. Changes apply to the catalog record — monitoring is managed separately.`
+          : 'Register a piece of lab equipment in the NPHL inventory. This creates a catalog record — monitoring, where supported, is set up afterwards.'}
         backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
       />
 
@@ -190,7 +215,7 @@ export function AddLabEquipmentScreen({
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
             <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
-            <Btn variant="primary" onClick={save}>Add equipment</Btn>
+            <Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>
           </div>
         </Card>
     </LabShell>
