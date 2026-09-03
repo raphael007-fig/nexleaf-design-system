@@ -1,12 +1,17 @@
-// ── Add lab equipment — single (Phase 1, §5.2) ─────────────────────────────────
-// Deliberately SHORT: this is inventory capture, not the monitored install.
-// No PQS make/model dependency, no thresholds, no sensor. Facility drives
-// region (never asked). Asset tag — the lab's own ID — is the primary
-// identifier; serial is optional. When the chosen Type is monitorable, saving
-// offers "Set up monitoring" → the Phase-2 install flow.
+// ── Add / edit lab equipment — single (Phase 1, §5.2) ─────────────────────────
+// Rides the Add-Equipment WIZARD FRAME (StepFrame — full-width fixed-height
+// card, pinned footer), matching Prototype C's Add Equipment surface (Raf,
+// 2026-09-03: "should have the add equipment frame, and be full width").
+// No stepper: this is a single-step catalog capture, not the monitored
+// install. No PQS make/model dependency, no thresholds, no sensor. Facility
+// drives region (never asked). Asset tag — the lab's own ID — is the primary
+// identifier; serial is optional.
+//
+// §5.2 success behaviour: save → return to the register with a success Toast
+// and the new row highlighted; when the Type is monitorable the Toast carries
+// the "Set up monitoring" action. There is no interstitial confirmation panel.
 import { useState } from 'react';
 import { Page } from '@ds/components/Page/Page.jsx';
-import { Card, CardSectionTitle } from '@ds/components/Card/Card.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
@@ -14,20 +19,16 @@ import { TextareaInput } from '@ds/components/TextareaInput/TextareaInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
-import { Divider } from '@ds/components/Divider/Divider.jsx';
 import { TEXT_SUBDUED } from '@ds/tokens/index.js';
+// The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
+import { StepFrame, FormSection } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
   isMonitorableNow, isMonitorableLater,
 } from './labData.js';
 
-
 /**
- * §5.2 success behaviour: save → return to the register with a success Toast
- * and the new row highlighted; when the Type is monitorable the Toast carries
- * the "Set up monitoring" action. There is no interstitial confirmation panel.
- *
  * @param {'lead'|'tech'} persona
  * @param {'default'|'errors'|'dup'} state  'errors' pre-fills the validation
  *   failure; 'dup' pre-fills a duplicate asset tag (unique-within-region).
@@ -112,8 +113,13 @@ export function AddLabEquipmentScreen({
         backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
       />
 
-      <Card style={{ maxWidth: 720 }}>
-          <CardSectionTitle title="Ownership" />
+      <StepFrame
+        title={isEdit ? 'Update the catalog record' : 'Catalog record'}
+        subtitle="Most fields mirror the lab’s paper register — the asset tag is the identifier that matters."
+        footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
+        footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
+      >
+        <FormSection title="Ownership" required>
           <SearchSelect
             label="Facility"
             required
@@ -148,9 +154,9 @@ export function AddLabEquipmentScreen({
               now and can be connected without re-registering when it lands.
             </Banner>
           )}
+        </FormSection>
 
-          <Divider />
-          <CardSectionTitle title="Identification" />
+        <FormSection title="Identification" required>
           <TextInput
             label="Name"
             placeholder="e.g. Refrigerated centrifuge"
@@ -179,9 +185,9 @@ export function AddLabEquipmentScreen({
               helpText="Often missing or duplicated on lab equipment — leave blank if unreadable."
             />
           </div>
+        </FormSection>
 
-          <Divider />
-          <CardSectionTitle title="Placement & condition" />
+        <FormSection title="Placement & condition">
           <TextInput
             label="Location / room"
             placeholder="e.g. Molecular lab, Room 12"
@@ -212,12 +218,8 @@ export function AddLabEquipmentScreen({
             value={form.notes}
             onChange={set('notes')}
           />
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
-            <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
-            <Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>
-          </div>
-        </Card>
+        </FormSection>
+      </StepFrame>
     </LabShell>
   );
 }

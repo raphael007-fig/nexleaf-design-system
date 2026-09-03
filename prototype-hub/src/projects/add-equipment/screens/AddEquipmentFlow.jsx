@@ -393,7 +393,7 @@ export function useFixedFrame(deps = []) {
   return { ref, fixed, height: `calc(100dvh - ${top + bottomInset}px)` };
 }
 
-export function StepFrame({ header, onBack, stepper, title, subtitle, children, footerLeft, footerRight }) {
+export function StepFrame({ header, onBack, stepper, title, subtitle, children, footerLeft, footerRight, contentMaxWidth = 620 }) {
   const isMobile = useIsMobile();
   // The labeled stepper needs ~900px before five phases fit without clipping;
   // below that the compact variant (circles + "Step X of Y" line) takes over.
@@ -421,7 +421,7 @@ export function StepFrame({ header, onBack, stepper, title, subtitle, children, 
           marginTop: stepper ? (isMobile ? 20 : 28) : 0,
           paddingRight: 8,
         }}>
-          <div style={{ width: '100%', maxWidth: 620, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ width: '100%', maxWidth: contentMaxWidth, display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 20 }}>
               <h2 style={{ margin: 0, fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>
                 {title}

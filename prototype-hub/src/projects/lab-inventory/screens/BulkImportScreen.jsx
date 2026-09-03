@@ -1,4 +1,7 @@
 // ── Bulk import — spreadsheet register (Phase 1, §5.3) ─────────────────────────
+// Rides the Add-Equipment WIZARD FRAME (StepFrame — full-width fixed-height
+// card, stepper in the frame, pinned footer), matching Prototype C's surface
+// (Raf, 2026-09-03: "should have the add equipment frame, and be full width").
 // Each lab already keeps its register in Excel/Word, so the flow maps THEIR
 // columns onto our fields instead of forcing re-keying:
 //   upload → column map → preview + validation → confirm → rows created.
@@ -7,18 +10,17 @@
 // "Old"/"New" are age, not condition, and are kept as notes).
 import { useMemo, useState } from 'react';
 import { Page } from '@ds/components/Page/Page.jsx';
-import { Card, CardSectionTitle } from '@ds/components/Card/Card.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
 import { IndexTable } from '@ds/components/IndexTable/IndexTable.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
-import { Stepper } from '@ds/components/Stepper/Stepper.jsx';
 import { Upload } from '@ds/components/Upload/Upload.jsx';
 import { SubmissionSuccessCard } from '@ds/components/SubmissionSuccessCard/SubmissionSuccessCard.jsx';
-import { useViewport } from '@ds/foundation/useViewport.js';
 import { TEXT_DEFAULT, TEXT_SUBDUED } from '@ds/tokens/index.js';
+// The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
+import { StepFrame, FormSection } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
   IMPORT_FIELDS, IMPORT_SHEET, CONDITION_MAP, LAB_FACILITIES, PERSONAS,
@@ -31,6 +33,7 @@ const PHASES = [
   { label: 'Map Columns', steps: ['map'] },
   { label: 'Preview & Validate', steps: ['preview'] },
 ];
+const STEP_ORDER = ['upload', 'map', 'preview'];
 
 // §8 condition mapping applied to one raw row.
 function mapRow(raw, mapping, facilityId) {
@@ -55,7 +58,7 @@ function mapRow(raw, mapping, facilityId) {
     record.condition = 'Not set';
   } else if (!mapped) {
     record.condition = 'Not set';
-    issues.push({ kind: 'condition', label: `Condition “${record.condition ?? rawCondition}” needs review` });
+    issues.push({ kind: 'condition', label: `Condition “${rawCondition}” needs review` });
   } else if (mapped.age) {
     record.condition = 'Not set';
     record.notes.push(`Sheet said “${rawCondition}” — age, not condition; kept as a note.`);
@@ -71,7 +74,6 @@ function mapRow(raw, mapping, facilityId) {
  * @param {'upload'|'map'|'preview'|'importing'|'success'|'error'} state Initial step.
  */
 export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }) {
-  const { width } = useViewport();
   const personaDef = PERSONAS[0]; // import is admin work — biomed-lead scope
   const [step, setStep] = useState(['importing', 'success', 'error'].includes(state) ? 'preview' : state);
   const [files, setFiles] = useState(() => (state === 'upload'
@@ -88,7 +90,14 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
   const withIssues = parsed.filter((p) => p.issues.length);
   const clean = parsed.length - withIssues.length;
 
-  const activePhaseIndex = PHASES.findIndex((p) => p.steps.includes(step));
+  const stepIndex = STEP_ORDER.indexOf(step);
+  const stepper = {
+    phases: PHASES,
+    activeIndex: stepIndex,
+    // Visited phases are tappable, like the install wizard.
+    navigable: PHASES.map((_, i) => i).filter((i) => i <= stepIndex),
+    onSelect: (i) => setStep(STEP_ORDER[i]),
+  };
 
   const header = (
     <Page
@@ -128,12 +137,20 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
   return (
     <LabShell level="tertiary" trail={TRAIL} onCrumb={onCrumb}>
       {header}
-      <Card style={{ maxWidth: 980 }}>
-        <Stepper phases={PHASES} activeIndex={activePhaseIndex} compact={width < 720} />
 
-        {step === 'upload' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 620 }}>
-            <CardSectionTitle title="Upload the lab’s register" />
+      {step === 'upload' && (
+        <StepFrame
+          stepper={stepper}
+          title="Upload the lab’s register"
+          subtitle="One spreadsheet per facility — the records land under the lab that owns them."
+          footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
+          footerRight={(
+            <Btn variant="primary" disabled={!files.length || !facilityId} onClick={() => setStep('map')}>
+              Continue to mapping
+            </Btn>
+          )}
+        >
+          <FormSection title="Facility" required>
             <SearchSelect
               label="Facility"
               required
@@ -142,6 +159,8 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
               value={facilityId}
               onChange={(v) => setFacilityId(v && v.target ? v.target.value : v)}
             />
+          </FormSection>
+          <FormSection title="Register file" required>
             <Upload
               label="Register spreadsheet"
               helperText="One file (XLSX or CSV), max 10 MB. Word tables: save as CSV first."
@@ -152,104 +171,96 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
               onAddFiles={() => setFiles([{ id: 'f1', name: IMPORT_SHEET.fileName, size: '84 KB', progress: 100, status: 'complete' }])}
               onRemove={() => setFiles([])}
             />
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>
-              <Btn variant="primary" disabled={!files.length || !facilityId} onClick={() => setStep('map')}>
-                Continue to mapping
-              </Btn>
-            </div>
-          </div>
-        )}
+          </FormSection>
+        </StepFrame>
+      )}
 
-        {step === 'map' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 620 }}>
-            <CardSectionTitle title={`Map columns — ${IMPORT_SHEET.fileName}`} />
-            <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-              Their headers, our fields. The suggestions below were matched automatically —
-              change any that are wrong. Unmapped columns are not imported.
-            </p>
-            {IMPORT_SHEET.headers.map((h) => (
-              <div key={h} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 2fr', gap: 16, alignItems: 'center' }}>
-                <span style={{ fontSize: 13, fontWeight: 550, color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>{h}</span>
-                <SelectInput
-                  ariaLabel={`Map column ${h}`}
-                  options={IMPORT_FIELDS}
-                  value={mapping[h] || '__skip'}
-                  onChange={(e) => setMapping((m) => ({ ...m, [h]: e.target.value }))}
-                />
-              </div>
-            ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <Btn variant="secondary" onClick={() => setStep('upload')}>Back</Btn>
-              <Btn variant="primary" onClick={() => setStep('preview')}>Preview import</Btn>
+      {step === 'map' && (
+        <StepFrame
+          stepper={stepper}
+          title={`Map columns — ${IMPORT_SHEET.fileName}`}
+          subtitle="Their headers, our fields. The suggestions were matched automatically — change any that are wrong. Unmapped columns are not imported."
+          footerLeft={<Btn variant="secondary" onClick={() => setStep('upload')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={() => setStep('preview')}>Preview import</Btn>}
+        >
+          {IMPORT_SHEET.headers.map((h) => (
+            <div key={h} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 2fr', gap: 16, alignItems: 'center' }}>
+              <span style={{ fontSize: 13, fontWeight: 550, color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>{h}</span>
+              <SelectInput
+                ariaLabel={`Map column ${h}`}
+                options={IMPORT_FIELDS}
+                value={mapping[h] || '__skip'}
+                onChange={(e) => setMapping((m) => ({ ...m, [h]: e.target.value }))}
+              />
             </div>
-          </div>
-        )}
+          ))}
+        </StepFrame>
+      )}
 
-        {step === 'preview' && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-            <CardSectionTitle title="Preview & validation" />
-            {/* In-card compact banners (Raf, 2026-09-03) — the titled Banner
-                variant renders its own colored-header card and is for page
-                level; inside a Card the tinted inCard variant is the pattern.
-                Note: `title` wins over `inCard` in the component, so the lead
-                line lives in children. */}
-            {phase === 'error' && (
-              <Banner tone="critical" inCard
-                actions={[{ label: 'Try again', onClick: () => setPhase('idle') }]}>
-                <span style={{ display: 'block', fontWeight: 650 }}>Import failed — no records were created</span>
-                The server rejected the batch before writing anything. The file and your
-                mapping are unchanged — retry when connectivity is back.
-              </Banner>
-            )}
-            <Banner tone={withIssues.length ? 'warning' : 'success'} inCard>
-              <span style={{ display: 'block', fontWeight: 650 }}>
-                {withIssues.length
-                  ? `${clean} of ${parsed.length} rows are ready · ${withIssues.length} need attention`
-                  : `All ${parsed.length} rows are ready to import`}
-              </span>
-              Flagged rows are still imported — they are marked for review so nothing from
-              the lab’s register is silently dropped.
+      {step === 'preview' && (
+        <StepFrame
+          stepper={stepper}
+          title="Preview & validation"
+          subtitle="Flagged rows are still imported — they are marked for review so nothing from the lab’s register is silently dropped."
+          contentMaxWidth={1100}
+          footerLeft={(
+            <Btn variant="secondary" onClick={() => setStep('map')} disabled={phase === 'importing'}>
+              Back to mapping
+            </Btn>
+          )}
+          footerRight={(
+            <Btn
+              variant="primary"
+              loading={phase === 'importing'}
+              onClick={() => { setPhase('importing'); setTimeout(() => setPhase('success'), 1400); }}
+            >
+              {phase === 'importing' ? 'Importing…' : `Import ${parsed.length} records`}
+            </Btn>
+          )}
+        >
+          {phase === 'error' && (
+            <Banner tone="critical" inCard
+              actions={[{ label: 'Try again', onClick: () => setPhase('idle') }]}>
+              <span style={{ display: 'block', fontWeight: 650 }}>Import failed — no records were created</span>
+              The server rejected the batch before writing anything. The file and your
+              mapping are unchanged — retry when connectivity is back.
             </Banner>
-            <IndexTable
-              bare
-              columns={[
-                { key: 'assetTag', label: 'Asset tag', width: 150, primary: true, render: (r) => r.record.assetTag || '—' },
-                { key: 'name', label: 'Name', width: 200, render: (r) => r.record.name || '—' },
-                { key: 'type', label: 'Type (inferred)', width: 160, render: (r) => (r.record.type ? typeLabel(r.record.type) : <Badge tone="warning">Not recognised</Badge>) },
-                { key: 'make', label: 'Make', width: 170, render: (r) => r.record.make || '—' },
-                { key: 'condition', label: 'Condition (mapped)', width: 180, render: (r) => r.record.condition },
-                {
-                  key: 'issues', label: 'Validation', width: 220,
-                  render: (r) => (r.issues.length
-                    ? (
-                      <span style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
-                        {r.issues.map((iss) => (
-                          <Badge key={iss.kind} tone={iss.kind === 'dup' ? 'critical' : 'warning'} size="small">{iss.label}</Badge>
-                        ))}
-                      </span>
-                    )
-                    : <Badge tone="success" size="small">Ready</Badge>),
-                },
-              ]}
-              rows={parsed.map((p, i) => ({ id: String(i), ...p }))}
-              hideCheckbox
-            />
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-              <Btn variant="secondary" onClick={() => setStep('map')} disabled={phase === 'importing'}>
-                Back to mapping
-              </Btn>
-              <Btn
-                variant="primary"
-                loading={phase === 'importing'}
-                onClick={() => { setPhase('importing'); setTimeout(() => setPhase('success'), 1400); }}
-              >
-                {phase === 'importing' ? 'Importing…' : `Import ${parsed.length} records`}
-              </Btn>
-            </div>
-          </div>
-        )}
-      </Card>
+          )}
+          <Banner tone={withIssues.length ? 'warning' : 'success'} inCard>
+            <span style={{ display: 'block', fontWeight: 650 }}>
+              {withIssues.length
+                ? `${clean} of ${parsed.length} rows are ready · ${withIssues.length} need attention`
+                : `All ${parsed.length} rows are ready to import`}
+            </span>
+            Duplicates, unrecognised types and conditions needing a human check are badged
+            per row below.
+          </Banner>
+          <IndexTable
+            bare
+            columns={[
+              { key: 'assetTag', label: 'Asset tag', width: 150, primary: true, render: (r) => r.record.assetTag || '—' },
+              { key: 'name', label: 'Name', width: 200, render: (r) => r.record.name || '—' },
+              { key: 'type', label: 'Type (inferred)', width: 160, render: (r) => (r.record.type ? typeLabel(r.record.type) : <Badge tone="warning">Not recognised</Badge>) },
+              { key: 'make', label: 'Make', width: 170, render: (r) => r.record.make || '—' },
+              { key: 'condition', label: 'Condition (mapped)', width: 180, render: (r) => r.record.condition },
+              {
+                key: 'issues', label: 'Validation', width: 220,
+                render: (r) => (r.issues.length
+                  ? (
+                    <span style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
+                      {r.issues.map((iss) => (
+                        <Badge key={iss.kind} tone={iss.kind === 'dup' ? 'critical' : 'warning'} size="small">{iss.label}</Badge>
+                      ))}
+                    </span>
+                  )
+                  : <Badge tone="success" size="small">Ready</Badge>),
+              },
+            ]}
+            rows={parsed.map((p, i) => ({ id: String(i), ...p }))}
+            hideCheckbox
+          />
+        </StepFrame>
+      )}
     </LabShell>
   );
 }
