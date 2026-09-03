@@ -237,6 +237,44 @@ assertion, and the numbers get reported.
 
 ---
 
+## How to amend this contract  — every session, same rules
+
+This file is shared by several concurrent sessions working in one repo. Amend it, don't fork it.
+
+**1 · Pull first.** Other sessions commit here. `git pull --rebase` before you edit, or you will
+hand Raphael a merge conflict.
+
+**2 · Amend in the same turn as the correction.** The moment he corrects something — a size, a
+colour, a copy rule, a component choice — write it into the right numbered section here *before*
+you reply. A correction that only lives in a chat transcript is lost.
+
+**3 · Add the assertion, not just the prose.** Every rule here must be checkable in a sweep, and the
+number reported. *A rule that nothing checks is a wish.* If you can't express it as an assertion,
+say so in the entry.
+
+**4 · Edit the section that owns it.** Screen geometry → §1. Layer order → §2. Breadcrumb → §3.
+Mobile → §4. Board layout → §5. Annotation → §6. Build order → §6b. Done-ness → §7. Composition →
+§8. **Never append a competing "rules" section at the bottom**, and never start a second contract
+file — that is how the two boards diverged in the first place.
+
+**5 · Long-form goes elsewhere.** This file states the rule. The war story, the API trap and the
+diagnosis belong in `FIGMA-MAP.md`; component keys and properties in
+`DESIGN-SYSTEM-INVENTORY.md`; product behaviour in `docs/coldtrace-domain.md`. Keep this one short
+enough to read before drawing.
+
+**6 · Retract explicitly.** If a rule written here turns out to be wrong, replace it *and say it was
+wrong*, with the date. Do not quietly delete — someone built to it.
+
+**7 · Skills are gitignored.** `.claude/` is in `.gitignore`, so a skill change needs
+`git add -f .claude/skills`. If you edit or add a skill, commit it, or the next session and Claude
+Code will not see it.
+
+**8 · Commit convention.** `docs(contract): <what changed> [PD-xx]`, and note it on the Jira ticket
+that prompted it.
+
+**9 · If a rule here conflicts with what Raphael just told you, he wins** — then update this file to
+match, in the same turn.
+
 ## Known inconsistency, still open
 
 Two annotation body formats exist in the file:
