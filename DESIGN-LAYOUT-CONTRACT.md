@@ -130,6 +130,90 @@ mobile), not a fixed count.
 - **One `note · matrix` per section** declaring which of the 12 states were deemed N/A and why.
   Absence must be a decision on the canvas, not an omission.
 
+## 6b · HOW TO BUILD A FRAME — the sequence, in order
+
+Consistency is not a review step, it's a build order. Every drift this project has suffered came
+from doing these out of sequence. Follow it literally.
+
+### 1 · Never start from a blank frame
+Clone the nearest **reference frame** (registry at the end of `FIGMA-MAP.md`) or an existing sibling
+screen, then change only what this state changes. Building from a spec's field list produced 24
+frames that were thrown away. If no sibling exists, clone the frame family's canonical example.
+
+### 2 · Establish the family and the chrome first
+Decide page card (1328) · success card (752) · modal (620). Set geometry from §1 **before** adding
+content, so content lays out into a correct box rather than being nudged afterwards.
+
+### 3 · Compose from real instances, by key
+```js
+const set = await figma.importComponentSetByKeyAsync(KEY);   // keys: DESIGN-SYSTEM-INVENTORY.md
+const inst = set.children.find(v => v.name === 'State=rest, …').createInstance();
+parent.appendChild(inst);
+```
+Check the inventory first. Never hand-roll, never substitute a lookalike (`Badge` is not `Tag`).
+
+### 4 · Set text through component properties, never `.characters`
+Assigning `.characters` to a property-driven node **silently does nothing**. Keys carry a literal
+`↪️ ` prefix, so resolve by regex:
+```js
+const keyOf = (n, re) => Object.keys(n.componentProperties || {}).find(k => re.test(k));
+inst.setProperties({ [keyOf(inst, /Label content/)]: 'Submit' });
+```
+
+### 5 · Append before sizing
+`layoutSizingHorizontal = 'FILL'` only works once the node is already a child of an auto-layout
+frame. Append first, then size.
+
+### 6 · Respect instance boundaries
+A node whose id contains `;` is instance-nested: you may set properties and `layoutSizing`, but
+`resize`, `remove` and `appendChild` all throw. To place content "inside" a component with no slot,
+**overlay a sibling frame** positioned over it — and log the missing variant as a DS gap. (`.slot
+examples` frames *do* accept real instances.)
+
+### 7 · Assert clones actually render
+Cloning a hidden or transparent source yields a hidden clone, and the script reports success. Set
+`visible = true` and `opacity = 1` on the clone **and its descendants**, then read the size back. 84
+invisible buttons and 52 invisible badges were shipped this way.
+
+### 8 · Name every structural node you create
+`__contact_tags`, `__contacts_pager`, `__dropdown`, `__step_counter_row`. Later passes then target
+**by name**, never by counting parents — counting parents deleted the contents of five rows and left
+the shells behind.
+
+### 9 · Refit in this exact order
+```
+1. hug the inner stacks            col.layoutSizingVertical = 'HUG'
+2. set card geometry               card.x/y per §1 (card height = max(804, content+32))
+3. resize the frame                max(900, bottom-most visible child + 24)
+4. RE-ASSERT the card position     resize moves children — set card.y again
+5. resync full-bleed overlays      Loader/Overlay/Scrim → 0,0 and frame size
+6. re-pin bottom sheets            sheet.y = frame.height − sheet.height
+7. resize the side nav             56 × frame.height
+```
+Skipping step 4 is what produced the dead band above E1. Skipping 5 clipped six Loaders.
+
+### 10 · Pin constraints so nothing drifts
+Content column / card `MIN / MIN` · chrome `STRETCH / MIN` · side nav `MIN / STRETCH` · modals
+`CENTER / CENTER`. Inherited `CENTER/CENTER` on a column is the single biggest cause of repeat drift.
+
+### 11 · Read it back, then count
+Normalise whitespace before matching text — Figma text contains non-breaking spaces (char 160), and
+a naive regex silently matches nothing:
+```js
+const norm = s => String(s).replace(/[\u00a0\u2007\u202f]/g, ' ');
+```
+A plugin run that throws **rolls back the entire run**, so re-read state after any failure rather
+than assuming a partial apply. Never trust a returned success value.
+
+### 12 · Reflow the board, then run the five numbers
+Reflow per §5 (sort by code, section width from the *widest* row), then report §7.
+
+### Bulk passes — the guardrail
+Any loop that repositions, resizes or re-pads is destructive to everything it touches. Build an
+**explicit allow-list**; skip any section carrying
+`getSharedPluginData('nexleaf.parity','owner')`; iterate **every child type**, not just frames; and
+print the target list and count before writing. There is no undo.
+
 ## 7 · Definition of done — five numbers, every time
 
 ```

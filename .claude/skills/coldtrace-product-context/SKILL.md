@@ -383,3 +383,30 @@ Append newest at the bottom. Format:
   Design-system and Figma mechanics from this work live in `FIGMA-MAP.md` and the `ds-components-only`
   skill, not here.
 
+
+### 2026-09-03 — Kenya NPHL Lab MVP: prototype built to the Sep 2 brief   [agreed + prototyped]
+- **Decision:** Lab is a new Inventory subsection (existing CCE/RTMD/Passive/Solar untouched).
+  Hierarchy: Kenya Lab (global group, never selectable) → NPHL = region → labs = facilities;
+  region always derived from facility. New `LabEquipment` entity — never a CCE variant, never in
+  CCE counts/uptime denominators. `Type` (managed seeded list, NOT PQS) doubles as the
+  monitored/cataloged switch — V1 monitors only the Walk-in Cold Room. Asset tag (the lab's own
+  scheme) is the primary identifier; serial optional. Condition reuses Passive's 4-value vocab;
+  "Old/New" = age → note, "Not set" for null (never "Unknown"). Roles via the four region lists;
+  no data = surface hidden; loading ≠ empty ≠ out-of-scope, all three drawn distinctly.
+- **Built to the §10 recommended answers:** D1 cold room = central "Central Cold Store" facility
+  (pending Ednah) · D2 ONE cold-room record + N sensors (data model to confirm w/ Lucas; workaround
+  rows must be tagged out of denominators) · D3 seeded type list, no admin UI · D4 hard 5-contact
+  cap WITH a visible counter · D5 inherit WICR 2–8 °C bands (durations to confirm on site) ·
+  D6 config-driven facilities (remaining labs drop in) · D7 web-only, responsive.
+- **In-prototype rulings, pending confirmation:** QR code required before the cold-room details
+  step completes (follows the CCE convention; brief's data model has no QR field — Ednah to
+  confirm labs carry QR stickers). §5.2 success = toast + return-to-list with row highlighted;
+  monitorable type's toast carries "Set up monitoring" (duration 0).
+- **Open, with owners (on PD-41):** sensor placement capture point · destructive confirm for
+  decommission via edit · whether Inventory Summary Report takes a register section ·
+  "Manage contacts" destination.
+- **Source:** Sep 2 Raf ↔ Ednah meeting → implementation brief pasted 2026-09-03; Raf's live
+  corrections during the build (inCard banners everywhere, wizard frame on add/import — those
+  are DS mechanics, recorded in ds-components-only, not here).
+- **Artefacts:** prototype-hub `src/projects/lab-inventory` (6 flows, 39 states,
+  localhost:5173/#/lab-inventory) · PD-41 · PRD.md working copy in the project. No Figma yet.
