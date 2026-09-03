@@ -90,7 +90,7 @@ export function ModuleHomeScreen({ persona = 'lead', onOpenModule }) {
                 <Cell
                   icon={<IcoGauge />}
                   iconTone="neutral"
-                  title="Walk-in Cold Room — 4.8 °C"
+                  title="Walk-in Cold Room — 5.7 °C"
                   description="Central Cold Store · 4 sensors reporting"
                   hasChevron
                   onClick={() => onOpenModule?.('inventory')}

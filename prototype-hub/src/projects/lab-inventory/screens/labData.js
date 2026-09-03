@@ -342,13 +342,15 @@ export const CONDITION_MAP = {
   'old': { age: true },
 };
 
-// Type inference from names (§8) — first match wins.
+// Type inference from names (§8) — first match wins, so SPECIFIC equipment is
+// checked before the fridge/freezer catch-all ("Refrigerated centrifuge" is a
+// centrifuge, not a fridge). Names with no confident match return null and the
+// preview flags them "Type not recognised" — a human assigns, nothing guessed.
 export const TYPE_INFERENCE = [
   { match: /cold\s*room/i, type: 'walk-in-cold-room' },
   { match: /-\s*86|-\s*40|ultra/i, type: 'ultra-cold' },
-  { match: /fridge|refrigerat|freezer/i, type: 'fridge-freezer' },
-  { match: /microscope/i, type: 'microscope' },
   { match: /centrifuge/i, type: 'centrifuge' },
+  { match: /microscope/i, type: 'microscope' },
   { match: /cobas|abbott|elisa|analy[sz]er|hplc|gc.?ms|washer/i, type: 'analyser' },
   { match: /incubator/i, type: 'incubator' },
   { match: /biosafety|cabinet/i, type: 'biosafety-cabinet' },
@@ -356,8 +358,9 @@ export const TYPE_INFERENCE = [
   { match: /pipette/i, type: 'pipette' },
   { match: /ph\s*meter/i, type: 'ph-meter' },
   { match: /thermometer|timer/i, type: 'thermo-timer' },
-  { match: /water\s*bath|distiller|autoclave|mixer/i, type: 'water-bath' },
+  { match: /water\s*bath/i, type: 'water-bath' },
   { match: /computer|printer|ups|monitor|workstation/i, type: 'it-facility' },
+  { match: /fridge|refrigerat|freezer/i, type: 'fridge-freezer' },
 ];
 export const inferType = (name) =>
   TYPE_INFERENCE.find((t) => t.match.test(name || ''))?.type || null;

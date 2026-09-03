@@ -94,7 +94,9 @@ const LAST = (s) => s[s.length - 1].temp;
 
 const STATS = {
   uptime: '99.2%', inRange: '97.4%',
-  below: '0h 0m below 2 °C', above: '0h 37m above 8 °C',
+  // Last 24 h — must agree with the drawn series (sensor C creeps toward 8 °C
+  // near the door but stays inside the band).
+  below: '0h 0m below 2 °C', above: '0h 0m above 8 °C',
 };
 
 /**

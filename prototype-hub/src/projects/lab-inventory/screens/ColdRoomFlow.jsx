@@ -491,13 +491,13 @@ export function ColdRoomFlow({
             title="The walk-in cold room is now monitored"
             sections={[
               {
-                title: 'What was set up',
-                rows: [
-                  ['Equipment', `${equipment.name} · ${equipment.assetTag}`],
-                  ['Facility', facilityLabel(facilityId)],
-                  ['Base station', device ? `${device.model} · IMEI ${device.imei}` : 'ColdTrace 5'],
-                  ['Sensors', `${sensors.length || 4} on this one record`],
-                  ['Alarms', `2–8 °C (Walk-in Cold Room configuration) → ${contacts.length} contact${contacts.length === 1 ? '' : 's'}`],
+                heading: 'What was set up',
+                lines: [
+                  { label: 'Equipment', value: `${equipment.name} · ${equipment.assetTag}` },
+                  { label: 'Facility', value: facilityLabel(facilityId) },
+                  { label: 'Base station', value: device ? `${device.model} · IMEI ${device.imei}` : 'ColdTrace 5' },
+                  { label: 'Sensors', value: `${sensors.length || 4} on this one record` },
+                  { label: 'Alarms', value: `2–8 °C (Walk-in Cold Room configuration) → ${contacts.length} contact${contacts.length === 1 ? '' : 's'}` },
                 ],
               },
             ]}

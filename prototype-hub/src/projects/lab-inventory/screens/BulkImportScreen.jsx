@@ -108,12 +108,12 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
             title={`${parsed.length} records imported to ${LAB_FACILITIES.find((f) => f.id === facilityId)?.label ?? 'the register'}`}
             sections={[
               {
-                title: 'What was created',
-                rows: [
-                  ['Source file', IMPORT_SHEET.fileName],
-                  ['Records created', `${parsed.length} (all cataloged — none monitored)`],
-                  ['Flagged for follow-up', `${withIssues.length} — kept, marked for review`],
-                  ['Condition mapping', 'Free-text mapped to the Passive Equipment vocabulary; “Old” kept as a note, not a condition'],
+                heading: 'What was created',
+                lines: [
+                  { label: 'Source file', value: IMPORT_SHEET.fileName },
+                  { label: 'Records created', value: `${parsed.length} (all cataloged — none monitored)` },
+                  { label: 'Flagged for follow-up', value: `${withIssues.length} — kept, marked for review` },
+                  { label: 'Condition mapping', value: 'Free-text mapped to the Passive Equipment vocabulary; “Old” kept as a note, not a condition' },
                 ],
               },
             ]}

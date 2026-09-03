@@ -112,6 +112,9 @@ export function LabRegisterScreen({
   const pageEnd = Math.min(pageStart + PAGE_SIZE, filtered.length);
   const pagedRows = filtered.slice(pageStart, pageEnd);
 
+  // No data chrome before the fetch resolves (§3): while loading or errored,
+  // tab counts, KPI numbers and pagination must not show live-looking values.
+  const showData = !loading && state !== 'error';
   const counts = TAB_LABELS.map((_, i) => allRows.filter((r) => tabMatch(r, i)).length);
   const nMonitored = allRows.filter((r) => r.monitored).length;
   const nCataloged = allRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
@@ -199,27 +202,27 @@ export function LabRegisterScreen({
         gap: 12, marginBottom: 24,
       }}>
         <MetricCard
-          title="Total equipment" metric={String(allRows.length)} loading={loading}
+          title="Total equipment" metric={showData ? String(allRows.length) : '—'} loading={loading}
           infoTooltip={`Every lab equipment record in ${scopeLabel}. Lab equipment is counted separately from cold chain equipment.`}
           selected={activeMetric === 'total'}
           onClick={() => setActiveMetric((p) => (p === 'total' ? null : 'total'))}
         />
         <MetricCard
-          title="Monitored" metric={String(nMonitored)} loading={loading}
-          badge={nMonitored ? { label: 'Walk-in cold room', tone: 'success' } : undefined}
+          title="Monitored" metric={showData ? String(nMonitored) : '—'} loading={loading}
+          badge={showData && nMonitored ? { label: 'Walk-in cold room', tone: 'success' } : undefined}
           infoTooltip={`Records with an assigned monitoring device, out of ${allRows.length} in ${scopeLabel}. V1 monitors the walk-in cold room only.`}
           selected={activeMetric === 'monitored'}
           onClick={() => setActiveMetric((p) => (p === 'monitored' ? null : 'monitored'))}
         />
         <MetricCard
-          title="Cataloged (not monitored)" metric={String(nCataloged)} loading={loading}
+          title="Cataloged (not monitored)" metric={showData ? String(nCataloged) : '—'} loading={loading}
           infoTooltip={`Register-only records — no monitoring device, out of ${allRows.length} in ${scopeLabel}.`}
           selected={activeMetric === 'cataloged'}
           onClick={() => setActiveMetric((p) => (p === 'cataloged' ? null : 'cataloged'))}
         />
         <MetricCard
-          title="Needs attention" metric={String(nAttention)} loading={loading}
-          badge={nAttention ? { label: 'Damaged or unusable', tone: 'warning' } : undefined}
+          title="Needs attention" metric={showData ? String(nAttention) : '—'} loading={loading}
+          badge={showData && nAttention ? { label: 'Damaged or unusable', tone: 'warning' } : undefined}
           infoTooltip={`Records whose condition is Damaged / Needs repair or Unusable, out of ${allRows.length} in ${scopeLabel}.`}
           selected={activeMetric === 'attention'}
           onClick={() => setActiveMetric((p) => (p === 'attention' ? null : 'attention'))}
@@ -266,7 +269,7 @@ export function LabRegisterScreen({
           loading={loading}
           selectedRows={selected}
           onSelectionChange={setSelected}
-          tabs={TAB_LABELS.map((label, i) => ({ label, badge: counts[i] }))}
+          tabs={TAB_LABELS.map((label, i) => ({ label, badge: showData ? counts[i] : undefined }))}
           activeTab={activeTab}
           onTabChange={(i) => { setActiveTab(i); setPage(0); setSelected(new Set()); }}
           searchValue={search}
@@ -289,7 +292,7 @@ export function LabRegisterScreen({
             heading: 'No equipment matches this view',
             description: 'Data exists in your scope, but the current tab, search, or filters exclude all of it. Clear the search or reset the filters to get back.',
           }}
-          footer={
+          footer={showData ? (
             <Pagination
               type="table"
               hasPrevious={safePage > 0}
@@ -298,7 +301,7 @@ export function LabRegisterScreen({
               onNext={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               label={filtered.length === 0 ? '0 of 0' : `${pageStart + 1}–${pageEnd} of ${filtered.length}`}
             />
-          }
+          ) : undefined}
         />
       )}
 
