@@ -3510,3 +3510,23 @@ prototype"*. D1c's toast now matches `9196:38686` exactly: no Retry, copy
 The `inlineActions` / `actions` extensions to Toast and Banner stay in the DS
 (additive, documented in the Banner story) but nothing in this module uses
 them now. Retract the "divergence, Raphael's call" note above — there is none.
+
+## A build cannot be verified from the Linux sandbox  (2026-09-04)
+
+`node_modules` is installed on Raphael's Mac, so it carries the **darwin-arm64** native binaries.
+Running `vite build` from the sandbox dies with `Cannot find module
+'@rolldown/binding-linux-arm64-gnu'` — **an environment failure that says nothing about the code.**
+Never report it as a code problem.
+
+To check whether a build has succeeded, **look for the artefacts instead of rebuilding**:
+
+```sh
+ls -la prototype-hub/dist                  # exists + timestamp = a build ran
+ls prototype-hub/dist/assets | head -30    # one chunk per flow = it compiled
+ls -la prototype-hub/node_modules/.vite    # deps cache = the dev server ran
+```
+
+This closed a false "blocking" item: Add Equipment's six hub flows were listed as unverified for a
+week when `dist/` already held `shared-entry`, `monitored-rtmd`, `third-party-device`,
+`unmonitored`, `converging-steps` and `errors-edge-cases` chunks. **Check the filesystem before
+declaring something unproven.**

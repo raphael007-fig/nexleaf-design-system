@@ -128,11 +128,18 @@ on a Figma section you don't own (contract §5).
 
 So a new session doesn't rediscover these.
 
-**Blocking, and the first thing to do**
-- **The hub build has never been run.** Add Equipment's 6 flows are parse-clean and imports-resolve,
-  not render-proven. `cd prototype-hub && npm run dev`. If it throws, the likely culprit is
-  `screens/AddEquipmentFlow.jsx` — 2,168 lines lifted from a standalone app whose Vite config
-  aliased `@ds` to an absolute path.
+**Resolved 2026-09-04 — the hub build works, Add Equipment included**
+
+`prototype-hub/dist/` from Sep 3 17:33 contains a chunk per flow — `shared-entry`,
+`monitored-rtmd`, `third-party-device`, `unmonitored`, `converging-steps`, `errors-edge-cases` —
+plus `AddEquipmentFlow` and `states`. Vite followed the `@ds` alias through all 28 deep imports and
+bundled the 2,168-line shared screen without complaint. The worry that it had been lifted from a
+standalone app with an absolute-path alias was unfounded.
+
+Don't re-raise this. If it needs re-verifying, check `dist/assets` for the per-flow chunks rather
+than rebuilding — and note that a **build cannot be run from a Linux sandbox**: `node_modules` holds
+the darwin-arm64 rolldown binary, so vite dies on `Cannot find module
+'@rolldown/binding-linux-arm64-gnu'`. That failure is environmental and says nothing about the code.
 
 **Waiting on Raphael**
 - **The DS library is unpublished.** `Cell`, `QR code`, the Breadcrumb 4/5 slots, the Button
