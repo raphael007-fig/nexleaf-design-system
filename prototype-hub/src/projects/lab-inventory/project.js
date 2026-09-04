@@ -5,6 +5,6 @@ export default {
   status: 'Active',
   jiraEpic: "PD-41",   // the project's Jira epic (PD-XX)
   prd: null,     // link to the PRD (Google Doc / Confluence / repo path)
-  figma: null,   // link to the project's Figma file or section
+  figma: 'https://www.figma.com/design/YzbXqlrKTcGbWxwzGkLTct/MultiEquipment-Management--UI-Design?node-id=9555-221380',
   updated: '2026-09-03',
 };
