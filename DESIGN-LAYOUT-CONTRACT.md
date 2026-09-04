@@ -245,10 +245,18 @@ This file is shared by several concurrent sessions working in one repo. Amend it
 
 | Surface | Can read the contract? | Can amend it? |
 |---|---|---|
-| **Cowork** with the `Design System` folder connected | yes | **yes** — read, edit, commit |
+| **Cowork** with the `Design System` folder connected | **not automatically** — see below | **yes** — read, edit, commit |
 | **Claude Code** launched inside this repo | yes, auto-loads | **yes** |
 | **claude.ai chat / mobile** | **no** — sandboxed container, no `~/Documents` | **no** |
 | Cowork **without** the folder connected | no | no |
+
+**Cowork does not follow `@` imports.** Verified 2026-08-27: a Cowork session is given the *text* of
+`CLAUDE.md`, including the literal `@DESIGN-LAYOUT-CONTRACT.md` lines, but the referenced files are
+**not expanded into context**. Claude Code does expand them. So in Cowork you must `Read` this file
+explicitly before relying on it — knowing the filename is not knowing the rule.
+
+**Cheap test for any session claiming to have loaded it:** ask it to quote §7's five numbers back. If
+it can't, it hasn't read the file.
 
 If you cannot reach the file, **say so plainly instead of confirming you have read it**, and do not
 pretend the same-turn duty applies. Instead, **emit the amendment as a ready-to-paste block** —
@@ -289,15 +297,25 @@ that prompted it.
 **9 · If a rule here conflicts with what Raphael just told you, he wins** — then update this file to
 match, in the same turn.
 
-## One copy of the skills — config drift is the same failure, one layer down
+## Two skill stores — name which one a rule governs
 
-`.claude/skills/` in this repo is the source of truth for the skills, and it is **gitignored**, so
-changes need `git add -f .claude/skills`.
+A rule about "skills" that doesn't say *which store* will misfire: someone will symlink a repo path,
+or `git add -f` a home-directory path, and both fail confusingly.
 
-**Never duplicate the skills directory.** `cp -r ~/.claude ~/.claude-personal` creates a second
-independent copy that drifts silently — the identical two-sources-of-truth failure this contract
-exists to prevent. If a second Claude config is needed for separate credentials, **share the skills
-by symlink rather than copying**:
+| | Path | Follows | In the repo? |
+|---|---|---|---|
+| **User-level** | `~/.claude/skills` | the **account** | no — **never `git add` this path** |
+| **Project-level** | `<repo>/.claude/skills` | the **directory** | yes, but **gitignored** — needs `git add -f .claude/skills` |
+
+**Project-level skills load for any account that `cd`s into the repo.** A second config directory
+isolates **credentials only** — project memory and project skills follow the directory, not the
+account.
+
+### The duplication hazard (user-level)
+
+`cp -r ~/.claude ~/.claude-personal` creates a second independent copy of the **user-level** skills
+that drifts silently — the same two-sources-of-truth failure this contract exists to prevent, one
+layer down. Share by symlink instead of copying:
 
 ```sh
 diff -rq ~/.claude/skills ~/.claude-personal/skills   # silence = safe to replace
@@ -305,17 +323,21 @@ rm -rf ~/.claude-personal/skills                      # NO trailing slash
 ln -s  ~/.claude/skills ~/.claude-personal/skills
 ```
 
-Two hazards, both real:
+**Footgun:** once that path is a symlink, `rm -rf ~/.claude-personal/skills/` **with** a trailing
+slash follows the link and deletes the real user-level skills. No trailing slash.
 
-- **Never put a trailing slash on that path once the symlink exists.** `rm -rf
-  ~/.claude-personal/skills/` follows the link and deletes the real skills.
-- **A second config does not isolate a session from this project.** `~/.claude/CLAUDE.md` is
-  *user-level* memory; the contract auto-loads from the **project** `CLAUDE.md` in this repo. Project
-  memory follows the **directory**, not the account — so any account that `cd`s in here loads the
-  contract. Isolation is behavioural, or a `permissions.deny` rule.
+### Assertion — carried amendments must land
 
-Credit where due: a parallel session caught this, and caught that the amendment duty is impossible
-on a surface with no filesystem. Both are now written into §0 and here.
+An amendment emitted by a no-filesystem session and never committed is a wish, same as an unchecked
+rule. Audit periodically:
+
+```sh
+git log --grep='docs(contract)' --oneline     # against the PD refs on the Jira tickets
+git status --ignored                          # project-level skill changes hiding behind .gitignore
+```
+
+Credit: a parallel claude.ai session caught both the impossible amendment duty and the conflated
+skill stores. Corrections from a session that cannot commit are still worth acting on.
 
 ## Known inconsistency, still open
 
