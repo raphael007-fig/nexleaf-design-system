@@ -113,19 +113,46 @@ Follow DESIGN-LAYOUT-CONTRACT.md exactly. Check the reference registry before as
 anything. Report the five numbers when you're done, and tell me what you didn't check.
 ```
 
+## Session ownership — who does what
+
+| Surface | Owns |
+|---|---|
+| **Claude Code**, this repo | **Add Equipment (PD-23)** — the flow, the board, the hub project |
+| **Cowork**, folder connected | **Temperature monitoring (PD-33/34/35/36/38)** |
+| **claude.ai chat** | no filesystem — emits transportable amendments only (contract §0) |
+
+Two sessions in one repo: `git pull --rebase` before editing shared files, and never bulk-operate
+on a Figma section you don't own (contract §5).
+
 ## What is genuinely outstanding
 
-So a new session doesn't rediscover these:
+So a new session doesn't rediscover these.
 
-- **Prototype parity** — the Manual Temp Recording states are drawn in Figma but none are
-  reachable in the hub prototype. Add Equipment's 33 states are now wired, but the hub build has
-  never been run.
-- **The DS library is unpublished** — `Cell`, `QR code`, the Breadcrumb 4/5 slots, the Button
-  loading-label fix and the Text field `Tags` property reach nothing until Raphael publishes.
-- **Soft-tint variables vs code** — the library's `fill-*-secondary` values don't match
-  `ICON_TONES` in `Cell.jsx`; `fill-transparent-secondary` resolves opaque. Undecided; the code
-  currently wins.
-- **Annotation body format** — two formats in the file, must converge on one.
-- **The amendment flow** — the 7-day and 3-day windows are recorded; the journey is undrawn, and
-  four questions about it are unanswered (see `docs/coldtrace-domain.md`).
-- **`~/Documents/3rd Party Equipment flow` is not a git repo.**
+**Blocking, and the first thing to do**
+- **The hub build has never been run.** Add Equipment's 6 flows are parse-clean and imports-resolve,
+  not render-proven. `cd prototype-hub && npm run dev`. If it throws, the likely culprit is
+  `screens/AddEquipmentFlow.jsx` — 2,168 lines lifted from a standalone app whose Vite config
+  aliased `@ds` to an absolute path.
+
+**Waiting on Raphael**
+- **The DS library is unpublished.** `Cell`, `QR code`, the Breadcrumb 4/5 slots, the Button
+  loading-label fix and the Text field `Tags` property reach nothing until he publishes it.
+- **Ednah's call on the amendment windows** — four questions, with a recommendation, on PD-38.
+
+**Settled 2026-08-27 — do not re-open**
+- Soft tints: the code is right and already tiered; the library is missing the soft-surface tier.
+  **PD-42** adds it, **PD-43** is the opaque `fill-transparent-secondary` bug. `Cell`'s tints stay raw
+  until PD-42 lands.
+- Annotation format: per-state notes use the tone-glyph short form; the structured `WHEN IT APPEARS`
+  block is for the section intro card only. The temperature-monitoring board's 18 per-state notes
+  need condensing.
+
+**Known gaps**
+- `DESIGN-SYSTEM-INVENTORY.md` doesn't yet list `Toast actions` / `Banner inlineActions`, added in
+  commit `46c2f25`.
+- **Prototype parity** — the temperature-monitoring states are drawn in Figma but not reachable in
+  the hub prototype.
+- **`~/Documents/3rd Party Equipment flow` is not a git repo.** Its code now also lives at
+  `prototype-hub/src/projects/add-equipment/screens/`; that copy is tracked.
+- `product-os/references/*.md` couldn't be copied into the repo (permissions); the main `SKILL.md` is
+  there.
