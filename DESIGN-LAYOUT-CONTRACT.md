@@ -124,7 +124,10 @@ mobile), not a fixed count.
 - Directly beneath its screen: same `x`, `y + height + 16`. **440** wide desktop, **375** mobile.
 - **Fill carries the tone of what it describes:** `ℹ` info `#EAF4FF` · `⚠` warning `#FFF1E3` ·
   `⛔` critical `#FEE9E8`. An error state never gets a blue note.
-- Title: tone glyph + a short statement of what the screen *is*.
+- **Per-state notes use the short form** — tone glyph + a short statement of what the screen *is*.
+  Decided 2026-08-27: scannable at board zoom, and the glyph carries the state class instantly.
+- **The structured `WHEN IT APPEARS: / PURPOSE: / WHAT IT DOES:` block belongs to the section
+  `content` intro card only**, not to per-state notes. Its value is the flow-level explainer.
 - Body answers **when it appears · what it's for · the rule it carries** — the commit boundary, why a
   control is a dropdown and not free text, what recovery exists. Never a restatement of the title.
 - **One `note · matrix` per section** declaring which of the 12 states were deemed N/A and why.
@@ -339,13 +342,54 @@ git status --ignored                          # project-level skill changes hidi
 Credit: a parallel claude.ai session caught both the impossible amendment duty and the conflated
 skill stores. Corrections from a session that cannot commit are still worth acting on.
 
-## Known inconsistency, still open
+## Settled decisions — 2026-08-27
 
-Two annotation body formats exist in the file:
+### Soft tints: the code is right, the library is missing a tier
 
-- **Add Equipment** (132 notes) — tone glyph title + a short prose body.
-- **Manual Temperature Recording** — a structured `WHEN IT APPEARS: / PURPOSE: / WHAT IT DOES:` block.
+`src/tokens/index.js` already defines **two deliberate tiers**, and documents why:
 
-§6 above is the standard. The Manual Temp Recording long form carries more and is the older house
-style; the short form reads faster at board zoom. **These need to converge on one.** Until Raphael
-picks, do not add a third variant — match whichever board you are working in and flag it.
+```
+BG_INFO       = '#eaf4ff'   // banner / surface tier
+BG_INFO_BADGE = '#e0f0ff'   // "a touch deeper ... better contrast of the chip against white"
+```
+
+Every library `fill-*-secondary` variable resolves to the **deeper chip tier** — `#e0f0ff`,
+`#fedad9`, `#ffef9d`. Binding a 32px icon tile to them is reaching for the wrong tier, not
+correcting a wrong value. A tile is a surface, not a chip.
+
+**Decision:** no change to `Cell.jsx`. The library gains **soft-surface variables** at the code's
+values, and `Cell` binds to those once they exist:
+
+| tone | soft surface (code) | chip tier (existing library) |
+|---|---|---|
+| success | `#cdfee1` | — |
+| critical | `#fde2e1` | `#fedad9` |
+| warning | `#fff3cd` | `#ffef9d` |
+| info | `#eaf4ff` | `#e0f0ff` |
+| neutral | `rgba(0,0,0,0.06)` | `fill-transparent-secondary` — **resolves opaque, a library bug** |
+
+Until the variables exist, `Cell`'s five tone tints stay **raw** and match `ICON_TONES`. Two library
+tickets track the gap.
+
+### Annotation format: short form for states, structured for the section
+
+See §6. Per-state notes are the tone-glyph short form; the `WHEN IT APPEARS` block is for the
+section intro card. The Manual Temperature Recording board's per-state notes condense to the short
+form; Add Equipment's 132 already comply.
+
+### Amendment windows: recommended, awaiting Ednah
+
+Product policy with compliance implications, so **not** settled by design alone. The reasoning, for
+whoever takes it to her:
+
+- **Count both windows from the reading's date, not the save time.** Otherwise recording late
+  silently extends your own amendment window — a two-week-old reading becomes editable by entering
+  it yesterday. Counting from the date makes both windows tamper-proof.
+- **Inclusive boundaries.** Day 7 is the last day you can record. Easier to explain than an
+  exclusive cutoff.
+- **Audit entry yes, free-text reason no.** Who, when, old → new, visible to supervisors and above.
+  Cold-chain data feeds compliance reporting, so a silent edit is a data-integrity hole — but a
+  mandatory reason field on a phone task produces junk.
+- **Supervisor override on the 3-day amendment; none on the 7-day recording.** Amending stale data
+  is a supervised correction. Creating readings for dates more than a week old is fabrication, and
+  the system should offer no path to it.
