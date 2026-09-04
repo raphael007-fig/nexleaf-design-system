@@ -241,6 +241,20 @@ assertion, and the numbers get reported.
 
 This file is shared by several concurrent sessions working in one repo. Amend it, don't fork it.
 
+**0 · First, work out whether you *can* amend it.** Not every session has this repo.
+
+| Surface | Can read the contract? | Can amend it? |
+|---|---|---|
+| **Cowork** with the `Design System` folder connected | yes | **yes** — read, edit, commit |
+| **Claude Code** launched inside this repo | yes, auto-loads | **yes** |
+| **claude.ai chat / mobile** | **no** — sandboxed container, no `~/Documents` | **no** |
+| Cowork **without** the folder connected | no | no |
+
+If you cannot reach the file, **say so plainly instead of confirming you have read it**, and do not
+pretend the same-turn duty applies. Instead, **emit the amendment as a ready-to-paste block** —
+the exact section, the exact wording — so Raphael can carry it to a session that can write it. A
+correction that can't be committed must at least be transportable. Never silently drop it.
+
 **1 · Pull first.** Other sessions commit here. `git pull --rebase` before you edit, or you will
 hand Raphael a merge conflict.
 
@@ -274,6 +288,34 @@ that prompted it.
 
 **9 · If a rule here conflicts with what Raphael just told you, he wins** — then update this file to
 match, in the same turn.
+
+## One copy of the skills — config drift is the same failure, one layer down
+
+`.claude/skills/` in this repo is the source of truth for the skills, and it is **gitignored**, so
+changes need `git add -f .claude/skills`.
+
+**Never duplicate the skills directory.** `cp -r ~/.claude ~/.claude-personal` creates a second
+independent copy that drifts silently — the identical two-sources-of-truth failure this contract
+exists to prevent. If a second Claude config is needed for separate credentials, **share the skills
+by symlink rather than copying**:
+
+```sh
+diff -rq ~/.claude/skills ~/.claude-personal/skills   # silence = safe to replace
+rm -rf ~/.claude-personal/skills                      # NO trailing slash
+ln -s  ~/.claude/skills ~/.claude-personal/skills
+```
+
+Two hazards, both real:
+
+- **Never put a trailing slash on that path once the symlink exists.** `rm -rf
+  ~/.claude-personal/skills/` follows the link and deletes the real skills.
+- **A second config does not isolate a session from this project.** `~/.claude/CLAUDE.md` is
+  *user-level* memory; the contract auto-loads from the **project** `CLAUDE.md` in this repo. Project
+  memory follows the **directory**, not the account — so any account that `cd`s in here loads the
+  contract. Isolation is behavioural, or a `permissions.deny` rule.
+
+Credit where due: a parallel session caught this, and caught that the amendment duty is impossible
+on a surface with no filesystem. Both are now written into §0 and here.
 
 ## Known inconsistency, still open
 
