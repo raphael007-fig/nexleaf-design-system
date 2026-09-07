@@ -157,7 +157,9 @@ export function AddLabEquipmentScreen({
         footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
         footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
       >
-        <FormSection title="Ownership" required>
+        {/* No section heading here (Raf, 2026-09-07) — facility and type open
+            the form directly. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <SearchSelect
             label="Facility"
             required
@@ -203,7 +205,7 @@ export function AddLabEquipmentScreen({
               now and can be connected without re-registering when it lands.
             </Banner>
           )}
-        </FormSection>
+        </div>
 
         <FormSection title="Identification" required>
           <TextInput
@@ -287,13 +289,26 @@ export function AddLabEquipmentScreen({
               error={errors.condition}
               helpText="The lab’s condition vocabulary. Age (“old”, “new”) is not a condition — use Notes."
             />
-            <DateField
-              label="Purchase date"
-              placeholder="Optional"
-              value={form.acquired}
-              onChange={set('acquired')}
+            {/* Deployment status sits beside Condition (Raf, 2026-09-07): the two
+                together say whether the equipment works AND whether it is in
+                service. */}
+            <SelectInput
+              label="Deployment status"
+              options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
+              placeholder="Select…"
+              value={deployment}
+              onChange={(e) => setDeployment(e.target ? e.target.value : e)}
+              helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
             />
           </div>
+          {deployment && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
+              <DateField label="From" value={deployFrom} onChange={setDeployFrom}
+                helpText="When this status began." />
+              <DateField label="To" value={deployTo} onChange={setDeployTo}
+                helpText="Leave blank while it is still current." />
+            </div>
+          )}
         </FormSection>
 
 
@@ -322,24 +337,13 @@ export function AddLabEquipmentScreen({
               helpText="When the equipment was installed at the facility. Defaults to today."
             />
           )}
-          {/* Deployment status answers a different question from Condition:
-              whether the equipment is in service, and over what period. */}
-          <SelectInput
-            label="Deployment status"
-            options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
-            placeholder="Select…"
-            value={deployment}
-            onChange={(e) => setDeployment(e.target ? e.target.value : e)}
-            helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
+          <DateField
+            label="Purchase date"
+            placeholder="Optional"
+            value={form.acquired}
+            onChange={set('acquired')}
+            helpText="When the lab bought it — separate from when it was installed."
           />
-          {deployment && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <DateField label="From" value={deployFrom} onChange={setDeployFrom}
-                helpText="When this status began." />
-              <DateField label="To" value={deployTo} onChange={setDeployTo}
-                helpText="Leave blank while it is still current." />
-            </div>
-          )}
           {/* Only for NOT INSTALLED (Raf, 2026-09-07): equipment waiting to be
               installed still has to say which facility is holding it. Once it is
               installed, the Location / room above already answers "where", so
