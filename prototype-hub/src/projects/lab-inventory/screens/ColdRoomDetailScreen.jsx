@@ -10,10 +10,10 @@ import {
   Card, CardSectionTitle, CardField,
   CardLayoutType3, CardLayoutType4, CardLayoutType5,
 } from '@ds/components/Card/Card.jsx';
-import { Popover } from '@ds/components/Popover/Popover.jsx';
-import { OptionList } from '@ds/components/OptionList/OptionList.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
+import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
+import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { Tag } from '@ds/components/Tag/Tag.jsx';
 import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
 import { MetricCard } from '@ds/components/MetricCard/MetricCard.jsx';
@@ -86,32 +86,19 @@ const STATS = {
  */
 export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdit }) {
   const [sensorId, setSensorId] = useState('all');
-  const [menuOpen, setMenuOpen] = useState(false);
   // Alarm contacts live in state so Manage contacts can actually change them —
   // the card's count and rows read from here, never from a hardcoded label.
   const [contacts, setContacts] = useState(['c1', 'c2']);
   const [contactsOpen, setContactsOpen] = useState(false);
   const [openSensor, setOpenSensor] = useState('sensor-a');
-  const [sensorsOpen, setSensorsOpen] = useState(false);
+  // Sensor-row actions open real surfaces: manage the set, edit one sensor's
+  // placement, read the region configuration, or override it for this sensor.
+  const [sensorModal, setSensorModal] = useState(null); // {mode, id}
   const actionsRef = useRef(null);
   const sensorsRef = useRef(null);
   const loading = state === 'loading';
   const sensors = COLD_ROOM.device.sensors;
   const atCap = contacts.length >= MAX_ALARM_CONTACTS;
-
-  // Header Actions menu — every item lands somewhere real: Edit routes to the
-  // shared add/edit form, the other two scroll to the sensors surface where
-  // Manage and View Region Config live.
-  const ACTION_OPTIONS = [
-    { id: 'edit', label: 'Edit record' },
-    { id: 'sensors', label: 'Manage sensors' },
-    { id: 'region', label: 'View region config' },
-  ];
-  const onAction = (id) => {
-    setMenuOpen(false);
-    if (id === 'edit') onEdit?.(COLD_ROOM.id);
-    else sensorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
 
   const series = sensorId === 'all' ? AGG : (SERIES[sensorId] || AGG);
   const truncated = state === 'partial' && sensorId === 'sensor-b';
@@ -133,25 +120,9 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             { label: 'Monitored', tone: 'success' },
             { label: COLD_ROOM.condition, tone: 'success' },
           ]}
-          secondaryActions={[{ content: 'Actions', disclosure: true, onClick: () => setMenuOpen((v) => !v) }]}
+          primaryAction={{ content: 'Edit record', onClick: () => onEdit?.(COLD_ROOM.id) }}
         />
       </div>
-      <Popover
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        anchorRef={actionsRef}
-        placement="bottom-end"
-        minWidth={220}
-        ariaLabel="Record actions"
-      >
-        <OptionList
-          flush
-          dense
-          options={ACTION_OPTIONS}
-          onChange={onAction}
-          ariaLabel="Record actions"
-        />
-      </Popover>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
         {/* ── Main column ── */}
@@ -244,7 +215,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
                   All readings land on this ONE cold-room record (D2)
                 </p>
               </div>
-              <Btn variant="secondary" small onClick={() => setSensorsOpen(true)}>+ Manage</Btn>
+              <Btn variant="secondary" small onClick={() => setSensorModal({ mode: 'manage' })}>+ Manage</Btn>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {sensors.map((s) => {
@@ -287,9 +258,9 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
                     </div>
                     <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 12 }}>
                       <Btn variant="tertiary" small onClick={() => setSensorId(s.id)}>Plot this sensor</Btn>
-                      <Btn variant="tertiary" small onClick={() => {}}>Edit</Btn>
-                      <Btn variant="tertiary" small onClick={() => {}}>View Region Config</Btn>
-                      <Btn variant="tertiary" small onClick={() => {}}>Override</Btn>
+                      <Btn variant="tertiary" small onClick={() => setSensorModal({ mode: 'edit', id: s.id })}>Edit</Btn>
+                      <Btn variant="tertiary" small onClick={() => setSensorModal({ mode: 'region', id: s.id })}>View Region Config</Btn>
+                      <Btn variant="tertiary" small onClick={() => setSensorModal({ mode: 'override', id: s.id })}>Override</Btn>
                     </div>
                   </Accordion>
                 );
@@ -352,6 +323,107 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
           </Card>
         </div>
       </div>
+
+
+      {/* Sensor surfaces — every row action lands somewhere real. Thresholds and
+          delays are the REGION configuration (D5), so viewing them is read-only
+          and overriding is an explicit, warned departure for one sensor. */}
+      {sensorModal && (() => {
+        const s = sensors.find((x) => x.id === sensorModal.id) || sensors[0];
+        const mode = sensorModal.mode;
+        const close = () => setSensorModal(null);
+        const title = mode === 'manage' ? `Sensors on this record · ${sensors.length}`
+          : mode === 'edit' ? `Edit ${s.label}`
+            : mode === 'region' ? 'Walk-in Cold Room configuration'
+              : `Override thresholds — ${s.label}`;
+        return (
+          <Modal
+            open
+            onClose={close}
+            title={title}
+            size="large"
+            footer={(
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <Btn variant="secondary" onClick={close}>{mode === 'region' ? 'Close' : 'Cancel'}</Btn>
+                {mode !== 'region' && (
+                  <Btn variant="primary" onClick={close}>
+                    {mode === 'manage' ? 'Done' : mode === 'edit' ? 'Save changes' : 'Save override'}
+                  </Btn>
+                )}
+              </div>
+            )}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {mode === 'manage' && (
+                <>
+                  <Banner tone="info" inCard>
+                    <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
+                    Every sensor here reports to this ONE cold-room record (D2), so the
+                    room stays one asset in every count. Sensor IDs come from the base
+                    station — they are never typed.
+                  </Banner>
+                  {sensors.map((x) => (
+                    <div key={x.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                      <CardField label={x.label} value={`${x.placement} · ${x.cce}`} />
+                      <Btn variant="tertiary" small onClick={() => setSensorModal({ mode: 'edit', id: x.id })}>Edit</Btn>
+                    </div>
+                  ))}
+                  <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+                    Adding or removing a sensor is done from the base station in the install
+                    flow — this record follows whatever the station reports.
+                  </p>
+                </>
+              )}
+              {mode === 'edit' && (
+                <>
+                  <TextInput label="Placement" value={s.placement} onChange={() => {}}
+                    helpText="Where in the room this sensor sits — it explains a reading, so keep it specific." />
+                  <SelectInput
+                    label="CCE role"
+                    options={[{ id: 'In-room', label: 'In-room — counts toward in-range' }, { id: 'Ambient', label: 'Ambient — excluded from in-range' }]}
+                    value={s.cce}
+                    onChange={() => {}}
+                  />
+                  <Banner tone="info" inCard hideIcon>
+                    <span style={{ display: 'block', fontWeight: 650 }}>Thresholds are not edited here</span>
+                    They come from the Walk-in Cold Room configuration. Use Override if this
+                    one sensor genuinely needs different limits.
+                  </Banner>
+                </>
+              )}
+              {(mode === 'region' || mode === 'override') && (
+                <>
+                  {mode === 'override' && (
+                    <Banner tone="warning" inCard>
+                      <span style={{ display: 'block', fontWeight: 650 }}>An override leaves the region configuration</span>
+                      This sensor will stop following the Walk-in Cold Room configuration
+                      (2–8 °C). Overrides are audited and should be rare — prefer fixing the
+                      region configuration if the whole room is wrong.
+                    </Banner>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
+                    {mode === 'region' ? (
+                      <>
+                        <CardField label="Temperature alarms" value="2 °C / 8 °C (Low / High)" />
+                        <CardField label="Alarm delays" value="1 hr / 10 hrs (Low / High)" />
+                        <CardField label="Applies to" value="Every Walk-in Cold Room in the region" />
+                        <CardField label="Managed by" value="Administrators — not editable here" />
+                      </>
+                    ) : (
+                      <>
+                        <TextInput label="Low threshold (°C)" value="2" onChange={() => {}} />
+                        <TextInput label="High threshold (°C)" value="8" onChange={() => {}} />
+                        <TextInput label="Low delay (hrs)" value="1" onChange={() => {}} />
+                        <TextInput label="High delay (hrs)" value="10" onChange={() => {}} />
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          </Modal>
+        );
+      })()}
 
       {/* Manage contacts — the same directory search and added-contact rows as
           the install flow's step 1, in a Modal so the record page never leaves
