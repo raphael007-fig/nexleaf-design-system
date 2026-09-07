@@ -44,20 +44,10 @@ const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 
 // chip is computed against a blank date. Capturing the date at registration is
 // what stops that happening here, so the field is offered up front and the
 // derived status says plainly when there is no history to judge.
+// CCE's maintenance vocabulary (coldtrace-product-context §4), entered here
+// the way the product does it.
+const MAINTENANCE_STATUS = ['Unknown', 'OK', 'Upcoming', 'Due', 'Overdue'];
 const MAINTENANCE_SCHEDULES = ['Quarterly', 'Every 6 months', 'Annually', 'Not scheduled'];
-const SCHEDULE_DAYS = { 'Quarterly': 90, 'Every 6 months': 182, 'Annually': 365 };
-
-function maintenanceBand(schedule, lastService) {
-  if (!schedule || schedule === 'Not scheduled') return { label: 'Unknown — no schedule', tone: 'default' };
-  if (!lastService) return { label: 'No maintenance history', tone: 'warning' };
-  const interval = SCHEDULE_DAYS[schedule] || 365;
-  const days = Math.floor((Date.now() - new Date(lastService).getTime()) / 86400000);
-  const overdueBy = days - interval;
-  if (overdueBy > 90) return { label: 'Critical — long overdue', tone: 'critical' };
-  if (overdueBy > 0) return { label: 'Maintenance overdue', tone: 'critical' };
-  if (overdueBy > -30) return { label: 'Due soon', tone: 'warning' };
-  return { label: 'Recently maintained', tone: 'success' };
-}
 
 
 // Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
@@ -118,6 +108,7 @@ export function AddLabEquipmentScreen({
   // it records whether the lab is actually using the equipment yet.
   // Step 2 — warranty and service cover. All optional: a record is valid
   // without it, and most lab kit outlives whatever cover it came with.
+  const [maintStatus, setMaintStatus] = useState('');
   const [schedule, setSchedule] = useState('');
   const [lastService, setLastService] = useState(null);
   const [warrantyStart, setWarrantyStart] = useState(null);
@@ -132,6 +123,9 @@ export function AddLabEquipmentScreen({
   // blocks the record. A typed type is never monitorable: nothing has been
   // configured for it, so it has no thresholds to inherit.
   const [customTypes, setCustomTypes] = useState([]);
+  const [customMakes, setCustomMakes] = useState([]);
+  const [customModels, setCustomModels] = useState([]);
+  const [customProviders, setCustomProviders] = useState([]);
   // Filled when the user picks "Other" from the list rather than typing a type.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
@@ -210,7 +204,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, maintStatus, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -320,7 +314,7 @@ export function AddLabEquipmentScreen({
               required
               error={errors.make}
               placeholder="Choose or type a manufacturer"
-              options={makeOptions()}
+              options={[...makeOptions(), ...customMakes.map((m) => ({ id: m, label: m }))]}
               value={form.make}
               onChange={(v) => {
                 const make = v && v.target ? v.target.value : v;
@@ -331,7 +325,11 @@ export function AddLabEquipmentScreen({
                   model: (LAB_MODELS[make] || []).includes(f.model) ? f.model : '',
                 }));
               }}
-              onCreate={(name) => setForm((f) => ({ ...f, make: name, model: '' }))}
+              onCreate={(name) => {
+                setCustomMakes((c) => (c.includes(name) ? c : [...c, name]));
+                setForm((f) => ({ ...f, make: name, model: '' }));
+                setErrors((e) => (e.make ? { ...e, make: undefined } : e));
+              }}
               createLabel="Add new manufacturer"
               helpText="From the managed manufacturer list — add one if it is genuinely new."
             />
@@ -339,10 +337,13 @@ export function AddLabEquipmentScreen({
               label="Model"
               error={errors.model}
               placeholder={form.make ? `Choose or type a ${form.make} model` : 'Choose or type a model'}
-              options={modelOptions(form.make)}
+              options={[...modelOptions(form.make), ...customModels.map((m) => ({ id: m, label: m }))]}
               value={form.model}
               onChange={set('model')}
-              onCreate={(name) => setForm((f) => ({ ...f, model: name }))}
+              onCreate={(name) => {
+                setCustomModels((c) => (c.includes(name) ? c : [...c, name]));
+                setForm((f) => ({ ...f, model: name }));
+              }}
               createLabel="Add new model"
               helpText={form.make ? `Models NPHL already holds for ${form.make}.` : 'Pick the make first to narrow this list.'}
             />
@@ -498,27 +499,27 @@ export function AddLabEquipmentScreen({
                 helpText="The date the schedule is measured from. Leave blank if it has never been serviced."
               />
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Maintenance status</span>
-              <Badge tone={maintenanceBand(schedule, lastService).tone} size="small">
-                {maintenanceBand(schedule, lastService).label}
-              </Badge>
-            </div>
-            <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-              Derived, never entered: the schedule measured against the last service date
-              (overdue past 30 days, critical past 90). With no service date it says so
-              rather than claiming the equipment is overdue.
-            </p>
+            <SelectInput
+              label="Maintenance status"
+              options={MAINTENANCE_STATUS.map((v) => ({ id: v, label: v }))}
+              placeholder="Select…"
+              value={maintStatus}
+              onChange={(e) => setMaintStatus(e.target ? e.target.value : e)}
+              helpText="The same five values CCE uses. Unknown is the honest answer where nobody has checked."
+            />
           </FormSection>
 
           <FormSection title="Service contract">
             <SearchSelect
               label="Service provider"
               placeholder="Choose or type a provider"
-              options={SERVICE_PROVIDERS.map((v) => ({ id: v, label: v }))}
+              options={[...SERVICE_PROVIDERS, ...customProviders].map((v) => ({ id: v, label: v }))}
               value={servicer}
               onChange={(v) => setServicer(v && v.target ? v.target.value : v)}
-              onCreate={(text) => setServicer(text)}
+              onCreate={(text) => {
+                setCustomProviders((c) => (c.includes(text) ? c : [...c, text]));
+                setServicer(text);
+              }}
               createLabel="Add provider"
               helpText="Who services it — the vendor, a local agent, or the calibration centre."
             />
@@ -574,7 +575,7 @@ export function AddLabEquipmentScreen({
             <ReviewRows rows={[
               ['Schedule', schedule || '— (not scheduled)'],
               ['Last service date', lastService ? new Date(lastService).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (no history)'],
-              ['Maintenance status', maintenanceBand(schedule, lastService).label],
+              ['Maintenance status', maintStatus || '— (not set)'],
             ]} />
           </FormSection>
           <FormSection title="Warranty & service">
