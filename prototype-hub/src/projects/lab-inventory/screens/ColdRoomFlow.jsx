@@ -22,6 +22,7 @@ import { Badge } from '@ds/components/Badge/Badge.jsx';
 import { Toast } from '@ds/components/Toast/Toast.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
+import { TextareaInput } from '@ds/components/TextareaInput/TextareaInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect, SearchSelectMulti } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
@@ -33,21 +34,29 @@ import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 import {
   StepFrame, FormSection, ReviewRows, ReviewSection, AlarmContactsField,
 } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
+import {
+  WarrantyMaintenanceFields, warrantyMaintenanceRows,
+  EMPTY_WARRANTY_MAINTENANCE,
+} from './WarrantyMaintenance.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
   LAB_FACILITIES, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS,
   BASE_STATIONS, CT5_SENSORS, CTX_SENSORS, facilityLabel, CONDITIONS,
+  DEPLOYMENT_STATUS, LAB_MODELS, makeOptions, modelOptions,
 } from './labData.js';
 
 const TRAIL = [{ id: 'add-monitoring', label: 'Set Up Monitoring' }];
 
+// Steps 1 and 2 are the register form's own steps (Raf, 2026-09-07): the same
+// Facility & Equipment capture, then the same shared Warranty & Maintenance
+// fields. Monitoring then continues where only this flow goes.
 const PHASES = [
-  { label: 'Facility', steps: ['facility'] },
-  { label: 'Equipment Details', steps: ['details'] },
+  { label: 'Facility & Equipment', steps: ['facility'] },
+  { label: 'Warranty & Maintenance', steps: ['warranty'] },
   { label: 'Base Station, Sensors & Alarms', steps: ['device'] },
   { label: 'Review & Submit', steps: ['review'] },
 ];
-const STEP_ORDER = ['facility', 'details', 'device', 'review'];
+const STEP_ORDER = ['facility', 'warranty', 'device', 'review'];
 
 // ── The flow ──────────────────────────────────────────────────────────────────
 const DEFAULT_EQUIPMENT = {
@@ -58,7 +67,7 @@ const DEFAULT_EQUIPMENT = {
   // details step can complete. Applied to lab assets pending Ednah's confirm
   // (logged on PD-41).
   qrCode: 'QR-70021',
-  location: 'Central cold store, Block C', condition: 'Functional', acquired: null,
+  location: 'Central cold store, Block C', condition: 'Functional', acquired: '2019-06-18',
 };
 
 /**
@@ -89,10 +98,37 @@ export function ColdRoomFlow({
   const [sensors, setSensors] = useState(initialData.sensors ?? []);
   const [errors, setErrors] = useState(initialErrors);
   const [contactNotice, setContactNotice] = useState(null);
+  // The register form's step 2, driven by the shared field set.
+  const [wm, setWm] = useState(EMPTY_WARRANTY_MAINTENANCE);
+  const [customProviders, setCustomProviders] = useState([]);
+  const [customMakes, setCustomMakes] = useState([]);
+  const [customModels, setCustomModels] = useState([]);
+  // A cold room being monitored is, by definition, deployed.
+  const [deployment, setDeployment] = useState(initialData.deployment ?? 'Deployed');
 
   const device = BASE_STATIONS.find((d) => d.id === deviceId) || null;
   const sensorOptions = (device?.kind === 'CTX' ? CTX_SENSORS : CT5_SENSORS)
     .map((s) => ({ id: s, label: s }));
+
+  // One validator for step 1, so the primary can stay disabled until the
+  // record is answerable (same rule as the register form).
+  function recordErrors() {
+    const next = {};
+    if (!facilityId) next.facilityId = 'Choose the facility that owns this cold room.';
+    if (!equipment.make.trim()) next.make = 'Choose or type the manufacturer.';
+    if (!equipment.assetTag.trim()) next.assetTag = 'Enter the asset tag — it is how this record is found.';
+    if (!equipment.condition) next.condition = 'Choose the equipment’s status.';
+    if (!equipment.acquired) next.acquired = 'Enter the purchase date.';
+    if (!equipment.qrCode.trim()) next.qrCode = 'Assign a QR code — the step cannot complete without one.';
+    return next;
+  }
+  const recordComplete = Object.keys(recordErrors()).length === 0;
+
+  function nextFromFacility() {
+    const found = recordErrors();
+    setErrors(found);
+    if (!Object.keys(found).length) go('warranty');
+  }
 
   function go(next) {
     setStep(next);
@@ -100,7 +136,8 @@ export function ColdRoomFlow({
   }
 
   const activePhaseIndex = PHASES.findIndex((p) => p.steps.includes(step));
-  const navigable = PHASES.map((p, i) => i).filter((i) => PHASES[i].steps.some((s) => visited.has(s)));
+  // Per-phase booleans, not indices — the Stepper reads navigable[i].
+  const navigable = PHASES.map((p) => p.steps.some((s) => visited.has(s)));
   const stepper = step === 'success' ? null : {
     phases: PHASES,
     activeIndex: activePhaseIndex,
@@ -135,73 +172,140 @@ export function ColdRoomFlow({
       {step === 'facility' && (
         <StepFrame
           stepper={stepper}
-          title="Facility"
-          subtitle="Who owns the cold room. Region is derived from the facility — alarm contacts are an RTMD concept and are asked with the base station."
+          title="Facility & equipment"
+          subtitle="The facility (which sets the region) and the cold room itself — the same capture as the register form, so a monitored record holds exactly what an unmonitored one does."
           footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={(
-            <Btn variant="primary" disabled={!facilityId} onClick={() => go('details')}>
-              Next
-            </Btn>
+            <Btn variant="primary" disabled={!recordComplete} onClick={nextFromFacility}>Next</Btn>
           )}
         >
-          <FormSection title="Facility" required>
-            <SearchSelect
-              label="Facility"
-              required
-              placeholder="Choose a facility"
-              options={LAB_FACILITIES}
-              value={facilityId}
-              onChange={(v) => setFacilityId(v && v.target ? v.target.value : v)}
-            />
-            <Banner tone="info" inCard hideIcon>
-              The cold room is a shared NPHL asset, so it lives under <b>Central Cold Store</b> —
-              not inside one unit lab. Region is derived from the facility.
-            </Banner>
-          </FormSection>
-        </StepFrame>
-      )}
+          <SearchSelect
+            label="Facility"
+            required
+            placeholder="Choose a facility"
+            options={LAB_FACILITIES}
+            value={facilityId}
+            onChange={(v) => setFacilityId(v && v.target ? v.target.value : v)}
+            error={errors.facilityId}
+          />
+          <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+            Region is derived from the facility — it is never asked separately.
+          </p>
+          <Banner tone="info" inCard hideIcon>
+            The cold room is a shared NPHL asset, so it lives under <b>Central Cold Store</b> —
+            not inside one unit lab.
+          </Banner>
 
-      {step === 'details' && (
-        <StepFrame
-          stepper={stepper}
-          title="Equipment details"
-          subtitle="The cold-room record itself. Type is Walk-in Cold Room from the managed lab list — cold rooms are not in PQS, and there is no compartment question."
-          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
-          footerRight={(
-            <Btn
-              variant="primary"
-              onClick={() => {
-                const next = {};
-                if (!equipment.assetTag.trim()) next.assetTag = 'Enter the asset tag — it is how this record is found.';
-                if (!equipment.qrCode.trim()) next.qrCode = 'Assign a QR code — the step cannot complete without one.';
-                setErrors(next);
-                if (!Object.values(next).some(Boolean)) go('device');
-              }}
-            >
-              Next
-            </Btn>
-          )}
-        >
+          {/* Equipment type is fixed here — this flow only ever sets up a
+              walk-in cold room, so the type is stated, not asked. */}
+          <TextInput
+            label="Equipment type"
+            value="Walk-in Cold Room"
+            readOnly
+            helpText="Fixed for this flow. Cold rooms are not in PQS, there is no compartment question, and the type carries the 2–8 °C thresholds."
+          />
+
           <FormSection title="Identification" required>
+            <TextInput
+              label="Name"
+              placeholder="e.g. Walk-in Cold Room (reagent store)"
+              value={equipment.name}
+              onChange={(e) => setEquipment((q) => ({ ...q, name: e.target.value }))}
+              helpText="Optional — what staff call it."
+            />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <TextInput label="Equipment type" value="Walk-in Cold Room" readOnly
-                helpText="Set when this record was added to the register. Fridge-vs-freezer never comes up — the type carries the thresholds." />
-              <TextInput label="Name" value={equipment.name}
-                onChange={(e) => setEquipment((q) => ({ ...q, name: e.target.value }))} />
+              <SearchSelect
+                label="Make"
+                required
+                error={errors.make}
+                placeholder="Choose or type a manufacturer"
+                options={[...makeOptions(), ...customMakes.map((m) => ({ id: m, label: m }))]}
+                value={equipment.make}
+                onChange={(v) => {
+                  const make = v && v.target ? v.target.value : v;
+                  setEquipment((q) => ({
+                    ...q, make,
+                    model: (LAB_MODELS[make] || []).includes(q.model) ? q.model : '',
+                  }));
+                  setErrors((er) => ({ ...er, make: undefined }));
+                }}
+                onCreate={(name) => {
+                  setCustomMakes((c) => (c.includes(name) ? c : [...c, name]));
+                  setEquipment((q) => ({ ...q, make: name, model: '' }));
+                  setErrors((er) => ({ ...er, make: undefined }));
+                }}
+                createLabel="Add new manufacturer"
+                helpText="From the managed manufacturer list — add one if it is genuinely new."
+              />
+              <SearchSelect
+                label="Model"
+                placeholder={equipment.make ? `Choose or type a ${equipment.make} model` : 'Choose or type a model'}
+                options={[...modelOptions(equipment.make), ...customModels.map((m) => ({ id: m, label: m }))]}
+                value={equipment.model}
+                onChange={(v) => setEquipment((q) => ({ ...q, model: v && v.target ? v.target.value : v }))}
+                onCreate={(name) => {
+                  setCustomModels((c) => (c.includes(name) ? c : [...c, name]));
+                  setEquipment((q) => ({ ...q, model: name }));
+                }}
+                createLabel="Add new model"
+                helpText={equipment.make ? `Models NPHL already holds for ${equipment.make}.` : 'Pick the make first to narrow this list.'}
+              />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <TextInput label="Make" value={equipment.make}
-                onChange={(e) => setEquipment((q) => ({ ...q, make: e.target.value }))} />
-              <TextInput label="Model" value={equipment.model}
-                onChange={(e) => setEquipment((q) => ({ ...q, model: e.target.value }))} />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <TextInput label="Asset tag" required value={equipment.assetTag} error={errors.assetTag}
-                onChange={(e) => { setEquipment((q) => ({ ...q, assetTag: e.target.value })); setErrors((er) => ({ ...er, assetTag: undefined })); }} />
-              <TextInput label="Serial number" placeholder="Optional" value={equipment.serial}
-                onChange={(e) => setEquipment((q) => ({ ...q, serial: e.target.value }))} />
-            </div>
+            <TextInput
+              label="Serial number"
+              placeholder="Optional"
+              value={equipment.serial}
+              onChange={(e) => setEquipment((q) => ({ ...q, serial: e.target.value }))}
+              helpText="Often missing or duplicated on lab equipment — leave blank if unreadable."
+            />
+            {/* Asset tag is REQUIRED on this path, unlike the register form: a
+                monitored record is the one every alarm and reading points at. */}
+            <TextInput
+              label="Asset tag"
+              required
+              placeholder="e.g. MOH/DLS/NPHL/CCS/WICR-001"
+              value={equipment.assetTag}
+              error={errors.assetTag}
+              onChange={(e) => { setEquipment((q) => ({ ...q, assetTag: e.target.value })); setErrors((er) => ({ ...er, assetTag: undefined })); }}
+              helpText="Required here — a monitored record is what every reading and alarm points at."
+            />
           </FormSection>
+
+          <FormSection title="Placement & status">
+            <TextInput
+              label="Location / room"
+              placeholder="e.g. Central cold store, Block C"
+              value={equipment.location}
+              onChange={(e) => setEquipment((q) => ({ ...q, location: e.target.value }))}
+            />
+            <SelectInput
+              label="Equipment status"
+              required
+              placeholder="Choose a condition"
+              options={CONDITIONS.map((c) => ({ id: c, label: c }))}
+              value={equipment.condition}
+              onChange={(e) => { setEquipment((q) => ({ ...q, condition: e.target ? e.target.value : e })); setErrors((er) => ({ ...er, condition: undefined })); }}
+              error={errors.condition}
+              helpText="Whether the equipment works. Age (“old”, “new”) is not a status — use Notes."
+            />
+            <SelectInput
+              label="Deployment status"
+              options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
+              placeholder="Select…"
+              value={deployment}
+              onChange={(e) => setDeployment(e.target ? e.target.value : e)}
+              helpText="Whether the equipment is in service. Equipment status says if it works; this says if it is being used."
+            />
+            <DateField
+              label="Purchase date"
+              required
+              value={equipment.acquired}
+              onChange={(d) => { setEquipment((q) => ({ ...q, acquired: d })); setErrors((er) => ({ ...er, acquired: undefined })); }}
+              error={errors.acquired}
+              helpText="When the lab bought it — separate from when it was installed."
+            />
+          </FormSection>
+
           <FormSection title="QR code" required>
             <TextInput
               label="QR code"
@@ -210,23 +314,35 @@ export function ColdRoomFlow({
               value={equipment.qrCode}
               error={errors.qrCode}
               onChange={(e) => { setEquipment((q) => ({ ...q, qrCode: e.target.value })); setErrors((er) => ({ ...er, qrCode: undefined })); }}
-              helpText="Required before this step can complete — same rule as the cold-chain install flow. The code links the physical asset to this record."
+              helpText="Required on this path — same rule as the cold-chain install flow. The code links the physical asset to this record."
             />
           </FormSection>
-          <FormSection title="Placement & condition">
-            <TextInput label="Location / room" value={equipment.location}
-              onChange={(e) => setEquipment((q) => ({ ...q, location: e.target.value }))} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <SelectInput
-                label="Equipment status"
-                options={CONDITIONS.map((c) => ({ id: c, label: c }))}
-                value={equipment.condition}
-                onChange={(e) => setEquipment((q) => ({ ...q, condition: e.target.value }))}
-              />
-              <DateField label="Installation date" placeholder="Optional" value={equipment.acquired}
-                onChange={(d) => setEquipment((q) => ({ ...q, acquired: d }))} />
-            </div>
+
+          <FormSection title="Notes">
+            <TextareaInput
+              placeholder="Anything the register should keep — provenance, validation status, shared use…"
+              value={equipment.notes || ''}
+              onChange={(e) => setEquipment((q) => ({ ...q, notes: e.target.value }))}
+            />
           </FormSection>
+        </StepFrame>
+      )}
+
+      {step === 'warranty' && (
+        <StepFrame
+          stepper={stepper}
+          title="Warranty & Maintenance"
+          subtitle="The cover and service history behind this equipment, so a fault can be checked against them before a repair is raised. All optional."
+          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={() => go('device')}>Next</Btn>}
+        >
+          {/* The register form's step 2, imported — not a second copy. */}
+          <WarrantyMaintenanceFields
+            value={wm}
+            onChange={(patch) => setWm((w) => ({ ...w, ...patch }))}
+            providers={customProviders}
+            onProviderCreate={(name) => setCustomProviders((c) => (c.includes(name) ? c : [...c, name]))}
+          />
         </StepFrame>
       )}
 
@@ -235,7 +351,7 @@ export function ColdRoomFlow({
           stepper={stepper}
           title="Base station & sensors"
           subtitle="Monitoring comes last: the equipment is the primary, the device is secondary. All sensors attach to this ONE cold-room record."
-          footerLeft={<Btn variant="secondary" onClick={() => go('details')}>Back</Btn>}
+          footerLeft={<Btn variant="secondary" onClick={() => go('warranty')}>Back</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!deviceId || sensors.length === 0} onClick={() => go('review')}>
               Next
@@ -335,7 +451,7 @@ export function ColdRoomFlow({
               ['Region', 'National Public Health Lab (derived from facility)'],
             ]} />
           </ReviewSection>
-          <ReviewSection title="Equipment" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('details')}>
+          <ReviewSection title="Equipment" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('facility')}>
             <ReviewRows rows={[
               ['Type', 'Walk-in Cold Room'],
               ['Name', equipment.name],
@@ -344,8 +460,18 @@ export function ColdRoomFlow({
               ['QR code', equipment.qrCode],
               equipment.serial ? ['Serial number', equipment.serial] : null,
               ['Location', equipment.location],
-              ['Condition', equipment.condition],
+              ['Equipment status', equipment.condition],
+              ['Deployment status', deployment || '—'],
+              ['Purchase date', equipment.acquired
+                ? new Date(equipment.acquired).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '—'],
             ]} />
+          </ReviewSection>
+          <ReviewSection title="Maintenance" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('warranty')}>
+            <ReviewRows rows={warrantyMaintenanceRows(wm).maintenance} />
+          </ReviewSection>
+          <ReviewSection title="Warranty & service" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('warranty')}>
+            <ReviewRows rows={warrantyMaintenanceRows(wm).warranty} />
           </ReviewSection>
           <ReviewSection title="Monitoring" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('device')}>
             <ReviewRows rows={[

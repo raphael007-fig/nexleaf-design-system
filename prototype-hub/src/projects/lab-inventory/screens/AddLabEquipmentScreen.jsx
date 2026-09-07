@@ -15,7 +15,6 @@ import { Page } from '@ds/components/Page/Page.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
-import { RadioGroup } from '@ds/components/RadioButton/RadioButton.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
@@ -26,6 +25,11 @@ import { DateField } from '@ds/components/DateField/DateField.jsx';
 import { TEXT_SUBDUED, TEXT_DEFAULT } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
 import { StepFrame, FormSection, ReviewRows, QrPreview } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
+// Step 2 is shared with the cold-room monitoring install flow.
+import {
+  WarrantyMaintenanceFields, warrantyMaintenanceRows, maintenanceStatus,
+  EMPTY_WARRANTY_MAINTENANCE,
+} from './WarrantyMaintenance.jsx';
 import { LabShell } from './LabShell.jsx';
 
 // Ported verbatim from the 3rd-party installation flow so a lab record and a
@@ -33,53 +37,15 @@ import { LabShell } from './LabShell.jsx';
 // Deployment status — from the live ColdTrace equipment page (Raf, 2026-09-07).
 // This is the LIFECYCLE answer (is it in service, and for how long), which is a
 // different question from Condition (is it working).
-const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 // Warranty + service cover (step 2). Warranty years is the 3rd-party flow's
 // list; the rest is what a lab actually needs to answer "is this repair
 // already paid for?" before raising one.
-// 'No contract' is gone from this list — the Service agreement yes/no answers that,
-// so the provider list only ever holds actual providers.
-const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 'Calibration Centre', 'In-house biomedical team'];
-// Maintenance, modelled on what CCE actually does (coldtrace-product-context
-// §2/§3): a SCHEDULE plus a LAST SERVICE DATE, from which the status is
-// DERIVED — Unknown / OK / Upcoming / Due / Overdue, banded at 30 and 90 days.
-// CCE's own bug is that Last Service Date is never populated, so its Overdue
-// chip is computed against a blank date. Capturing the date at registration is
-// what stops that happening here, so the field is offered up front and the
-// derived status says plainly when there is no history to judge.
-// CCE's maintenance vocabulary (coldtrace-product-context §4), entered here
-// the way the product does it.
-// Maintenance status is CCE's five values, and it is CALCULATED, never picked
-// (Raf, 2026-09-07): the schedule measured against the last service date. With
-// no schedule or no service date the honest answer is Unknown — which is also
-// the bug in CCE today, where an Overdue chip is computed against a Last
-// Service Date that is never populated.
-const SCHEDULE_DAYS = { 'Quarterly': 90, 'Every 6 months': 182, 'Annually': 365 };
-
-function maintenanceStatus(schedule, lastService) {
-  if (!schedule || schedule === 'Not scheduled' || !lastService) {
-    return { label: 'Unknown', tone: 'default', why: 'No schedule or no last service date — nothing to measure.' };
-  }
-  const interval = SCHEDULE_DAYS[schedule] || 365;
-  const due = new Date(lastService).getTime() + interval * 86400000;
-  const daysToDue = Math.ceil((due - Date.now()) / 86400000);
-  // The Due/Upcoming windows are 30/90 days, but capped against the interval —
-  // otherwise a Quarterly schedule (90 days) could never read OK, and a fridge
-  // serviced yesterday would already say Upcoming.
-  const dueWindow = Math.min(30, Math.round(interval * 0.25));
-  const upcomingWindow = Math.min(90, Math.round(interval * 0.6));
-  const on = () => new Date(due).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-  if (daysToDue < 0) return { label: 'Overdue', tone: 'critical', why: `${Math.abs(daysToDue)} days past due (${on()}).` };
-  if (daysToDue <= dueWindow) return { label: 'Due', tone: 'warning', why: `Due in ${daysToDue} days (${on()}).` };
-  if (daysToDue <= upcomingWindow) return { label: 'Upcoming', tone: 'info', why: `Due ${on()}.` };
-  return { label: 'OK', tone: 'success', why: `Next service ${on()}.` };
-}
-const MAINTENANCE_SCHEDULES = ['Quarterly', 'Every 6 months', 'Annually', 'Not scheduled'];
 
 
 // Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
 // adding a lab record and adding a cold-chain record feel like one product:
 // facility first (it sets the region), then the equipment, then a review.
+const STEP_IDS = ['facility', 'details', 'review'];
 const PHASES = [
   { label: 'Facility & Equipment', steps: ['facility'] },
   { label: 'Warranty & Maintenance', steps: ['details'] },
@@ -93,6 +59,7 @@ import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
   LAB_MODELS, makeOptions, modelOptions,
   isMonitorableNow, isMonitorableLater,
+  DEPLOYMENT_STATUS,
 } from './labData.js';
 
 /**
@@ -107,6 +74,7 @@ import {
  */
 export function AddLabEquipmentScreen({
   persona = 'tech', state = 'default', mode = 'add', record = null,
+  initialStep = null,
   onSaved, onCancel, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[1];
@@ -135,18 +103,12 @@ export function AddLabEquipmentScreen({
   // it records whether the lab is actually using the equipment yet.
   // Step 2 — warranty and service cover. All optional: a record is valid
   // without it, and most lab kit outlives whatever cover it came with.
-  const [schedule, setSchedule] = useState('');
-  const [lastService, setLastService] = useState(null);
-  const [warrantyStart, setWarrantyStart] = useState(null);
-  const [warrantyEnd, setWarrantyEnd] = useState(null);
-  // A service agreement is a yes/no fact first (Raf, 2026-09-07): the provider
-  // and the contract details only exist if there is one. "No" is a real answer,
-  // not an empty form.
-  const [agreement, setAgreement] = useState('');
-  const [servicer, setServicer] = useState('');
-  const [contractRef, setContractRef] = useState('');
-  const [coverFrom, setCoverFrom] = useState(null);
-  const [coverTo, setCoverTo] = useState(null);
+  // Warranty, maintenance and the service contract live in one object because
+  // the cold-room monitoring flow drives the same shared fields with it.
+  const [wm, setWm] = useState(EMPTY_WARRANTY_MAINTENANCE);
+  // Back and Cancel confirm before discarding, the same as the monitoring
+  // install flow (Raf, 2026-09-07) — a half-filled register record is work.
+  const [cancelOpen, setCancelOpen] = useState(false);
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
   // Types typed in via "+ Add" this session — the same escape hatch the
   // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
@@ -165,8 +127,12 @@ export function AddLabEquipmentScreen({
   const [assignQr, setAssignQr] = useState(null);
   const [nextQrSeq, setNextQrSeq] = useState(70071);
   // Validation states open on the step that owns them.
-  const [step, setStep] = useState(() => ((state === 'errors' || state === 'dup') ? 'details' : 'facility'));
-  const [visited, setVisited] = useState(() => new Set(['facility', ...((state === 'errors' || state === 'dup') ? ['details'] : [])]));
+  const [step, setStep] = useState(() => initialStep || ((state === 'errors' || state === 'dup') ? 'details' : 'facility'));
+  // Everything up to the opening step counts as visited, so the stepper can
+  // navigate back to it (Raf, 2026-09-07 — steps are for navigation).
+  const [visited, setVisited] = useState(() => new Set(
+    STEP_IDS.slice(0, Math.max(0, STEP_IDS.indexOf(initialStep || ((state === 'errors' || state === 'dup') ? 'details' : 'facility'))) + 1),
+  ));
   const go = (next) => { setStep(next); setVisited((v) => new Set([...v, next])); };
   const [errors, setErrors] = useState(() => (state === 'errors'
     ? {
@@ -192,7 +158,8 @@ export function AddLabEquipmentScreen({
       && (!isEdit || r.id !== record.id));
 
   const activePhaseIndex = PHASES.findIndex((ph) => ph.steps.includes(step));
-  const navigable = PHASES.map((ph, i) => i).filter((i) => PHASES[i].steps.some((x) => visited.has(x)));
+  // Per-phase booleans, not indices — the Stepper reads navigable[i].
+  const navigable = PHASES.map((ph) => ph.steps.some((x) => visited.has(x)));
   const stepper = {
     phases: PHASES,
     activeIndex: activePhaseIndex,
@@ -239,7 +206,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, maintStatus: maintenanceStatus(schedule, lastService).label, schedule, lastService, warrantyStart, warrantyEnd, agreement, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, ...wm, maintStatus: maintenanceStatus(wm.schedule, wm.lastService).label, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -257,7 +224,7 @@ export function AddLabEquipmentScreen({
         subtitle={isEdit
           ? `${record.name} · ${record.assetTag}. Changes apply to the register record — monitoring is managed separately.`
           : 'Register a piece of lab equipment in the NPHL inventory. This adds the equipment to the register — monitoring, where supported, is set up afterwards.'}
-        backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
+        backAction={{ onClick: () => setCancelOpen(true), ariaLabel: 'Back to Lab Equipment' }}
       />
 
       {step === 'facility' && (
@@ -265,7 +232,7 @@ export function AddLabEquipmentScreen({
           stepper={stepper}
           title="Facility & equipment"
           subtitle="The facility (which sets the region) and the equipment itself. Most fields mirror the lab’s paper register."
-          footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
+          footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={<Btn variant="primary" disabled={!recordComplete} onClick={nextFromFacility}>Next</Btn>}
         >
         <SearchSelect
@@ -500,96 +467,12 @@ export function AddLabEquipmentScreen({
           footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
         >
-          <FormSection title="Warranty">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
-              <DateField
-                label="Warranty start date"
-                value={warrantyStart}
-                onChange={setWarrantyStart}
-                helpText="Usually the purchase or commissioning date."
-              />
-              <DateField
-                label="Warranty end date"
-                value={warrantyEnd}
-                onChange={setWarrantyEnd}
-                helpText="When cover lapses — what a repair is checked against."
-              />
-            </div>
-          </FormSection>
-
-          <FormSection title="Maintenance">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
-              <SelectInput
-                label="Maintenance schedule"
-                options={MAINTENANCE_SCHEDULES.map((v) => ({ id: v, label: v }))}
-                placeholder="Select…"
-                value={schedule}
-                onChange={(e) => setSchedule(e.target ? e.target.value : e)}
-                helpText="How often preventive maintenance is planned."
-              />
-              <DateField
-                label="Last service date"
-                value={lastService}
-                onChange={setLastService}
-                helpText="The date the schedule is measured from. Leave blank if it has never been serviced."
-              />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Maintenance status</span>
-              <Badge tone={maintenanceStatus(schedule, lastService).tone} size="small">
-                {maintenanceStatus(schedule, lastService).label}
-              </Badge>
-            </div>
-            <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-              Calculated, never entered — the schedule measured against the last service
-              date. {maintenanceStatus(schedule, lastService).why}
-            </p>
-          </FormSection>
-
-          <FormSection title="Service contract">
-            <RadioGroup
-              title="Service agreement"
-              name="service-agreement"
-              value={agreement}
-              onChange={(v) => {
-                setAgreement(v);
-                if (v === 'no') { setServicer(''); setContractRef(''); setCoverFrom(null); setCoverTo(null); }
-              }}
-              options={[
-                { id: 'yes', label: 'Yes', helpText: 'There is a contract or agreement covering service.' },
-                { id: 'no', label: 'No', helpText: 'No agreement — repairs are arranged case by case.' },
-              ]}
-            />
-            {agreement === 'yes' && (
-              <>
-                <SearchSelect
-                  label="Service provider"
-                  placeholder="Choose or type a provider"
-                  options={[...SERVICE_PROVIDERS, ...customProviders].map((v) => ({ id: v, label: v }))}
-                  value={servicer}
-                  onChange={(v) => setServicer(v && v.target ? v.target.value : v)}
-                  onCreate={(text) => {
-                    setCustomProviders((c) => (c.includes(text) ? c : [...c, text]));
-                    setServicer(text);
-                  }}
-                  createLabel="Add provider"
-                  helpText="Who services it — the vendor, a local agent, or the calibration centre."
-                />
-                <TextInput
-                  label="Contract reference"
-                  placeholder="Optional — the contract or PO number"
-                  value={contractRef}
-                  onChange={(e) => setContractRef(e.target.value)}
-                />
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
-                  <DateField label="Cover from" value={coverFrom} onChange={setCoverFrom}
-                    helpText="When the contract starts." />
-                  <DateField label="Cover to" value={coverTo} onChange={setCoverTo}
-                    helpText="Leave blank for an open-ended arrangement." />
-                </div>
-              </>
-            )}
-          </FormSection>
+          <WarrantyMaintenanceFields
+            value={wm}
+            onChange={(patch) => setWm((w) => ({ ...w, ...patch }))}
+            providers={customProviders}
+            onProviderCreate={(name) => setCustomProviders((c) => (c.includes(name) ? c : [...c, name]))}
+          />
         </StepFrame>
       )}
 
@@ -626,22 +509,10 @@ export function AddLabEquipmentScreen({
             ]} />
           </FormSection>
           <FormSection title="Maintenance">
-            <ReviewRows rows={[
-              ['Schedule', schedule || '— (not scheduled)'],
-              ['Last service date', lastService ? new Date(lastService).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (no history)'],
-              ['Maintenance status', maintenanceStatus(schedule, lastService).label],
-            ]} />
+            <ReviewRows rows={warrantyMaintenanceRows(wm).maintenance} />
           </FormSection>
           <FormSection title="Warranty & service">
-            <ReviewRows rows={[
-              ['Warranty start', warrantyStart ? new Date(warrantyStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (not recorded)'],
-              ['Warranty end', warrantyEnd ? new Date(warrantyEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
-              ['Service agreement', agreement === 'yes' ? 'Yes' : agreement === 'no' ? 'No' : '— (not answered)'],
-              ...(agreement === 'yes' ? [
-                ['Service provider', servicer || '— (none)'],
-                ['Contract reference', contractRef || '—'],
-              ] : []),
-            ]} />
+            <ReviewRows rows={warrantyMaintenanceRows(wm).warranty} />
           </FormSection>
           {isMonitorableNow(form.type) && (
             <Banner tone="info" inCard hideIcon>
@@ -726,6 +597,26 @@ export function AddLabEquipmentScreen({
             )}
           </div>
         )}
+      </Modal>
+      <Modal
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title={isEdit ? 'Discard these changes?' : 'Discard this record?'}
+        size="small"
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, width: '100%' }}>
+            <Btn variant="secondary" onClick={() => setCancelOpen(false)}>Keep editing</Btn>
+            <Btn variant="primary" tone="critical" onClick={() => { setCancelOpen(false); onCancel?.(); }}>
+              {isEdit ? 'Discard changes' : 'Discard record'}
+            </Btn>
+          </div>
+        )}
+      >
+        <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
+          {isEdit
+            ? 'The record stays as it was — only the edits made here are discarded.'
+            : 'Nothing has been added to the register yet. Everything entered on these steps is discarded.'}
+        </p>
       </Modal>
     </LabShell>
   );

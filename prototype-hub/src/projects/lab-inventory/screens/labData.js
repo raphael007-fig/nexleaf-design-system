@@ -118,6 +118,10 @@ export const modelOptions = (make) => {
 // Severity ladder the tones follow: Functional (green) → Unknown (amber, needs
 // verifying) → Faulty (red, needs repair) → Decommissioned (grey, the
 // deliberate end state).
+// CCE's deployment vocabulary — shared by the register form and the monitoring
+// install flow (moved out of AddLabEquipmentScreen, 2026-09-07).
+export const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
+
 export const CONDITIONS = [
   'Functional',
   'Faulty',

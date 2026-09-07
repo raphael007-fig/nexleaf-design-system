@@ -17,6 +17,7 @@ import { IndexTable } from '@ds/components/IndexTable/IndexTable.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { Upload } from '@ds/components/Upload/Upload.jsx';
+import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { SubmissionSuccessCard } from '@ds/components/SubmissionSuccessCard/SubmissionSuccessCard.jsx';
 import { TEXT_DEFAULT, TEXT_SUBDUED } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
@@ -78,7 +79,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
   const [step, setStep] = useState(['importing', 'success', 'error'].includes(state) ? 'preview' : state);
   const [files, setFiles] = useState(() => (state === 'upload'
     ? []
-    : [{ id: 'f1', name: IMPORT_SHEET.fileName, size: '84 KB', progress: 100, status: 'complete' }]));
+    : [{ id: 'f1', name: IMPORT_SHEET.fileName, size: 86016, progress: 100, status: 'complete' }]));
   const [facilityId, setFacilityId] = useState(state === 'upload' ? '' : 'nhrl');
   const [mapping, setMapping] = useState({ ...IMPORT_SHEET.suggested });
   const [phase, setPhase] = useState(state === 'importing' ? 'importing' : state === 'success' ? 'success' : state === 'error' ? 'error' : 'idle');
@@ -90,12 +91,15 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
   const withIssues = parsed.filter((p) => p.issues.length);
   const clean = parsed.length - withIssues.length;
 
+  const [cancelOpen, setCancelOpen] = useState(false);
+
   const stepIndex = STEP_ORDER.indexOf(step);
   const stepper = {
     phases: PHASES,
     activeIndex: stepIndex,
     // Visited phases are tappable, like the install wizard.
-    navigable: PHASES.map((_, i) => i).filter((i) => i <= stepIndex),
+    // Per-phase booleans, not indices — every step up to the current one.
+    navigable: PHASES.map((_, i) => i <= stepIndex),
     onSelect: (i) => setStep(STEP_ORDER[i]),
   };
 
@@ -104,7 +108,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
       flushTop
       title="Import from Spreadsheet"
       subtitle="Bring a lab’s existing register in as it is — map their columns to ours, review what the mapping found, then create the records."
-      backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
+      backAction={{ onClick: () => setCancelOpen(true), ariaLabel: 'Back to Lab Equipment' }}
     />
   );
 
@@ -143,7 +147,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
           stepper={stepper}
           title="Upload the lab’s register"
           subtitle="One spreadsheet per facility — the records land under the lab that owns them."
-          footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
+          footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!files.length || !facilityId} onClick={() => setStep('map')}>
               Continue to mapping
@@ -168,7 +172,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
               multiple={false}
               maxFiles={1}
               files={files}
-              onAddFiles={() => setFiles([{ id: 'f1', name: IMPORT_SHEET.fileName, size: '84 KB', progress: 100, status: 'complete' }])}
+              onAddFiles={() => setFiles([{ id: 'f1', name: IMPORT_SHEET.fileName, size: 86016, progress: 100, status: 'complete' }])}
               onRemove={() => setFiles([])}
             />
           </FormSection>
@@ -261,6 +265,28 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
           />
         </StepFrame>
       )}
+
+      {/* Back and Cancel confirm before discarding, the same as the add and
+          monitoring flows (Raf, 2026-09-07). */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title="Discard this import?"
+        size="small"
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, width: '100%' }}>
+            <Btn variant="secondary" onClick={() => setCancelOpen(false)}>Keep editing</Btn>
+            <Btn variant="primary" tone="critical" onClick={() => { setCancelOpen(false); onCancel?.(); }}>
+              Discard import
+            </Btn>
+          </div>
+        )}
+      >
+        <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
+          Nothing has been created in the register yet. The uploaded file and the
+          column mapping done here are discarded.
+        </p>
+      </Modal>
     </LabShell>
   );
 }

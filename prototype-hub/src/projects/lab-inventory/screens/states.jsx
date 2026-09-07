@@ -42,6 +42,7 @@ import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 import { ModuleHomeScreen } from './ModuleHomeScreen.jsx';
 import { LabRegisterScreen } from './LabRegisterScreen.jsx';
 import { AddLabEquipmentScreen } from './AddLabEquipmentScreen.jsx';
+import { MonitoringMethodModal } from './MonitoringMethodModal.jsx';
 import { BulkImportScreen } from './BulkImportScreen.jsx';
 import { ColdRoomFlow } from './ColdRoomFlow.jsx';
 import { ColdRoomDetailScreen } from './ColdRoomDetailScreen.jsx';
@@ -96,6 +97,7 @@ function AssembledLabApp({
   const [view, setView] = useState(initialView);
   const [highlightId, setHighlightId] = useState(registerProps.highlightId ?? null);
   const [returnToast, setReturnToast] = useState(registerProps.initialToast ?? null);
+  const [methodOpen, setMethodOpen] = useState(false);
   const toRegister = () => { setView('register'); };
   const onCrumb = (id) => {
     if (id === 'home') setView('home');
@@ -188,7 +190,10 @@ function AssembledLabApp({
       />
     );
   }
+  // Add equipment asks the monitoring question first, the way the third-party
+  // flow does — then routes to whichever flow that answer implies.
   return (
+    <>
     <LabRegisterScreen
       key={returnToast ? 'returned' : 'plain'}
       persona={persona}
@@ -197,11 +202,17 @@ function AssembledLabApp({
       onSetUpMonitoring={() => setView('flow')}
       onView={(id) => setView(id === 'ccs-wicr-001' ? 'detail' : `record:${id}`)}
       onEdit={(id) => setView(`edit:${id}`)}
-      onAdd={() => { setReturnToast(null); setView('add'); }}
+      onAdd={() => { setReturnToast(null); setMethodOpen(true); }}
       onImport={() => { setReturnToast(null); setView('import'); }}
       onCrumb={onCrumb}
       {...registerProps}
     />
+    <MonitoringMethodModal
+      open={methodOpen}
+      onClose={() => setMethodOpen(false)}
+      onContinue={(method) => { setMethodOpen(false); setView(method === 'rtmd' ? 'flow' : 'add'); }}
+    />
+    </>
   );
 }
 
@@ -251,7 +262,9 @@ export const STATE_SECTIONS = [
   {
     title: 'Add equipment (single)',
     states: [
-      { id: 'add-default', label: 'Form — technician scope', render: () => <AssembledLabApp persona="tech" initialView="add" /> },
+      { id: 'add-default', label: '1 · Facility & equipment', render: () => <AssembledLabApp persona="tech" initialView="add" /> },
+      { id: 'add-warranty', label: '2 · Warranty & Maintenance', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'details' }} /> },
+      { id: 'add-review', label: '3 · Review & submit', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'review' }} /> },
       { id: 'add-errors', label: 'Validation errors', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ state: 'errors' }} /> },
       { id: 'add-dup-tag', label: 'Duplicate asset tag (unique in region)', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ state: 'dup' }} /> },
       { id: 'add-edit-mode', label: 'Edit mode — prefilled record', render: () => <AssembledLabApp persona="lead" initialView="edit:nhrl-058" /> },
@@ -286,19 +299,14 @@ export const STATE_SECTIONS = [
   {
     title: 'Cold-room monitoring (install)',
     states: [
-      { id: 'flow-facility', label: '1 · Facility', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'facility' }} /> },
-      {
-        id: 'flow-contacts-cap',
-        label: '3 · Contacts at the cap (10 of 10)',
-        render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device', initialData: { ...FLOW_READY, contacts: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10'] } }} />,
-      },
-      { id: 'flow-details', label: '2 · Equipment details', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'details' }} /> },
+      { id: 'flow-facility', label: '1 · Facility & equipment', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'facility' }} /> },
+      { id: 'flow-warranty', label: '2 · Warranty & Maintenance', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'warranty' }} /> },
       {
         id: 'flow-details-errors',
-        label: '2 · Missing asset tag + QR',
+        label: '1 · Missing asset tag + QR',
         render: () => (
           <AssembledLabApp persona="lead" initialView="flow" flowProps={{
-            initialStep: 'details',
+            initialStep: 'facility',
             initialData: { equipment: { assetTag: '', qrCode: '' } },
             initialErrors: {
               assetTag: 'Enter the asset tag — it is how this record is found.',
@@ -312,6 +320,11 @@ export const STATE_SECTIONS = [
         id: 'flow-device-assigned',
         label: '3 · Sensors assigned (CT5 A–D)',
         render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device', initialData: FLOW_READY }} />,
+      },
+      {
+        id: 'flow-contacts-cap',
+        label: '3 · Contacts at the cap (10 of 10)',
+        render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device', initialData: { ...FLOW_READY, contacts: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10'] } }} />,
       },
       {
         id: 'flow-review',

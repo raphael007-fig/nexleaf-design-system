@@ -11,6 +11,9 @@ const IcoAlertCircle = () => (
 
 // Outer dot: 16×16px circle. Inner dot: 6×6px (checked only).
 // Default tone → dark #303030 fill on check. Magic tone → purple #8051ff fill on check.
+// Brand tone  → COLOR_PRIMARY #005bd3 fill on check, for a selection that reads
+//               as the interactive choice rather than a neutral setting
+//               (added 2026-09-07: the component had no blue selected state).
 // Error → pinkish fill #fee9e8 + #8e1f0b border (unchecked); #8e1f0b fill (checked).
 
 export function RadioButton({
@@ -21,6 +24,13 @@ export function RadioButton({
   const [foc, setFoc] = useState(false);
 
   const isMagic = tone === 'magic';
+  const isBrand = tone === 'brand';
+  // Selected/hover accent per tone — default stays neutral so existing
+  // usage is untouched.
+  const accent = isMagic ? '#8051ff' : isBrand ? '#005bd3' : '#303030';
+  const accentSoft = isMagic ? '#f3f1ff' : isBrand ? '#f1f8ff' : '#fafafa';
+  const accentTint = isMagic ? '#f8f7ff' : isBrand ? '#f7fbff' : '#fdfdfd';
+  const accentEdge = isMagic ? '#9474ff' : isBrand ? '#a9d1ff' : '#8a8a8a';
 
   // ── Outer ring colours ──────────────────────────────────────────
   let ringBg, ringBorder;
@@ -31,13 +41,13 @@ export function RadioButton({
   } else if (error && !checked) {
     ringBg = '#fee9e8'; ringBorder = '0.66px solid #8e1f0b';
   } else if (checked) {
-    ringBg = isMagic ? '#8051ff' : '#303030'; ringBorder = 'none';
+    ringBg = accent; ringBorder = 'none';
   } else if (hov || foc) {
-    ringBg = isMagic ? '#f3f1ff' : '#fafafa';
-    ringBorder = isMagic ? '0.66px solid #8051ff' : '0.66px solid #616161';
+    ringBg = accentSoft;
+    ringBorder = `0.66px solid ${isMagic || isBrand ? accent : '#616161'}`;
   } else {
-    ringBg = isMagic ? '#f8f7ff' : '#fdfdfd';
-    ringBorder = isMagic ? '0.66px solid #9474ff' : '0.66px solid #8a8a8a';
+    ringBg = accentTint;
+    ringBorder = `0.66px solid ${accentEdge}`;
   }
 
   const innerDotBg = disabled ? 'rgba(160,160,160,0.7)' : '#fff';
