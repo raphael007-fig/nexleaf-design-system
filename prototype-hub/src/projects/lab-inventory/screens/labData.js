@@ -420,38 +420,172 @@ export const IMPORT_FIELDS = [
   { id: '__skip',        label: 'Don’t import' },
 ];
 
-// A slice of NHRL's real-looking sheet: messy headers, messy condition strings.
-export const IMPORT_SHEET = {
-  fileName: 'NHRL equipment register 2026.xlsx',
-  headers: ['EQUIPMENT ID NO', 'Name of equipment', 'Manufacturer', 'Serial no', 'Current location', 'Status', 'Purchase date', 'Warranty expiry', 'Last serviced', 'Service company'],
-  // Suggested mapping (their header → our field id); Status is the human-check.
-  suggested: {
-    'EQUIPMENT ID NO': 'assetTag',
-    'Name of equipment': 'name',
-    'Manufacturer': 'make',
-    'Serial no': 'serial',
-    'Current location': 'location',
-    'Status': 'condition',
-    'Purchase date': 'acquired',
-    'Warranty expiry': 'warrantyEnd',
-    'Last serviced': 'lastService',
-    'Service company': 'servicer',
-  },
-  rows: [
-    // id · name · manufacturer · serial · location · status · purchase · warranty expiry · last serviced · service company
-    ['NHRL/EQP/101', 'Refrigerated centrifuge',   'Eppendorf 5702 R',       '5702R-8817',   'Sample prep, Room 6',  'OK',                  '12/03/2022', '12/03/2025', '04/02/2026', 'Calibration Centre'],
-    ['NHRL/EQP/102', 'Freezer -86 New Brunswick', 'Eppendorf',              'U410-2231',    'Molecular lab, Rm 12', 'Working',             '02/07/2019', '02/07/2022', '',           ''],
-    ['NHRL/EQP/103', 'ELISA washer',              'BioTek 50 TS',           '',             'Serology, Room 8',     'Not fully installed', '28/11/2025', '28/11/2028', '',           'Vendor (original supplier)'],
-    ['NHRL/EQP/104', 'Vortex mixer',              'Scientific Industries',  '',             'Sample prep, Room 6',  'Old',                 '',           '',           '',           ''],
-    ['NHRL/EQP/022', 'Ultra-low freezer -86',     'Eppendorf New Brunswick','U535-8842-KE', 'Molecular lab, Rm 12', 'OK',                  '15/03/2021', '15/03/2024', '11/08/2025', 'Local service agent'],
-    ['NHRL/EQP/106', 'Water distiller',           'Lasany',                 'LI-8842',      'Media room',           'Out of order',        '19/06/2017', '',           '03/03/2024', 'In-house biomedical team'],
-    ['NHRL/EQP/107', 'Autoclave bench-top',       'Tuttnauer 2540',         '',             'Sterilisation room',   'awaiting validation', '30/01/2026', '30/01/2029', '',           'Vendor (original supplier)'],
-  ],
+// ── Reading a real lab spreadsheet ───────────────────────────────────────────
+// Labs send whatever they have: several files, several sheets per file, and
+// some sheets laid out sideways (our field names running DOWN the first column
+// with one record per column) rather than as a header row. The import has to
+// work all of that out for itself (Raf, 2026-09-07), so the seed data below is
+// RAW GRIDS — exactly what a parser would hand us — and the orientation,
+// headers and rows are derived, never declared.
+
+// Header synonyms, so an unseen header still finds its field. Matched loosely:
+// lowercased, punctuation stripped, substring or whole-word hit.
+const FIELD_SYNONYMS = {
+  assetTag:      ['asset tag', 'asset no', 'equipment id', 'equipment no', 'equip id', 'inventory no', 'tag no', 'asset code', 'id no'],
+  type:          ['equipment type', 'type of equipment', 'category', 'equipment category', 'class'],
+  name:          ['name of equipment', 'equipment name', 'description', 'item', 'equipment', 'name'],
+  make:          ['manufacturer', 'make', 'brand', 'supplier brand'],
+  model:         ['model', 'model no', 'model number'],
+  serial:        ['serial no', 'serial number', 'serial', 'sn'],
+  location:      ['current location', 'location', 'room', 'department', 'unit', 'placement', 'where'],
+  condition:     ['status', 'condition', 'working status', 'functional status', 'state'],
+  deployment:    ['deployment', 'deployment status', 'in use', 'in service', 'installed'],
+  acquired:      ['purchase date', 'date purchased', 'date of purchase', 'acquired', 'acquisition date', 'year purchased', 'procurement date'],
+  qrCode:        ['qr', 'qr code', 'barcode'],
+  sheetNotes:    ['notes', 'remarks', 'comments', 'observation'],
+  warrantyStart: ['warranty start', 'warranty from', 'warranty commencement'],
+  warrantyEnd:   ['warranty expiry', 'warranty end', 'warranty to', 'warranty until', 'warranty expires'],
+  schedule:      ['maintenance schedule', 'service interval', 'ppm frequency', 'service frequency', 'maintenance frequency'],
+  lastService:   ['last serviced', 'last service', 'date serviced', 'last ppm', 'last maintenance'],
+  agreement:     ['service agreement', 'contract', 'under contract', 'service contract'],
+  servicer:      ['service company', 'service provider', 'servicer', 'vendor', 'maintained by', 'service agent'],
+  servicerPhone: ['service phone', 'provider phone', 'contact number', 'service contact', 'telephone'],
+  servicerEmail: ['service email', 'provider email', 'email'],
+  coverFrom:     ['cover start', 'cover from', 'contract start'],
+  coverTo:       ['cover end', 'cover to', 'contract end', 'contract expiry'],
 };
+
+const norm = (v) => String(v ?? '').toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+/**
+ * Best field for a spreadsheet header, or null when nothing matches.
+ * Longest synonym first, so "warranty expiry" never loses to "warranty".
+ */
+export function suggestField(header) {
+  const h = norm(header);
+  if (!h) return null;
+  let best = null;
+  let bestLen = 0;
+  Object.entries(FIELD_SYNONYMS).forEach(([field, syns]) => {
+    syns.forEach((syn) => {
+      const matched = h === syn || h.includes(syn);
+      if (matched && syn.length > bestLen) { best = field; bestLen = syn.length; }
+    });
+  });
+  return best;
+}
+
+const transpose = (grid) => (grid[0] || []).map((_, c) => grid.map((row) => row[c] ?? ''));
+
+/**
+ * Work out whether a raw grid is laid out in COLUMNS (a header row, one record
+ * per row) or in ROWS (field names down the first column, one record per
+ * column) by scoring which edge looks more like our field names.
+ *
+ * @returns {{orientation:'columns'|'rows', headers:string[], rows:string[][], confidence:number}}
+ */
+export function readSheet(grid) {
+  const rowsGrid = grid.filter((r) => r.some((c) => String(c ?? '').trim()));
+  if (!rowsGrid.length) return { orientation: 'columns', headers: [], rows: [], confidence: 0 };
+  const firstRow = rowsGrid[0] || [];
+  const firstCol = rowsGrid.map((r) => r[0] ?? '');
+  const score = (cells) => {
+    const filled = cells.filter((c) => String(c ?? '').trim());
+    if (!filled.length) return 0;
+    return filled.filter((c) => suggestField(c)).length / filled.length;
+  };
+  const colScore = score(firstRow);
+  const rowScore = score(firstCol);
+  // Ties go to columns — it is overwhelmingly the common layout.
+  const asRows = rowScore > colScore;
+  const oriented = asRows ? transpose(rowsGrid) : rowsGrid;
+  return {
+    orientation: asRows ? 'rows' : 'columns',
+    headers: (oriented[0] || []).map((h) => String(h ?? '').trim()),
+    rows: oriented.slice(1),
+    confidence: Math.max(colScore, rowScore),
+  };
+}
+
+/** Auto-map every header a sheet has; unmatched columns default to skip. */
+export function suggestMapping(headers) {
+  const out = {};
+  headers.forEach((h) => { out[h] = suggestField(h) || '__skip'; });
+  return out;
+}
+
+// ── Seed files: two spreadsheets, four sheets, one of them sideways ──────────
+export const IMPORT_FILES = [
+  {
+    id: 'f1',
+    name: 'NHRL equipment register 2026.xlsx',
+    size: 86016,
+    sheets: [
+      {
+        name: 'Main register',
+        grid: [
+          ['EQUIPMENT ID NO', 'Name of equipment', 'Manufacturer', 'Model', 'Serial no', 'Current location', 'Status', 'Purchase date', 'Warranty expiry', 'Last serviced', 'Service company'],
+          ['NHRL/EQP/101', 'Refrigerated centrifuge',   'Eppendorf',    '5702 R',        '5702R-8817',   'Sample prep, Room 6',  'OK',                  '12/03/2022', '12/03/2025', '04/02/2026', 'Calibration Centre'],
+          ['NHRL/EQP/102', 'Freezer -86 New Brunswick', 'Eppendorf',    'U410',          'U410-2231',    'Molecular lab, Rm 12', 'Working',             '02/07/2019', '02/07/2022', '',           ''],
+          ['NHRL/EQP/103', 'ELISA washer',              'BioTek',       '50 TS',         '',             'Serology, Room 8',     'Not fully installed', '28/11/2025', '28/11/2028', '',           'Vendor (original supplier)'],
+          ['NHRL/EQP/104', 'Vortex mixer',              'Scientific Industries', 'SI-0236', '',          'Sample prep, Room 6',  'Old',                 '',           '',           '',           ''],
+          ['NHRL/EQP/022', 'Ultra-low freezer -86',     'Eppendorf New Brunswick', 'U535', 'U535-8842-KE', 'Molecular lab, Rm 12', 'OK',               '15/03/2021', '15/03/2024', '11/08/2025', 'Local service agent'],
+        ],
+      },
+      {
+        name: 'Cold chain',
+        grid: [
+          ['Asset code', 'Equipment', 'Brand', 'Serial', 'Room', 'Working status', 'Date purchased', 'Remarks'],
+          ['NHRL/EQP/106', 'Water distiller',      'Lasany',   'LI-8842', 'Media room',         'Out of order',        '19/06/2017', 'Awaiting spare part'],
+          ['NHRL/EQP/107', 'Autoclave bench-top',  'Tuttnauer', '',       'Sterilisation room', 'awaiting validation', '30/01/2026', 'New — IQ/OQ pending'],
+        ],
+      },
+      {
+        // Sideways: our field names run DOWN the first column, one machine per
+        // column. Real registers arrive like this more often than anyone hopes.
+        name: 'Annex (sideways)',
+        grid: [
+          ['Equipment ID',    'NHRL/EQP/201',        'NHRL/EQP/202'],
+          ['Name',            'Biosafety cabinet',   'CO2 incubator'],
+          ['Manufacturer',    'Thermo Scientific',   'Thermo Scientific'],
+          ['Model',           '1300 Series A2',      'Heracell 150i'],
+          ['Serial no',       'BSC-4471-KE',         'INC-9920-KE'],
+          ['Room',            'TB lab, Room 3',      'Culture room'],
+          ['Status',          'Functional',          'Needs repair'],
+          ['Purchase date',   '08/04/2021',          '17/09/2018'],
+          ['Warranty expiry', '08/04/2024',          ''],
+          ['Service company', 'Local service agent', 'Local service agent'],
+        ],
+      },
+    ],
+  },
+  {
+    id: 'f2',
+    name: 'Serology annex 2025.csv',
+    size: 12288,
+    sheets: [
+      {
+        name: 'Sheet 1',
+        grid: [
+          ['Inventory no', 'Description', 'Make', 'Model no', 'SN', 'Department', 'Condition', 'Year purchased', 'Maintained by', 'Telephone'],
+          ['NHRL/EQP/301', 'Plate reader',      'BioTek',  'ELx800', 'ELX-2231', 'Serology, Room 8', 'Functional',   '2023', 'Calibration Centre', '+254 722 415 990'],
+          ['NHRL/EQP/302', 'Microplate washer', 'BioTek',  '405 LS', '',         'Serology, Room 8', 'Not working',  '2016', '',                   ''],
+        ],
+      },
+    ],
+  },
+];
 
 // Condition mapping (§8): free-text → the lab's 4 values. 'review' rows need a
 // human check; 'age' strings are NOT a condition — stored as a note instead.
 export const CONDITION_MAP = {
+  // Sheets that already use the lab's own vocabulary map straight through.
+  'functional': { condition: 'Functional' },
+  'faulty': { condition: 'Faulty' },
+  'decommissioned': { condition: 'Decommissioned' },
+  'unknown': { condition: 'Unknown' },
+  'needs repair': { condition: 'Faulty' },
+  'not working': { condition: 'Faulty' },
   'ok': { condition: 'Functional' },
   'working': { condition: 'Functional' },
   'new': { condition: 'Functional' },
@@ -490,6 +624,7 @@ export const TYPE_INFERENCE = [
   { match: /balance/i, type: 'balance' },
   { match: /pipette/i, type: 'pipette' },
   { match: /ph\s*meter/i, type: 'ph-meter' },
+  { match: /plate\s*reader|microplate|elisa/i, type: 'analyser' },
   { match: /thermometer|timer/i, type: 'thermo-timer' },
   { match: /water\s*bath/i, type: 'water-bath' },
   { match: /computer|printer|ups|monitor|workstation/i, type: 'it-facility' },

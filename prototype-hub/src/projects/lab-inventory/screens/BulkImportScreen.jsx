@@ -18,13 +18,14 @@ import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { Upload } from '@ds/components/Upload/Upload.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
+import { Accordion } from '@ds/components/Accordion/Accordion.jsx';
 import { SubmissionSuccessCard } from '@ds/components/SubmissionSuccessCard/SubmissionSuccessCard.jsx';
 import { TEXT_DEFAULT, TEXT_SUBDUED } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
 import { StepFrame, FormSection } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
-  IMPORT_FIELDS, IMPORT_SHEET, CONDITION_MAP, LAB_FACILITIES, PERSONAS,
+  IMPORT_FIELDS, IMPORT_FILES, readSheet, suggestMapping, CONDITION_MAP, LAB_FACILITIES, PERSONAS,
   LAB_EQUIPMENT, inferType, typeLabel, LAB_TYPES,
 } from './labData.js';
 
@@ -37,9 +38,9 @@ const PHASES = [
 const STEP_ORDER = ['upload', 'map', 'preview'];
 
 // §8 condition mapping applied to one raw row.
-function mapRow(raw, mapping, facilityId) {
+function mapRow(raw, headers, mapping, facilityId, source) {
   const record = { facilityId, notes: [] };
-  IMPORT_SHEET.headers.forEach((header, i) => {
+  headers.forEach((header, i) => {
     const field = mapping[header];
     if (!field || field === '__skip') return;
     record[field] = raw[i];
@@ -81,7 +82,7 @@ function mapRow(raw, mapping, facilityId) {
     if (mapped.deployment) record.notes.push(`Deployment: ${mapped.deployment} (from “${rawCondition}”).`);
     if (mapped.review) issues.push({ kind: 'review', label: 'Status needs a human check' });
   }
-  return { record, issues, raw };
+  return { record, issues, raw, source };
 }
 
 /**
@@ -90,16 +91,51 @@ function mapRow(raw, mapping, facilityId) {
 export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }) {
   const personaDef = PERSONAS[0]; // import is admin work — biomed-lead scope
   const [step, setStep] = useState(['importing', 'success', 'error'].includes(state) ? 'preview' : state);
-  const [files, setFiles] = useState(() => (state === 'upload'
-    ? []
-    : [{ id: 'f1', name: IMPORT_SHEET.fileName, size: 86016, progress: 100, status: 'complete' }]));
+  // Up to three files (Raf, 2026-09-07) — labs rarely keep one register. Status
+  // is 'done' (not 'complete'): that is the value the DS Upload renders its
+  // remove control for.
+  const [fileIds, setFileIds] = useState(() => (state === 'upload' ? [] : IMPORT_FILES.map((f) => f.id)));
+  const chosen = IMPORT_FILES.filter((f) => fileIds.includes(f.id));
+  const files = chosen.map((f) => ({ id: f.id, name: f.name, size: f.size, progress: 100, status: 'done' }));
   const [facilityId, setFacilityId] = useState(state === 'upload' ? '' : 'nhrl');
-  const [mapping, setMapping] = useState({ ...IMPORT_SHEET.suggested });
+  // How each file is laid out: 'auto' trusts the per-sheet detection, the other
+  // two force every sheet in that file one way.
+  const [layout, setLayout] = useState({});
+  const [openSheet, setOpenSheet] = useState(null);
+
+  // Every sheet of every chosen file, read for orientation and headers.
+  const sheets = useMemo(() => chosen.flatMap((file) => file.sheets.map((sheet) => {
+    const forced = layout[file.id] && layout[file.id] !== 'auto' ? layout[file.id] : null;
+    const read = readSheet(sheet.grid);
+    if (!forced || forced === read.orientation) {
+      return { file, sheet, key: `${file.id}|${sheet.name}`, ...read, forced: false };
+    }
+    // Forced the other way: re-read the grid with the axes swapped.
+    const swapped = (sheet.grid[0] || []).map((_, c) => sheet.grid.map((r) => r[c] ?? ''));
+    const base = forced === 'rows' ? swapped : sheet.grid;
+    return {
+      file, sheet, key: `${file.id}|${sheet.name}`, forced: true,
+      orientation: forced,
+      headers: (base[0] || []).map((h) => String(h ?? '').trim()),
+      rows: base.slice(1),
+      confidence: read.confidence,
+    };
+  })), [fileIds.join(','), JSON.stringify(layout)]);
+
+  // Auto-mapping for every header of every sheet, keyed per sheet so the same
+  // header name in two sheets can map differently.
+  const [mappingOverrides, setMappingOverrides] = useState({});
+  const mappingFor = (sh) => ({ ...suggestMapping(sh.headers), ...(mappingOverrides[sh.key] || {}) });
   const [phase, setPhase] = useState(state === 'importing' ? 'importing' : state === 'success' ? 'success' : state === 'error' ? 'error' : 'idle');
 
   const parsed = useMemo(
-    () => IMPORT_SHEET.rows.map((raw) => mapRow(raw, mapping, facilityId)),
-    [mapping, facilityId],
+    () => sheets.flatMap((sh) => {
+      const map = mappingFor(sh);
+      return sh.rows
+        .filter((raw) => raw.some((c) => String(c ?? '').trim()))
+        .map((raw) => mapRow(raw, sh.headers, map, facilityId, `${sh.file.name} › ${sh.sheet.name}`));
+    }),
+    [sheets, JSON.stringify(mappingOverrides), facilityId],
   );
   const withIssues = parsed.filter((p) => p.issues.length);
   const clean = parsed.length - withIssues.length;
@@ -136,7 +172,8 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
               {
                 heading: 'What was created',
                 lines: [
-                  { label: 'Source file', value: IMPORT_SHEET.fileName },
+                  { label: 'Source files', value: chosen.map((f) => f.name).join(', ') || '—' },
+                  { label: 'Sheets read', value: sheets.map((sh) => `${sh.sheet.name} (${sh.orientation})`).join(', ') || '—' },
                   { label: 'Records created', value: `${parsed.length} (all in the register — none monitored)` },
                   { label: 'Flagged for follow-up', value: `${withIssues.length} — kept, marked for review` },
                   { label: 'Equipment status mapping', value: 'Free-text mapped to the lab’s five conditions; “Old” kept as a note, not a condition' },
@@ -163,7 +200,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
         <StepFrame
           stepper={stepper}
           title="Upload the lab’s register"
-          subtitle="One spreadsheet per facility — the records land under the lab that owns them."
+          subtitle="Up to three spreadsheets per facility — every sheet is read."
           footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!files.length || !facilityId} onClick={() => setStep('map')}>
@@ -171,27 +208,53 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
             </Btn>
           )}
         >
-          <FormSection title="Facility" required>
-            <SearchSelect
-              label="Facility"
-              required
-              placeholder="Which lab does this register belong to?"
-              options={LAB_FACILITIES.filter((f) => personaDef.facilities.includes(f.id))}
-              value={facilityId}
-              onChange={(v) => setFacilityId(v && v.target ? v.target.value : v)}
-            />
-          </FormSection>
-          <FormSection title="Register file" required>
+          {/* No section heading — the field carries its own label. */}
+          <SearchSelect
+            label="Facility"
+            required
+            placeholder="Which lab does this register belong to?"
+            options={LAB_FACILITIES.filter((f) => personaDef.facilities.includes(f.id))}
+            value={facilityId}
+            onChange={(v) => setFacilityId(v && v.target ? v.target.value : v)}
+          />
+          <FormSection title="Register files" required>
             <Upload
-              label="Register spreadsheet"
-              helperText="One file (XLSX or CSV), max 10 MB. Word tables: save as CSV first."
+              label="Register spreadsheets"
+              helperText="Up to three files (XLSX or CSV), max 10 MB each."
               accept=".xlsx,.csv"
-              multiple={false}
-              maxFiles={1}
+              multiple
+              maxFiles={3}
               files={files}
-              onAddFiles={() => setFiles([{ id: 'f1', name: IMPORT_SHEET.fileName, size: 86016, progress: 100, status: 'complete' }])}
-              onRemove={() => setFiles([])}
+              onAddFiles={() => setFileIds((ids) => {
+                const next = IMPORT_FILES.find((f) => !ids.includes(f.id));
+                return next && ids.length < 3 ? [...ids, next.id] : ids;
+              })}
+              onRemove={(id) => setFileIds((ids) => ids.filter((x) => x !== id))}
             />
+            {/* Under each file: what the layout was read as, and the chance to
+                say otherwise (Raf, 2026-09-07). Detection is per sheet, so the
+                default stays "as detected" — forcing applies to every sheet in
+                that file. */}
+            {chosen.map((file, i) => {
+              const fileSheets = sheets.filter((sh) => sh.file.id === file.id);
+              const kinds = [...new Set(fileSheets.map((sh) => sh.orientation))];
+              const detected = kinds.length > 1 ? 'mixed — per sheet' : kinds[0] || 'unknown';
+              return (
+                <div key={file.id} style={{ maxWidth: 320 }}>
+                  <SelectInput
+                    label={`Spreadsheet ${i + 1} · layout`}
+                    options={[
+                      { id: 'auto', label: `As detected · ${detected}` },
+                      { id: 'columns', label: 'By columns' },
+                      { id: 'rows', label: 'By rows' },
+                    ]}
+                    value={layout[file.id] || 'auto'}
+                    onChange={(e) => setLayout((l) => ({ ...l, [file.id]: e.target ? e.target.value : e }))}
+                    helpText={`${fileSheets.length} ${fileSheets.length === 1 ? 'sheet' : 'sheets'} · ${fileSheets.reduce((n, sh) => n + sh.headers.length, 0)} columns · ${fileSheets.reduce((n, sh) => n + sh.rows.length, 0)} records`}
+                  />
+                </div>
+              );
+            })}
           </FormSection>
         </StepFrame>
       )}
@@ -199,20 +262,58 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
       {step === 'map' && (
         <StepFrame
           stepper={stepper}
-          title={`Map columns — ${IMPORT_SHEET.fileName}`}
-          subtitle="Their headers, our fields. The suggestions were matched automatically — change any that are wrong. Unmapped columns are not imported."
+          title="Map columns"
+          subtitle="Their headers, our fields — matched automatically, one section per sheet."
           footerLeft={<Btn variant="secondary" onClick={() => setStep('upload')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={() => setStep('preview')}>Preview import</Btn>}
         >
-          {IMPORT_SHEET.headers.map((h) => (
-            <div key={h} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 2fr', gap: 16, alignItems: 'center' }}>
-              <span style={{ fontSize: 13, fontWeight: 550, color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>{h}</span>
-              <SelectInput
-                ariaLabel={`Map column ${h}`}
-                options={IMPORT_FIELDS}
-                value={mapping[h] || '__skip'}
-                onChange={(e) => setMapping((m) => ({ ...m, [h]: e.target.value }))}
-              />
+          {chosen.map((file, fi) => (
+            <div key={file.id} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span style={{ fontSize: 14, fontWeight: 650, color: TEXT_DEFAULT }}>
+                  Spreadsheet {fi + 1} · {file.name}
+                </span>
+                <span style={{ fontSize: 12, color: TEXT_SUBDUED }}>
+                  {file.sheets.length} {file.sheets.length === 1 ? 'sheet' : 'sheets'} in this file
+                </span>
+              </div>
+              {sheets.filter((sh) => sh.file.id === file.id).map((sh, si) => {
+                const map = mappingFor(sh);
+                const unmatched = sh.headers.filter((h) => map[h] === '__skip').length;
+                return (
+                  <Accordion
+                    key={sh.key}
+                    open={openSheet === sh.key || (openSheet === null && fi === 0 && si === 0)}
+                    onToggle={() => setOpenSheet(openSheet === sh.key ? '' : sh.key)}
+                    title={`Sheet ${si + 1} · ${sh.sheet.name}`}
+                    description={`${sh.orientation === 'rows' ? 'Rows layout' : 'Columns layout'}${sh.forced ? ' (you set this)' : ' (detected)'} · ${sh.headers.length} columns · ${sh.rows.length} records${unmatched ? ` · ${unmatched} not matched` : ' · all matched'}`}
+                    hasContent={sh.headers.length > 0}
+                  >
+                    {sh.orientation === 'rows' && (
+                      <Banner tone="info" inCard hideIcon>
+                        <span style={{ display: 'block', fontWeight: 650 }}>This sheet is laid out sideways</span>
+                        The field names run down the first column and each record is a column
+                        across. It has been turned the right way round — {sh.headers.length} fields,
+                        {' '}{sh.rows.length} records — so it maps like any other sheet.
+                      </Banner>
+                    )}
+                    {sh.headers.map((h) => (
+                      <div key={h} style={{ display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 2fr', gap: 16, alignItems: 'center' }}>
+                        <span style={{ fontSize: 13, fontWeight: 550, color: TEXT_DEFAULT, overflowWrap: 'anywhere' }}>{h}</span>
+                        <SelectInput
+                          ariaLabel={`Map ${sh.sheet.name} column ${h}`}
+                          options={IMPORT_FIELDS}
+                          value={map[h] || '__skip'}
+                          onChange={(e) => setMappingOverrides((mo) => ({
+                            ...mo,
+                            [sh.key]: { ...(mo[sh.key] || {}), [h]: e.target ? e.target.value : e },
+                          }))}
+                        />
+                      </div>
+                    ))}
+                  </Accordion>
+                );
+              })}
             </div>
           ))}
         </StepFrame>
