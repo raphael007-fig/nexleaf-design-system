@@ -23,11 +23,26 @@ import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
 import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
-import { StepFrame, FormSection } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
+import { StepFrame, FormSection, ReviewRows } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
+import { RadioGroup } from '@ds/components/RadioButton/RadioButton.jsx';
 import { LabShell } from './LabShell.jsx';
+
+// Ported verbatim from the 3rd-party installation flow so a lab record and a
+// cold-chain record answer these questions identically (Raf, 2026-09-07).
+const EQUIPMENT_STATUS = [
+  { id: 'installed', label: 'Installed' },
+  { id: 'not-installed', label: 'Not Installed' },
+];
+const WARRANTY_YEARS = ['1 year', '2 years', '3 years', '5 years', '10 years', 'No warranty'];
+// Deployment status — from the live ColdTrace equipment page (Raf, 2026-09-07).
+// This is the LIFECYCLE answer (is it in service, and for how long), which is a
+// different question from Condition (is it working).
+const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 
 // Same 20px muted glyph the add-equipment flow puts on its QR section.
 const IcoQr = () => <PolarisIconImg name="ShopcodesIcon" size={20} color="#616161" />;
+const IcoLocation = () => <PolarisIconImg name="LocationIcon" size={20} color="#303030" />;
+const IcoClipboard = () => <PolarisIconImg name="ClipboardIcon" size={20} color="#303030" />;
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
   LAB_MODELS, makeOptions, modelOptions,
@@ -69,6 +84,15 @@ export function AddLabEquipmentScreen({
   // register is walked with a clipboard, and most lab kit has no label at all —
   // so the section is offered, not enforced. Whether lab assets get QR codes at
   // all is still an open question on PD-41.
+  // Installation + warranty (ported from the 3rd-party flow). Status is
+  // required there because a monitored device must be installed to report; here
+  // it records whether the lab is actually using the equipment yet.
+  const [status, setStatus] = useState(() => (mode === 'edit' && record ? (record.status || 'installed') : ''));
+  const [installDate, setInstallDate] = useState(() => (mode === 'edit' && record ? (record.installDate || null) : null));
+  const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
+  const [deployFrom, setDeployFrom] = useState(null);
+  const [deployTo, setDeployTo] = useState(null);
+  const [warrantyYears, setWarrantyYears] = useState(() => (mode === 'edit' && record ? (record.warrantyYears || '') : ''));
   // Free-text type, only when Type = Other.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
@@ -101,6 +125,7 @@ export function AddLabEquipmentScreen({
     if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
+    if (!status) next.status = 'Equipment status is required.';
     if (!form.name.trim()) next.name = 'Enter the equipment name — it is how staff recognise this record.';
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
@@ -110,7 +135,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, status, installDate, deployment, deployFrom, deployTo, warrantyYears, qrCode, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -309,6 +334,66 @@ export function AddLabEquipmentScreen({
               </div>
             </>
           )}
+        </FormSection>
+
+        {/* Installation Details — the same section as the 3rd-party flow.
+            Facility and Region are never re-asked: the facility was chosen in
+            Ownership above and the region follows from it. */}
+        <FormSection icon={<IcoLocation />} title="Installation Details">
+          <RadioGroup
+            title="Equipment status"
+            required
+            name="lab-equipment-status"
+            value={status}
+            onChange={(id) => {
+              setStatus(id);
+              if (id === 'installed' && !installDate) setInstallDate(new Date());
+              setErrors((x) => (x.status ? { ...x, status: undefined } : x));
+            }}
+            options={EQUIPMENT_STATUS}
+            error={errors.status}
+          />
+          {status === 'installed' && (
+            <DateField
+              label="Equipment install date"
+              value={installDate}
+              onChange={setInstallDate}
+              helpText="When the equipment was installed at the facility. Defaults to today."
+            />
+          )}
+          {/* Deployment status answers a different question from Condition:
+              whether the equipment is in service, and over what period. */}
+          <SelectInput
+            label="Deployment status"
+            options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
+            placeholder="Select…"
+            value={deployment}
+            onChange={(e) => setDeployment(e.target ? e.target.value : e)}
+            helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
+          />
+          {deployment && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
+              <DateField label="From" value={deployFrom} onChange={setDeployFrom}
+                helpText="When this status began." />
+              <DateField label="To" value={deployTo} onChange={setDeployTo}
+                helpText="Leave blank while it is still current." />
+            </div>
+          )}
+          <ReviewRows rows={[
+            ['Facility', form.facilityId ? (LAB_FACILITIES.find((f) => f.id === form.facilityId)?.label || '—') : 'Choose a facility above'],
+            ['Region', 'National Public Health Lab — set by the facility'],
+          ]} />
+        </FormSection>
+
+        <FormSection icon={<IcoClipboard />} title="Maintenance and Warranty">
+          <SelectInput
+            label="Warranty years"
+            options={WARRANTY_YEARS.map((w) => ({ id: w, label: w }))}
+            placeholder="Select…"
+            value={warrantyYears}
+            onChange={(e) => setWarrantyYears(e.target ? e.target.value : e)}
+            helpText="Optional — recorded so a faulty unit can be checked against its warranty before a repair is raised."
+          />
         </FormSection>
       </StepFrame>
 
