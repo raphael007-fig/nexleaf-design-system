@@ -45,7 +45,6 @@ const PHASES = [
 // Same 20px muted glyph the add-equipment flow puts on its QR section.
 const IcoQr = ({ size = 20, color = '#616161' }) => <PolarisIconImg name="ShopcodesIcon" size={size} color={color} />;
 const IcoCamera = () => <PolarisIconImg name="CameraIcon" size={16} color="#ffffff" />;
-const IcoLocation = () => <PolarisIconImg name="LocationIcon" size={20} color="#303030" />;
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
   LAB_MODELS, makeOptions, modelOptions,
@@ -367,6 +366,15 @@ export function AddLabEquipmentScreen({
               helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
             />
           </div>
+          {/* Purchase date is a fact about the record, not about being installed
+              (Raf, 2026-09-07), so it shows for every deployment status. */}
+          <DateField
+            label="Purchase date"
+            placeholder="Optional"
+            value={form.acquired}
+            onChange={set('acquired')}
+            helpText="When the lab bought it — separate from when it was installed."
+          />
         </FormSection>
 
 
@@ -374,26 +382,17 @@ export function AddLabEquipmentScreen({
             section (Raf, 2026-09-07). The old "Equipment status" radios are gone
             with it: Deployment status above already says whether the equipment
             is installed, so asking twice invited contradictions. */}
+        {/* No heading — the field follows straight on from the deployment
+            status that revealed it. */}
         {(deployment === 'Installed' || deployment === 'Deployed') && (
-          <FormSection icon={<IcoLocation />} title="Installation Details">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <DateField
               label="Equipment install date"
               value={installDate}
               onChange={setInstallDate}
               helpText="When the equipment was installed at the facility. Defaults to today."
             />
-            <DateField
-              label="Purchase date"
-              placeholder="Optional"
-              value={form.acquired}
-              onChange={set('acquired')}
-              helpText="When the lab bought it — separate from when it was installed."
-            />
-            <ReviewRows rows={[
-              ['Facility', form.facilityId ? (LAB_FACILITIES.find((f) => f.id === form.facilityId)?.label || '—') : 'Choose a facility above'],
-              ['Region', 'National Public Health Lab — set by the facility'],
-            ]} />
-          </FormSection>
+          </div>
         )}
 
 
