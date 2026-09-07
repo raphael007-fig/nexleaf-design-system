@@ -127,19 +127,25 @@ export function AddLabEquipmentScreen({
   const [assignQr, setAssignQr] = useState(null);
   const [nextQrSeq, setNextQrSeq] = useState(70071);
   // Validation states open on the step that owns them.
-  const [step, setStep] = useState(() => initialStep || ((state === 'errors' || state === 'dup') ? 'details' : 'facility'));
+  // Validation states open on the step that OWNS the fields — step 1 since the
+  // 3-step refactor (was 'details', which is now Warranty & Maintenance).
+  const [step, setStep] = useState(() => initialStep || 'facility');
   // Everything up to the opening step counts as visited, so the stepper can
   // navigate back to it (Raf, 2026-09-07 — steps are for navigation).
   const [visited, setVisited] = useState(() => new Set(
-    STEP_IDS.slice(0, Math.max(0, STEP_IDS.indexOf(initialStep || ((state === 'errors' || state === 'dup') ? 'details' : 'facility'))) + 1),
+    STEP_IDS.slice(0, Math.max(0, STEP_IDS.indexOf(initialStep || 'facility')) + 1),
   ));
   const go = (next) => { setStep(next); setVisited((v) => new Set([...v, next])); };
+  // The seeded validation state must be the SAME messages recordErrors() would
+  // produce, on the SAME fields that are actually required — asset tag stopped
+  // being one, and "condition" became "status".
   const [errors, setErrors] = useState(() => (state === 'errors'
     ? {
       facilityId: 'Choose the facility that owns this equipment.',
       type: 'Choose an equipment type from the list.',
-      assetTag: 'Enter the lab’s own asset tag — it is how this record is found.',
-      condition: 'Choose the equipment’s condition.',
+      make: 'Choose or type the manufacturer.',
+      condition: 'Choose the equipment’s status.',
+      acquired: 'Enter the purchase date.',
     }
     : state === 'dup'
       ? { assetTag: 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.' }
