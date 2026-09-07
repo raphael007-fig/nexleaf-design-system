@@ -8,8 +8,11 @@
 //     "Central Cold Store" facility.
 //   • D6 (A): the 4 known labs + Calibration Centre now; the remaining labs
 //     drop into this config list without a rebuild.
-//   • Condition vocabulary REUSES Passive Equipment's 4-value set — no new
-//     status vocabulary. "Not set" is the display for null (never "Unknown").
+//   • Condition vocabulary is the LAB's own 5-value set (Raf, 2026-09-07):
+//     Functional · Faulty · Decommissioned · Unknown · Not in use. It replaces
+//     the Passive Equipment 4-value set the first draft borrowed. "Not set" is
+//     the display for null — distinct from "Unknown", which is a real answer
+//     meaning nobody has verified this equipment yet.
 
 // ── Facilities (NPHL region) ──────────────────────────────────────────────────
 export const NPHL_REGION = { id: 'nphl', label: 'National Public Health Lab' };
@@ -54,17 +57,75 @@ export const typeLabel = (id) => typeById(id)?.label ?? '—';
 export const isMonitorableNow = (id) => typeById(id)?.monitoring === 'v1';
 export const isMonitorableLater = (id) => typeById(id)?.monitoring === 'later';
 
-// ── Condition — Passive Equipment's 4-value vocabulary, reused verbatim ───────
+// ── Make / model — a seeded, extensible managed list (same pattern as D3) ─────
+// Labs re-buy from the same handful of manufacturers, so typing the make by
+// hand produced the spelling drift we see in the paper registers ("Eppendorf",
+// "eppendorf", "Eppendorf AG"). These lists are what NPHL's own inventory
+// already contains, so a user PICKS in the common case. They are NOT PQS — lab
+// kit is not in the PQS catalogue — and both fields stay creatable, because a
+// lab will always own something the list has never seen.
+export const LAB_MAKES = [
+  'Agilent', 'Bio-Rad', 'BioTek', 'Dell / APC', 'Eppendorf', 'Eppendorf New Brunswick',
+  'Esco', 'Fluke', 'Foster Refrigerator', 'Grant Instruments', 'Haier Biomedical',
+  'Hanna Instruments', 'Hettich', 'Labconco', 'Lasany', 'Memmert', 'Mettler Toledo',
+  'Olympus', 'Panasonic Biomedical', 'Roche', 'Sartorius', 'Scientific Industries',
+  'Shimadzu', 'Thermo Forma', 'Tuttnauer',
+];
+
+// Models the NPHL inventory already holds, by make. A make with no entry simply
+// offers no suggestions — the field still accepts a typed model.
+export const LAB_MODELS = {
+  'Agilent': ['8890 GC / 5977C MS', '1260 Infinity II'],
+  'BioTek': ['50 TS', 'ELx50'],
+  'Dell / APC': ['OptiPlex 7010 / BX950'],
+  'Eppendorf': ['5810 R', '5702 R', 'Research plus', 'ThermoMixer C'],
+  'Eppendorf New Brunswick': ['Innova U535', 'Innova U725'],
+  'Esco': ['Airstream AC2-4S8'],
+  'Fluke': ['1523', '1524'],
+  'Foster Refrigerator': ['PROB1100H'],
+  'Grant Instruments': ['JB Nova 12'],
+  'Haier Biomedical': ['HYC-390', 'HYC-509', 'DW-86L388J'],
+  'Hanna Instruments': ['HI2211'],
+  'Hettich': ['EBA 200', 'ROTINA 380'],
+  'Labconco': ['Purifier Logic+'],
+  'Lasany': ['LPD-102'],
+  'Memmert': ['IN55', 'UF55'],
+  'Mettler Toledo': ['ME204', 'ME103'],
+  'Olympus': ['CX23', 'CX43'],
+  'Panasonic Biomedical': ['MDF-DU502VH'],
+  'Roche': ['cobas 6800', 'cobas 4800'],
+  'Sartorius': ['Entris II', 'Quintix'],
+  'Scientific Industries': ['Vortex-Genie 2'],
+  'Shimadzu': ['Nexera LC-40 (LC-40D XR, SIL-40C XR, CTO-40C, SPD-M40)'],
+  'Thermo Forma': ['8600 Series', '3111'],
+  'Tuttnauer': ['2540', '3870 EA'],
+};
+
+// Options for the Make picker, and for the Model picker once a make is chosen.
+export const makeOptions = () => LAB_MAKES.map((m) => ({ id: m, label: m }));
+export const modelOptions = (make) => {
+  const list = LAB_MODELS[make];
+  if (list) return list.map((m) => ({ id: m, label: m }));
+  // No make chosen yet (or an unlisted one): offer every model we know.
+  return Object.values(LAB_MODELS).flat().sort().map((m) => ({ id: m, label: m }));
+};
+
+// ── Condition — the lab's own 5-value vocabulary (Raf, 2026-09-07) ────────────
+// Severity ladder the tones follow: Functional (green) → Unknown (amber, needs
+// verifying) → Faulty (red, needs repair) → Not in use / Decommissioned (grey,
+// deliberate end states).
 export const CONDITIONS = [
   'Functional',
-  'Damaged / Needs repair',
-  'Unusable',
+  'Faulty',
   'Decommissioned',
+  'Unknown',
+  'Not in use',
 ];
 export const CONDITION_TONES = {
   'Functional': 'success',
-  'Damaged / Needs repair': 'warning',
-  'Unusable': 'critical',
+  'Faulty': 'critical',
+  'Unknown': 'warning',
+  'Not in use': 'default',
   'Decommissioned': 'default',
   'Not set': 'default',
 };
@@ -127,7 +188,7 @@ export const LAB_EQUIPMENT = [
     type: 'fridge-freezer', name: 'Reagent refrigerator',
     make: 'Haier Biomedical', model: 'HYC-390',
     serial: 'HYC390-7723', location: 'Serology, Room 8',
-    condition: 'Damaged / Needs repair', acquired: '2017-05-11', monitored: false,
+    condition: 'Faulty', acquired: '2017-05-11', monitored: false,
   },
   {
     id: 'nhrl-061', facilityId: 'nhrl', assetTag: 'NHRL/EQP/061',
@@ -155,7 +216,7 @@ export const LAB_EQUIPMENT = [
     type: 'microscope', name: 'Teaching microscope',
     make: 'Olympus', model: 'CX43',
     serial: null, location: 'Training room',
-    condition: 'Unusable', acquired: '2014-08-22', monitored: false,
+    condition: 'Faulty', acquired: '2014-08-22', monitored: false,
   },
   {
     id: 'nmarl-inc-001', facilityId: 'nmarl', assetTag: 'NMARL/TR/INC/001',
@@ -176,7 +237,7 @@ export const LAB_EQUIPMENT = [
     type: 'centrifuge', name: 'Benchtop centrifuge',
     make: 'Hettich', model: 'EBA 200',
     serial: null, location: 'Histology, Room 3',
-    condition: 'Damaged / Needs repair', acquired: '2016-12-09', monitored: false,
+    condition: 'Faulty', acquired: '2016-12-09', monitored: false,
   },
   {
     id: 'nobrl-e-020', facilityId: 'nobrl', assetTag: 'MOH/DLS/NPHL/NOBRL/E-020',
@@ -244,7 +305,7 @@ export const LAB_EQUIPMENT = [
     type: 'balance', name: 'Calibration weights + balance',
     make: 'Sartorius', model: 'Entris II',
     serial: 'SR-ENT-1189', location: 'Calibration bench A',
-    condition: 'Damaged / Needs repair', acquired: '2018-03-03', monitored: false,
+    condition: 'Faulty', acquired: '2018-03-03', monitored: false,
   },
 ];
 
@@ -353,8 +414,8 @@ export const CONDITION_MAP = {
   'not in use': { condition: 'Functional', deployment: 'Not in use' },
   'not fully installed': { condition: 'Functional', deployment: 'Not in use' },
   'awaiting validation': { condition: 'Functional', deployment: 'Not in use' },
-  'out of order': { condition: 'Damaged / Needs repair', review: true },
-  'not working': { condition: 'Damaged / Needs repair', review: true },
+  'out of order': { condition: 'Faulty', review: true },
+  'not working': { condition: 'Faulty', review: true },
   'decommissioned': { condition: 'Decommissioned' },
   'retired': { condition: 'Decommissioned' },
   'old': { age: true },

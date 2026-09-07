@@ -121,7 +121,7 @@ export function LabRecordDetailScreen({
               <Badge tone={CONDITION_TONES[record.condition] || 'default'}>{record.condition || 'Not set'}</Badge>
             </div>
             <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-              Uses the Passive Equipment vocabulary. Age is kept in notes, never as a condition.
+              The lab’s five-value vocabulary. Age is kept in notes, never as a condition.
             </p>
           </Card>
           {/* DS QR card — unmonitored rows have no QR yet (whether lab assets get QR

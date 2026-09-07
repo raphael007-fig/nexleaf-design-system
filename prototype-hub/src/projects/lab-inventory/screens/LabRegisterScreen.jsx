@@ -102,7 +102,7 @@ export function LabRegisterScreen({
     if (!tabMatch(r, activeTab)) return false;
     if (activeMetric === 'monitored' && !r.monitored) return false;
     if (activeMetric === 'not-monitored' && (r.monitored || r.condition === 'Decommissioned')) return false;
-    if (activeMetric === 'attention' && !['Damaged / Needs repair', 'Unusable'].includes(r.condition)) return false;
+    if (activeMetric === 'attention' && !['Faulty', 'Unknown'].includes(r.condition)) return false;
     if (filters.facilities.length && !filters.facilities.includes(r.facilityId)) return false;
     if (filters.types.length && !filters.types.includes(r.type)) return false;
     if (filters.conditions.length && !filters.conditions.includes(r.condition)) return false;
@@ -126,7 +126,7 @@ export function LabRegisterScreen({
   const counts = TAB_LABELS.map((_, i) => allRows.filter((r) => tabMatch(r, i)).length);
   const nMonitored = allRows.filter((r) => r.monitored).length;
   const nNotMonitored = allRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
-  const nAttention = allRows.filter((r) => ['Damaged / Needs repair', 'Unusable'].includes(r.condition)).length;
+  const nAttention = allRows.filter((r) => ['Faulty', 'Unknown'].includes(r.condition)).length;
   const scopeLabel = personaDef.facilities.length > 1
     ? `all ${personaDef.facilities.length} NPHL facilities`
     : facilityLabel(personaDef.facilities[0]);
@@ -230,8 +230,8 @@ export function LabRegisterScreen({
         />
         <MetricCard
           title="Needs attention" metric={showData ? String(nAttention) : '—'} loading={loading}
-          badge={showData && nAttention ? { label: 'Damaged or unusable', tone: 'warning' } : undefined}
-          infoTooltip={`Records whose condition is Damaged / Needs repair or Unusable, out of ${allRows.length} in ${scopeLabel}.`}
+          badge={showData && nAttention ? { label: 'Faulty or unknown', tone: 'warning' } : undefined}
+          infoTooltip={`Records that are Faulty (need repair) or Unknown (nobody has verified them), out of ${allRows.length} in ${scopeLabel}.`}
           selected={activeMetric === 'attention'}
           onClick={() => setActiveMetric((p) => (p === 'attention' ? null : 'attention'))}
         />
