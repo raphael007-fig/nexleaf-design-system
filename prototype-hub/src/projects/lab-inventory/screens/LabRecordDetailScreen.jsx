@@ -80,7 +80,7 @@ export function LabRecordDetailScreen({
             <CardSectionTitle title="Record" />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 16 }}>
               <CardField label="Asset tag" value={record.assetTag} />
-              <CardField label="Type" value={typeLabel(record.type)} />
+              <CardField label="Equipment type" value={typeLabel(record.type)} />
               <CardField label="Make" value={record.make} />
               <CardField label="Model" value={record.model} />
               <CardField label="Serial number" value={record.serial || '— (not recorded)'} />

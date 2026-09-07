@@ -38,6 +38,15 @@ const EQUIPMENT_STATUS = [
 // different question from Condition (is it working).
 const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 
+// Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
+// adding a lab record and adding a cold-chain record feel like one product:
+// facility first (it sets the region), then the equipment, then a review.
+const PHASES = [
+  { label: 'Facility', steps: ['facility'] },
+  { label: 'Equipment Details', steps: ['details'] },
+  { label: 'Review & Submit', steps: ['review'] },
+];
+
 // Same 20px muted glyph the add-equipment flow puts on its QR section.
 const IcoQr = () => <PolarisIconImg name="ShopcodesIcon" size={20} color="#616161" />;
 const IcoLocation = () => <PolarisIconImg name="LocationIcon" size={20} color="#303030" />;
@@ -94,6 +103,10 @@ export function AddLabEquipmentScreen({
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
   const [qrModal, setQrModal] = useState(null);   // null | 'assign' | 'view'
+  // Validation states open on the step that owns them.
+  const [step, setStep] = useState(() => ((state === 'errors' || state === 'dup') ? 'details' : 'facility'));
+  const [visited, setVisited] = useState(() => new Set(['facility', ...((state === 'errors' || state === 'dup') ? ['details'] : [])]));
+  const go = (next) => { setStep(next); setVisited((v) => new Set([...v, next])); };
   const [errors, setErrors] = useState(() => (state === 'errors'
     ? {
       facilityId: 'Choose the facility that owns this equipment.',
@@ -117,11 +130,39 @@ export function AddLabEquipmentScreen({
     && LAB_EQUIPMENT.some((r) => r.assetTag.toLowerCase() === form.assetTag.trim().toLowerCase()
       && (!isEdit || r.id !== record.id));
 
-  function save() {
+  const activePhaseIndex = PHASES.findIndex((ph) => ph.steps.includes(step));
+  const navigable = PHASES.map((ph, i) => i).filter((i) => PHASES[i].steps.some((x) => visited.has(x)));
+  const stepper = {
+    phases: PHASES,
+    activeIndex: activePhaseIndex,
+    navigable,
+    onSelect: (i) => go(PHASES[i].steps[0]),
+  };
+
+  // Step 1 → 2 needs the facility, because it sets the region everything else
+  // inherits. Step 2 → 3 needs the fields a record cannot exist without.
+  function nextFromFacility() {
     const next = {};
     if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    go('details');
+  }
+  function nextFromDetails() {
+    const next = {};
+    if (!status) next.status = 'Equipment status is required.';
+    if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
+    if (!form.condition) next.condition = 'Choose the equipment’s condition.';
+    setErrors(next);
+    if (Object.keys(next).length) return;
+    go('review');
+  }
+
+  function save() {
+    const next = {};
+    if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!status) next.status = 'Equipment status is required.';
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
@@ -152,27 +193,28 @@ export function AddLabEquipmentScreen({
         backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
       />
 
-      <StepFrame
-        footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
-        footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
-      >
-        {/* No section heading here (Raf, 2026-09-07) — facility and type open
-            the form directly. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <SearchSelect
-            label="Facility"
-            required
-            placeholder="Choose the owning facility"
-            options={scopedFacilities}
-            value={form.facilityId}
-            onChange={set('facilityId')}
-            error={errors.facilityId}
-          />
-          <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-            Region is derived from the facility — it is never asked separately.
-          </p>
+      {step === 'facility' && (
+        <StepFrame
+          stepper={stepper}
+          title="Facility & equipment type"
+          subtitle="Where the equipment lives and what it is. The facility sets the region; the type decides whether monitoring is even possible."
+          footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
+          footerRight={<Btn variant="primary" onClick={nextFromFacility}>Next</Btn>}
+        >
+        <SearchSelect
+          label="Facility"
+          required
+          placeholder="Search facilities…"
+          options={scopedFacilities}
+          value={form.facilityId}
+          onChange={set('facilityId')}
+          error={errors.facilityId}
+        />
+        <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+          Region is derived from the facility — it is never asked separately.
+        </p>
           <SelectInput
-            label="Type"
+            label="Equipment type"
             required
             placeholder="Choose an equipment type"
             options={LAB_TYPES.map((t) => ({ id: t.id, label: t.label }))}
@@ -204,8 +246,17 @@ export function AddLabEquipmentScreen({
               now and can be connected without re-registering when it lands.
             </Banner>
           )}
-        </div>
+        </StepFrame>
+      )}
 
+      {step === 'details' && (
+        <StepFrame
+          stepper={stepper}
+          title="Equipment details"
+          subtitle="What the equipment is, where it sits, and whether it is in service. Most fields mirror the lab’s paper register."
+          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
+        >
         <FormSection title="Identification" required>
           <TextInput
             label="Name"
@@ -396,7 +447,51 @@ export function AddLabEquipmentScreen({
           />
         </FormSection>
 
-      </StepFrame>
+        </StepFrame>
+      )}
+
+      {step === 'review' && (
+        <StepFrame
+          stepper={stepper}
+          title="Review & submit"
+          subtitle="Check the record before it joins the register. Nothing is created until you submit."
+          footerLeft={<Btn variant="secondary" onClick={() => go('details')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
+        >
+          <FormSection title="Ownership">
+            <ReviewRows rows={[
+              ['Facility', scopedFacilities.find((f) => f.id === form.facilityId)?.label || '—'],
+              ['Region', 'National Public Health Lab — set by the facility'],
+            ]} />
+          </FormSection>
+          <FormSection title="Equipment">
+            <ReviewRows rows={[
+              ['Equipment type', form.type === 'other' ? `${otherType || '—'} (other)` : (LAB_TYPES.find((t) => t.id === form.type)?.label || '—')],
+              ['Name', form.name || '—'],
+              ['Make / model', [form.make, form.model].filter(Boolean).join(' ') || '—'],
+              ['Asset tag', form.assetTag || '— (none)'],
+              ['Serial number', form.serial || '— (none)'],
+            ]} />
+          </FormSection>
+          <FormSection title="Placement, condition & service">
+            <ReviewRows rows={[
+              ['Location / room', form.location || '—'],
+              ['Condition', form.condition || '—'],
+              ['Deployment status', deployment || '—'],
+              ['Equipment status', EQUIPMENT_STATUS.find((o) => o.id === status)?.label || '—'],
+              ['Purchase date', form.acquired ? new Date(form.acquired).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
+              ['QR code', qrCode || '— (none)'],
+            ]} />
+          </FormSection>
+          {isMonitorableNow(form.type) && (
+            <Banner tone="info" inCard hideIcon>
+              <span style={{ display: 'block', fontWeight: 650 }}>Monitoring comes next</span>
+              This type supports monitoring. Submitting creates the register record —
+              you will be offered the monitoring setup straight after.
+            </Banner>
+          )}
+        </StepFrame>
+      )}
 
       {/* Assign / check — deliberately small: scanning happens on a phone, this
           just records which pre-printed code was stuck on the equipment. */}

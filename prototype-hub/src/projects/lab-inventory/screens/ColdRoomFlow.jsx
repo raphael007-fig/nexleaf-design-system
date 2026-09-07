@@ -229,7 +229,7 @@ export function ColdRoomFlow({
         >
           <FormSection title="Identification" required>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <TextInput label="Type" value="Walk-in Cold Room" readOnly
+              <TextInput label="Equipment type" value="Walk-in Cold Room" readOnly
                 helpText="Set when this record was added to the register. Fridge-vs-freezer never comes up — the type carries the thresholds." />
               <TextInput label="Name" value={equipment.name}
                 onChange={(e) => setEquipment((q) => ({ ...q, name: e.target.value }))} />
