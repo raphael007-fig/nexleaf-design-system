@@ -42,7 +42,7 @@ import { LabShell } from './LabShell.jsx';
 import {
   LAB_FACILITIES, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS,
   BASE_STATIONS, CT5_SENSORS, CTX_SENSORS, facilityLabel, CONDITIONS,
-  DEPLOYMENT_STATUS, LAB_MODELS, makeOptions, modelOptions,
+  DEPLOYMENT_STATUS, LAB_MODELS, LAB_TYPES, makeOptions, modelOptions,
 } from './labData.js';
 
 const TRAIL = [{ id: 'add-monitoring', label: 'Set Up Monitoring' }];
@@ -66,6 +66,7 @@ const SENSOR_ROLES = ['In-room', 'Ambient', 'Door'];
 
 // ── The flow ──────────────────────────────────────────────────────────────────
 const DEFAULT_EQUIPMENT = {
+  type: 'walk-in-cold-room',
   name: 'Walk-in Cold Room (reagent store)',
   make: 'Foster Refrigerator', model: 'PROB1100H',
   assetTag: 'MOH/DLS/NPHL/CCS/WICR-001', serial: 'FR-PROB-2019-4471',
@@ -109,6 +110,8 @@ export function ColdRoomFlow({
   const [customProviders, setCustomProviders] = useState([]);
   const [customMakes, setCustomMakes] = useState([]);
   const [customModels, setCustomModels] = useState([]);
+  const [customTypes, setCustomTypes] = useState([]);
+  const [otherType, setOtherType] = useState('');
   // A cold room being monitored is, by definition, deployed.
   const [deployment, setDeployment] = useState(initialData.deployment ?? 'Deployed');
 
@@ -117,17 +120,27 @@ export function ColdRoomFlow({
     .map((s) => ({ id: s, label: s }));
   // A CT5 has exactly four sensors; a CTX draws from the pre-fed serial pool.
   const maxSensors = device?.kind === 'CT5' ? 4 : (device ? CTX_SENSORS.length : 0);
+  // Copy follows the chosen type, not a hardcoded cold room: the type carries
+  // the thresholds, so it also carries what the screens can honestly say.
+  const typeName = equipment.type === 'other'
+    ? (otherType.trim() || 'Other')
+    : (LAB_TYPES.find((t) => t.id === equipment.type)?.label || 'equipment');
+  const band = equipment.type === 'ultra-cold' ? '−40 to −86 °C' : '2–8 °C';
+  const configName = `${typeName} configuration`;
+  // Don't lowercase the label — it would eat the °C in "Ultra-cold freezer
+  // (−40/−86 °C)" — and don't restate the band when the label already carries it.
+  const bandSuffix = typeName.includes('°C') ? '' : ` (${band})`;
 
   // One validator for step 1, so the primary can stay disabled until the
   // record is answerable (same rule as the register form).
   function recordErrors() {
     const next = {};
     if (!facilityId) next.facilityId = 'Choose the facility that owns this cold room.';
+    if (!equipment.type) next.type = 'Choose an equipment type from the list.';
+    if (equipment.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is.';
     if (!equipment.make.trim()) next.make = 'Choose or type the manufacturer.';
-    if (!equipment.assetTag.trim()) next.assetTag = 'Enter the asset tag — it is how this record is found.';
     if (!equipment.condition) next.condition = 'Choose the equipment’s status.';
     if (!equipment.acquired) next.acquired = 'Enter the purchase date.';
-    if (!equipment.qrCode.trim()) next.qrCode = 'Assign a QR code — the step cannot complete without one.';
     return next;
   }
   const recordComplete = Object.keys(recordErrors()).length === 0;
@@ -171,8 +184,8 @@ export function ColdRoomFlow({
       {step !== 'success' && (
         <Page
           flushTop
-          title="Set Up Monitoring — Walk-in Cold Room"
-          subtitle="Install the Nexleaf base station and assign its sensors to this one cold-room record. Thresholds follow the Walk-in Cold Room configuration (2–8 °C) — nothing to enter here."
+          title="Set Up Monitoring"
+          subtitle={`Install the Nexleaf base station and assign its sensors to this ONE record — ${typeName}. Thresholds follow the ${configName}${bandSuffix} — nothing to enter here.`}
           backAction={{ onClick: () => setCancelOpen(true), ariaLabel: 'Cancel monitoring setup' }}
         />
       )}
@@ -181,7 +194,7 @@ export function ColdRoomFlow({
         <StepFrame
           stepper={stepper}
           title="Facility & equipment"
-          subtitle="The facility (which sets the region) and the cold room itself — the same capture as the register form, so a monitored record holds exactly what an unmonitored one does."
+          subtitle="The facility (which sets the region) and the equipment itself — the same capture as the register form, so a monitored record holds exactly what an unmonitored one does."
           footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!recordComplete} onClick={nextFromFacility}>Next</Btn>
@@ -199,24 +212,55 @@ export function ColdRoomFlow({
           <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
             Region is derived from the facility — it is never asked separately.
           </p>
-          <Banner tone="info" inCard hideIcon>
-            The cold room is a shared NPHL asset, so it lives under <b>Central Cold Store</b> —
-            not inside one unit lab.
-          </Banner>
+          {equipment.type === 'walk-in-cold-room' && (
+            <Banner tone="info" inCard hideIcon>
+              A walk-in cold room is a shared NPHL asset, so it lives under <b>Central Cold
+              Store</b> — not inside one unit lab.
+            </Banner>
+          )}
 
-          {/* Equipment type is fixed here — this flow only ever sets up a
-              walk-in cold room, so the type is stated, not asked. */}
-          <TextInput
+          {/* The type is CHOSEN, not fixed (the Sep 2026 meeting: the monitored
+              flow mirrors the unmonitored one exactly). The register already
+              holds monitored fridges and ultra-cold freezers, which a
+              cold-room-only flow could never have created. */}
+          <SearchSelect
             label="Equipment type"
-            value="Walk-in Cold Room"
-            readOnly
-            helpText="Fixed for this flow. Cold rooms are not in PQS, there is no compartment question, and the type carries the 2–8 °C thresholds."
+            required
+            placeholder="Choose or type an equipment type"
+            options={[
+              ...LAB_TYPES.map((t) => ({ id: t.id, label: t.label })),
+              ...customTypes.map((t) => ({ id: t, label: t })),
+            ]}
+            value={equipment.type}
+            onChange={(v) => {
+              const type = v && v.target ? v.target.value : v;
+              setEquipment((q) => ({ ...q, type }));
+              setErrors((er) => ({ ...er, type: undefined }));
+            }}
+            onCreate={(text) => {
+              setCustomTypes((c) => (c.includes(text) ? c : [...c, text]));
+              setEquipment((q) => ({ ...q, type: text }));
+              setErrors((er) => ({ ...er, type: undefined }));
+            }}
+            createLabel="Add equipment type"
+            error={errors.type}
+            helpText="The type carries the temperature thresholds — they are never entered here."
           />
+          {equipment.type === 'other' && (
+            <TextInput
+              label="What type of equipment is it?"
+              required
+              placeholder="The lab’s own word for this equipment"
+              value={otherType}
+              onChange={(e) => { setOtherType(e.target.value); setErrors((x) => ({ ...x, otherType: undefined })); }}
+              error={errors.otherType}
+            />
+          )}
 
           <FormSection title="Identification" required>
             <TextInput
               label="Name"
-              placeholder="e.g. Walk-in Cold Room (reagent store)"
+              placeholder="Optional — what staff call it"
               value={equipment.name}
               onChange={(e) => setEquipment((q) => ({ ...q, name: e.target.value }))}
               helpText="Optional — what staff call it."
@@ -270,12 +314,11 @@ export function ColdRoomFlow({
                 monitored record is the one every alarm and reading points at. */}
             <TextInput
               label="Asset tag"
-              required
-              placeholder="e.g. MOH/DLS/NPHL/CCS/WICR-001"
+              placeholder="Optional — e.g. MOH/DLS/NPHL/CCS/WICR-001"
               value={equipment.assetTag}
               error={errors.assetTag}
               onChange={(e) => { setEquipment((q) => ({ ...q, assetTag: e.target.value })); setErrors((er) => ({ ...er, assetTag: undefined })); }}
-              helpText="Required here — a monitored record is what every reading and alarm points at."
+              helpText="Optional, as in the register form. Where a lab tags its kit, enter it exactly as labelled."
             />
           </FormSection>
 
@@ -314,15 +357,13 @@ export function ColdRoomFlow({
             />
           </FormSection>
 
-          <FormSection title="QR code" required>
+          <FormSection title="QR code">
             <TextInput
               label="QR code"
-              required
-              placeholder="Scan or type the code on the sticker"
+              placeholder="Optional — scan or type the code on the sticker"
               value={equipment.qrCode}
-              error={errors.qrCode}
-              onChange={(e) => { setEquipment((q) => ({ ...q, qrCode: e.target.value })); setErrors((er) => ({ ...er, qrCode: undefined })); }}
-              helpText="Required on this path — same rule as the cold-chain install flow. The code links the physical asset to this record."
+              onChange={(e) => setEquipment((q) => ({ ...q, qrCode: e.target.value }))}
+              helpText="Optional, for future use. A code links a physical label to this record so a phone scan opens it."
             />
           </FormSection>
 
@@ -390,7 +431,7 @@ export function ColdRoomFlow({
             {sensors.length === 0 && (
               <Banner tone="info" inCard>
                 No sensors on this record yet. Add at least one — a walk-in cold room
-                normally has 3–4 in-room sensors plus an ambient one.
+                normally has 3–4 in-room sensors plus an ambient one; a fridge usually one.
               </Banner>
             )}
             {sensors.map((row, i) => (
@@ -454,8 +495,8 @@ export function ColdRoomFlow({
               every count. Serials are picked from the system, never typed.
             </Banner>
             <Banner tone="info" inCard hideIcon>
-              <b>No thresholds to enter.</b> Alarms follow the Walk-in Cold Room configuration
-              (2–8 °C, WHO-derived), managed by administrators. The NPHL region can override
+              <b>No thresholds to enter.</b> Alarms follow the {configName}{bandSuffix},
+              WHO-derived and managed by administrators. The NPHL region can override
               durations later if the lab lead confirms reagents need it.
             </Banner>
           </FormSection>
@@ -516,7 +557,7 @@ export function ColdRoomFlow({
           </ReviewSection>
           <ReviewSection title="Equipment" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('facility')}>
             <ReviewRows rows={[
-              ['Type', 'Walk-in Cold Room'],
+              ['Type', typeName],
               ['Name', equipment.name],
               ['Make / Model', `${equipment.make} ${equipment.model}`],
               ['Asset tag', equipment.assetTag],
@@ -542,7 +583,7 @@ export function ColdRoomFlow({
               ['Sensors on this record', sensors.length
                 ? sensors.map((r) => `${r.serial} (${r.role.toLowerCase()})`).join(' · ')
                 : '—'],
-              ['Thresholds', 'Walk-in Cold Room configuration (2–8 °C) — admin-managed, not set here'],
+              ['Thresholds', `${configName}${bandSuffix} — admin-managed, not set here`],
               ['Alarm contacts', contacts.length
                 ? `${contacts.length} of ${MAX_ALARM_CONTACTS} — ${contacts.map((id) => directory.find((c) => c.id === id)?.name || id).join(', ')}`
                 : 'None (dashboard alarms only)'],
@@ -563,7 +604,7 @@ export function ColdRoomFlow({
                   { label: 'Facility', value: facilityLabel(facilityId) },
                   { label: 'Base station', value: device ? `${device.model} · IMEI ${device.imei}` : 'ColdTrace 5' },
                   { label: 'Sensors', value: `${sensors.length} on this one record` },
-                  { label: 'Alarms', value: `2–8 °C (Walk-in Cold Room configuration) → ${contacts.length} contact${contacts.length === 1 ? '' : 's'}` },
+                  { label: 'Alarms', value: `${band} (${configName}) → ${contacts.length} contact${contacts.length === 1 ? '' : 's'}` },
                 ],
               },
             ]}
