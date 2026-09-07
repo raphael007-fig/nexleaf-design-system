@@ -87,11 +87,16 @@ export const LAB_EQUIPMENT = [
     device: {
       baseStation: 'ColdTrace 5 · IMEI 356938035643809',
       kind: 'CT5',
+      // Per-sensor CONFIGURATION, not readings. `cce` is the cold-chain-equipment
+      // role (in-room sensors count toward in-range; the ambient one never does),
+      // and alarms/delays are INHERITED from the Walk-in Cold Room region
+      // configuration (D5) — they are shown so a biomed can see what a sensor is
+      // actually enforcing, and overridden per sensor only deliberately.
       sensors: [
-        { id: 'sensor-a', label: 'Sensor A', placement: 'Front-left, mid-height' },
-        { id: 'sensor-b', label: 'Sensor B', placement: 'Rear-right, mid-height' },
-        { id: 'sensor-c', label: 'Sensor C', placement: 'Centre, near door' },
-        { id: 'sensor-d', label: 'Sensor D (ambient)', placement: 'Outside, ante-room' },
+        { id: 'sensor-a', label: 'Sensor A', placement: 'Front-left, mid-height', cce: 'In-room', alarms: '2 °C / 8 °C (Low / High)', delays: '1 hr / 10 hrs (Low / High)', config: 'Walk-in Cold Room configuration' },
+        { id: 'sensor-b', label: 'Sensor B', placement: 'Rear-right, mid-height', cce: 'In-room', alarms: '2 °C / 8 °C (Low / High)', delays: '1 hr / 10 hrs (Low / High)', config: 'Walk-in Cold Room configuration' },
+        { id: 'sensor-c', label: 'Sensor C', placement: 'Centre, near door', cce: 'In-room', alarms: '2 °C / 8 °C (Low / High)', delays: '1 hr / 10 hrs (Low / High)', config: 'Walk-in Cold Room configuration' },
+        { id: 'sensor-d', label: 'Sensor D (ambient)', placement: 'Outside, ante-room', cce: 'Ambient', alarms: 'None — ambient is not alarmed', delays: '—', config: 'Excluded from in-range maths' },
       ],
     },
     notes: 'Shared NPHL asset — serves all reference labs. Thresholds follow the Walk-in Cold Room configuration (2–8 °C).',

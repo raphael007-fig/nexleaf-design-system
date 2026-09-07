@@ -23,8 +23,9 @@ import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Tabs } from '@ds/components/Tabs/Tabs.jsx';
 import { Cell } from '@ds/components/Cell/Cell.jsx';
 import { Divider } from '@ds/components/Divider/Divider.jsx';
+import { Accordion } from '@ds/components/Accordion/Accordion.jsx';
 import { Skeleton, SkeletonGroup } from '@ds/components/Skeleton/Skeleton.jsx';
-import { TEXT_DEFAULT, TEXT_SUBDUED } from '@ds/tokens/index.js';
+import { TEXT_DEFAULT, TEXT_SUBDUED, BG_SUCCESS, COLOR_SUCCESS } from '@ds/tokens/index.js';
 import { LabShell } from './LabShell.jsx';
 import { TempChart, ChartLegend } from './TempChart.jsx';
 import {
@@ -90,6 +91,8 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
   // the card's count and rows read from here, never from a hardcoded label.
   const [contacts, setContacts] = useState(['c1', 'c2']);
   const [contactsOpen, setContactsOpen] = useState(false);
+  const [openSensor, setOpenSensor] = useState('sensor-a');
+  const [sensorsOpen, setSensorsOpen] = useState(false);
   const actionsRef = useRef(null);
   const sensorsRef = useRef(null);
   const loading = state === 'loading';
@@ -225,33 +228,70 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             )}
           </Card>
 
-          {/* Sensors on this ONE record — the D2 model made visible. */}
+          {/* Sensors on this ONE record — the D2 model made visible. Each row
+              expands to the sensor's own CONFIGURATION (CCE role, the alarms and
+              delays it enforces, and where they came from), because a biomed
+              looking at an excursion needs to know what the sensor was set to,
+              not just its last reading. Thresholds are inherited from the
+              Walk-in Cold Room configuration (D5) — Override is the deliberate
+              exception, never the default. */}
           <Card>
             <div ref={sensorsRef} />
-            <CardSectionTitle title={`Sensors on this record · ${sensors.length}`} />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {sensors.map((s, i) => {
-                const sSeries = SERIES[s.id];
-                const sTemp = LAST(sSeries);
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+              <div>
+                <CardSectionTitle title={`Sensors on this record · ${sensors.length}`} />
+                <p style={{ margin: '2px 0 0', fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
+                  All readings land on this ONE cold-room record (D2)
+                </p>
+              </div>
+              <Btn variant="secondary" small onClick={() => setSensorsOpen(true)}>+ Manage</Btn>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {sensors.map((s) => {
+                const sTemp = LAST(SERIES[s.id]);
                 const offline = state === 'partial' && s.id === 'sensor-b';
                 const ambient = s.id === 'sensor-d';
+                const reading = offline
+                  ? 'last reported 07:12 today'
+                  : state === 'no-readings' ? 'no readings yet' : `${sTemp.toFixed(1)} °C, 2 min ago`;
                 return (
-                  <div key={s.id}>
-                    {i > 0 && <Divider />}
-                    <Cell
-                      title={s.label}
-                      description={`${s.placement} · ${offline ? 'last reported 07:12 today' : state === 'no-readings' ? 'no readings yet' : `${sTemp.toFixed(1)} °C, 2 min ago`}`}
-                      badge={offline
-                        ? <Badge tone="warning">Not reporting</Badge>
-                        : state === 'no-readings'
-                          ? <Badge tone="info">Awaiting first upload</Badge>
-                          : ambient
-                            ? <Badge tone="info">Ambient</Badge>
-                            : <Badge tone="success">In range</Badge>}
-                      onClick={() => setSensorId(s.id)}
-                      ariaLabel={`Show ${s.label} on the chart`}
-                    />
-                  </div>
+                  <Accordion
+                    key={s.id}
+                    open={openSensor === s.id}
+                    onToggle={() => setOpenSensor((v) => (v === s.id ? null : s.id))}
+                    title={(
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{
+                          width: 28, height: 28, borderRadius: 8, background: BG_SUCCESS,
+                          display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                        }}>
+                          <PolarisIconImg name="MediaReceiverIcon" size={16} color={COLOR_SUCCESS} />
+                        </span>
+                        {`${s.label} — ${s.placement.toLowerCase()}`}
+                        {offline
+                          ? <Badge tone="warning" size="small">Not reporting</Badge>
+                          : state === 'no-readings'
+                            ? <Badge tone="info" size="small">Awaiting first upload</Badge>
+                            : ambient
+                              ? <Badge tone="info" size="small">Ambient</Badge>
+                              : <Badge tone="success" size="small">Active</Badge>}
+                      </span>
+                    )}
+                    description={`${s.cce} | ${s.alarms} | ${s.config} · ${reading}`}
+                  >
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
+                      <CardField label="CCE" value={s.cce} />
+                      <CardField label="Temperature Alarms" value={s.alarms} />
+                      <CardField label="Alarm Delays" value={s.delays} />
+                      <CardField label="Region Configuration" value={s.config} />
+                    </div>
+                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 12 }}>
+                      <Btn variant="tertiary" small onClick={() => setSensorId(s.id)}>Plot this sensor</Btn>
+                      <Btn variant="tertiary" small onClick={() => {}}>Edit</Btn>
+                      <Btn variant="tertiary" small onClick={() => {}}>View Region Config</Btn>
+                      <Btn variant="tertiary" small onClick={() => {}}>Override</Btn>
+                    </div>
+                  </Accordion>
                 );
               })}
             </div>
