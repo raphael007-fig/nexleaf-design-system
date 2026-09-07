@@ -377,7 +377,7 @@ export const IMPORT_FIELDS = [
   { id: 'make',      label: 'Make' },
   { id: 'serial',    label: 'Serial' },
   { id: 'location',  label: 'Location / room' },
-  { id: 'condition', label: 'Condition' },
+  { id: 'condition', label: 'Equipment status' },
   { id: 'acquired',  label: 'Purchase date' },
   { id: '__skip',    label: 'Don’t import' },
 ];

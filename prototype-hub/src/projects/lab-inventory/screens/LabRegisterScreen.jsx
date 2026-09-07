@@ -153,7 +153,7 @@ export function LabRegisterScreen({
     { key: 'facility', label: 'Facility', width: 200, render: (r) => facilityLabel(r.facilityId) },
     { key: 'location', label: 'Location / room', width: 170 },
     {
-      key: 'condition', label: 'Condition', width: 170,
+      key: 'condition', label: 'Equipment status', width: 170,
       render: (r) => <Badge tone={CONDITION_TONES[r.condition] || 'default'}>{r.condition || 'Not set'}</Badge>,
     },
     {
@@ -358,7 +358,7 @@ export function LabRegisterScreen({
             ))}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Condition</span>
+            <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Equipment status</span>
             {CONDITIONS.map((c) => (
               <Checkbox
                 key={c}

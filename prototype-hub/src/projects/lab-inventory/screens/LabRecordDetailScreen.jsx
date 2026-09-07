@@ -117,7 +117,7 @@ export function LabRecordDetailScreen({
           </Card>
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <CardSectionTitle title="Condition" />
+              <CardSectionTitle title="Equipment status" />
               <Badge tone={CONDITION_TONES[record.condition] || 'default'}>{record.condition || 'Not set'}</Badge>
             </div>
             <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>

@@ -263,7 +263,7 @@ export function ColdRoomFlow({
               onChange={(e) => setEquipment((q) => ({ ...q, location: e.target.value }))} />
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
               <SelectInput
-                label="Condition"
+                label="Equipment status"
                 options={CONDITIONS.map((c) => ({ id: c, label: c }))}
                 value={equipment.condition}
                 onChange={(e) => setEquipment((q) => ({ ...q, condition: e.target.value }))}

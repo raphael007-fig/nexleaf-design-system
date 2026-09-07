@@ -58,14 +58,14 @@ function mapRow(raw, mapping, facilityId) {
     record.condition = 'Not set';
   } else if (!mapped) {
     record.condition = 'Not set';
-    issues.push({ kind: 'condition', label: `Condition “${rawCondition}” needs review` });
+    issues.push({ kind: 'condition', label: `Status “${rawCondition}” needs review` });
   } else if (mapped.age) {
     record.condition = 'Not set';
     record.notes.push(`Sheet said “${rawCondition}” — age, not condition; kept as a note.`);
   } else {
     record.condition = mapped.condition;
     if (mapped.deployment) record.notes.push(`Deployment: ${mapped.deployment} (from “${rawCondition}”).`);
-    if (mapped.review) issues.push({ kind: 'review', label: 'Condition needs a human check' });
+    if (mapped.review) issues.push({ kind: 'review', label: 'Status needs a human check' });
   }
   return { record, issues, raw };
 }
@@ -122,7 +122,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
                   { label: 'Source file', value: IMPORT_SHEET.fileName },
                   { label: 'Records created', value: `${parsed.length} (all in the register — none monitored)` },
                   { label: 'Flagged for follow-up', value: `${withIssues.length} — kept, marked for review` },
-                  { label: 'Condition mapping', value: 'Free-text mapped to the lab’s five conditions; “Old” kept as a note, not a condition' },
+                  { label: 'Equipment status mapping', value: 'Free-text mapped to the lab’s five conditions; “Old” kept as a note, not a condition' },
                 ],
               },
             ]}
@@ -242,7 +242,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
               { key: 'name', label: 'Name', width: 200, render: (r) => r.record.name || '—' },
               { key: 'type', label: 'Type (inferred)', width: 160, render: (r) => (r.record.type ? typeLabel(r.record.type) : <Badge tone="warning">Not recognised</Badge>) },
               { key: 'make', label: 'Make', width: 170, render: (r) => r.record.make || '—' },
-              { key: 'condition', label: 'Condition (mapped)', width: 180, render: (r) => r.record.condition },
+              { key: 'condition', label: 'Equipment status (mapped)', width: 180, render: (r) => r.record.condition },
               {
                 key: 'issues', label: 'Validation', width: 220,
                 render: (r) => (r.issues.length

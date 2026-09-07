@@ -284,7 +284,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             <CardSectionTitle title="Record" />
             <CardField icon={<RailIcon name="BarcodeIcon" />} label="Asset tag" value={COLD_ROOM.assetTag} />
             <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={COLD_ROOM.serial || '—'} />
-            <CardField icon={<RailIcon name="WrenchIcon" />} label="Condition" value={COLD_ROOM.condition} />
+            <CardField icon={<RailIcon name="WrenchIcon" />} label="Equipment status" value={COLD_ROOM.condition} />
             <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={COLD_ROOM.location} />
             <CardField icon={<RailIcon name="CalendarIcon" />} label="Purchase date" value={formatDate(COLD_ROOM.acquired)} />
           </Card>

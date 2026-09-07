@@ -151,7 +151,8 @@ export function AddLabEquipmentScreen({
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is — “Other” on its own is not a record.';
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
-    if (!form.condition) next.condition = 'Choose the equipment’s condition.';
+    if (!form.condition) next.condition = 'Choose the equipment’s status.';
+    if (!form.acquired) next.acquired = 'Enter the purchase date.';
     setErrors(next);
     if (Object.keys(next).length) return;
     go('review');
@@ -163,7 +164,8 @@ export function AddLabEquipmentScreen({
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
-    if (!form.condition) next.condition = 'Choose the equipment’s condition.';
+    if (!form.condition) next.condition = 'Choose the equipment’s status.';
+    if (!form.acquired) next.acquired = 'Enter the purchase date.';
     setErrors(next);
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
@@ -313,87 +315,83 @@ export function AddLabEquipmentScreen({
               helpText={form.make ? `Models NPHL already holds for ${form.make}.` : 'Pick the make first to narrow this list.'}
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-            <TextInput
-              label="Asset tag"
-              placeholder="Optional — the lab’s own ID, e.g. NHRL/EQP/101"
-              value={form.assetTag}
-              onChange={set('assetTag')}
-              error={errors.assetTag}
-              helpText="Optional. Where a lab tags its kit, enter it exactly as labelled — it must still be unique in the region."
-            />
-            <TextInput
-              label="Serial number"
-              placeholder="Optional"
-              value={form.serial}
-              onChange={set('serial')}
-              helpText="Often missing or duplicated on lab equipment — leave blank if unreadable."
-            />
-          </div>
+        {/* Serial number, then Asset tag beneath it (Raf, 2026-09-07). */}
+          <TextInput
+            label="Serial number"
+            placeholder="Optional"
+            value={form.serial}
+            onChange={set('serial')}
+            helpText="Often missing or duplicated on lab equipment — leave blank if unreadable."
+          />
+          <TextInput
+            label="Asset tag"
+            placeholder="Optional — the lab’s own ID, e.g. NHRL/EQP/101"
+            value={form.assetTag}
+            onChange={set('assetTag')}
+            error={errors.assetTag}
+            helpText="Optional. Where a lab tags its kit, enter it exactly as labelled — it must still be unique in the region."
+          />
         </FormSection>
 
-        <FormSection title="Placement & condition">
+        <FormSection title="Placement & status">
           <TextInput
             label="Location / room"
             placeholder="e.g. Molecular lab, Room 12"
             value={form.location}
             onChange={set('location')}
           />
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-            <SelectInput
-              label="Condition"
-              required
-              placeholder="Choose a condition"
-              options={CONDITIONS.map((c) => ({ id: c, label: c }))}
-              value={form.condition}
-              onChange={set('condition')}
-              error={errors.condition}
-              helpText="The lab’s condition vocabulary. Age (“old”, “new”) is not a condition — use Notes."
-            />
-            {/* Deployment status sits beside Condition (Raf, 2026-09-07): the two
-                together say whether the equipment works AND whether it is in
-                service. */}
-            <SelectInput
-              label="Deployment status"
-              options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
-              placeholder="Select…"
-              value={deployment}
-              onChange={(e) => {
-              const v = e.target ? e.target.value : e;
-              setDeployment(v);
-              if ((v === 'Installed' || v === 'Deployed') && !installDate) setInstallDate(new Date());
-            }}
-              helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
-            />
-          </div>
-          {/* Purchase date is a fact about the record, not about being installed
-              (Raf, 2026-09-07), so it shows for every deployment status. */}
-          <DateField
-            label="Purchase date"
-            placeholder="Optional"
-            value={form.acquired}
-            onChange={set('acquired')}
-            helpText="When the lab bought it — separate from when it was installed."
+        {/* Condition, then Deployment status directly beneath it (Raf,
+            2026-09-07) — stacked, not side by side. */}
+          <SelectInput
+            label="Equipment status"
+            required
+            placeholder="Choose a condition"
+            options={CONDITIONS.map((c) => ({ id: c, label: c }))}
+            value={form.condition}
+            onChange={set('condition')}
+            error={errors.condition}
+            helpText="Whether the equipment works. Age (“old”, “new”) is not a status — use Notes."
           />
+          {/* Deployment status sits beside Condition (Raf, 2026-09-07): the two
+              together say whether the equipment works AND whether it is in
+              service. */}
+          <SelectInput
+            label="Deployment status"
+            options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
+            placeholder="Select…"
+            value={deployment}
+            onChange={(e) => {
+            const v = e.target ? e.target.value : e;
+            setDeployment(v);
+            if ((v === 'Installed' || v === 'Deployed') && !installDate) setInstallDate(new Date());
+          }}
+            helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
+          />
+          {/* Purchase date is a fact about the record, not about being installed
+              (Raf, 2026-09-07), so it shows for every deployment status. It
+              shares this row with the install date so both dates keep the same
+              column rhythm as Condition / Deployment above. */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+            <DateField
+              label="Purchase date"
+              required
+              value={form.acquired}
+              onChange={set('acquired')}
+              error={errors.acquired}
+              helpText="When the lab bought it — separate from when it was installed."
+            />
+            {(deployment === 'Installed' || deployment === 'Deployed') && (
+              <DateField
+                label="Equipment install date"
+                value={installDate}
+                onChange={setInstallDate}
+                helpText="When the equipment was installed at the facility. Defaults to today."
+              />
+            )}
+          </div>
         </FormSection>
 
 
-        {/* Installed (or Deployed, which implies installed) is what opens this
-            section (Raf, 2026-09-07). The old "Equipment status" radios are gone
-            with it: Deployment status above already says whether the equipment
-            is installed, so asking twice invited contradictions. */}
-        {/* No heading — the field follows straight on from the deployment
-            status that revealed it. */}
-        {(deployment === 'Installed' || deployment === 'Deployed') && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <DateField
-              label="Equipment install date"
-              value={installDate}
-              onChange={setInstallDate}
-              helpText="When the equipment was installed at the facility. Defaults to today."
-            />
-          </div>
-        )}
 
 
         {/* QR Code — the same section as the 3rd-party add-equipment flow, but
@@ -466,7 +464,7 @@ export function AddLabEquipmentScreen({
           <FormSection title="Placement, condition & service">
             <ReviewRows rows={[
               ['Location / room', form.location || '—'],
-              ['Condition', form.condition || '—'],
+              ['Equipment status', form.condition || '—'],
               ['Deployment status', deployment || '—'],
               ['Purchase date', form.acquired ? new Date(form.acquired).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
               ['QR code', qrCode || '— (none)'],
