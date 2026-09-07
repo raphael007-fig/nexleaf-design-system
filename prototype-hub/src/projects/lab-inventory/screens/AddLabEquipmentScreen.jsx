@@ -142,16 +142,13 @@ export function AddLabEquipmentScreen({
   // Step 1 → 2 needs the facility, because it sets the region everything else
   // inherits. Step 2 → 3 needs the fields a record cannot exist without.
   function nextFromFacility() {
-    const next = {};
-    if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
-    if (!form.type) next.type = 'Choose an equipment type from the list.';
-    if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
-    setErrors(next);
-    if (Object.keys(next).length) return;
+    if (!form.facilityId) { setErrors((e) => ({ ...e, facilityId: 'Choose the facility that owns this equipment.' })); return; }
     go('details');
   }
   function nextFromDetails() {
     const next = {};
+    if (!form.type) next.type = 'Choose an equipment type from the list.';
+    if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
     if (!status) next.status = 'Equipment status is required.';
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
     if (!form.condition) next.condition = 'Choose the equipment’s condition.';
@@ -196,8 +193,8 @@ export function AddLabEquipmentScreen({
       {step === 'facility' && (
         <StepFrame
           stepper={stepper}
-          title="Facility & equipment type"
-          subtitle="Where the equipment lives and what it is. The facility sets the region; the type decides whether monitoring is even possible."
+          title="Facility"
+          subtitle="The facility where this equipment is installed. It also sets the region."
           footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromFacility}>Next</Btn>}
         >
@@ -213,8 +210,21 @@ export function AddLabEquipmentScreen({
         <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
           Region is derived from the facility — it is never asked separately.
         </p>
+        </StepFrame>
+      )}
+
+      {step === 'details' && (
+        <StepFrame
+          stepper={stepper}
+          title="Equipment details"
+          subtitle="What the equipment is, where it sits, and whether it is in service. Most fields mirror the lab’s paper register."
+          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
+        >
+        {/* Equipment type stands on its own above Identification (Raf,
+            2026-09-07) — it is the field the rest of the record hangs off. */}
+        <FormSection title="Equipment type" required>
           <SelectInput
-            label="Equipment type"
             required
             placeholder="Choose an equipment type"
             options={LAB_TYPES.map((t) => ({ id: t.id, label: t.label }))}
@@ -246,17 +256,8 @@ export function AddLabEquipmentScreen({
               now and can be connected without re-registering when it lands.
             </Banner>
           )}
-        </StepFrame>
-      )}
+        </FormSection>
 
-      {step === 'details' && (
-        <StepFrame
-          stepper={stepper}
-          title="Equipment details"
-          subtitle="What the equipment is, where it sits, and whether it is in service. Most fields mirror the lab’s paper register."
-          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
-          footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
-        >
         <FormSection title="Identification" required>
           <TextInput
             label="Name"
