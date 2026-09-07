@@ -286,7 +286,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={COLD_ROOM.serial || '—'} />
             <CardField icon={<RailIcon name="WrenchIcon" />} label="Condition" value={COLD_ROOM.condition} />
             <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={COLD_ROOM.location} />
-            <CardField icon={<RailIcon name="CalendarIcon" />} label="Acquired" value={formatDate(COLD_ROOM.acquired)} />
+            <CardField icon={<RailIcon name="CalendarIcon" />} label="Purchase date" value={formatDate(COLD_ROOM.acquired)} />
           </Card>
           {/* DS QR card (CardLayoutType5) — QR-70021 was linked during the install
               (F-flow, required); the card renders it scannable with the modal

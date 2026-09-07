@@ -84,7 +84,7 @@ export function LabRecordDetailScreen({
               <CardField label="Make" value={record.make} />
               <CardField label="Model" value={record.model} />
               <CardField label="Serial number" value={record.serial || '— (not recorded)'} />
-              <CardField label="Acquisition date" value={formatDate(record.acquired)} />
+              <CardField label="Purchase date" value={formatDate(record.acquired)} />
             </div>
           </Card>
 

@@ -33,7 +33,6 @@ const EQUIPMENT_STATUS = [
   { id: 'installed', label: 'Installed' },
   { id: 'not-installed', label: 'Not Installed' },
 ];
-const WARRANTY_YEARS = ['1 year', '2 years', '3 years', '5 years', '10 years', 'No warranty'];
 // Deployment status — from the live ColdTrace equipment page (Raf, 2026-09-07).
 // This is the LIFECYCLE answer (is it in service, and for how long), which is a
 // different question from Condition (is it working).
@@ -42,7 +41,6 @@ const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 // Same 20px muted glyph the add-equipment flow puts on its QR section.
 const IcoQr = () => <PolarisIconImg name="ShopcodesIcon" size={20} color="#616161" />;
 const IcoLocation = () => <PolarisIconImg name="LocationIcon" size={20} color="#303030" />;
-const IcoClipboard = () => <PolarisIconImg name="ClipboardIcon" size={20} color="#303030" />;
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
   LAB_MODELS, makeOptions, modelOptions,
@@ -92,7 +90,6 @@ export function AddLabEquipmentScreen({
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
   const [deployFrom, setDeployFrom] = useState(null);
   const [deployTo, setDeployTo] = useState(null);
-  const [warrantyYears, setWarrantyYears] = useState(() => (mode === 'edit' && record ? (record.warrantyYears || '') : ''));
   // Free-text type, only when Type = Other.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
@@ -135,7 +132,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, status, installDate, deployment, deployFrom, deployTo, warrantyYears, qrCode, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, status, installDate, deployment, deployFrom, deployTo, qrCode, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -291,50 +288,14 @@ export function AddLabEquipmentScreen({
               helpText="The lab’s condition vocabulary. Age (“old”, “new”) is not a condition — use Notes."
             />
             <DateField
-              label="Acquisition date"
+              label="Purchase date"
               placeholder="Optional"
               value={form.acquired}
               onChange={set('acquired')}
             />
           </div>
-          <TextareaInput
-            label="Notes"
-            placeholder="Anything the register should keep — provenance, validation status, shared use…"
-            value={form.notes}
-            onChange={set('notes')}
-          />
         </FormSection>
 
-        {/* QR Code — the same section as the 3rd-party add-equipment flow, but
-            optional: a code links a physical label to this record so a phone
-            scan opens it. */}
-        <FormSection icon={<IcoQr />} title="QR Code">
-          {qrCode ? (
-            <>
-              <Banner tone="info" inCard hideIcon>
-                <span style={{ display: 'block', fontWeight: 650 }}>{qrCode} will be linked to this record</span>
-                Scanning this label on the equipment opens this register record. Optional —
-                the record saves with or without it.
-              </Banner>
-              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <Btn variant="secondary" onClick={() => setQrModal('view')}>Check QR Code</Btn>
-                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Reassign QR Code</Btn>
-                <Btn variant="tertiary" onClick={() => setQrCode('')}>Remove</Btn>
-              </div>
-            </>
-          ) : (
-            <>
-              <Banner tone="info" inCard hideIcon>
-                <span style={{ display: 'block', fontWeight: 650 }}>No QR code assigned — optional</span>
-                Assign one only where the lab actually labels its equipment. Most lab kit
-                is found by asset tag or name, so this can stay empty.
-              </Banner>
-              <div style={{ display: 'flex' }}>
-                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Assign QR Code</Btn>
-              </div>
-            </>
-          )}
-        </FormSection>
 
         {/* Installation Details — the same section as the 3rd-party flow.
             Facility and Region are never re-asked: the facility was chosen in
@@ -379,22 +340,60 @@ export function AddLabEquipmentScreen({
                 helpText="Leave blank while it is still current." />
             </div>
           )}
-          <ReviewRows rows={[
-            ['Facility', form.facilityId ? (LAB_FACILITIES.find((f) => f.id === form.facilityId)?.label || '—') : 'Choose a facility above'],
-            ['Region', 'National Public Health Lab — set by the facility'],
-          ]} />
+          {/* Only for NOT INSTALLED (Raf, 2026-09-07): equipment waiting to be
+              installed still has to say which facility is holding it. Once it is
+              installed, the Location / room above already answers "where", so
+              repeating the derived facility here is noise. */}
+          {status === 'not-installed' && (
+            <ReviewRows rows={[
+              ['Facility', form.facilityId ? (LAB_FACILITIES.find((f) => f.id === form.facilityId)?.label || '—') : 'Choose a facility above'],
+              ['Region', 'National Public Health Lab — set by the facility'],
+            ]} />
+          )}
         </FormSection>
 
-        <FormSection icon={<IcoClipboard />} title="Maintenance and Warranty">
-          <SelectInput
-            label="Warranty years"
-            options={WARRANTY_YEARS.map((w) => ({ id: w, label: w }))}
-            placeholder="Select…"
-            value={warrantyYears}
-            onChange={(e) => setWarrantyYears(e.target ? e.target.value : e)}
-            helpText="Optional — recorded so a faulty unit can be checked against its warranty before a repair is raised."
+
+        {/* QR Code — the same section as the 3rd-party add-equipment flow, but
+            optional: a code links a physical label to this record so a phone
+            scan opens it. */}
+        <FormSection icon={<IcoQr />} title="QR Code">
+          {qrCode ? (
+            <>
+              <Banner tone="info" inCard hideIcon>
+                <span style={{ display: 'block', fontWeight: 650 }}>{qrCode} will be linked to this record</span>
+                Scanning this label on the equipment opens this register record. Optional —
+                the record saves with or without it.
+              </Banner>
+              <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <Btn variant="secondary" onClick={() => setQrModal('view')}>Check QR Code</Btn>
+                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Reassign QR Code</Btn>
+                <Btn variant="tertiary" onClick={() => setQrCode('')}>Remove</Btn>
+              </div>
+            </>
+          ) : (
+            <>
+              <Banner tone="info" inCard hideIcon>
+                <span style={{ display: 'block', fontWeight: 650 }}>No QR code assigned — optional</span>
+                Assign one only where the lab actually labels its equipment. Most lab kit
+                is found by asset tag or name, so this can stay empty.
+              </Banner>
+              <div style={{ display: 'flex' }}>
+                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Assign QR Code</Btn>
+              </div>
+            </>
+          )}
+        </FormSection>
+
+        {/* Notes is the last thing on the form (Raf, 2026-09-07) — a free-text
+            catch-all belongs after every structured field has been answered. */}
+        <FormSection title="Notes">
+          <TextareaInput
+            placeholder="Anything the register should keep — provenance, validation status, shared use…"
+            value={form.notes}
+            onChange={set('notes')}
           />
         </FormSection>
+
       </StepFrame>
 
       {/* Assign / check — deliberately small: scanning happens on a phone, this

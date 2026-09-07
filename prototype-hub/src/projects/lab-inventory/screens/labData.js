@@ -379,7 +379,7 @@ export const IMPORT_FIELDS = [
   { id: 'serial',    label: 'Serial' },
   { id: 'location',  label: 'Location / room' },
   { id: 'condition', label: 'Condition' },
-  { id: 'acquired',  label: 'Acquisition date' },
+  { id: 'acquired',  label: 'Purchase date' },
   { id: '__skip',    label: 'Don’t import' },
 ];
 
