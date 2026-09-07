@@ -1,6 +1,6 @@
 export default {
   title: 'Add lab equipment — single',
-  description: 'Short catalog form — asset tag first-class, serial optional, no PQS, no thresholds. Monitorable types get a Set-up-monitoring CTA after save.',
+  description: 'Short register form — asset tag first-class, serial optional, no PQS, no thresholds. Monitorable types get a Set-up-monitoring CTA after save.',
   type: 'flow',
   screens: ['AddLabEquipmentScreen'],
   status: 'In Review',

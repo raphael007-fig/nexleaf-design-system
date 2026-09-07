@@ -27,8 +27,8 @@
 //     here — installers walk to the cold store.
 //   • Cold-room detail: default / loading / partial(sensor silent) /
 //     no-readings / chart-error DRAWN; per-sensor views live via the Tabs.
-//   • Catalog record detail: default / monitorable-later / decommissioned /
-//     read-only DRAWN. No chart states: catalog records have no monitoring
+//   • Register record detail: default / monitorable-later / decommissioned /
+//     read-only DRAWN. No chart states: unmonitored records have no monitoring
 //     surface by definition.
 //   • Module home: three personas DRAWN (the gating IS the state).
 //   • Interaction states (hover/focus/disabled/loading on controls) belong to
@@ -86,7 +86,7 @@ function ModulePlaceholder({ moduleId, onHome }) {
 
 // The interactive assembly/router. Views:
 //   'home' · 'register' · 'add' · 'import' · 'flow' · 'detail' (cold room)
-//   'record:<id>' (catalog detail) · 'edit:<id>' · 'module:<id>' (placeholder)
+//   'record:<id>' (register-record detail) · 'edit:<id>' · 'module:<id>' (placeholder)
 // Per-view prop bags (registerProps/addProps/importProps/flowProps/detailProps)
 // let each registry state open the SAME wired app at a specific condition.
 function AssembledLabApp({
@@ -351,9 +351,9 @@ export const STATE_SECTIONS = [
     ],
   },
   {
-    title: 'Catalog record (detail)',
+    title: 'Register record (detail)',
     states: [
-      { id: 'record-default', label: 'Catalog-only — analyser', render: () => <AssembledLabApp persona="lead" initialView="record:nhrl-044" /> },
+      { id: 'record-default', label: 'Not monitored — analyser', render: () => <AssembledLabApp persona="lead" initialView="record:nhrl-044" /> },
       { id: 'record-monitorable-later', label: 'Fridge — monitoring later', render: () => <AssembledLabApp persona="lead" initialView="record:nhrl-058" /> },
       { id: 'record-decommissioned', label: 'Decommissioned — still reachable', render: () => <AssembledLabApp persona="lead" initialView="record:nfsnrl-90" /> },
       { id: 'record-readonly', label: 'Read-only — QA, no Edit', render: () => <AssembledLabApp persona="qa" initialView="record:nfsnrl-77" /> },

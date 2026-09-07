@@ -2,7 +2,7 @@
 // Rides the Add-Equipment WIZARD FRAME (StepFrame — full-width fixed-height
 // card, pinned footer), matching Prototype C's Add Equipment surface (Raf,
 // 2026-09-03: "should have the add equipment frame, and be full width").
-// No stepper: this is a single-step catalog capture, not the monitored
+// No stepper: this is a single-step register capture, not the monitored
 // install. No PQS make/model dependency, no thresholds, no sensor. Facility
 // drives region (never asked). Asset tag — the lab's own ID — is the primary
 // identifier; serial is optional.
@@ -108,13 +108,13 @@ export function AddLabEquipmentScreen({
         flushTop
         title={isEdit ? 'Edit Lab Equipment' : 'Add Lab Equipment'}
         subtitle={isEdit
-          ? `${record.name} · ${record.assetTag}. Changes apply to the catalog record — monitoring is managed separately.`
-          : 'Register a piece of lab equipment in the NPHL inventory. This creates a catalog record — monitoring, where supported, is set up afterwards.'}
+          ? `${record.name} · ${record.assetTag}. Changes apply to the register record — monitoring is managed separately.`
+          : 'Register a piece of lab equipment in the NPHL inventory. This adds the equipment to the register — monitoring, where supported, is set up afterwards.'}
         backAction={{ onClick: onCancel, ariaLabel: 'Back to Lab Equipment' }}
       />
 
       <StepFrame
-        title={isEdit ? 'Update the catalog record' : 'Catalog record'}
+        title={isEdit ? 'Update the register record' : 'Register record'}
         subtitle="Most fields mirror the lab’s paper register — the asset tag is the identifier that matters."
         footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
         footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
@@ -144,13 +144,13 @@ export function AddLabEquipmentScreen({
           />
           {monitorableNow && (
             <Banner tone="info" inCard hideIcon>
-              <b>Walk-in Cold Room supports monitoring.</b> Finish this catalog record first —
+              <b>Walk-in Cold Room supports monitoring.</b> Finish this register record first —
               you’ll be offered the monitoring setup right after saving.
             </Banner>
           )}
           {monitorableLater && (
             <Banner tone="info" inCard hideIcon>
-              <b>Fridge/freezer monitoring is coming later.</b> This record stays cataloged for
+              <b>Fridge/freezer monitoring is coming later.</b> This record stays in the register for
               now and can be connected without re-registering when it lands.
             </Banner>
           )}

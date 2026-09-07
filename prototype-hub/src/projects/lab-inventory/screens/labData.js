@@ -28,10 +28,10 @@ export const facilityLabel = (id) =>
   LAB_FACILITIES.find((f) => f.id === id)?.label ?? '—';
 
 // ── LabEquipmentType — the managed list (D3: seeded, extensible, NOT PQS) ─────
-// `monitoring` is the monitored/cataloged switch the Type field carries:
+// `monitoring` is the monitored/not-monitored switch the Type field carries:
 //   'v1'    → monitorable now (walk-in cold room only)
 //   'later' → monitorable in a later phase (fridge/freezer)
-//   'none'  → catalog only
+//   'none'  → never monitored
 export const LAB_TYPES = [
   { id: 'walk-in-cold-room', label: 'Walk-in Cold Room',              monitoring: 'v1' },
   { id: 'fridge-freezer',    label: 'Fridge / Freezer',               monitoring: 'later' },

@@ -120,7 +120,7 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
                 heading: 'What was created',
                 lines: [
                   { label: 'Source file', value: IMPORT_SHEET.fileName },
-                  { label: 'Records created', value: `${parsed.length} (all cataloged — none monitored)` },
+                  { label: 'Records created', value: `${parsed.length} (all in the register — none monitored)` },
                   { label: 'Flagged for follow-up', value: `${withIssues.length} — kept, marked for review` },
                   { label: 'Condition mapping', value: 'Free-text mapped to the Passive Equipment vocabulary; “Old” kept as a note, not a condition' },
                 ],

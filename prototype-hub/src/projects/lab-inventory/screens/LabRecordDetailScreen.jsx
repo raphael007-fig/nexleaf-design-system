@@ -1,8 +1,8 @@
-// ── Catalog record — tertiary detail for a NON-monitored lab equipment row ─────
+// ── Register record — tertiary detail for a NOT-MONITORED lab equipment row ───
 // The register's explicit View has to land somewhere for every row, not just
 // the cold room. Follows the EquipmentDetail ViewDetail shape: two-column,
 // main card of fields + notes, right rail of small single-purpose cards.
-// Catalog-only records have no monitoring surface — instead, a monitorable
+// Unmonitored records have no monitoring surface — instead, a monitorable
 // type gets the "Set up monitoring" path and everything else states plainly
 // that it is register-only (not an error, not empty: a decision on screen).
 import { Page } from '@ds/components/Page/Page.jsx';
@@ -26,7 +26,7 @@ import {
 const RailIcon = ({ name }) => <PolarisIconImg name={name} size={20} color="#616161" />;
 
 /**
- * @param {string} recordId   A LAB_EQUIPMENT id (catalog-only rows).
+ * @param {string} recordId   A LAB_EQUIPMENT id (unmonitored rows).
  * @param {'lead'|'tech'|'qa'} persona  Read-only personas lose Edit/monitoring.
  */
 export function LabRecordDetailScreen({
@@ -45,7 +45,7 @@ export function LabRecordDetailScreen({
         subtitle={`${record.assetTag} · ${record.make} ${record.model} · ${facilityLabel(record.facilityId)}`}
         backAction={{ onClick: onBack, ariaLabel: 'Back to Lab Equipment' }}
         metadata={[
-          { label: 'Cataloged', tone: 'default' },
+          { label: 'Not monitored', tone: 'default' },
           { label: record.condition || 'Not set', tone: CONDITION_TONES[record.condition] === 'default' ? 'default' : CONDITION_TONES[record.condition] },
         ]}
         primaryAction={personaDef.canInstall && !decommissioned ? { content: 'Edit', onClick: () => onEdit?.(record.id) } : undefined}
@@ -71,7 +71,7 @@ export function LabRecordDetailScreen({
           {isMonitorableLater(record.type) && !decommissioned && (
             <Banner tone="info" inCard hideIcon>
               <span style={{ display: 'block', fontWeight: 650 }}>Fridge/freezer monitoring is coming later</span>
-              This record stays catalog-only for now and can be connected without
+              This record stays in the register, unmonitored, for now and can be connected without
               re-registering when it lands.
             </Banner>
           )}
@@ -96,8 +96,8 @@ export function LabRecordDetailScreen({
                 : monitorableNow
                   ? 'Not monitored yet. This type supports monitoring — set it up from the banner above.'
                   : isMonitorableLater(record.type)
-                    ? 'Catalog-only for now. Fridge/freezer monitoring arrives in a later phase.'
-                    : 'Catalog-only. This equipment type has no compatible temperature monitoring — that is expected for most of the register (~90%).'}
+                    ? 'Not monitored for now. Fridge/freezer monitoring arrives in a later phase.'
+                    : 'Not monitored. This equipment type has no compatible temperature monitoring — that is expected for most of the register (~90%).'}
             </p>
           </Card>
         </div>
@@ -124,7 +124,7 @@ export function LabRecordDetailScreen({
               Uses the Passive Equipment vocabulary. Age is kept in notes, never as a condition.
             </p>
           </Card>
-          {/* DS QR card — catalog rows have no QR yet (whether lab assets get QR
+          {/* DS QR card — unmonitored rows have no QR yet (whether lab assets get QR
               codes is an open decision on PD-41), so the card shows its honest
               empty state. Contact card carries the facility's primary contact. */}
           <CardLayoutType5 title="QR Code" onAssign={() => {}} />

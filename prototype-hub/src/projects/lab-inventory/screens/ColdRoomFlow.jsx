@@ -230,7 +230,7 @@ export function ColdRoomFlow({
           <FormSection title="Identification" required>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
               <TextInput label="Type" value="Walk-in Cold Room" readOnly
-                helpText="Set when this record was cataloged. Fridge-vs-freezer never comes up — the type carries the thresholds." />
+                helpText="Set when this record was added to the register. Fridge-vs-freezer never comes up — the type carries the thresholds." />
               <TextInput label="Name" value={equipment.name}
                 onChange={(e) => setEquipment((q) => ({ ...q, name: e.target.value }))} />
             </div>
@@ -425,7 +425,7 @@ export function ColdRoomFlow({
         )}
       >
         <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-          The cold-room record stays cataloged in the register — only this monitoring setup
+          The cold-room record stays in the register — only this monitoring setup
           (base station, sensors, contacts added here) is discarded.
         </p>
       </Modal>

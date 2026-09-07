@@ -48,7 +48,7 @@ const IcoAdjust = ({ size = 16, color = '#303030' }) => (
 );
 
 const PAGE_SIZE = 10;
-const TAB_LABELS = ['All', 'Monitored', 'Cataloged', 'Decommissioned'];
+const TAB_LABELS = ['All', 'Monitored', 'Not monitored', 'Decommissioned'];
 const EMPTY_FILTERS = { facilities: [], types: [], conditions: [], monitored: 'all' };
 
 function tabMatch(row, tabIndex) {
@@ -101,7 +101,7 @@ export function LabRegisterScreen({
     if (scope.length && !scope.includes(r.facilityId)) return false;
     if (!tabMatch(r, activeTab)) return false;
     if (activeMetric === 'monitored' && !r.monitored) return false;
-    if (activeMetric === 'cataloged' && (r.monitored || r.condition === 'Decommissioned')) return false;
+    if (activeMetric === 'not-monitored' && (r.monitored || r.condition === 'Decommissioned')) return false;
     if (activeMetric === 'attention' && !['Damaged / Needs repair', 'Unusable'].includes(r.condition)) return false;
     if (filters.facilities.length && !filters.facilities.includes(r.facilityId)) return false;
     if (filters.types.length && !filters.types.includes(r.type)) return false;
@@ -125,7 +125,7 @@ export function LabRegisterScreen({
   const showData = !loading && state !== 'error';
   const counts = TAB_LABELS.map((_, i) => allRows.filter((r) => tabMatch(r, i)).length);
   const nMonitored = allRows.filter((r) => r.monitored).length;
-  const nCataloged = allRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
+  const nNotMonitored = allRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
   const nAttention = allRows.filter((r) => ['Damaged / Needs repair', 'Unusable'].includes(r.condition)).length;
   const scopeLabel = personaDef.facilities.length > 1
     ? `all ${personaDef.facilities.length} NPHL facilities`
@@ -160,7 +160,7 @@ export function LabRegisterScreen({
       key: 'monitored', label: 'Monitored', width: 120,
       render: (r) => (r.monitored
         ? <Badge tone="success">Monitored</Badge>
-        : <Badge>Cataloged</Badge>),
+        : <Badge>Not monitored</Badge>),
     },
     {
       key: 'device', label: 'Assigned device', width: 210,
@@ -223,10 +223,10 @@ export function LabRegisterScreen({
           onClick={() => setActiveMetric((p) => (p === 'monitored' ? null : 'monitored'))}
         />
         <MetricCard
-          title="Cataloged (not monitored)" metric={showData ? String(nCataloged) : '—'} loading={loading}
+          title="Not monitored" metric={showData ? String(nNotMonitored) : '—'} loading={loading}
           infoTooltip={`Register-only records — no monitoring device, out of ${allRows.length} in ${scopeLabel}.`}
-          selected={activeMetric === 'cataloged'}
-          onClick={() => setActiveMetric((p) => (p === 'cataloged' ? null : 'cataloged'))}
+          selected={activeMetric === 'not-monitored'}
+          onClick={() => setActiveMetric((p) => (p === 'not-monitored' ? null : 'not-monitored'))}
         />
         <MetricCard
           title="Needs attention" metric={showData ? String(nAttention) : '—'} loading={loading}
@@ -259,7 +259,7 @@ export function LabRegisterScreen({
             </div>
             <p style={{ margin: 0, maxWidth: 440, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
               This register holds everything {personaDef.facilities.length > 1 ? 'the NPHL labs own' : `${scopeLabel} owns`} —
-              from microscopes to the walk-in cold room. Most records are catalog-only;
+              from microscopes to the walk-in cold room. Most records are not monitored;
               monitoring is set up separately for equipment that supports it.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -378,7 +378,7 @@ export function LabRegisterScreen({
               options={[
                 { id: 'all', label: 'All' },
                 { id: 'yes', label: 'Monitored only' },
-                { id: 'no', label: 'Cataloged only' },
+                { id: 'no', label: 'Not monitored' },
               ]}
               value={draft.monitored}
               onChange={(id) => setDraft((d) => ({ ...d, monitored: id }))}
