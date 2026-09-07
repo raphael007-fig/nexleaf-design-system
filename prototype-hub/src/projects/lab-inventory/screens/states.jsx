@@ -286,11 +286,11 @@ export const STATE_SECTIONS = [
   {
     title: 'Cold-room monitoring (install)',
     states: [
-      { id: 'flow-facility', label: '1 · Facility & contacts', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'facility' }} /> },
+      { id: 'flow-facility', label: '1 · Facility', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'facility' }} /> },
       {
         id: 'flow-contacts-cap',
-        label: 'Contacts at the cap (5 of 5)',
-        render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'facility', initialData: { contacts: ['c1', 'c2', 'c3', 'c4', 'c5'] } }} />,
+        label: '3 · Contacts at the cap (10 of 10)',
+        render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device', initialData: { ...FLOW_READY, contacts: ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8', 'c9', 'c10'] } }} />,
       },
       { id: 'flow-details', label: '2 · Equipment details', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'details' }} /> },
       {
@@ -307,7 +307,7 @@ export const STATE_SECTIONS = [
           }} />
         ),
       },
-      { id: 'flow-device', label: '3 · Base station & sensors', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device' }} /> },
+      { id: 'flow-device', label: '3 · Base station, sensors & alarms', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device' }} /> },
       {
         id: 'flow-device-assigned',
         label: '3 · Sensors assigned (CT5 A–D)',

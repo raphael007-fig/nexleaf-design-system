@@ -625,6 +625,176 @@ const ENTRY_COPY = {
   },
 };
 
+/**
+ * AlarmContactsField — the facility's RTMD alarm-contact picker, exactly as the
+ * third-party / RTMD add-equipment flow asks for it: heading + cap sentence,
+ * multi-select over the facility directory, a "Create a new contact" escape
+ * hatch with its structured modal, and one Cell per added contact. Layer 1 —
+ * exported so the cold-room monitoring install flow uses this one
+ * implementation rather than a copy that drifts.
+ *
+ * Contacts are OPTIONAL by design: with none, the empty state says plainly
+ * that alarms only reach the ColdTrace dashboard.
+ *
+ * @param {string[]} contacts        Selected contact ids.
+ * @param {(ids: string[]) => void} onChange
+ * @param {object[]} directory       [{id, name, phone, occupation, language}]
+ * @param {(contact) => void} onDirectoryAdd  Called with a newly created contact.
+ * @param {number} [max]             Platform cap (10 RTMD alarm contacts).
+ * @param {(notice: {tone, message}) => void} [onNotice]  Cap-exceeded toast.
+ */
+export function AlarmContactsField({
+  contacts = [], onChange, directory = [], onDirectoryAdd, max = MAX_ALARM_CONTACTS, onNotice,
+}) {
+  const [draft, setDraft] = useState(null);
+  const [draftErrors, setDraftErrors] = useState({});
+  const added = contacts.map((id) => directory.find((c) => c.id === id)).filter(Boolean);
+  const options = directory.map((c) => ({ id: c.id, label: `${c.name} · ${c.phone}` }));
+  const atLimit = added.length >= max;
+
+  return (
+    <>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <h3 style={{ margin: 0, fontSize: 14, fontWeight: 650, lineHeight: '20px', color: TEXT_DEFAULT }}>
+          Alarm contacts
+        </h3>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
+          A facility can have up to {max} RTMD alarm contacts. They receive SMS alerts when this RTMD raises an alarm.
+        </p>
+      </div>
+
+      {/* Multi-select: checking adds, unchecking removes — kept in sync
+          with the contact list below. */}
+      <SearchSelectMulti
+        label="Add alarm contacts"
+        placeholder="Search contacts by name…"
+        tagsInside
+        options={options}
+        value={contacts}
+        onChange={(ids) => {
+          if (ids.length > max) {
+            onNotice?.({ tone: 'warning', message: `A facility can have at most ${max} alarm contacts. Remove one to add someone else.` });
+            return;
+          }
+          onChange?.(ids);
+        }}
+      />
+      {!atLimit ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: -12 }}>
+          <span style={{ fontSize: 13, fontWeight: 450, color: TEXT_SUBDUED }}>
+            Search and select contacts, or
+          </span>
+          <Btn variant="ghost" small onClick={() => {
+            setDraftErrors({});
+            setDraft({ email: '', phone: '', first: '', last: '', occupation: '', language: 'English' });
+          }}>
+            Create a new contact
+          </Btn>
+        </div>
+      ) : (
+        <Banner tone="info" title="Contact limit reached">
+          This facility has the maximum of {max} alarm contacts. Remove one to add or create someone else.
+        </Banner>
+      )}
+
+      {added.length === 0 ? (
+        <Banner tone="info" inCard>
+          No alarm contacts in this facility yet. Without contacts, alarms only appear on the ColdTrace dashboard.
+        </Banner>
+      ) : (
+        added.map((c) => (
+          <Cell
+            key={c.id}
+            icon={<IcoUser />}
+            iconTone="info"
+            title={c.name}
+            titleBadge={<Badge tone="success" size="small">Added</Badge>}
+            description={`${c.phone} · ${c.occupation}${c.language ? ` · ${c.language}` : ''}`}
+            buttonLabel="Remove"
+            onButtonClick={() => onChange?.(contacts.filter((id) => id !== c.id))}
+            ariaLabel={`Alarm contact ${c.name}`}
+          />
+        ))
+      )}
+
+      {/* Create Facility Contact — structured modal, saves into the directory */}
+      <Modal
+        open={draft != null}
+        onClose={() => setDraft(null)}
+        title="Create facility contact"
+        maxWidth={480}
+        footer={<>
+          <Btn variant="secondary" small onClick={() => setDraft(null)}>Cancel</Btn>
+          <Btn variant="primary" small onClick={() => {
+            const e = {};
+            if (!draft.phone.trim()) e.phone = 'Phone number is required.';
+            if (!draft.first.trim()) e.first = 'First name is required.';
+            setDraftErrors(e);
+            if (Object.keys(e).length) return;
+            const contact = {
+              id: `new-${Date.now()}`,
+              name: `${draft.first.trim()} ${draft.last.trim()}`.trim(),
+              phone: draft.phone.trim(),
+              occupation: draft.occupation || 'Facility staff',
+              language: draft.language,
+              email: draft.email.trim(),
+            };
+            onDirectoryAdd?.(contact);
+            if (contacts.length < max) onChange?.([...contacts, contact.id]);
+            setDraft(null);
+          }}>Save</Btn>
+        </>}
+      >
+        {draft != null && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <TextInput
+              label="Phone number"
+              required
+              placeholder="e.g. +254 722 000 000"
+              helpText="Include the country code. SMS alarm alerts go to this number."
+              value={draft.phone}
+              onChange={(e) => setDraft((d) => ({ ...d, phone: e.target.value }))}
+              error={draftErrors.phone}
+            />
+            <TextInput
+              label="Email address"
+              placeholder="e.g. j.zulu@moh.go.ke"
+              value={draft.email}
+              onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
+            />
+            <TextInput
+              label="First name"
+              required
+              value={draft.first}
+              onChange={(e) => setDraft((d) => ({ ...d, first: e.target.value }))}
+              error={draftErrors.first}
+            />
+            <TextInput
+              label="Last name"
+              value={draft.last}
+              onChange={(e) => setDraft((d) => ({ ...d, last: e.target.value }))}
+            />
+            <SelectInput
+              label="Occupation"
+              options={OCCUPATIONS}
+              placeholder="Select…"
+              value={draft.occupation}
+              onChange={(e) => setDraft((d) => ({ ...d, occupation: e.target.value }))}
+            />
+            <SelectInput
+              label="Language"
+              options={LANGUAGES}
+              helpText="Alarm SMS messages are sent in this language."
+              value={draft.language}
+              onChange={(e) => setDraft((d) => ({ ...d, language: e.target.value }))}
+            />
+          </div>
+        )}
+      </Modal>
+    </>
+  );
+}
+
 // ─── Main flow ────────────────────────────────────────────────────────────────
 
 /**
@@ -723,8 +893,6 @@ export function AddEquipmentFlow({
   // Facility alarm-contact directory (created contacts join it) + the
   // create-contact modal draft (null = closed).
   const [contactDirectory, setContactDirectory] = useState(ALARM_CONTACTS);
-  const [contactDraft, setContactDraft] = useState(null);
-  const [contactErrors, setContactErrors] = useState({});
   const [integration, setIntegration] = useState({
     providerId: '', deviceId: '', accessCode: '',
     status: 'not_connected', // not_connected | connecting | connected | failed | unavailable
@@ -1167,9 +1335,6 @@ export function AddEquipmentFlow({
   // appear on the Nexleaf path.
   if (step === 'facility') {
     const isRtmdMethod = monitoring.method === 'rtmd';
-    const added = rtmd.contacts.map((id) => contactDirectory.find((c) => c.id === id)).filter(Boolean);
-    const contactOptions = contactDirectory.map((c) => ({ id: c.id, label: `${c.name} · ${c.phone}` }));
-    const atLimit = added.length >= MAX_ALARM_CONTACTS;
     body = (
       <StepFrame
         {...wizardChrome}
@@ -1202,149 +1367,14 @@ export function AddEquipmentFlow({
         )}
 
         {isRtmdMethod && rtmd.facilityId && (
-          <>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <h3 style={{ margin: 0, fontSize: 14, fontWeight: 650, lineHeight: '20px', color: TEXT_DEFAULT }}>
-                Alarm contacts
-              </h3>
-              <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
-                A facility can have up to {MAX_ALARM_CONTACTS} RTMD alarm contacts. They receive SMS alerts when this RTMD raises an alarm.
-              </p>
-            </div>
-
-            {/* Multi-select: checking adds, unchecking removes — kept in sync
-                with the contact list below. */}
-            <SearchSelectMulti
-              label="Add alarm contacts"
-              placeholder="Search contacts by name…"
-              tagsInside
-              options={contactOptions}
-              value={rtmd.contacts}
-              onChange={(ids) => {
-                if (ids.length > MAX_ALARM_CONTACTS) {
-                  setSearchNotice({ tone: 'warning', message: `A facility can have at most ${MAX_ALARM_CONTACTS} alarm contacts. Remove one to add someone else.` });
-                  return;
-                }
-                setRtmd((s) => ({ ...s, contacts: ids }));
-              }}
-            />
-            {!atLimit ? (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: -12 }}>
-                <span style={{ fontSize: 13, fontWeight: 450, color: TEXT_SUBDUED }}>
-                  Search and select contacts, or
-                </span>
-                <Btn variant="ghost" small onClick={() => {
-                  setContactErrors({});
-                  setContactDraft({ email: '', phone: '', first: '', last: '', occupation: '', language: 'English' });
-                }}>
-                  Create a new contact
-                </Btn>
-              </div>
-            ) : (
-              <Banner tone="info" title="Contact limit reached">
-                This facility has the maximum of {MAX_ALARM_CONTACTS} alarm contacts. Remove one to add or create someone else.
-              </Banner>
-            )}
-
-            {added.length === 0 ? (
-              <Banner tone="info" inCard>
-                No alarm contacts in this facility yet. Without contacts, alarms only appear on the ColdTrace dashboard.
-              </Banner>
-            ) : (
-              added.map((c) => (
-                <Cell
-                  key={c.id}
-                  icon={<IcoUser />}
-                  iconTone="info"
-                  title={c.name}
-                  titleBadge={<Badge tone="success" size="small">Added</Badge>}
-                  description={`${c.phone} · ${c.occupation}${c.language ? ` · ${c.language}` : ''}`}
-                  buttonLabel="Remove"
-                  onButtonClick={() => setRtmd((s) => ({ ...s, contacts: s.contacts.filter((id) => id !== c.id) }))}
-                  ariaLabel={`Alarm contact ${c.name}`}
-                />
-              ))
-            )}
-          </>
+          <AlarmContactsField
+            contacts={rtmd.contacts}
+            onChange={(ids) => setRtmd((st) => ({ ...st, contacts: ids }))}
+            directory={contactDirectory}
+            onDirectoryAdd={(c) => setContactDirectory((d) => [...d, c])}
+            onNotice={setSearchNotice}
+          />
         )}
-
-        {/* Create Facility Contact — structured modal, saves into the directory */}
-        <Modal
-          open={contactDraft != null}
-          onClose={() => setContactDraft(null)}
-          title="Create facility contact"
-          maxWidth={480}
-          footer={<>
-            <Btn variant="secondary" small onClick={() => setContactDraft(null)}>Cancel</Btn>
-            <Btn variant="primary" small onClick={() => {
-              const e = {};
-              if (!contactDraft.phone.trim()) e.phone = 'Phone number is required.';
-              if (!contactDraft.first.trim()) e.first = 'First name is required.';
-              setContactErrors(e);
-              if (Object.keys(e).length) return;
-              const id = `new-${Date.now()}`;
-              const contact = {
-                id,
-                name: `${contactDraft.first.trim()} ${contactDraft.last.trim()}`.trim(),
-                phone: contactDraft.phone.trim(),
-                occupation: contactDraft.occupation || 'Facility staff',
-                language: contactDraft.language,
-                email: contactDraft.email.trim(),
-              };
-              setContactDirectory((d) => [...d, contact]);
-              setRtmd((s) => (s.contacts.length < MAX_ALARM_CONTACTS
-                ? { ...s, contacts: [...s.contacts, id] }
-                : s));
-              setContactDraft(null);
-            }}>Save</Btn>
-          </>}
-        >
-          {contactDraft != null && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <TextInput
-                label="Phone number"
-                required
-                placeholder="e.g. +254 722 000 000"
-                helpText="Include the country code. SMS alarm alerts go to this number."
-                value={contactDraft.phone}
-                onChange={(e) => setContactDraft((d) => ({ ...d, phone: e.target.value }))}
-                error={contactErrors.phone}
-              />
-              <TextInput
-                label="Email address"
-                placeholder="e.g. j.zulu@moh.go.ke"
-                value={contactDraft.email}
-                onChange={(e) => setContactDraft((d) => ({ ...d, email: e.target.value }))}
-              />
-              <TextInput
-                label="First name"
-                required
-                value={contactDraft.first}
-                onChange={(e) => setContactDraft((d) => ({ ...d, first: e.target.value }))}
-                error={contactErrors.first}
-              />
-              <TextInput
-                label="Last name"
-                value={contactDraft.last}
-                onChange={(e) => setContactDraft((d) => ({ ...d, last: e.target.value }))}
-              />
-              <SelectInput
-                label="Occupation"
-                options={OCCUPATIONS}
-                placeholder="Select…"
-                value={contactDraft.occupation}
-                onChange={(e) => setContactDraft((d) => ({ ...d, occupation: e.target.value }))}
-              />
-              <SelectInput
-                label="Language"
-                options={LANGUAGES}
-                helpText="Alarm SMS messages are sent in this language."
-                value={contactDraft.language}
-                onChange={(e) => setContactDraft((d) => ({ ...d, language: e.target.value }))}
-              />
-            </div>
-          )}
-        </Modal>
       </StepFrame>
     );
   }

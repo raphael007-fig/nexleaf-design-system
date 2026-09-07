@@ -8,7 +8,10 @@
 //   • ONE cold-room record, an ARRAY of sensors (D2 intended model). Sensor
 //     assignment is a dropdown, never free text (CT5 A–D · CTX pre-fed).
 //   • No thresholds anywhere: WICR bands (2–8 °C) are admin config (D5).
-//   • Alarm contacts hard-cap at 5 with a visible counter (D4).
+//   • Alarm contacts use the RTMD flow's own component and its platform cap of
+//     10 (the third-party add-equipment flow's exact field), asked with the
+//     base station rather than the facility — D4's provisional 5 is superseded
+//     by what the platform actually enforces.
 //   • Type comes from the managed lab list (cold rooms are not in PQS);
 //     no compartment question.
 import { useState } from 'react';
@@ -16,7 +19,7 @@ import { Page } from '@ds/components/Page/Page.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
-import { Tag } from '@ds/components/Tag/Tag.jsx';
+import { Toast } from '@ds/components/Toast/Toast.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
@@ -28,7 +31,7 @@ import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 // designed for reuse by other "add X" flows) — imported, not cloned, so the
 // two flows can never drift.
 import {
-  StepFrame, FormSection, ReviewRows, ReviewSection,
+  StepFrame, FormSection, ReviewRows, ReviewSection, AlarmContactsField,
 } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
@@ -39,9 +42,9 @@ import {
 const TRAIL = [{ id: 'add-monitoring', label: 'Set Up Monitoring' }];
 
 const PHASES = [
-  { label: 'Facility & Contacts', steps: ['facility'] },
+  { label: 'Facility', steps: ['facility'] },
   { label: 'Equipment Details', steps: ['details'] },
-  { label: 'Base Station & Sensors', steps: ['device'] },
+  { label: 'Base Station, Sensors & Alarms', steps: ['device'] },
   { label: 'Review & Submit', steps: ['review'] },
 ];
 const STEP_ORDER = ['facility', 'details', 'device', 'review'];
@@ -85,11 +88,11 @@ export function ColdRoomFlow({
   const [deviceId, setDeviceId] = useState(initialData.deviceId ?? '');
   const [sensors, setSensors] = useState(initialData.sensors ?? []);
   const [errors, setErrors] = useState(initialErrors);
+  const [contactNotice, setContactNotice] = useState(null);
 
   const device = BASE_STATIONS.find((d) => d.id === deviceId) || null;
   const sensorOptions = (device?.kind === 'CTX' ? CTX_SENSORS : CT5_SENSORS)
     .map((s) => ({ id: s, label: s }));
-  const atCap = contacts.length >= MAX_ALARM_CONTACTS;
 
   function go(next) {
     setStep(next);
@@ -132,11 +135,11 @@ export function ColdRoomFlow({
       {step === 'facility' && (
         <StepFrame
           stepper={stepper}
-          title="Facility & alarm contacts"
-          subtitle="Who owns the cold room, and who is called when it goes out of range. Contacts join the facility's shared directory."
+          title="Facility"
+          subtitle="Who owns the cold room. Region is derived from the facility — alarm contacts are an RTMD concept and are asked with the base station."
           footerLeft={<Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>}
           footerRight={(
-            <Btn variant="primary" disabled={!facilityId || contacts.length === 0} onClick={() => go('details')}>
+            <Btn variant="primary" disabled={!facilityId} onClick={() => go('details')}>
               Next
             </Btn>
           )}
@@ -154,54 +157,6 @@ export function ColdRoomFlow({
               The cold room is a shared NPHL asset, so it lives under <b>Central Cold Store</b> —
               not inside one unit lab. Region is derived from the facility.
             </Banner>
-          </FormSection>
-          <FormSection title={`Alarm contacts · ${contacts.length} of ${MAX_ALARM_CONTACTS}`} required>
-            {atCap ? (
-              <Banner tone="warning" inCard>
-                <span style={{ display: 'block', fontWeight: 650 }}>
-                  Contact limit reached ({MAX_ALARM_CONTACTS} of {MAX_ALARM_CONTACTS})
-                </span>
-                A facility can hold {MAX_ALARM_CONTACTS} RTMD alarm contacts. To add someone,
-                remove a contact first — the limit is enforced by the platform.
-              </Banner>
-            ) : (
-              <SearchSelect
-                label="Add a contact"
-                placeholder="Search the facility directory…"
-                options={directory
-                  .filter((c) => !contacts.includes(c.id))
-                  .map((c) => ({ id: c.id, label: `${c.name} · ${c.phone} · ${c.occupation}` }))}
-                value=""
-                onChange={(v) => {
-                  const id = v && v.target ? v.target.value : v;
-                  if (id) setContacts((cs) => (cs.includes(id) || cs.length >= MAX_ALARM_CONTACTS ? cs : [...cs, id]));
-                }}
-                onCreate={(name) => {
-                  const id = `new-${Date.now()}`;
-                  setDirectory((d) => [...d, { id, name, phone: '+254 7— — —', occupation: 'New contact' }]);
-                  setContacts((cs) => (cs.length >= MAX_ALARM_CONTACTS ? cs : [...cs, id]));
-                }}
-                createLabel="Add new contact"
-              />
-            )}
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {contacts.map((id) => {
-                const c = directory.find((x) => x.id === id);
-                return (
-                  <Tag
-                    key={id}
-                    label={c ? `${c.name} · ${c.phone}` : id}
-                    removable
-                    onRemove={() => setContacts((cs) => cs.filter((x) => x !== id))}
-                  />
-                );
-              })}
-            </div>
-            {contacts.length === 0 && (
-              <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-                At least one alarm contact is needed before the cold room can alert anyone.
-              </p>
-            )}
           </FormSection>
         </StepFrame>
       )}
@@ -325,6 +280,21 @@ export function ColdRoomFlow({
               durations later if the lab lead confirms reagents need it.
             </Banner>
           </FormSection>
+          {/* Alarm contacts belong with the RTMD, not the facility step (Raf,
+              2026-09-07): the exact component from the third-party / RTMD
+              add-equipment flow, imported from layer 1 so there is one
+              implementation. Contacts are optional — the empty state says what
+              happens without them. */}
+          <FormSection title="Alarms">
+            <AlarmContactsField
+              max={MAX_ALARM_CONTACTS}
+              contacts={contacts}
+              onChange={setContacts}
+              directory={directory}
+              onDirectoryAdd={(c) => setDirectory((d) => [...d, c])}
+              onNotice={setContactNotice}
+            />
+          </FormSection>
         </StepFrame>
       )}
 
@@ -359,11 +329,10 @@ export function ColdRoomFlow({
               back later; the record is not partially saved.
             </Banner>
           )}
-          <ReviewSection title="Facility & Contacts" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('facility')}>
+          <ReviewSection title="Facility" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('facility')}>
             <ReviewRows rows={[
               ['Facility', facilityLabel(facilityId)],
               ['Region', 'National Public Health Lab (derived from facility)'],
-              ['Alarm contacts', `${contacts.length} of ${MAX_ALARM_CONTACTS} — ${contacts.map((id) => directory.find((c) => c.id === id)?.name || id).join(', ')}`],
             ]} />
           </ReviewSection>
           <ReviewSection title="Equipment" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('details')}>
@@ -383,6 +352,9 @@ export function ColdRoomFlow({
               ['Base station', device ? `${device.model} · IMEI ${device.imei}` : '—'],
               ['Sensors on this record', sensors.length ? sensors.join(' · ') : '—'],
               ['Thresholds', 'Walk-in Cold Room configuration (2–8 °C) — admin-managed, not set here'],
+              ['Alarm contacts', contacts.length
+                ? `${contacts.length} of ${MAX_ALARM_CONTACTS} — ${contacts.map((id) => directory.find((c) => c.id === id)?.name || id).join(', ')}`
+                : 'None (dashboard alarms only)'],
             ]} />
           </ReviewSection>
         </StepFrame>
@@ -429,6 +401,12 @@ export function ColdRoomFlow({
           (base station, sensors, contacts added here) is discarded.
         </p>
       </Modal>
+
+      {contactNotice && (
+        <Toast tone={contactNotice.tone} onDismiss={() => setContactNotice(null)}>
+          {contactNotice.message}
+        </Toast>
+      )}
     </LabShell>
   );
 }

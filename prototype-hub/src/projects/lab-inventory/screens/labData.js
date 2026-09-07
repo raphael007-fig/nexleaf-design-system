@@ -347,7 +347,10 @@ export const rowsForPersona = (personaId) => {
 };
 
 // ── Alarm contacts — facility directory (cap 5 per D4, hard, with counter) ────
-export const MAX_ALARM_CONTACTS = 5;
+// The platform's real cap: a facility can hold 10 RTMD alarm contacts (the
+// third-party add-equipment flow states it on screen). This supersedes the
+// provisional 5 recommended for D4 — flagged on PD-41.
+export const MAX_ALARM_CONTACTS = 10;
 export const CONTACT_DIRECTORY = [
   { id: 'c1', name: 'Victory Adhiambo',  phone: '+254 711 204 118', occupation: 'Biomedical Engineer' },
   { id: 'c2', name: 'Ednah Chebet',      phone: '+254 722 815 903', occupation: 'EPI Supervisor' },
@@ -356,6 +359,13 @@ export const CONTACT_DIRECTORY = [
   { id: 'c5', name: 'Brian Ochieng',     phone: '+254 756 318 447', occupation: 'Biomedical Technician' },
   { id: 'c6', name: 'Naomi Chirwa',      phone: '+254 767 559 210', occupation: 'Nurse' },
   { id: 'c7', name: 'Kevin Mutua',       phone: '+254 778 402 995', occupation: 'Health Center Manager' },
+  // Past c7 so the 10-contact cap can actually be reached and shown.
+  { id: 'c8',  name: 'Halima Said',       phone: '+254 789 663 174', occupation: 'Laboratory Technologist' },
+  { id: 'c9',  name: 'Peter Otieno',      phone: '+254 790 227 508', occupation: 'Facility In-charge' },
+  { id: 'c10', name: 'Janet Moraa',       phone: '+254 701 884 632', occupation: 'Data Officer' },
+  { id: 'c11', name: 'Isaac Cheruiyot',   phone: '+254 712 470 951', occupation: 'Store Keeper' },
+  { id: 'c12', name: 'Beatrice Wanjiru',  phone: '+254 723 015 786', occupation: 'Quality Officer' },
+  { id: 'c13', name: 'George Njoroge',    phone: '+254 734 592 240', occupation: 'Biomedical Engineer' },
 ];
 
 // ── Cold-room monitoring devices (Phase 2) — dropdowns only, never free text ──
