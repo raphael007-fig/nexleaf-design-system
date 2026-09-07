@@ -24,15 +24,10 @@ import { DateField } from '@ds/components/DateField/DateField.jsx';
 import { TEXT_SUBDUED, TEXT_DEFAULT } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
 import { StepFrame, FormSection, ReviewRows, QrPreview } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
-import { RadioGroup } from '@ds/components/RadioButton/RadioButton.jsx';
 import { LabShell } from './LabShell.jsx';
 
 // Ported verbatim from the 3rd-party installation flow so a lab record and a
 // cold-chain record answer these questions identically (Raf, 2026-09-07).
-const EQUIPMENT_STATUS = [
-  { id: 'installed', label: 'Installed' },
-  { id: 'not-installed', label: 'Not Installed' },
-];
 // Deployment status — from the live ColdTrace equipment page (Raf, 2026-09-07).
 // This is the LIFECYCLE answer (is it in service, and for how long), which is a
 // different question from Condition (is it working).
@@ -95,11 +90,8 @@ export function AddLabEquipmentScreen({
   // Installation + warranty (ported from the 3rd-party flow). Status is
   // required there because a monitored device must be installed to report; here
   // it records whether the lab is actually using the equipment yet.
-  const [status, setStatus] = useState(() => (mode === 'edit' && record ? (record.status || 'installed') : ''));
   const [installDate, setInstallDate] = useState(() => (mode === 'edit' && record ? (record.installDate || null) : null));
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
-  const [deployFrom, setDeployFrom] = useState(null);
-  const [deployTo, setDeployTo] = useState(null);
   // Types typed in via "+ Add" this session — the same escape hatch the
   // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
   // blocks the record. A typed type is never monitorable: nothing has been
@@ -159,7 +151,6 @@ export function AddLabEquipmentScreen({
     const next = {};
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is — “Other” on its own is not a record.';
-    if (!status) next.status = 'Equipment status is required.';
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
     if (!form.condition) next.condition = 'Choose the equipment’s condition.';
     setErrors(next);
@@ -170,7 +161,6 @@ export function AddLabEquipmentScreen({
   function save() {
     const next = {};
     if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
-    if (!status) next.status = 'Equipment status is required.';
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
@@ -179,7 +169,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', status, installDate, deployment, deployFrom, deployTo, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', installDate, deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -369,64 +359,42 @@ export function AddLabEquipmentScreen({
               options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
               placeholder="Select…"
               value={deployment}
-              onChange={(e) => setDeployment(e.target ? e.target.value : e)}
+              onChange={(e) => {
+              const v = e.target ? e.target.value : e;
+              setDeployment(v);
+              if ((v === 'Installed' || v === 'Deployed') && !installDate) setInstallDate(new Date());
+            }}
               helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
             />
           </div>
-          {deployment && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
-              <DateField label="From" value={deployFrom} onChange={setDeployFrom}
-                helpText="When this status began." />
-              <DateField label="To" value={deployTo} onChange={setDeployTo}
-                helpText="Leave blank while it is still current." />
-            </div>
-          )}
         </FormSection>
 
 
-        {/* Installation Details — the same section as the 3rd-party flow.
-            Facility and Region are never re-asked: the facility was chosen in
-            Ownership above and the region follows from it. */}
-        <FormSection icon={<IcoLocation />} title="Installation Details">
-          <RadioGroup
-            title="Equipment status"
-            required
-            name="lab-equipment-status"
-            value={status}
-            onChange={(id) => {
-              setStatus(id);
-              if (id === 'installed' && !installDate) setInstallDate(new Date());
-              setErrors((x) => (x.status ? { ...x, status: undefined } : x));
-            }}
-            options={EQUIPMENT_STATUS}
-            error={errors.status}
-          />
-          {status === 'installed' && (
+        {/* Installed (or Deployed, which implies installed) is what opens this
+            section (Raf, 2026-09-07). The old "Equipment status" radios are gone
+            with it: Deployment status above already says whether the equipment
+            is installed, so asking twice invited contradictions. */}
+        {(deployment === 'Installed' || deployment === 'Deployed') && (
+          <FormSection icon={<IcoLocation />} title="Installation Details">
             <DateField
               label="Equipment install date"
               value={installDate}
               onChange={setInstallDate}
               helpText="When the equipment was installed at the facility. Defaults to today."
             />
-          )}
-          <DateField
-            label="Purchase date"
-            placeholder="Optional"
-            value={form.acquired}
-            onChange={set('acquired')}
-            helpText="When the lab bought it — separate from when it was installed."
-          />
-          {/* Only for NOT INSTALLED (Raf, 2026-09-07): equipment waiting to be
-              installed still has to say which facility is holding it. Once it is
-              installed, the Location / room above already answers "where", so
-              repeating the derived facility here is noise. */}
-          {status === 'not-installed' && (
+            <DateField
+              label="Purchase date"
+              placeholder="Optional"
+              value={form.acquired}
+              onChange={set('acquired')}
+              helpText="When the lab bought it — separate from when it was installed."
+            />
             <ReviewRows rows={[
               ['Facility', form.facilityId ? (LAB_FACILITIES.find((f) => f.id === form.facilityId)?.label || '—') : 'Choose a facility above'],
               ['Region', 'National Public Health Lab — set by the facility'],
             ]} />
-          )}
-        </FormSection>
+          </FormSection>
+        )}
 
 
         {/* QR Code — the same section as the 3rd-party add-equipment flow, but
@@ -501,7 +469,6 @@ export function AddLabEquipmentScreen({
               ['Location / room', form.location || '—'],
               ['Condition', form.condition || '—'],
               ['Deployment status', deployment || '—'],
-              ['Equipment status', EQUIPMENT_STATUS.find((o) => o.id === status)?.label || '—'],
               ['Purchase date', form.acquired ? new Date(form.acquired).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
               ['QR code', qrCode || '— (none)'],
             ]} />
