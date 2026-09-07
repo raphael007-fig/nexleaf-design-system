@@ -198,8 +198,8 @@ export function ColdRoomFlow({
           flushTop
           title="Set Up Monitoring"
           subtitle={equipment.type
-            ? `Install the Nexleaf base station and assign its sensors to this ONE record — ${typeName}. Thresholds follow the ${configName}${bandSuffix} — nothing to enter here.`
-            : 'Install the Nexleaf base station and assign its sensors to ONE equipment record. Thresholds come from the equipment type — nothing to enter here.'}
+            ? `Install the Nexleaf base station and its sensors on this ONE record — ${typeName}.`
+            : 'Install the Nexleaf base station and its sensors on ONE equipment record.'}
           backAction={{ onClick: () => setCancelOpen(true), ariaLabel: 'Cancel monitoring setup' }}
         />
       )}
@@ -413,7 +413,7 @@ export function ColdRoomFlow({
         <StepFrame
           stepper={stepper}
           title="Base station & sensors"
-          subtitle={`Monitoring comes last: the equipment is the primary, the device is secondary. All sensors attach to this ONE record — ${typeName}.`}
+          subtitle={`Monitoring comes last — the equipment is primary, the device secondary. All sensors attach to this ONE ${typeName} record.`}
           footerLeft={<Btn variant="secondary" onClick={() => go('warranty')}>Back</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!deviceId || !sensors.length || sensors.some((r) => !r.serial)} onClick={() => go('review')}>
@@ -502,16 +502,12 @@ export function ColdRoomFlow({
                 guidance while the list is empty, then just the rule. */}
             <Banner tone="info" inCard>
               <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
-              {sensors.length === 0
-                ? 'Add at least one — a walk-in cold room normally has 3–4 in-room sensors plus an ambient one, a fridge usually one. '
-                : ''}
-              Every reading lands on this one record — it stays one piece of equipment in
-              every count. Serials are picked from the system, never typed.
+              {sensors.length === 0 ? 'Add at least one — a cold room takes 3–4 plus an ambient. ' : ''}
+              Every reading lands on this one record. Serials are picked, never typed.
             </Banner>
             <Banner tone="info" inCard hideIcon>
-              <b>No thresholds to enter.</b> Alarms follow the {configName}{bandSuffix},
-              WHO-derived and managed by administrators. The NPHL region can override
-              durations later if the lab lead confirms reagents need it.
+              <b>No thresholds to enter.</b> Alarms follow the {configName}{bandSuffix} —
+              admin-managed, WHO-derived.
             </Banner>
           </FormSection>
           {/* Alarm contacts belong with the RTMD, not the facility step (Raf,
