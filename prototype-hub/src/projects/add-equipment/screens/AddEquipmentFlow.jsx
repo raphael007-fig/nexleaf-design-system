@@ -265,7 +265,7 @@ const IcoLocation = ({ size = 20, color = TEXT_SUBDUED }) => (
 // QR preview — a deterministic QR-style pattern derived from the code string
 // (three finder squares + hashed data modules). Prototype rendering; inline
 // SVG only, no QR library.
-function QrPreview({ code, size = 200 }) {
+export function QrPreview({ code, size = 200 }) {
   const n = 21;
   let h = 2166136261;
   for (let i = 0; i < code.length; i++) { h ^= code.charCodeAt(i); h = Math.imul(h, 16777619); }

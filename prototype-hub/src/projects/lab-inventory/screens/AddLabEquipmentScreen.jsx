@@ -21,9 +21,9 @@ import { TextareaInput } from '@ds/components/TextareaInput/TextareaInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
 import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
-import { TEXT_SUBDUED } from '@ds/tokens/index.js';
+import { TEXT_SUBDUED, TEXT_DEFAULT } from '@ds/tokens/index.js';
 // The generic addition-flow wizard system (layer 1 of the Add Equipment flow).
-import { StepFrame, FormSection, ReviewRows } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
+import { StepFrame, FormSection, ReviewRows, QrPreview } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { RadioGroup } from '@ds/components/RadioButton/RadioButton.jsx';
 import { LabShell } from './LabShell.jsx';
 
@@ -48,7 +48,8 @@ const PHASES = [
 ];
 
 // Same 20px muted glyph the add-equipment flow puts on its QR section.
-const IcoQr = () => <PolarisIconImg name="ShopcodesIcon" size={20} color="#616161" />;
+const IcoQr = ({ size = 20, color = '#616161' }) => <PolarisIconImg name="ShopcodesIcon" size={size} color={color} />;
+const IcoCamera = () => <PolarisIconImg name="CameraIcon" size={16} color="#ffffff" />;
 const IcoLocation = () => <PolarisIconImg name="LocationIcon" size={20} color="#303030" />;
 import {
   LAB_FACILITIES, LAB_TYPES, CONDITIONS, PERSONAS, LAB_EQUIPMENT,
@@ -107,7 +108,11 @@ export function AddLabEquipmentScreen({
   // Filled when the user picks "Other" from the list rather than typing a type.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
-  const [qrModal, setQrModal] = useState(null);   // null | 'assign' | 'view'
+  // Same QR state shape as the 3rd-party flow: a view flag, an assign panel
+  // ({scanning, scanned}) and the label sequence the simulated scanner issues.
+  const [qrViewOpen, setQrViewOpen] = useState(false);
+  const [assignQr, setAssignQr] = useState(null);
+  const [nextQrSeq, setNextQrSeq] = useState(70071);
   // Validation states open on the step that owns them.
   const [step, setStep] = useState(() => ((state === 'errors' || state === 'dup') ? 'details' : 'facility'));
   const [visited, setVisited] = useState(() => new Set(['facility', ...((state === 'errors' || state === 'dup') ? ['details'] : [])]));
@@ -436,8 +441,8 @@ export function AddLabEquipmentScreen({
                 the record saves with or without it.
               </Banner>
               <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                <Btn variant="secondary" onClick={() => setQrModal('view')}>Check QR Code</Btn>
-                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Reassign QR Code</Btn>
+                <Btn variant="secondary" onClick={() => setQrViewOpen(true)}>Check QR Code</Btn>
+                <Btn variant="secondary" onClick={() => setAssignQr({ scanning: false, scanned: null })}>Reassign QR Code</Btn>
                 <Btn variant="tertiary" onClick={() => setQrCode('')}>Remove</Btn>
               </div>
             </>
@@ -449,7 +454,7 @@ export function AddLabEquipmentScreen({
                 is found by asset tag or name, so this can stay empty.
               </Banner>
               <div style={{ display: 'flex' }}>
-                <Btn variant="secondary" onClick={() => setQrModal('assign')}>Assign QR Code</Btn>
+                <Btn variant="secondary" onClick={() => setAssignQr({ scanning: false, scanned: null })}>Assign QR Code</Btn>
               </div>
             </>
           )}
@@ -511,39 +516,79 @@ export function AddLabEquipmentScreen({
         </StepFrame>
       )}
 
-      {/* Assign / check — deliberately small: scanning happens on a phone, this
-          just records which pre-printed code was stuck on the equipment. */}
+      {/* Check QR Code — view the assigned label (structure from the 3rd-party
+          add-equipment flow, including its QR preview). */}
       <Modal
-        open={qrModal === 'assign'}
-        onClose={() => setQrModal(null)}
-        title="Assign a QR code"
+        open={qrViewOpen}
+        onClose={() => setQrViewOpen(false)}
+        title="QR Code"
         size="small"
+        footer={<Btn variant="secondary" small onClick={() => setQrViewOpen(false)}>Close</Btn>}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '12px 0', textAlign: 'center' }}>
+          <div style={{ border: '1px solid #e3e3e3', borderRadius: 12, padding: 16 }}>
+            <QrPreview code={qrCode || 'QR'} size={192} />
+          </div>
+          <span style={{ fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>{qrCode}</span>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 450, lineHeight: '20px', color: TEXT_SUBDUED }}>
+            This label will identify the equipment. Scanning it opens the register record.
+          </p>
+        </div>
+      </Modal>
+
+      {/* Assign QR Code — the flow's scan panel: the code comes from a scan, it
+          is never typed. */}
+      <Modal
+        open={assignQr != null}
+        onClose={() => setAssignQr(null)}
+        title="Assign QR Code"
         footer={(
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
-            <Btn variant="secondary" onClick={() => setQrModal(null)}>Cancel</Btn>
-            <Btn variant="primary" onClick={() => { setQrCode(`QR-${70000 + Math.floor(Math.random() * 900)}`); setQrModal(null); }}>
-              Assign next code
+            <Btn variant="secondary" small onClick={() => setAssignQr(null)}>Cancel</Btn>
+            <Btn
+              variant="primary"
+              small
+              disabled={!assignQr?.scanned}
+              onClick={() => { setQrCode(assignQr.scanned); setAssignQr(null); }}
+            >
+              Assign QR Code
             </Btn>
           </div>
         )}
       >
-        <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-          Codes come from the pre-printed sheet the programme issues — they are never
-          typed by hand. Assigning takes the next unused code and links it to this
-          record when you save.
-        </p>
-      </Modal>
-      <Modal
-        open={qrModal === 'view'}
-        onClose={() => setQrModal(null)}
-        title={qrCode || 'QR code'}
-        size="small"
-        footer={<div style={{ display: 'flex', justifyContent: 'flex-end' }}><Btn variant="secondary" onClick={() => setQrModal(null)}>Close</Btn></div>}
-      >
-        <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-          {qrCode} is reserved for this record. Print it from the label sheet and stick it
-          where a phone can reach it — inside a cold-room door, or on the equipment body.
-        </p>
+        {assignQr != null && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div style={{
+              border: '1px solid #e3e3e3', borderRadius: 12,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+              padding: '40px 24px',
+            }}>
+              <IcoQr size={44} color={TEXT_SUBDUED} />
+              <span style={{ fontSize: 16, fontWeight: 650, lineHeight: '24px', color: TEXT_DEFAULT }}>
+                Scan QR Code
+              </span>
+              <Btn
+                variant="primary"
+                icon={<IcoCamera />}
+                loading={assignQr.scanning}
+                disabled={assignQr.scanning}
+                onClick={() => {
+                  setAssignQr((a) => ({ ...a, scanning: true }));
+                  const code = `QR-${nextQrSeq}`;
+                  setNextQrSeq((n) => n + 1);
+                  setTimeout(() => setAssignQr((a) => (a ? { scanning: false, scanned: code } : a)), 1200);
+                }}
+              >
+                {assignQr.scanning ? 'Scanning…' : assignQr.scanned ? 'Scan Again' : 'Start Scanning'}
+              </Btn>
+            </div>
+            {assignQr.scanned && (
+              <Banner tone="success" inCard>
+                QR Code scanned successfully! ({assignQr.scanned})
+              </Banner>
+            )}
+          </div>
+        )}
       </Modal>
     </LabShell>
   );
