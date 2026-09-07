@@ -186,6 +186,11 @@ export function AddLabEquipmentScreen({
     return next;
   }
 
+  // Live validity for the footer: Next stays disabled until the record's
+  // required fields are answered (Raf, 2026-09-07), so the button never invites
+  // a click that only produces errors.
+  const recordComplete = Object.keys(recordErrors()).length === 0;
+
   // Step 1 holds the whole record, so it is the gate. Step 2 (warranty and
   // service cover) carries nothing mandatory.
   function nextFromFacility() {
@@ -231,7 +236,7 @@ export function AddLabEquipmentScreen({
           title="Facility & equipment"
           subtitle="The facility (which sets the region) and the equipment itself. Most fields mirror the lab’s paper register."
           footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
-          footerRight={<Btn variant="primary" onClick={nextFromFacility}>Next</Btn>}
+          footerRight={<Btn variant="primary" disabled={!recordComplete} onClick={nextFromFacility}>Next</Btn>}
         >
         <SearchSelect
           label="Facility"
@@ -545,7 +550,7 @@ export function AddLabEquipmentScreen({
           title="Review & submit"
           subtitle="Check the record before it joins the register. Nothing is created until you submit."
           footerLeft={<Btn variant="secondary" onClick={() => go('details')}>Back</Btn>}
-          footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
+          footerRight={<Btn variant="primary" disabled={!recordComplete} onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
         >
           <FormSection title="Ownership">
             <ReviewRows rows={[
