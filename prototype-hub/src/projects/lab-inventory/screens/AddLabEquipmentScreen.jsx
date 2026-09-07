@@ -66,7 +66,7 @@ const SERVICE_COVER = ['Preventive maintenance only', 'Repairs only', 'Preventiv
 // facility first (it sets the region), then the equipment, then a review.
 const PHASES = [
   { label: 'Facility & Equipment', steps: ['facility'] },
-  { label: 'Warranty & Service', steps: ['details'] },
+  { label: 'Warranty and Maintenance', steps: ['details'] },
   { label: 'Review & Submit', steps: ['review'] },
 ];
 
@@ -461,11 +461,28 @@ export function AddLabEquipmentScreen({
       {step === 'details' && (
         <StepFrame
           stepper={stepper}
-          title="Warranty & service contract"
-          subtitle="What cover this equipment has, so a fault can be checked against it before a repair is raised. All optional."
+          title="Warranty and maintenance"
+          subtitle="The cover and service history behind this equipment, so a fault can be checked against them before a repair is raised. All optional."
           footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
         >
+          <FormSection title="Warranty">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+              <DateField
+                label="Warranty start date"
+                value={warrantyStart}
+                onChange={setWarrantyStart}
+                helpText="Usually the purchase or commissioning date."
+              />
+              <DateField
+                label="Warranty end date"
+                value={warrantyEnd}
+                onChange={setWarrantyEnd}
+                helpText="When cover lapses — what a repair is checked against."
+              />
+            </div>
+          </FormSection>
+
           <FormSection title="Maintenance">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
               <SelectInput
@@ -494,23 +511,6 @@ export function AddLabEquipmentScreen({
               (overdue past 30 days, critical past 90). With no service date it says so
               rather than claiming the equipment is overdue.
             </p>
-          </FormSection>
-
-          <FormSection title="Warranty">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
-              <DateField
-                label="Warranty start date"
-                value={warrantyStart}
-                onChange={setWarrantyStart}
-                helpText="Usually the purchase or commissioning date."
-              />
-              <DateField
-                label="Warranty end date"
-                value={warrantyEnd}
-                onChange={setWarrantyEnd}
-                helpText="When cover lapses — what a repair is checked against."
-              />
-            </div>
           </FormSection>
 
           <FormSection title="Service contract">
