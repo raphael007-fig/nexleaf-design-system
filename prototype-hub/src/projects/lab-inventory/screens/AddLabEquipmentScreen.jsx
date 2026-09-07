@@ -32,13 +32,19 @@ import { LabShell } from './LabShell.jsx';
 // This is the LIFECYCLE answer (is it in service, and for how long), which is a
 // different question from Condition (is it working).
 const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
+// Warranty + service cover (step 2). Warranty years is the 3rd-party flow's
+// list; the rest is what a lab actually needs to answer "is this repair
+// already paid for?" before raising one.
+const WARRANTY_YEARS = ['1 year', '2 years', '3 years', '5 years', '10 years', 'No warranty'];
+const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 'Calibration Centre', 'In-house biomedical team', 'No contract'];
+const SERVICE_COVER = ['Preventive maintenance only', 'Repairs only', 'Preventive maintenance + repairs', 'Calibration only', 'Parts only'];
 
 // Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
 // adding a lab record and adding a cold-chain record feel like one product:
 // facility first (it sets the region), then the equipment, then a review.
 const PHASES = [
-  { label: 'Facility', steps: ['facility'] },
-  { label: 'Equipment Details', steps: ['details'] },
+  { label: 'Facility & Equipment', steps: ['facility'] },
+  { label: 'Warranty & Service', steps: ['details'] },
   { label: 'Review & Submit', steps: ['review'] },
 ];
 
@@ -90,6 +96,15 @@ export function AddLabEquipmentScreen({
   // required there because a monitored device must be installed to report; here
   // it records whether the lab is actually using the equipment yet.
   const [installDate, setInstallDate] = useState(() => (mode === 'edit' && record ? (record.installDate || null) : null));
+  // Step 2 — warranty and service cover. All optional: a record is valid
+  // without it, and most lab kit outlives whatever cover it came with.
+  const [warrantyYears, setWarrantyYears] = useState('');
+  const [warrantyEnds, setWarrantyEnds] = useState(null);
+  const [servicer, setServicer] = useState('');
+  const [contractRef, setContractRef] = useState('');
+  const [coverFrom, setCoverFrom] = useState(null);
+  const [coverTo, setCoverTo] = useState(null);
+  const [cover, setCover] = useState('');
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
   // Types typed in via "+ Add" this session — the same escape hatch the
   // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
@@ -143,20 +158,21 @@ export function AddLabEquipmentScreen({
   // Step 1 → 2 needs the facility, because it sets the region everything else
   // inherits. Step 2 → 3 needs the fields a record cannot exist without.
   function nextFromFacility() {
-    if (!form.facilityId) { setErrors((e) => ({ ...e, facilityId: 'Choose the facility that owns this equipment.' })); return; }
-    go('details');
-  }
-  function nextFromDetails() {
     const next = {};
+    if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is — “Other” on its own is not a record.';
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
+    if (!form.make.trim()) next.make = 'Choose or type the manufacturer.';
+    if (!form.model.trim()) next.model = 'Choose or type the model.';
     if (!form.condition) next.condition = 'Choose the equipment’s status.';
     if (!form.acquired) next.acquired = 'Enter the purchase date.';
     setErrors(next);
     if (Object.keys(next).length) return;
-    go('review');
+    go('details');
   }
+  // Step 2 carries nothing mandatory — warranty and service cover are extras.
+  function nextFromDetails() { go('review'); }
 
   function save() {
     const next = {};
@@ -170,7 +186,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', installDate, deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, warrantyYears, warrantyEnds, servicer, contractRef, coverFrom, coverTo, cover, otherType: form.type === 'other' ? otherType.trim() : '', installDate, deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -194,8 +210,8 @@ export function AddLabEquipmentScreen({
       {step === 'facility' && (
         <StepFrame
           stepper={stepper}
-          title="Facility"
-          subtitle="The facility where this equipment is installed. It also sets the region."
+          title="Facility & equipment"
+          subtitle="The facility (which sets the region) and the equipment itself. Most fields mirror the lab’s paper register."
           footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromFacility}>Next</Btn>}
         >
@@ -211,17 +227,6 @@ export function AddLabEquipmentScreen({
         <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
           Region is derived from the facility — it is never asked separately.
         </p>
-        </StepFrame>
-      )}
-
-      {step === 'details' && (
-        <StepFrame
-          stepper={stepper}
-          title="Equipment details"
-          subtitle="What the equipment is, where it sits, and whether it is in service. Most fields mirror the lab’s paper register."
-          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
-          footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
-        >
         {/* No section heading — the field carries its own label (Raf,
             2026-09-07). FormSection always draws a header rule, so this
             group is a plain stack. */}
@@ -288,6 +293,8 @@ export function AddLabEquipmentScreen({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16 }}>
             <SearchSelect
               label="Make"
+              required
+              error={errors.make}
               placeholder="Choose or type a manufacturer"
               options={makeOptions()}
               value={form.make}
@@ -306,6 +313,8 @@ export function AddLabEquipmentScreen({
             />
             <SearchSelect
               label="Model"
+              required
+              error={errors.model}
               placeholder={form.make ? `Choose or type a ${form.make} model` : 'Choose or type a model'}
               options={modelOptions(form.make)}
               value={form.model}
@@ -365,7 +374,7 @@ export function AddLabEquipmentScreen({
             setDeployment(v);
             if ((v === 'Installed' || v === 'Deployed') && !installDate) setInstallDate(new Date());
           }}
-            helpText="Whether the equipment is in service. Condition says if it works; this says if it is being used."
+            helpText="Whether the equipment is in service. Equipment status says if it works; this says if it is being used."
           />
           {/* Purchase date is a fact about the record, not about being installed
               (Raf, 2026-09-07), so it shows for every deployment status. It
@@ -438,6 +447,68 @@ export function AddLabEquipmentScreen({
         </StepFrame>
       )}
 
+      {step === 'details' && (
+        <StepFrame
+          stepper={stepper}
+          title="Warranty & service contract"
+          subtitle="What cover this equipment has, so a fault can be checked against it before a repair is raised. All optional."
+          footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
+          footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
+        >
+          <FormSection title="Warranty">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+              <SelectInput
+                label="Warranty years"
+                options={WARRANTY_YEARS.map((w) => ({ id: w, label: w }))}
+                placeholder="Select…"
+                value={warrantyYears}
+                onChange={(e) => setWarrantyYears(e.target ? e.target.value : e)}
+                helpText="Counted from the purchase date."
+              />
+              <DateField
+                label="Warranty expires"
+                value={warrantyEnds}
+                onChange={setWarrantyEnds}
+                helpText="Leave blank to let the years above speak for themselves."
+              />
+            </div>
+          </FormSection>
+
+          <FormSection title="Service contract">
+            <SearchSelect
+              label="Service provider"
+              placeholder="Choose or type a provider"
+              options={SERVICE_PROVIDERS.map((v) => ({ id: v, label: v }))}
+              value={servicer}
+              onChange={(v) => setServicer(v && v.target ? v.target.value : v)}
+              onCreate={(text) => setServicer(text)}
+              createLabel="Add provider"
+              helpText="Who services it — the vendor, a local agent, or the calibration centre."
+            />
+            <TextInput
+              label="Contract reference"
+              placeholder="Optional — the contract or PO number"
+              value={contractRef}
+              onChange={(e) => setContractRef(e.target.value)}
+            />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+              <DateField label="Cover from" value={coverFrom} onChange={setCoverFrom}
+                helpText="When the contract starts." />
+              <DateField label="Cover to" value={coverTo} onChange={setCoverTo}
+                helpText="Leave blank for an open-ended arrangement." />
+            </div>
+            <SelectInput
+              label="What it covers"
+              options={SERVICE_COVER.map((v) => ({ id: v, label: v }))}
+              placeholder="Select…"
+              value={cover}
+              onChange={(e) => setCover(e.target ? e.target.value : e)}
+              helpText="Preventive maintenance and repairs are often separate contracts — record which this is."
+            />
+          </FormSection>
+        </StepFrame>
+      )}
+
       {step === 'review' && (
         <StepFrame
           stepper={stepper}
@@ -461,13 +532,22 @@ export function AddLabEquipmentScreen({
               ['Serial number', form.serial || '— (none)'],
             ]} />
           </FormSection>
-          <FormSection title="Placement, condition & service">
+          <FormSection title="Placement & status">
             <ReviewRows rows={[
               ['Location / room', form.location || '—'],
               ['Equipment status', form.condition || '—'],
               ['Deployment status', deployment || '—'],
               ['Purchase date', form.acquired ? new Date(form.acquired).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
               ['QR code', qrCode || '— (none)'],
+            ]} />
+          </FormSection>
+          <FormSection title="Warranty & service">
+            <ReviewRows rows={[
+              ['Warranty', warrantyYears || '— (not recorded)'],
+              ['Warranty expires', warrantyEnds ? new Date(warrantyEnds).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
+              ['Service provider', servicer || '— (none)'],
+              ['Contract reference', contractRef || '—'],
+              ['Cover', cover || '—'],
             ]} />
           </FormSection>
           {isMonitorableNow(form.type) && (
