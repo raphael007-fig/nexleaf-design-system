@@ -15,6 +15,7 @@ import { Page } from '@ds/components/Page/Page.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
+import { RadioGroup } from '@ds/components/RadioButton/RadioButton.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
@@ -36,7 +37,9 @@ const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 // Warranty + service cover (step 2). Warranty years is the 3rd-party flow's
 // list; the rest is what a lab actually needs to answer "is this repair
 // already paid for?" before raising one.
-const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 'Calibration Centre', 'In-house biomedical team', 'No contract'];
+// 'No contract' is gone from this list — the Service agreement yes/no answers that,
+// so the provider list only ever holds actual providers.
+const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 'Calibration Centre', 'In-house biomedical team'];
 // Maintenance, modelled on what CCE actually does (coldtrace-product-context
 // §2/§3): a SCHEDULE plus a LAST SERVICE DATE, from which the status is
 // DERIVED — Unknown / OK / Upcoming / Due / Overdue, banded at 30 and 90 days.
@@ -46,7 +49,31 @@ const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 
 // derived status says plainly when there is no history to judge.
 // CCE's maintenance vocabulary (coldtrace-product-context §4), entered here
 // the way the product does it.
-const MAINTENANCE_STATUS = ['Unknown', 'OK', 'Upcoming', 'Due', 'Overdue'];
+// Maintenance status is CCE's five values, and it is CALCULATED, never picked
+// (Raf, 2026-09-07): the schedule measured against the last service date. With
+// no schedule or no service date the honest answer is Unknown — which is also
+// the bug in CCE today, where an Overdue chip is computed against a Last
+// Service Date that is never populated.
+const SCHEDULE_DAYS = { 'Quarterly': 90, 'Every 6 months': 182, 'Annually': 365 };
+
+function maintenanceStatus(schedule, lastService) {
+  if (!schedule || schedule === 'Not scheduled' || !lastService) {
+    return { label: 'Unknown', tone: 'default', why: 'No schedule or no last service date — nothing to measure.' };
+  }
+  const interval = SCHEDULE_DAYS[schedule] || 365;
+  const due = new Date(lastService).getTime() + interval * 86400000;
+  const daysToDue = Math.ceil((due - Date.now()) / 86400000);
+  // The Due/Upcoming windows are 30/90 days, but capped against the interval —
+  // otherwise a Quarterly schedule (90 days) could never read OK, and a fridge
+  // serviced yesterday would already say Upcoming.
+  const dueWindow = Math.min(30, Math.round(interval * 0.25));
+  const upcomingWindow = Math.min(90, Math.round(interval * 0.6));
+  const on = () => new Date(due).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  if (daysToDue < 0) return { label: 'Overdue', tone: 'critical', why: `${Math.abs(daysToDue)} days past due (${on()}).` };
+  if (daysToDue <= dueWindow) return { label: 'Due', tone: 'warning', why: `Due in ${daysToDue} days (${on()}).` };
+  if (daysToDue <= upcomingWindow) return { label: 'Upcoming', tone: 'info', why: `Due ${on()}.` };
+  return { label: 'OK', tone: 'success', why: `Next service ${on()}.` };
+}
 const MAINTENANCE_SCHEDULES = ['Quarterly', 'Every 6 months', 'Annually', 'Not scheduled'];
 
 
@@ -108,11 +135,14 @@ export function AddLabEquipmentScreen({
   // it records whether the lab is actually using the equipment yet.
   // Step 2 — warranty and service cover. All optional: a record is valid
   // without it, and most lab kit outlives whatever cover it came with.
-  const [maintStatus, setMaintStatus] = useState('');
   const [schedule, setSchedule] = useState('');
   const [lastService, setLastService] = useState(null);
   const [warrantyStart, setWarrantyStart] = useState(null);
   const [warrantyEnd, setWarrantyEnd] = useState(null);
+  // A service agreement is a yes/no fact first (Raf, 2026-09-07): the provider
+  // and the contract details only exist if there is one. "No" is a real answer,
+  // not an empty form.
+  const [agreement, setAgreement] = useState('');
   const [servicer, setServicer] = useState('');
   const [contractRef, setContractRef] = useState('');
   const [coverFrom, setCoverFrom] = useState(null);
@@ -209,7 +239,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, maintStatus, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, maintStatus: maintenanceStatus(schedule, lastService).label, schedule, lastService, warrantyStart, warrantyEnd, agreement, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -504,42 +534,61 @@ export function AddLabEquipmentScreen({
                 helpText="The date the schedule is measured from. Leave blank if it has never been serviced."
               />
             </div>
-            <SelectInput
-              label="Maintenance status"
-              options={MAINTENANCE_STATUS.map((v) => ({ id: v, label: v }))}
-              placeholder="Select…"
-              value={maintStatus}
-              onChange={(e) => setMaintStatus(e.target ? e.target.value : e)}
-              helpText="The same five values CCE uses. Unknown is the honest answer where nobody has checked."
-            />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Maintenance status</span>
+              <Badge tone={maintenanceStatus(schedule, lastService).tone} size="small">
+                {maintenanceStatus(schedule, lastService).label}
+              </Badge>
+            </div>
+            <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+              Calculated, never entered — the schedule measured against the last service
+              date. {maintenanceStatus(schedule, lastService).why}
+            </p>
           </FormSection>
 
           <FormSection title="Service contract">
-            <SearchSelect
-              label="Service provider"
-              placeholder="Choose or type a provider"
-              options={[...SERVICE_PROVIDERS, ...customProviders].map((v) => ({ id: v, label: v }))}
-              value={servicer}
-              onChange={(v) => setServicer(v && v.target ? v.target.value : v)}
-              onCreate={(text) => {
-                setCustomProviders((c) => (c.includes(text) ? c : [...c, text]));
-                setServicer(text);
+            <RadioGroup
+              title="Service agreement"
+              name="service-agreement"
+              value={agreement}
+              onChange={(v) => {
+                setAgreement(v);
+                if (v === 'no') { setServicer(''); setContractRef(''); setCoverFrom(null); setCoverTo(null); }
               }}
-              createLabel="Add provider"
-              helpText="Who services it — the vendor, a local agent, or the calibration centre."
+              options={[
+                { id: 'yes', label: 'Yes', helpText: 'There is a contract or agreement covering service.' },
+                { id: 'no', label: 'No', helpText: 'No agreement — repairs are arranged case by case.' },
+              ]}
             />
-            <TextInput
-              label="Contract reference"
-              placeholder="Optional — the contract or PO number"
-              value={contractRef}
-              onChange={(e) => setContractRef(e.target.value)}
-            />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
-              <DateField label="Cover from" value={coverFrom} onChange={setCoverFrom}
-                helpText="When the contract starts." />
-              <DateField label="Cover to" value={coverTo} onChange={setCoverTo}
-                helpText="Leave blank for an open-ended arrangement." />
-            </div>
+            {agreement === 'yes' && (
+              <>
+                <SearchSelect
+                  label="Service provider"
+                  placeholder="Choose or type a provider"
+                  options={[...SERVICE_PROVIDERS, ...customProviders].map((v) => ({ id: v, label: v }))}
+                  value={servicer}
+                  onChange={(v) => setServicer(v && v.target ? v.target.value : v)}
+                  onCreate={(text) => {
+                    setCustomProviders((c) => (c.includes(text) ? c : [...c, text]));
+                    setServicer(text);
+                  }}
+                  createLabel="Add provider"
+                  helpText="Who services it — the vendor, a local agent, or the calibration centre."
+                />
+                <TextInput
+                  label="Contract reference"
+                  placeholder="Optional — the contract or PO number"
+                  value={contractRef}
+                  onChange={(e) => setContractRef(e.target.value)}
+                />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+                  <DateField label="Cover from" value={coverFrom} onChange={setCoverFrom}
+                    helpText="When the contract starts." />
+                  <DateField label="Cover to" value={coverTo} onChange={setCoverTo}
+                    helpText="Leave blank for an open-ended arrangement." />
+                </div>
+              </>
+            )}
           </FormSection>
         </StepFrame>
       )}
@@ -580,15 +629,18 @@ export function AddLabEquipmentScreen({
             <ReviewRows rows={[
               ['Schedule', schedule || '— (not scheduled)'],
               ['Last service date', lastService ? new Date(lastService).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (no history)'],
-              ['Maintenance status', maintStatus || '— (not set)'],
+              ['Maintenance status', maintenanceStatus(schedule, lastService).label],
             ]} />
           </FormSection>
           <FormSection title="Warranty & service">
             <ReviewRows rows={[
               ['Warranty start', warrantyStart ? new Date(warrantyStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (not recorded)'],
               ['Warranty end', warrantyEnd ? new Date(warrantyEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
-              ['Service provider', servicer || '— (none)'],
-              ['Contract reference', contractRef || '—'],
+              ['Service agreement', agreement === 'yes' ? 'Yes' : agreement === 'no' ? 'No' : '— (not answered)'],
+              ...(agreement === 'yes' ? [
+                ['Service provider', servicer || '— (none)'],
+                ['Contract reference', contractRef || '—'],
+              ] : []),
             ]} />
           </FormSection>
           {isMonitorableNow(form.type) && (
