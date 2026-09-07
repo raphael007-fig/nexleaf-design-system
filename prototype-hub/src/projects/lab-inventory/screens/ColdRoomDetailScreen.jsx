@@ -29,7 +29,7 @@ import { TEXT_DEFAULT, TEXT_SUBDUED, BG_SUCCESS, COLOR_SUCCESS } from '@ds/token
 import { LabShell } from './LabShell.jsx';
 import { TempChart, ChartLegend } from './TempChart.jsx';
 import {
-  LAB_EQUIPMENT, facilityLabel, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS, formatDate,
+  LAB_EQUIPMENT, facilityLabel, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS, formatDate, CONDITION_TONES,
 } from './labData.js';
 
 // Right-rail field icons — the DS location/contact cards (CardLayoutType3/4) put
@@ -38,7 +38,7 @@ import {
 const RailIcon = ({ name }) => <PolarisIconImg name={name} size={20} color="#616161" />;
 
 const COLD_ROOM = LAB_EQUIPMENT.find((r) => r.id === 'ccs-wicr-001');
-const TRAIL = [{ id: 'record', label: COLD_ROOM.assetTag }];
+const monitoredRecord = (id) => LAB_EQUIPMENT.find((r) => r.id === id && r.monitored) || COLD_ROOM;
 
 // Static stand-in image for the linked code QR-70021 (an asset, not UI — the
 // card itself is the DS CardLayoutType5). Deterministic pattern, no network.
@@ -84,7 +84,10 @@ const STATS = {
  * @param {'default'|'loading'|'partial'|'no-readings'|'chart-error'} state
  *   'partial' — sensor B offline for 6 h (very common in cold-chain data).
  */
-export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdit }) {
+export function ColdRoomDetailScreen({ recordId = 'ccs-wicr-001', state = 'default', onBack, onCrumb, onEdit }) {
+  const record = monitoredRecord(recordId);
+  const isColdRoom = record.type === 'walk-in-cold-room';
+  const TRAIL = [{ id: 'record', label: record.assetTag }];
   const [sensorId, setSensorId] = useState('all');
   // Alarm contacts live in state so Manage contacts can actually change them —
   // the card's count and rows read from here, never from a hardcoded label.
@@ -97,7 +100,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
   const actionsRef = useRef(null);
   const sensorsRef = useRef(null);
   const loading = state === 'loading';
-  const sensors = COLD_ROOM.device.sensors;
+  const sensors = record.device.sensors;
   const atCap = contacts.length >= MAX_ALARM_CONTACTS;
 
   const series = sensorId === 'all' ? AGG : (SERIES[sensorId] || AGG);
@@ -113,14 +116,14 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
         <Page
           flushTop
           loading={loading}
-          title={COLD_ROOM.name}
-          subtitle={`${COLD_ROOM.assetTag} · ${COLD_ROOM.make} ${COLD_ROOM.model} · ${facilityLabel(COLD_ROOM.facilityId)}`}
+          title={record.name}
+          subtitle={`${record.assetTag} · ${record.make} ${record.model} · ${facilityLabel(record.facilityId)}`}
           backAction={{ onClick: onBack, ariaLabel: 'Back to Lab Equipment' }}
           metadata={[
             { label: 'Monitored', tone: 'success' },
-            { label: COLD_ROOM.condition, tone: 'success' },
+            { label: record.condition, tone: CONDITION_TONES[record.condition] || 'default' },
           ]}
-          primaryAction={{ content: 'Edit record', onClick: () => onEdit?.(COLD_ROOM.id) }}
+          primaryAction={{ content: 'Edit record', onClick: () => onEdit?.(record.id) }}
         />
       </div>
 
@@ -193,7 +196,11 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
                 <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', fontSize: 12, color: TEXT_SUBDUED }}>
                   <span><b style={{ color: TEXT_DEFAULT }}>{STATS.below}</b></span>
                   <span><b style={{ color: TEXT_DEFAULT }}>{STATS.above}</b></span>
-                  <span>Denominator: in-room sensors A–C, last 24 h</span>
+                  {/* The denominator names the sensors that actually count —
+                      in-room ones only; an ambient sensor never does. */}
+                  <span>
+                    {`Denominator: ${sensors.filter((x) => x.cce === 'In-room').map((x) => x.label).join(', ')}, last 24 h`}
+                  </span>
                 </div>
               </>
             )}
@@ -212,7 +219,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
               <div>
                 <CardSectionTitle title={`Sensors on this record · ${sensors.length}`} />
                 <p style={{ margin: '2px 0 0', fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-                  All readings land on this ONE cold-room record (D2)
+                  {isColdRoom ? 'All readings land on this ONE cold-room record (D2)' : 'All readings land on this one equipment record'}
                 </p>
               </div>
               <Btn variant="secondary" small onClick={() => setSensorModal({ mode: 'manage' })}>+ Manage</Btn>
@@ -275,18 +282,18 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
               per the EquipmentDetail canonical. Room stays on the Record card. */}
           <CardLayoutType3
             region="National Public Health Lab"
-            facilityName={facilityLabel(COLD_ROOM.facilityId)}
+            facilityName={facilityLabel(record.facilityId)}
             facilityHref="#"
             mapLat={-1.3005}
             mapLon={36.8065}
           />
           <Card>
             <CardSectionTitle title="Record" />
-            <CardField icon={<RailIcon name="BarcodeIcon" />} label="Asset tag" value={COLD_ROOM.assetTag} />
-            <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={COLD_ROOM.serial || '—'} />
-            <CardField icon={<RailIcon name="WrenchIcon" />} label="Equipment status" value={COLD_ROOM.condition} />
-            <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={COLD_ROOM.location} />
-            <CardField icon={<RailIcon name="CalendarIcon" />} label="Purchase date" value={formatDate(COLD_ROOM.acquired)} />
+            <CardField icon={<RailIcon name="BarcodeIcon" />} label="Asset tag" value={record.assetTag} />
+            <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={record.serial || '—'} />
+            <CardField icon={<RailIcon name="WrenchIcon" />} label="Equipment status" value={record.condition} />
+            <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={record.location} />
+            <CardField icon={<RailIcon name="CalendarIcon" />} label="Purchase date" value={formatDate(record.acquired)} />
           </Card>
           {/* DS QR card (CardLayoutType5) — QR-70021 was linked during the install
               (F-flow, required); the card renders it scannable with the modal
@@ -299,7 +306,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
           />
           <Card>
             <CardSectionTitle title="Monitoring device" />
-            <CardField icon={<RailIcon name="MediaReceiverIcon" />} label="Base station" value={COLD_ROOM.device.baseStation} />
+            <CardField icon={<RailIcon name="MediaReceiverIcon" />} label="Base station" value={record.device.baseStation} />
             <CardField icon={<RailIcon name="WifiIcon" />} label="Sensors" value={`${sensors.length} on this record`} />
             <CardField icon={<RailIcon name="GaugeIcon" />} label="Thresholds" value="2–8 °C · Walk-in Cold Room config" />
           </Card>
@@ -358,7 +365,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
                 <>
                   <Banner tone="info" inCard>
                     <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
-                    Every sensor here reports to this ONE cold-room record (D2), so the
+                    Every sensor here reports to this ONE record, so the
                     room stays one asset in every count. Sensor IDs come from the base
                     station — they are never typed.
                   </Banner>
@@ -443,7 +450,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
-            These people are called when {COLD_ROOM.name} goes out of range
+            These people are called when {record.name} goes out of range
             (2–8 °C, from the Walk-in Cold Room configuration). Contacts come from
             the facility's shared directory.
           </p>

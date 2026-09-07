@@ -194,6 +194,7 @@ export const LAB_EQUIPMENT = [
     type: 'fridge-freezer', name: 'Reagent refrigerator',
     make: 'Haier Biomedical', model: 'HYC-390',
     serial: 'HYC390-7723', location: 'Serology, Room 8',
+    previousCondition: 'Functional', conditionChangedAt: '2026-07-19',
     condition: 'Faulty', acquired: '2017-05-11', monitored: false,
   },
   {
@@ -313,7 +314,186 @@ export const LAB_EQUIPMENT = [
     serial: 'SR-ENT-1189', location: 'Calibration bench A',
     condition: 'Faulty', acquired: '2018-03-03', monitored: false,
   },
+
+  // ── Added 2026-09-07 (Raf): the register needs every equipment status and
+  // both monitoring states represented, or the KPI cards and tabs can't be
+  // judged. Monitoring stays type-led — walk-in cold rooms are the only v1
+  // monitorable type (D5), so the second monitored record is another cold room
+  // rather than an invented exception.
+  {
+    id: 'nfsnrl-wicr-002', facilityId: 'nfsnrl',
+    assetTag: 'MOH/DLS/NPHL/NFSNRL/WICR-002',
+    type: 'walk-in-cold-room', name: 'Walk-in Cold Room (sample archive)',
+    make: 'Porkka', model: 'C1200',
+    serial: 'PK-C1200-2021-8830', qrCode: 'QR-70044',
+    location: 'Sample archive, Block D',
+    previousCondition: 'Faulty', conditionChangedAt: '2026-09-04',
+    condition: 'Functional', acquired: '2021-05-14',
+    monitored: true,
+    device: {
+      baseStation: 'ColdTrace X · IMEI 356938035644127',
+      kind: 'CTX',
+      sensors: [
+        { id: 'sensor-a', label: 'CTX-88301', placement: 'Front-left, mid-height', cce: 'In-room', alarms: '2 °C / 8 °C (Low / High)', delays: '1 hr / 10 hrs (Low / High)', config: 'Walk-in Cold Room configuration' },
+        { id: 'sensor-b', label: 'CTX-88302', placement: 'Rear-right, mid-height', cce: 'In-room', alarms: '2 °C / 8 °C (Low / High)', delays: '1 hr / 10 hrs (Low / High)', config: 'Walk-in Cold Room configuration' },
+        { id: 'sensor-c', label: 'CTX-88303', placement: 'Ambient, outside door', cce: 'Ambient', alarms: 'Not applicable', delays: 'Not applicable', config: 'Walk-in Cold Room configuration' },
+      ],
+    },
+  },
+  // Unknown — imported from a paper register and never verified. The honest
+  // default, and the reason the status exists at all.
+  {
+    id: 'nhrl-112', facilityId: 'nhrl', assetTag: 'NHRL/EQP/112',
+    type: 'analyser', name: 'Chemistry analyser',
+    make: 'Roche', model: 'cobas c 311',
+    serial: 'RC311-4417', location: 'Chemistry, Room 15',
+    condition: 'Unknown', acquired: '2017-02-20', monitored: false,
+    notes: 'Imported from the 2024 paper register — nobody has verified it since.',
+  },
+  {
+    id: 'nmarl-118', facilityId: 'nmarl', assetTag: 'NMARL/TR/CEN/004',
+    type: 'centrifuge', name: 'Haematocrit centrifuge',
+    make: 'Hettich', model: 'Haematokrit 200',
+    serial: null, location: 'Sample prep, Room 2',
+    condition: 'Unknown', acquired: null, monitored: false,
+    notes: 'No purchase date on the sheet; status never confirmed.',
+  },
+  {
+    id: 'nobrl-124', facilityId: 'nobrl', assetTag: 'NOBRL/EQP/124',
+    type: 'water-bath', name: 'Shaking water bath',
+    make: 'Grant Instruments', model: 'OLS26',
+    serial: 'GR-OLS-7741', location: 'Cell culture, Room 4',
+    previousCondition: 'Faulty', conditionChangedAt: '2026-09-06',
+    condition: 'Unknown', acquired: '2019-09-30', monitored: false,
+  },
+  // Faulty — waiting on a repair.
+  {
+    id: 'nfsnrl-131', facilityId: 'nfsnrl', assetTag: 'NFSNRL/EQP/131',
+    type: 'incubator', name: 'CO2 incubator',
+    make: 'Thermo Scientific', model: 'Heracell 150i',
+    serial: 'TS-HC150-2210', location: 'Culture room 1',
+    previousCondition: 'Functional', conditionChangedAt: '2026-08-04',
+    condition: 'Faulty', acquired: '2018-11-12', monitored: false,
+    notes: 'CO2 sensor drifting — vendor quote requested.',
+  },
+  {
+    id: 'nhrl-137', facilityId: 'nhrl', assetTag: 'NHRL/EQP/137',
+    type: 'ph-meter', name: 'Benchtop pH meter',
+    make: 'Mettler Toledo', model: 'SevenCompact S220',
+    serial: 'MT-S220-9903', location: 'Media room',
+    condition: 'Faulty', acquired: '2020-07-07', monitored: false,
+  },
+  // Decommissioned — retired, kept for audit, excluded from active counts.
+  {
+    id: 'nmarl-142', facilityId: 'nmarl', assetTag: 'NMARL/TR/MIC/012',
+    type: 'microscope', name: 'Monocular microscope (retired)',
+    make: 'Olympus', model: 'CX21',
+    serial: 'OL-CX21-1180', location: 'Store, Room 9',
+    previousCondition: 'Faulty', conditionChangedAt: '2026-06-28',
+    condition: 'Decommissioned', acquired: '2009-04-01', monitored: false,
+    notes: 'Retired 2025 — replaced by the CX23 pair. Kept for audit.',
+  },
+  {
+    id: 'calib-148', facilityId: 'calib', assetTag: 'CAL/EQP/048',
+    type: 'balance', name: 'Analytical balance (retired)',
+    make: 'Sartorius', model: 'BP211D',
+    serial: 'SR-BP211-0442', location: 'Calibration store',
+    condition: 'Decommissioned', acquired: '2008-10-19', monitored: false,
+  },
+  // Functional, monitorable LATER — a fridge/freezer stays in the register
+  // unmonitored until phase 2 lands.
+  {
+    id: 'nobrl-155', facilityId: 'nobrl', assetTag: 'NOBRL/EQP/155',
+    type: 'fridge-freezer', name: 'Vaccine refrigerator',
+    make: 'Haier Biomedical', model: 'HYC-509',
+    serial: 'HB-509-3318', location: 'Serology, Room 8',
+    condition: 'Functional', acquired: '2023-01-25', monitored: false,
+  },
+  {
+    id: 'nfsnrl-161', facilityId: 'nfsnrl', assetTag: 'NFSNRL/EQP/161',
+    type: 'fridge-freezer', name: 'Reagent freezer −20 °C',
+    make: 'Liebherr', model: 'LGex 3410',
+    serial: 'LB-3410-6612', location: 'Reagent store, Block D',
+    condition: 'Functional', acquired: '2022-03-11', monitored: false,
+  },
 ];
+// ── Volume for judging the table and the KPI row ──────────────────────────────
+// Raf, 2026-09-07: "let it be like 54 records and with about 35% of it being
+// monitored". Written as compact tuples and expanded, so 23 more records don't
+// bury the hand-authored ones above.
+//
+// NOTE this deliberately exceeds D5: V1 monitors the walk-in cold room only,
+// and 35% monitored means monitored fridges, freezers and ultra-colds. The
+// monitored set is at least kept to types that could physically carry a sensor
+// — never a microscope or a balance.
+//   [facility, tag, type, name, make, model, condition, monitored]
+const EXTRA_ROWS = [
+  ['nhrl',   'NHRL/EQP/170', 'fridge-freezer', 'Blood bank refrigerator',     'Haier Biomedical', 'HXC-608',        'Functional',      true],
+  ['nhrl',   'NHRL/EQP/171', 'ultra-cold',     'Ultra-low freezer −86 °C',    'Thermo Scientific', 'TSX400',        'Functional',      true],
+  ['nhrl',   'NHRL/EQP/172', 'fridge-freezer', 'Reagent refrigerator (lab 2)', 'Liebherr',        'LKPv 6520',      'Faulty',          true],
+  ['nhrl',   'NHRL/EQP/173', 'fridge-freezer', 'Plasma refrigerator',         'Haier Biomedical', 'HXC-158',        'Functional',      true],
+  ['nhrl',   'NHRL/EQP/174', 'pipette',        'Multichannel pipette set',    'Gilson',           'Pipetman L',     'Unknown',         false],
+  ['nmarl',  'NMARL/TR/FRZ/003', 'fridge-freezer', 'Sample freezer −20 °C',   'Haier Biomedical', 'DW-25L262',      'Functional',      true],
+  ['nmarl',  'NMARL/TR/FRG/004', 'fridge-freezer', 'Reagent refrigerator',    'Haier Biomedical', 'HYC-390',        'Functional',      true],
+  ['nmarl',  'NMARL/TR/MIC/008', 'microscope',  'Fluorescence microscope',    'Olympus',          'BX53',           'Functional',      false],
+  ['nmarl',  'NMARL/TR/FRZ/005', 'ultra-cold',  'Ultra-low freezer −80 °C',   'Eppendorf',        'CryoCube F570',  'Functional',      true],
+  ['nobrl',  'NOBRL/EQP/170', 'ultra-cold',    'Ultra-low freezer −80 °C',    'Eppendorf',        'CryoCube F740',  'Functional',      true],
+  ['nobrl',  'NOBRL/EQP/171', 'fridge-freezer', 'Tissue bank refrigerator',   'Liebherr',         'LKUv 1610',      'Functional',      true],
+  ['nobrl',  'NOBRL/EQP/172', 'biosafety-cabinet', 'Biosafety cabinet Class II', 'Esco',          'Airstream AC2',  'Unknown',         false],
+  ['nobrl',  'NOBRL/EQP/173', 'fridge-freezer', 'Media refrigerator',         'Liebherr',         'LKPv 1420',      'Functional',      true],
+  ['nfsnrl', 'NFSNRL/EQP/170', 'fridge-freezer', 'Sample refrigerator',       'Haier Biomedical', 'HYC-509',        'Functional',      true],
+  ['nfsnrl', 'NFSNRL/EQP/171', 'ultra-cold',   'Ultra-low freezer −86 °C',    'Thermo Scientific', 'TSX600',        'Functional',      true],
+  ['nfsnrl', 'NFSNRL/EQP/172', 'fridge-freezer', 'Standards refrigerator',    'Liebherr',         'LKPv 1420',      'Functional',      true],
+  ['nfsnrl', 'NFSNRL/EQP/173', 'analyser',     'HPLC system',                 'Agilent',          '1260 Infinity II', 'Functional',    false],
+  ['nfsnrl', 'NFSNRL/EQP/174', 'fridge-freezer', 'Sample refrigerator (bench 3)', 'Haier Biomedical', 'HYC-390',    'Faulty',          true],
+  ['calib',  'CAL/EQP/060',   'fridge-freezer', 'Reference standards fridge', 'Liebherr',         'LKUv 1610',      'Functional',      true],
+  ['calib',  'CAL/EQP/061',   'thermo-timer',  'Reference thermometer (spare)', 'Fluke',          '1524',           'Functional',      false],
+  ['calib',  'CAL/EQP/062',   'it-facility',   'Calibration workstation',     'Dell',             'OptiPlex 7010',  'Decommissioned',  false],
+  ['ccs',    'MOH/DLS/NPHL/CCS/FRZ-003', 'ultra-cold', 'Ultra-low freezer −86 °C (store)', 'Thermo Scientific', 'TSX400', 'Functional', true],
+  ['ccs',    'MOH/DLS/NPHL/CCS/FRG-004', 'fridge-freezer', 'Vaccine refrigerator (store)', 'Haier Biomedical', 'HYC-509', 'Functional', true],
+];
+
+const LOCATIONS = {
+  nhrl: ['Molecular lab, Room 12', 'Serology, Room 8', 'Sample prep, Room 6', 'Chemistry, Room 15'],
+  nmarl: ['Microscopy bench 2', 'Sample prep, Room 2', 'Training room', 'Culture room'],
+  nobrl: ['Cell culture, Room 4', 'Tissue bank, Room 1', 'Molecular lab, Room 7', 'Store, Room 9'],
+  nfsnrl: ['Reagent store, Block D', 'Sample archive, Block D', 'Chemistry bench 3', 'Media room'],
+  calib: ['Calibration bench A', 'Calibration bench B', 'Calibration store'],
+  ccs: ['Central cold store, Block C', 'Central cold store, Block A'],
+};
+
+// A monitored record needs a device; single-sensor devices for the appliances,
+// with the thresholds their type's configuration carries.
+const deviceFor = (i, type) => ({
+  baseStation: `ColdTrace ${i % 3 === 0 ? 'X' : '5'} · IMEI 3569380356${String(44200 + i * 7).slice(0, 5)}`,
+  kind: i % 3 === 0 ? 'CTX' : 'CT5',
+  sensors: [{
+    id: 'sensor-a',
+    label: i % 3 === 0 ? `CTX-${88400 + i}` : 'Sensor A',
+    placement: 'Mid-height, centre',
+    cce: 'In-room',
+    alarms: type === 'ultra-cold' ? '−86 °C / −60 °C (Low / High)' : '2 °C / 8 °C (Low / High)',
+    delays: '1 hr / 10 hrs (Low / High)',
+    config: type === 'ultra-cold' ? 'Ultra-cold freezer configuration' : 'Refrigerator configuration',
+  }],
+});
+
+LAB_EQUIPMENT.push(...EXTRA_ROWS.map(([facilityId, assetTag, type, name, make, model, condition, monitored], i) => ({
+  id: `gen-${assetTag.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`,
+  facilityId,
+  assetTag,
+  type,
+  name,
+  make,
+  model,
+  serial: `${make.slice(0, 2).toUpperCase()}-${1000 + i * 37}-${2018 + (i % 8)}`,
+  location: LOCATIONS[facilityId][i % LOCATIONS[facilityId].length],
+  condition,
+  acquired: `${2017 + (i % 9)}-${String(1 + (i % 12)).padStart(2, '0')}-${String(1 + ((i * 3) % 27)).padStart(2, '0')}`,
+  monitored,
+  ...(monitored ? { qrCode: `QR-${70100 + i}`, device: deviceFor(i, type) } : {}),
+})));
+
 
 // ── Roles & scope (§3) — no role model; the 4 region-scoped lists ─────────────
 // Each persona is a projection of the same register through its granted scope.
@@ -344,6 +524,23 @@ export const PERSONAS = [
     modules: ['inventory', 'reports'],
   },
 ];
+
+// Interleave monitored records through the list, one in three, so the first
+// pages of the register show both kinds (Raf, 2026-09-07 — "give me more
+// monitored on page 1 and 2"). The register renders in array order and the
+// monitored appliances were all appended last, which buried them on page 5.
+(() => {
+  const mon = LAB_EQUIPMENT.filter((r) => r.monitored);
+  const un = LAB_EQUIPMENT.filter((r) => !r.monitored);
+  const ordered = [];
+  while (mon.length || un.length) {
+    if (mon.length) ordered.push(mon.shift());
+    if (un.length) ordered.push(un.shift());
+    if (un.length) ordered.push(un.shift());
+  }
+  LAB_EQUIPMENT.length = 0;
+  LAB_EQUIPMENT.push(...ordered);
+})();
 
 export const rowsForPersona = (personaId) => {
   const p = PERSONAS.find((x) => x.id === personaId) || PERSONAS[0];

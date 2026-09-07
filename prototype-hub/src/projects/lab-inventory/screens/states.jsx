@@ -175,8 +175,16 @@ function AssembledLabApp({
       />
     );
   }
-  if (view === 'detail') {
-    return <ColdRoomDetailScreen onBack={toRegister} onCrumb={onCrumb} onEdit={(id) => setView(`edit:${id}`)} {...detailProps} />;
+  if (view === 'detail' || view.startsWith('detail:')) {
+    return (
+      <ColdRoomDetailScreen
+        recordId={view.startsWith('detail:') ? view.slice(7) : 'ccs-wicr-001'}
+        onBack={toRegister}
+        onCrumb={onCrumb}
+        onEdit={(id) => setView(`edit:${id}`)}
+        {...detailProps}
+      />
+    );
   }
   if (view.startsWith('record:')) {
     return (
@@ -200,7 +208,7 @@ function AssembledLabApp({
       highlightId={highlightId}
       initialToast={returnToast}
       onSetUpMonitoring={() => setView('flow')}
-      onView={(id) => setView(id === 'ccs-wicr-001' ? 'detail' : `record:${id}`)}
+      onView={(id) => setView(LAB_EQUIPMENT.find((r) => r.id === id)?.monitored ? `detail:${id}` : `record:${id}`)}
       onEdit={(id) => setView(`edit:${id}`)}
       onAdd={() => { setReturnToast(null); setMethodOpen(true); }}
       onImport={() => { setReturnToast(null); setView('import'); }}

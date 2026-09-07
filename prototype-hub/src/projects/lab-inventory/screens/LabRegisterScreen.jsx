@@ -49,6 +49,23 @@ const IcoAdjust = ({ size = 16, color = '#303030' }) => (
 
 const PAGE_SIZE = 10;
 const TAB_LABELS = ['All', 'Monitored', 'Not monitored', 'Decommissioned'];
+
+// What each equipment status means, said plainly on its KPI card.
+// The cards read as a ladder — working, broken, unverified, retired — which is
+// not the order the form offers them in.
+const STATUS_CARD_ORDER = ['Functional', 'Faulty', 'Unknown', 'Decommissioned'];
+const STATUS_MEANING = {
+  Functional: 'Working',
+  Faulty: 'Needs repair',
+  Unknown: 'Needs verifying',
+  Decommissioned: 'Retired',
+};
+const STATUS_TOOLTIP = {
+  Functional: 'Records the lab has confirmed are working',
+  Faulty: 'Records that need a repair',
+  Unknown: 'Records nobody has verified — the honest default for an imported register',
+  Decommissioned: 'Retired records, kept for audit and excluded from active counts',
+};
 const EMPTY_FILTERS = { facilities: [], types: [], conditions: [], monitored: 'all' };
 
 function tabMatch(row, tabIndex) {
@@ -102,6 +119,7 @@ export function LabRegisterScreen({
     if (!tabMatch(r, activeTab)) return false;
     if (activeMetric === 'monitored' && !r.monitored) return false;
     if (activeMetric === 'not-monitored' && (r.monitored || r.condition === 'Decommissioned')) return false;
+    if (activeMetric?.startsWith('status:') && (r.condition || 'Not set') !== activeMetric.slice(7)) return false;
     if (activeMetric === 'attention' && !['Faulty', 'Unknown'].includes(r.condition)) return false;
     if (filters.facilities.length && !filters.facilities.includes(r.facilityId)) return false;
     if (filters.types.length && !filters.types.includes(r.type)) return false;
@@ -114,6 +132,39 @@ export function LabRegisterScreen({
     return true;
   }), [allRows, scope, activeTab, activeMetric, filters, search]);
 
+  // The KPI row counts the CURRENT scope — facility scope plus the active tab
+  // (Raf, 2026-09-07: "track changes ... based on monitored or unmonitored") —
+  // but ignores the KPI cards' own selection, so clicking one can't collapse
+  // the row it lives in.
+  const kpiRows = useMemo(() => allRows.filter((r) => {
+    if (scope.length && !scope.includes(r.facilityId)) return false;
+    return tabMatch(r, activeTab);
+  }), [allRows, scope, activeTab]);
+
+  // A week ago: whatever the status was before any change inside the window.
+  const WEEK_MS = 7 * 86400000;
+  const statusLastWeek = (r) => (r.conditionChangedAt
+    && Date.now() - new Date(r.conditionChangedAt).getTime() <= WEEK_MS
+    ? (r.previousCondition || r.condition)
+    : r.condition);
+  const countNow = (c) => kpiRows.filter((r) => (r.condition || 'Not set') === c).length;
+  const countThen = (c) => kpiRows.filter((r) => (statusLastWeek(r) || 'Not set') === c).length;
+  // ── KPI pill definition ───────────────────────────────────────────────────
+  // A pill says what changed in the last week, in words rather than a bare
+  // signed number: "+2" next to Faulty is ambiguous, and a green minus sign
+  // reads as an error. So:
+  //   no movement            → "No change", neutral
+  //   movement the lab wants → "N fewer than last week" / "N more…", success
+  //   movement it does not   → the same wording, critical
+  // Which direction is wanted depends on the card: MORE Functional is good,
+  // FEWER Faulty / Unknown / Decommissioned is good.
+  const deltaPill = (delta, moreIsBetter) => {
+    if (!delta) return { label: 'No change', tone: 'default' };
+    const words = `${Math.abs(delta)} ${delta > 0 ? 'more' : 'fewer'} than last week`;
+    const wanted = moreIsBetter ? delta > 0 : delta < 0;
+    return { label: words, tone: wanted ? 'success' : 'critical' };
+  };
+
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const safePage = Math.min(page, totalPages - 1);
   const pageStart = safePage * PAGE_SIZE;
@@ -123,10 +174,16 @@ export function LabRegisterScreen({
   // No data chrome before the fetch resolves (§3): while loading or errored,
   // tab counts, KPI numbers and pagination must not show live-looking values.
   const showData = !loading && state !== 'error';
-  const counts = TAB_LABELS.map((_, i) => allRows.filter((r) => tabMatch(r, i)).length);
-  const nMonitored = allRows.filter((r) => r.monitored).length;
-  const nNotMonitored = allRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
-  const nAttention = allRows.filter((r) => ['Faulty', 'Unknown'].includes(r.condition)).length;
+  // Tab counts and KPI counts read the SAME set — the facility scope — so the
+  // numbers on screen always add up against each other (Raf, 2026-09-07).
+  const scopedRows = useMemo(
+    () => allRows.filter((r) => !scope.length || scope.includes(r.facilityId)),
+    [allRows, scope],
+  );
+  const counts = TAB_LABELS.map((_, i) => scopedRows.filter((r) => tabMatch(r, i)).length);
+  const nMonitored = scopedRows.filter((r) => r.monitored).length;
+  const nNotMonitored = scopedRows.filter((r) => !r.monitored && r.condition !== 'Decommissioned').length;
+  const nAttention = scopedRows.filter((r) => ['Faulty', 'Unknown'].includes(r.condition)).length;
   const scopeLabel = personaDef.facilities.length > 1
     ? `all ${personaDef.facilities.length} NPHL facilities`
     : facilityLabel(personaDef.facilities[0]);
@@ -157,10 +214,24 @@ export function LabRegisterScreen({
       render: (r) => <Badge tone={CONDITION_TONES[r.condition] || 'default'}>{r.condition || 'Not set'}</Badge>,
     },
     {
+      // The badge is the door (Raf, 2026-09-07): Monitored opens the monitored
+      // record — chart, sensors, alarms; Not monitored opens the register
+      // record. Same destinations as View, one click closer.
       key: 'monitored', label: 'Monitored', width: 120,
-      render: (r) => (r.monitored
-        ? <Badge tone="success">Monitored</Badge>
-        : <Badge>Not monitored</Badge>),
+      render: (r) => (
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onView?.(r.id); }}
+          aria-label={r.monitored
+            ? `Open the monitored record for ${r.assetTag}`
+            : `Open the register record for ${r.assetTag}`}
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit' }}
+        >
+          {r.monitored
+            ? <Badge tone="success">Monitored</Badge>
+            : <Badge>Not monitored</Badge>}
+        </button>
+      ),
     },
     {
       key: 'device', label: 'Assigned device', width: 210,
@@ -168,7 +239,7 @@ export function LabRegisterScreen({
         ? (
           <span style={{ fontSize: 12, lineHeight: '16px', color: TEXT_SUBDUED }}>
             <span style={{ display: 'block', color: TEXT_DEFAULT, fontWeight: 500 }}>{r.device.baseStation.split(' · ')[0]}</span>
-            {r.device.sensors.length} sensors on this record
+            {r.device.sensors.length} {r.device.sensors.length === 1 ? 'sensor' : 'sensors'} on this record
           </span>
         )
         : '—'),
@@ -210,31 +281,34 @@ export function LabRegisterScreen({
         gap: 12, marginBottom: 24,
       }}>
         <MetricCard
-          title="Total equipment" metric={showData ? String(allRows.length) : '—'} loading={loading}
-          infoTooltip={`Every lab equipment record in ${scopeLabel}. Lab equipment is counted separately from cold chain equipment.`}
+          title="Total equipment" metric={showData ? String(kpiRows.length) : '—'} loading={loading}
+          badge={showData ? deltaPill(kpiRows.length - kpiRows.length, true) : undefined}
+          infoTooltip={`Every lab equipment record in ${scopeLabel}${activeTab ? ` on the ${TAB_LABELS[activeTab]} tab` : ''}. Lab equipment is counted separately from cold chain equipment.`}
           selected={activeMetric === 'total'}
           onClick={() => setActiveMetric((p) => (p === 'total' ? null : 'total'))}
         />
-        <MetricCard
-          title="Monitored" metric={showData ? String(nMonitored) : '—'} loading={loading}
-          badge={showData && nMonitored ? { label: 'Walk-in cold room', tone: 'success' } : undefined}
-          infoTooltip={`Records with an assigned monitoring device, out of ${allRows.length} in ${scopeLabel}. V1 monitors the walk-in cold room only.`}
-          selected={activeMetric === 'monitored'}
-          onClick={() => setActiveMetric((p) => (p === 'monitored' ? null : 'monitored'))}
-        />
-        <MetricCard
-          title="Not monitored" metric={showData ? String(nNotMonitored) : '—'} loading={loading}
-          infoTooltip={`Register-only records — no monitoring device, out of ${allRows.length} in ${scopeLabel}.`}
-          selected={activeMetric === 'not-monitored'}
-          onClick={() => setActiveMetric((p) => (p === 'not-monitored' ? null : 'not-monitored'))}
-        />
-        <MetricCard
-          title="Needs attention" metric={showData ? String(nAttention) : '—'} loading={loading}
-          badge={showData && nAttention ? { label: 'Faulty or unknown', tone: 'warning' } : undefined}
-          infoTooltip={`Records that are Faulty (need repair) or Unknown (nobody has verified them), out of ${allRows.length} in ${scopeLabel}.`}
-          selected={activeMetric === 'attention'}
-          onClick={() => setActiveMetric((p) => (p === 'attention' ? null : 'attention'))}
-        />
+        {/* The rest of the row is the EQUIPMENT STATUS split (Raf, 2026-09-07)
+            — monitored vs not is the tab row and the Monitored column, so the
+            cards are spent on the condition the lab acts on. Each pill is the
+            week-on-week change within the scope the cards are counting, so
+            switching to Monitored or Not monitored re-reads both. */}
+        {STATUS_CARD_ORDER.map((c) => {
+          const n = countNow(c);
+          // Fewer Faulty/Unknown/Decommissioned is good news; fewer Functional is not.
+          const delta = n - countThen(c);
+          return (
+            <MetricCard
+              key={c}
+              title={c}
+              metric={showData ? String(n) : '—'}
+              loading={loading}
+              badge={showData ? deltaPill(delta, c === 'Functional') : undefined}
+              infoTooltip={`${STATUS_TOOLTIP[c]} — out of ${kpiRows.length} records in ${scopeLabel}${activeTab ? ` on the ${TAB_LABELS[activeTab]} tab` : ''}.`}
+              selected={activeMetric === `status:${c}`}
+              onClick={() => setActiveMetric((p) => (p === `status:${c}` ? null : `status:${c}`))}
+            />
+          );
+        })}
       </div>
 
       {state === 'error' && (

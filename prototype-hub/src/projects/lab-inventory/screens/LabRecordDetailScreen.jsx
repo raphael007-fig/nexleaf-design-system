@@ -36,6 +36,9 @@ export function LabRecordDetailScreen({
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[0];
   const decommissioned = record.condition === 'Decommissioned';
   const monitorableNow = isMonitorableNow(record.type) && !record.monitored;
+  // Is anything of this type actually monitored? Cheaper and truer than a
+  // hardcoded claim about the register's composition.
+  const monitoredOfType = LAB_EQUIPMENT.some((r) => r.type === record.type && r.monitored);
 
   return (
     <LabShell level="tertiary" trail={[{ id: 'record', label: record.assetTag }]} onCrumb={onCrumb}>
@@ -97,7 +100,9 @@ export function LabRecordDetailScreen({
                   ? 'Not monitored yet. This type supports monitoring — set it up from the banner above.'
                   : isMonitorableLater(record.type)
                     ? 'Not monitored for now. Fridge/freezer monitoring arrives in a later phase.'
-                    : 'Not monitored. This equipment type has no compatible temperature monitoring — that is expected for most of the register (~90%).'}
+                    : `Not monitored. ${monitoredOfType
+                      ? `Other ${typeLabel(record.type)} records are monitored, so this one can be — set it up from the register.`
+                      : 'This equipment type has no compatible temperature monitoring, which is true of most of the register.'}`}
             </p>
           </Card>
         </div>
@@ -121,7 +126,7 @@ export function LabRecordDetailScreen({
               <Badge tone={CONDITION_TONES[record.condition] || 'default'}>{record.condition || 'Not set'}</Badge>
             </div>
             <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
-              The lab’s five-value vocabulary. Age is kept in notes, never as a condition.
+              One of the lab’s four statuses. Age is kept in notes, never as a status.
             </p>
           </Card>
           {/* DS QR card — unmonitored rows have no QR yet (whether lab assets get QR
