@@ -14,6 +14,7 @@ import { useState } from 'react';
 import { Page } from '@ds/components/Page/Page.jsx';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
+import { Badge } from '@ds/components/Badge/Badge.jsx';
 import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
@@ -35,8 +36,29 @@ const DEPLOYMENT_STATUS = ['Not in use', 'Installed', 'Deployed'];
 // Warranty + service cover (step 2). Warranty years is the 3rd-party flow's
 // list; the rest is what a lab actually needs to answer "is this repair
 // already paid for?" before raising one.
-const WARRANTY_YEARS = ['1 year', '2 years', '3 years', '5 years', '10 years', 'No warranty'];
 const SERVICE_PROVIDERS = ['Vendor (original supplier)', 'Local service agent', 'Calibration Centre', 'In-house biomedical team', 'No contract'];
+// Maintenance, modelled on what CCE actually does (coldtrace-product-context
+// §2/§3): a SCHEDULE plus a LAST SERVICE DATE, from which the status is
+// DERIVED — Unknown / OK / Upcoming / Due / Overdue, banded at 30 and 90 days.
+// CCE's own bug is that Last Service Date is never populated, so its Overdue
+// chip is computed against a blank date. Capturing the date at registration is
+// what stops that happening here, so the field is offered up front and the
+// derived status says plainly when there is no history to judge.
+const MAINTENANCE_SCHEDULES = ['Quarterly', 'Every 6 months', 'Annually', 'Not scheduled'];
+const SCHEDULE_DAYS = { 'Quarterly': 90, 'Every 6 months': 182, 'Annually': 365 };
+
+function maintenanceBand(schedule, lastService) {
+  if (!schedule || schedule === 'Not scheduled') return { label: 'Unknown — no schedule', tone: 'default' };
+  if (!lastService) return { label: 'No maintenance history', tone: 'warning' };
+  const interval = SCHEDULE_DAYS[schedule] || 365;
+  const days = Math.floor((Date.now() - new Date(lastService).getTime()) / 86400000);
+  const overdueBy = days - interval;
+  if (overdueBy > 90) return { label: 'Critical — long overdue', tone: 'critical' };
+  if (overdueBy > 0) return { label: 'Maintenance overdue', tone: 'critical' };
+  if (overdueBy > -30) return { label: 'Due soon', tone: 'warning' };
+  return { label: 'Recently maintained', tone: 'success' };
+}
+
 const SERVICE_COVER = ['Preventive maintenance only', 'Repairs only', 'Preventive maintenance + repairs', 'Calibration only', 'Parts only'];
 
 // Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
@@ -95,11 +117,12 @@ export function AddLabEquipmentScreen({
   // Installation + warranty (ported from the 3rd-party flow). Status is
   // required there because a monitored device must be installed to report; here
   // it records whether the lab is actually using the equipment yet.
-  const [installDate, setInstallDate] = useState(() => (mode === 'edit' && record ? (record.installDate || null) : null));
   // Step 2 — warranty and service cover. All optional: a record is valid
   // without it, and most lab kit outlives whatever cover it came with.
-  const [warrantyYears, setWarrantyYears] = useState('');
-  const [warrantyEnds, setWarrantyEnds] = useState(null);
+  const [schedule, setSchedule] = useState('');
+  const [lastService, setLastService] = useState(null);
+  const [warrantyStart, setWarrantyStart] = useState(null);
+  const [warrantyEnd, setWarrantyEnd] = useState(null);
   const [servicer, setServicer] = useState('');
   const [contractRef, setContractRef] = useState('');
   const [coverFrom, setCoverFrom] = useState(null);
@@ -189,7 +212,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, warrantyYears, warrantyEnds, servicer, contractRef, coverFrom, coverTo, cover, otherType: form.type === 'other' ? otherType.trim() : '', installDate, deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, cover, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -371,18 +394,12 @@ export function AddLabEquipmentScreen({
             options={DEPLOYMENT_STATUS.map((d) => ({ id: d, label: d }))}
             placeholder="Select…"
             value={deployment}
-            onChange={(e) => {
-            const v = e.target ? e.target.value : e;
-            setDeployment(v);
-            if ((v === 'Installed' || v === 'Deployed') && !installDate) setInstallDate(new Date());
-          }}
+            onChange={(e) => setDeployment(e.target ? e.target.value : e)}
             helpText="Whether the equipment is in service. Equipment status says if it works; this says if it is being used."
           />
-          {/* Purchase date is a fact about the record, not about being installed
-              (Raf, 2026-09-07), so it shows for every deployment status. It
-              shares this row with the install date so both dates keep the same
-              column rhythm as Condition / Deployment above. */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+          {/* Purchase date shows for every deployment status — it is a fact about
+              the record, not about being installed (Raf, 2026-09-07). */}
+          <div>
             <DateField
               label="Purchase date"
               required
@@ -390,12 +407,6 @@ export function AddLabEquipmentScreen({
               onChange={set('acquired')}
               error={errors.acquired}
               helpText="When the lab bought it — separate from when it was installed."
-            />
-            <DateField
-              label="Equipment install date"
-              value={installDate}
-              onChange={setInstallDate}
-              helpText="When it was installed at the facility. Leave blank if it is not installed yet."
             />
           </div>
         </FormSection>
@@ -455,21 +466,49 @@ export function AddLabEquipmentScreen({
           footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
         >
-          <FormSection title="Warranty">
+          <FormSection title="Maintenance">
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
               <SelectInput
-                label="Warranty years"
-                options={WARRANTY_YEARS.map((w) => ({ id: w, label: w }))}
+                label="Maintenance schedule"
+                options={MAINTENANCE_SCHEDULES.map((v) => ({ id: v, label: v }))}
                 placeholder="Select…"
-                value={warrantyYears}
-                onChange={(e) => setWarrantyYears(e.target ? e.target.value : e)}
-                helpText="Counted from the purchase date."
+                value={schedule}
+                onChange={(e) => setSchedule(e.target ? e.target.value : e)}
+                helpText="How often preventive maintenance is planned."
               />
               <DateField
-                label="Warranty expires"
-                value={warrantyEnds}
-                onChange={setWarrantyEnds}
-                helpText="Leave blank to let the years above speak for themselves."
+                label="Last service date"
+                value={lastService}
+                onChange={setLastService}
+                helpText="The date the schedule is measured from. Leave blank if it has never been serviced."
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>Maintenance status</span>
+              <Badge tone={maintenanceBand(schedule, lastService).tone} size="small">
+                {maintenanceBand(schedule, lastService).label}
+              </Badge>
+            </div>
+            <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+              Derived, never entered: the schedule measured against the last service date
+              (overdue past 30 days, critical past 90). With no service date it says so
+              rather than claiming the equipment is overdue.
+            </p>
+          </FormSection>
+
+          <FormSection title="Warranty">
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: 16, alignItems: 'start' }}>
+              <DateField
+                label="Warranty start date"
+                value={warrantyStart}
+                onChange={setWarrantyStart}
+                helpText="Usually the purchase or commissioning date."
+              />
+              <DateField
+                label="Warranty end date"
+                value={warrantyEnd}
+                onChange={setWarrantyEnd}
+                helpText="When cover lapses — what a repair is checked against."
               />
             </div>
           </FormSection>
@@ -541,10 +580,17 @@ export function AddLabEquipmentScreen({
               ['QR code', qrCode || '— (none)'],
             ]} />
           </FormSection>
+          <FormSection title="Maintenance">
+            <ReviewRows rows={[
+              ['Schedule', schedule || '— (not scheduled)'],
+              ['Last service date', lastService ? new Date(lastService).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (no history)'],
+              ['Maintenance status', maintenanceBand(schedule, lastService).label],
+            ]} />
+          </FormSection>
           <FormSection title="Warranty & service">
             <ReviewRows rows={[
-              ['Warranty', warrantyYears || '— (not recorded)'],
-              ['Warranty expires', warrantyEnds ? new Date(warrantyEnds).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
+              ['Warranty start', warrantyStart ? new Date(warrantyStart).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '— (not recorded)'],
+              ['Warranty end', warrantyEnd ? new Date(warrantyEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
               ['Service provider', servicer || '— (none)'],
               ['Contract reference', contractRef || '—'],
               ['Cover', cover || '—'],
