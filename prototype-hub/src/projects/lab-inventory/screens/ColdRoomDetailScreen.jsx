@@ -270,7 +270,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             mapLon={36.8065}
           />
           <Card>
-            <CardSectionTitle icon={<RailIcon name="ClipboardIcon" />} title="Record" />
+            <CardSectionTitle title="Record" />
             <CardField icon={<RailIcon name="BarcodeIcon" />} label="Asset tag" value={COLD_ROOM.assetTag} />
             <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={COLD_ROOM.serial || '—'} />
             <CardField icon={<RailIcon name="WrenchIcon" />} label="Condition" value={COLD_ROOM.condition} />
@@ -287,14 +287,14 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdi
             contactNumber={CONTACT_DIRECTORY[0].phone}
           />
           <Card>
-            <CardSectionTitle icon={<RailIcon name="MediaReceiverIcon" />} title="Monitoring device" />
+            <CardSectionTitle title="Monitoring device" />
             <CardField icon={<RailIcon name="MediaReceiverIcon" />} label="Base station" value={COLD_ROOM.device.baseStation} />
             <CardField icon={<RailIcon name="WifiIcon" />} label="Sensors" value={`${sensors.length} on this record`} />
             <CardField icon={<RailIcon name="GaugeIcon" />} label="Thresholds" value="2–8 °C · Walk-in Cold Room config" />
           </Card>
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <CardSectionTitle icon={<RailIcon name="NotificationIcon" />} title="Alarm contacts" />
+              <CardSectionTitle title="Alarm contacts" />
               <Badge size="small">{`${contacts.length} of ${MAX_ALARM_CONTACTS}`}</Badge>
             </div>
             {contacts.map((id) => {

@@ -112,12 +112,12 @@ export function LabRecordDetailScreen({
             mapLon={36.8065}
           />
           <Card>
-            <CardSectionTitle icon={<RailIcon name="PinIcon" />} title="Placement" />
+            <CardSectionTitle title="Placement" />
             <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={record.location || '—'} />
           </Card>
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <CardSectionTitle icon={<RailIcon name="WrenchIcon" />} title="Condition" />
+              <CardSectionTitle title="Condition" />
               <Badge tone={CONDITION_TONES[record.condition] || 'default'}>{record.condition || 'Not set'}</Badge>
             </div>
             <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
@@ -134,7 +134,7 @@ export function LabRecordDetailScreen({
           />
           {record.notes && (
             <Card>
-              <CardSectionTitle icon={<RailIcon name="NoteIcon" />} title="Notes" />
+              <CardSectionTitle title="Notes" />
               <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>{record.notes}</p>
             </Card>
           )}
