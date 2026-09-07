@@ -224,7 +224,16 @@ function AssembledLabApp({
   );
 }
 
-const FLOW_READY = { deviceId: 'rtmd-1', sensors: ['Sensor A', 'Sensor B', 'Sensor C', 'Sensor D (ambient)'] };
+// Sensors are rows of {serial, role} now that they are added with a "+".
+const FLOW_READY = {
+  deviceId: 'rtmd-1',
+  sensors: [
+    { serial: 'Sensor A', role: 'In-room' },
+    { serial: 'Sensor B', role: 'In-room' },
+    { serial: 'Sensor C', role: 'In-room' },
+    { serial: 'Sensor D (ambient)', role: 'Ambient' },
+  ],
+};
 
 export const STATE_SECTIONS = [
   {

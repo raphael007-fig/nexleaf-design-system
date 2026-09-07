@@ -24,7 +24,7 @@ import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { TextInput } from '@ds/components/TextInput/TextInput.jsx';
 import { TextareaInput } from '@ds/components/TextareaInput/TextareaInput.jsx';
 import { SelectInput } from '@ds/components/SelectInput/SelectInput.jsx';
-import { SearchSelect, SearchSelectMulti } from '@ds/components/SearchSelect/SearchSelect.jsx';
+import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
 import { DateField } from '@ds/components/DateField/DateField.jsx';
 import { SubmissionSuccessCard } from '@ds/components/SubmissionSuccessCard/SubmissionSuccessCard.jsx';
 import { TEXT_SUBDUED } from '@ds/tokens/index.js';
@@ -57,6 +57,12 @@ const PHASES = [
   { label: 'Review & Submit', steps: ['review'] },
 ];
 const STEP_ORDER = ['facility', 'warranty', 'device', 'review'];
+
+// What a sensor is FOR. In-room readings count toward in-range; ambient is
+// context; a door sensor reports openings, not temperature — the meeting left
+// fridge door sensors as "confirm scope", so the role exists and nothing forces
+// it (Sep 2026).
+const SENSOR_ROLES = ['In-room', 'Ambient', 'Door'];
 
 // ── The flow ──────────────────────────────────────────────────────────────────
 const DEFAULT_EQUIPMENT = {
@@ -109,6 +115,8 @@ export function ColdRoomFlow({
   const device = BASE_STATIONS.find((d) => d.id === deviceId) || null;
   const sensorOptions = (device?.kind === 'CTX' ? CTX_SENSORS : CT5_SENSORS)
     .map((s) => ({ id: s, label: s }));
+  // A CT5 has exactly four sensors; a CTX draws from the pre-fed serial pool.
+  const maxSensors = device?.kind === 'CT5' ? 4 : (device ? CTX_SENSORS.length : 0);
 
   // One validator for step 1, so the primary can stay disabled until the
   // record is answerable (same rule as the register form).
@@ -353,7 +361,7 @@ export function ColdRoomFlow({
           subtitle="Monitoring comes last: the equipment is the primary, the device is secondary. All sensors attach to this ONE cold-room record."
           footerLeft={<Btn variant="secondary" onClick={() => go('warranty')}>Back</Btn>}
           footerRight={(
-            <Btn variant="primary" disabled={!deviceId || sensors.length === 0} onClick={() => go('review')}>
+            <Btn variant="primary" disabled={!deviceId || !sensors.length || sensors.some((r) => !r.serial)} onClick={() => go('review')}>
               Next
             </Btn>
           )}
@@ -372,23 +380,78 @@ export function ColdRoomFlow({
               }}
             />
           </FormSection>
-          <FormSection title={`Sensors on this record · ${sensors.length} assigned`} required>
-            <SearchSelectMulti
-              label="Assign sensors"
-              required
-              placeholder={device
-                ? (device.kind === 'CTX' ? 'Pick pre-fed CTX sensor serials…' : 'Pick from the CT5’s four sensors (A–D)…')
-                : 'Choose a base station first'}
-              options={sensorOptions}
-              value={sensors}
-              onChange={setSensors}
-              disabled={!deviceId}
-            />
+          {/* Sensors are added one at a time with a "+" (the meeting, Sep 2026):
+              a cold room needs 3–4, a fridge usually one, and some carry a door
+              sensor — a fixed multi-select could not express that. Each row is
+              a serial plus the ROLE it plays, because the role decides whether
+              the reading counts toward in-range (in-room), is context only
+              (ambient), or is an open-door event (door). */}
+          <FormSection title={`Sensors on this record · ${sensors.length} of ${maxSensors}`} required>
+            {sensors.length === 0 && (
+              <Banner tone="info" inCard>
+                No sensors on this record yet. Add at least one — a walk-in cold room
+                normally has 3–4 in-room sensors plus an ambient one.
+              </Banner>
+            )}
+            {sensors.map((row, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1.2fr) auto', gap: 12, alignItems: 'end' }}>
+                <SearchSelect
+                  label={`Sensor ${i + 1}`}
+                  required
+                  placeholder={device
+                    ? (device.kind === 'CTX' ? 'Pick a pre-fed CTX serial…' : 'Pick a CT5 sensor (A–D)…')
+                    : 'Choose a base station first'}
+                  options={sensorOptions.filter((o) => o.id === row.serial || !sensors.some((x) => x.serial === o.id))}
+                  value={row.serial}
+                  onChange={(v) => {
+                    const serial = v && v.target ? v.target.value : v;
+                    setSensors((rs) => rs.map((r, j) => (j === i ? { ...r, serial } : r)));
+                    setErrors((er) => ({ ...er, sensors: undefined }));
+                  }}
+                  disabled={!deviceId}
+                  error={errors.sensors && !row.serial ? 'Choose a sensor.' : undefined}
+                />
+                <SelectInput
+                  label="Role"
+                  options={SENSOR_ROLES.map((r) => ({ id: r, label: r }))}
+                  value={row.role}
+                  onChange={(e) => {
+                    const role = e.target ? e.target.value : e;
+                    setSensors((rs) => rs.map((r, j) => (j === i ? { ...r, role } : r)));
+                  }}
+                />
+                <Btn
+                  variant="tertiary"
+                  onClick={() => setSensors((rs) => rs.filter((_, j) => j !== i))}
+                  ariaLabel={`Remove sensor ${i + 1}`}
+                >
+                  Remove
+                </Btn>
+              </div>
+            ))}
+            <div style={{ display: 'flex' }}>
+              <Btn
+                variant="secondary"
+                disabled={!deviceId || sensors.length >= maxSensors}
+                onClick={() => setSensors((rs) => [...rs, { serial: '', role: rs.length ? 'Ambient' : 'In-room' }])}
+              >
+                + Add sensor
+              </Btn>
+            </div>
+            {!deviceId && (
+              <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+                Choose a base station first — it decides which sensors exist.
+              </p>
+            )}
+            {deviceId && sensors.length >= maxSensors && (
+              <p style={{ margin: 0, fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
+                {device.model} carries {maxSensors} sensors — remove one to swap it.
+              </p>
+            )}
             <Banner tone="info" inCard>
               <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
-              A walk-in cold room needs 3–4 sensors, and every reading lands on this one
-              record — it stays one piece of equipment in every count. Sensor IDs are picked
-              from the system, never typed{device?.kind === 'CT5' ? '; Sensor D is ambient and may sit outside the cold room' : ''}.
+              Every reading lands on this one record — it stays one piece of equipment in
+              every count. Serials are picked from the system, never typed.
             </Banner>
             <Banner tone="info" inCard hideIcon>
               <b>No thresholds to enter.</b> Alarms follow the Walk-in Cold Room configuration
@@ -476,7 +539,9 @@ export function ColdRoomFlow({
           <ReviewSection title="Monitoring" status={<Badge tone="success" size="small">Complete</Badge>} onEdit={() => go('device')}>
             <ReviewRows rows={[
               ['Base station', device ? `${device.model} · IMEI ${device.imei}` : '—'],
-              ['Sensors on this record', sensors.length ? sensors.join(' · ') : '—'],
+              ['Sensors on this record', sensors.length
+                ? sensors.map((r) => `${r.serial} (${r.role.toLowerCase()})`).join(' · ')
+                : '—'],
               ['Thresholds', 'Walk-in Cold Room configuration (2–8 °C) — admin-managed, not set here'],
               ['Alarm contacts', contacts.length
                 ? `${contacts.length} of ${MAX_ALARM_CONTACTS} — ${contacts.map((id) => directory.find((c) => c.id === id)?.name || id).join(', ')}`
@@ -497,7 +562,7 @@ export function ColdRoomFlow({
                   { label: 'Equipment', value: `${equipment.name} · ${equipment.assetTag}` },
                   { label: 'Facility', value: facilityLabel(facilityId) },
                   { label: 'Base station', value: device ? `${device.model} · IMEI ${device.imei}` : 'ColdTrace 5' },
-                  { label: 'Sensors', value: `${sensors.length || 4} on this one record` },
+                  { label: 'Sensors', value: `${sensors.length} on this one record` },
                   { label: 'Alarms', value: `2–8 °C (Walk-in Cold Room configuration) → ${contacts.length} contact${contacts.length === 1 ? '' : 's'}` },
                 ],
               },
