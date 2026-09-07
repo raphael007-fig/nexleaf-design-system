@@ -385,21 +385,45 @@ export const CTX_SENSORS = [
 ];
 
 // ── Bulk import — the real files' headers → our fields (§8) ───────────────────
+// Every column a record can hold — i.e. every field steps 1 and 2 of the add
+// form collect (Raf, 2026-09-07), so a spreadsheet can carry as much as a
+// hand-entered record. In the same order the form asks them.
+//
+// Two deliberate absences: Facility (chosen once for the whole file — one
+// spreadsheet per facility) and Maintenance status (calculated from the
+// schedule and last service date, never imported).
 export const IMPORT_FIELDS = [
-  { id: 'assetTag',  label: 'Asset tag' },
-  { id: 'name',      label: 'Name (+ infer type)' },
-  { id: 'make',      label: 'Make' },
-  { id: 'serial',    label: 'Serial' },
-  { id: 'location',  label: 'Location / room' },
-  { id: 'condition', label: 'Equipment status' },
-  { id: 'acquired',  label: 'Purchase date' },
-  { id: '__skip',    label: 'Don’t import' },
+  // ── Step 1 · Facility & equipment ──
+  { id: 'type',          label: 'Equipment type' },
+  { id: 'name',          label: 'Name (+ infer type)' },
+  { id: 'make',          label: 'Make' },
+  { id: 'model',         label: 'Model' },
+  { id: 'serial',        label: 'Serial number' },
+  { id: 'assetTag',      label: 'Asset tag' },
+  { id: 'location',      label: 'Location / room' },
+  { id: 'condition',     label: 'Equipment status' },
+  { id: 'deployment',    label: 'Deployment status' },
+  { id: 'acquired',      label: 'Purchase date' },
+  { id: 'qrCode',        label: 'QR code' },
+  { id: 'sheetNotes',    label: 'Notes' },
+  // ── Step 2 · Warranty & maintenance ──
+  { id: 'warrantyStart', label: 'Warranty start date' },
+  { id: 'warrantyEnd',   label: 'Warranty end date' },
+  { id: 'schedule',      label: 'Maintenance schedule' },
+  { id: 'lastService',   label: 'Last service date' },
+  { id: 'agreement',     label: 'Service agreement (yes/no)' },
+  { id: 'servicer',      label: 'Service provider' },
+  { id: 'servicerPhone', label: 'Service provider phone' },
+  { id: 'servicerEmail', label: 'Service provider email' },
+  { id: 'coverFrom',     label: 'Cover start date' },
+  { id: 'coverTo',       label: 'Cover end date' },
+  { id: '__skip',        label: 'Don’t import' },
 ];
 
 // A slice of NHRL's real-looking sheet: messy headers, messy condition strings.
 export const IMPORT_SHEET = {
   fileName: 'NHRL equipment register 2026.xlsx',
-  headers: ['EQUIPMENT ID NO', 'Name of equipment', 'Manufacturer', 'Serial no', 'Current location', 'Status', 'Purchase date'],
+  headers: ['EQUIPMENT ID NO', 'Name of equipment', 'Manufacturer', 'Serial no', 'Current location', 'Status', 'Purchase date', 'Warranty expiry', 'Last serviced', 'Service company'],
   // Suggested mapping (their header → our field id); Status is the human-check.
   suggested: {
     'EQUIPMENT ID NO': 'assetTag',
@@ -409,15 +433,19 @@ export const IMPORT_SHEET = {
     'Current location': 'location',
     'Status': 'condition',
     'Purchase date': 'acquired',
+    'Warranty expiry': 'warrantyEnd',
+    'Last serviced': 'lastService',
+    'Service company': 'servicer',
   },
   rows: [
-    ['NHRL/EQP/101', 'Refrigerated centrifuge', 'Eppendorf 5702 R',        '5702R-8817', 'Sample prep, Room 6',  'OK',                    '12/03/2022'],
-    ['NHRL/EQP/102', 'Freezer -86 New Brunswick', 'Eppendorf',             'U410-2231',  'Molecular lab, Rm 12', 'Working',               '02/07/2019'],
-    ['NHRL/EQP/103', 'ELISA washer', 'BioTek 50 TS',                       '',           'Serology, Room 8',     'Not fully installed',   '28/11/2025'],
-    ['NHRL/EQP/104', 'Vortex mixer', 'Scientific Industries',              '',           'Sample prep, Room 6',  'Old',                   ''],
-    ['NHRL/EQP/022', 'Ultra-low freezer -86', 'Eppendorf New Brunswick',   'U535-8842-KE', 'Molecular lab, Rm 12', 'OK',                  '15/03/2021'],
-    ['NHRL/EQP/106', 'Water distiller', 'Lasany',                          'LI-8842',    'Media room',           'Out of order',          '19/06/2017'],
-    ['NHRL/EQP/107', 'Autoclave bench-top', 'Tuttnauer 2540',              '',           'Sterilisation room',   'awaiting validation',   '30/01/2026'],
+    // id · name · manufacturer · serial · location · status · purchase · warranty expiry · last serviced · service company
+    ['NHRL/EQP/101', 'Refrigerated centrifuge',   'Eppendorf 5702 R',       '5702R-8817',   'Sample prep, Room 6',  'OK',                  '12/03/2022', '12/03/2025', '04/02/2026', 'Calibration Centre'],
+    ['NHRL/EQP/102', 'Freezer -86 New Brunswick', 'Eppendorf',              'U410-2231',    'Molecular lab, Rm 12', 'Working',             '02/07/2019', '02/07/2022', '',           ''],
+    ['NHRL/EQP/103', 'ELISA washer',              'BioTek 50 TS',           '',             'Serology, Room 8',     'Not fully installed', '28/11/2025', '28/11/2028', '',           'Vendor (original supplier)'],
+    ['NHRL/EQP/104', 'Vortex mixer',              'Scientific Industries',  '',             'Sample prep, Room 6',  'Old',                 '',           '',           '',           ''],
+    ['NHRL/EQP/022', 'Ultra-low freezer -86',     'Eppendorf New Brunswick','U535-8842-KE', 'Molecular lab, Rm 12', 'OK',                  '15/03/2021', '15/03/2024', '11/08/2025', 'Local service agent'],
+    ['NHRL/EQP/106', 'Water distiller',           'Lasany',                 'LI-8842',      'Media room',           'Out of order',        '19/06/2017', '',           '03/03/2024', 'In-house biomedical team'],
+    ['NHRL/EQP/107', 'Autoclave bench-top',       'Tuttnauer 2540',         '',             'Sterilisation room',   'awaiting validation', '30/01/2026', '30/01/2029', '',           'Vendor (original supplier)'],
   ],
 };
 

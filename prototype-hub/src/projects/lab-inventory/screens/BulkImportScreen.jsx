@@ -25,7 +25,7 @@ import { StepFrame, FormSection } from '../../add-equipment/screens/AddEquipment
 import { LabShell } from './LabShell.jsx';
 import {
   IMPORT_FIELDS, IMPORT_SHEET, CONDITION_MAP, LAB_FACILITIES, PERSONAS,
-  LAB_EQUIPMENT, inferType, typeLabel,
+  LAB_EQUIPMENT, inferType, typeLabel, LAB_TYPES,
 } from './labData.js';
 
 const TRAIL = [{ id: 'import', label: 'Import from Spreadsheet' }];
@@ -44,13 +44,26 @@ function mapRow(raw, mapping, facilityId) {
     if (!field || field === '__skip') return;
     record[field] = raw[i];
   });
+  if (record.sheetNotes) { record.notes.push(String(record.sheetNotes)); delete record.sheetNotes; }
   const issues = [];
   // Duplicate asset tags — within the region (existing register + this sheet).
   if (record.assetTag && LAB_EQUIPMENT.some((r) => r.assetTag.toLowerCase() === String(record.assetTag).toLowerCase())) {
     issues.push({ kind: 'dup', label: 'Duplicate asset tag' });
   }
-  // Type inference from the name.
-  record.type = inferType(record.name);
+  // Type: an explicitly mapped Equipment type column wins; inference from the
+  // name is the fallback for the usual case where the sheet has no type column.
+  if (record.type) {
+    const wanted = String(record.type).trim().toLowerCase();
+    const hit = LAB_TYPES.find((t) => t.label.toLowerCase() === wanted || t.id === wanted);
+    if (hit) {
+      record.type = hit.id;
+    } else {
+      record.notes.push(`Sheet said type “${String(record.type).trim()}” — not in the managed list.`);
+      record.type = inferType(record.name);
+    }
+  } else {
+    record.type = inferType(record.name);
+  }
   if (!record.type) issues.push({ kind: 'type', label: 'Type not recognised' });
   // Condition mapping.
   const rawCondition = String(record.condition || '').trim().toLowerCase().replace(/[",]+$/, '');
@@ -127,6 +140,10 @@ export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }
                   { label: 'Records created', value: `${parsed.length} (all in the register — none monitored)` },
                   { label: 'Flagged for follow-up', value: `${withIssues.length} — kept, marked for review` },
                   { label: 'Equipment status mapping', value: 'Free-text mapped to the lab’s five conditions; “Old” kept as a note, not a condition' },
+                  {
+                    label: 'Warranty & service',
+                    value: `${parsed.filter((p2) => p2.record.warrantyEnd || p2.record.servicer || p2.record.lastService).length} of ${parsed.length} rows carried warranty or service columns — maintenance status is calculated from them, never imported`,
+                  },
                 ],
               },
             ]}
