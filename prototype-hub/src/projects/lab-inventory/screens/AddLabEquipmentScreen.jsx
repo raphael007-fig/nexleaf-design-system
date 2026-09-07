@@ -99,7 +99,12 @@ export function AddLabEquipmentScreen({
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
   const [deployFrom, setDeployFrom] = useState(null);
   const [deployTo, setDeployTo] = useState(null);
-  // Free-text type, only when Type = Other.
+  // Types typed in via "+ Add" this session — the same escape hatch the
+  // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
+  // blocks the record. A typed type is never monitorable: nothing has been
+  // configured for it, so it has no thresholds to inherit.
+  const [customTypes, setCustomTypes] = useState([]);
+  // Filled when the user picks "Other" from the list rather than typing a type.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
   const [qrModal, setQrModal] = useState(null);   // null | 'assign' | 'view'
@@ -169,7 +174,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, status, installDate, deployment, deployFrom, deployTo, qrCode, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', status, installDate, deployment, deployFrom, deployTo, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -221,17 +226,28 @@ export function AddLabEquipmentScreen({
           footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
         >
-        {/* Equipment type stands on its own above Identification (Raf,
-            2026-09-07) — it is the field the rest of the record hangs off. */}
-        <FormSection title="Equipment type" required>
-          <SelectInput
+        {/* No section heading — the field carries its own label (Raf,
+            2026-09-07). FormSection always draws a header rule, so this
+            group is a plain stack. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <SearchSelect
+            label="Equipment type"
             required
-            placeholder="Choose an equipment type"
-            options={LAB_TYPES.map((t) => ({ id: t.id, label: t.label }))}
+            placeholder="Choose or type an equipment type"
+            options={[
+              ...LAB_TYPES.map((t) => ({ id: t.id, label: t.label })),
+              ...customTypes.map((t) => ({ id: t, label: t })),
+            ]}
             value={form.type}
             onChange={set('type')}
+            onCreate={(text) => {
+              setCustomTypes((c) => (c.includes(text) ? c : [...c, text]));
+              setForm((f) => ({ ...f, type: text }));
+              setErrors((e) => (e.type ? { ...e, type: undefined } : e));
+            }}
+            createLabel="Add equipment type"
             error={errors.type}
-            helpText="From the managed lab-type list — the type also decides whether the equipment can be monitored."
+            helpText="From the managed lab-type list — the type also decides whether the equipment can be monitored. Type a new one if the lab owns something unlisted."
           />
           {form.type === 'other' && (
             <TextInput
@@ -256,7 +272,8 @@ export function AddLabEquipmentScreen({
               now and can be connected without re-registering when it lands.
             </Banner>
           )}
-        </FormSection>
+        </div>
+
 
         <FormSection title="Identification" required>
           <TextInput
@@ -467,7 +484,7 @@ export function AddLabEquipmentScreen({
           </FormSection>
           <FormSection title="Equipment">
             <ReviewRows rows={[
-              ['Equipment type', form.type === 'other' ? `${otherType || '—'} (other)` : (LAB_TYPES.find((t) => t.id === form.type)?.label || '—')],
+              ['Equipment type', form.type === 'other' ? `${otherType || '—'} (other)` : (LAB_TYPES.find((t) => t.id === form.type)?.label || form.type || '—')],
               ['Name', form.name || '—'],
               ['Make / model', [form.make, form.model].filter(Boolean).join(' ') || '—'],
               ['Asset tag', form.assetTag || '— (none)'],

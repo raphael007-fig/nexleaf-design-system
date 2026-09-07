@@ -50,11 +50,10 @@ export const LAB_TYPES = [
   { id: 'thermo-timer',      label: 'Thermometer / Timer',            monitoring: 'none' },
   { id: 'water-bath',        label: 'Water bath',                     monitoring: 'none' },
   { id: 'it-facility',       label: 'Computer / Printer / UPS',       monitoring: 'none' },
-  // Escape hatch: the managed list cannot know every instrument a reference lab
-  // owns, and forcing a wrong type is worse than recording the lab's own word.
-  // Choosing this reveals a required free-text field. Never monitorable — a
-  // type nobody has configured has no thresholds to inherit.
-  { id: 'other',             label: 'Other (enter the type)',         monitoring: 'none' },
+  // Last in the list on purpose: a visible escape hatch for anyone who does not
+  // think to type. Selecting it asks what the equipment actually is. Never
+  // monitorable — nothing is configured for a type nobody has defined.
+  { id: 'other',             label: 'Other',                          monitoring: 'none' },
 ];
 
 export const typeById = (id) => LAB_TYPES.find((t) => t.id === id) || null;
