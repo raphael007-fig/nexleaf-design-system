@@ -164,9 +164,10 @@ function AssembledLabApp({
       />
     );
   }
-  if (view === 'flow') {
+  if (view === 'flow' || view === 'flow-new') {
     return (
       <ColdRoomFlow
+        blank={view === 'flow-new'}
         onDone={toRegister}
         onViewRecord={() => setView('detail')}
         onCancel={toRegister}
@@ -218,7 +219,7 @@ function AssembledLabApp({
     <MonitoringMethodModal
       open={methodOpen}
       onClose={() => setMethodOpen(false)}
-      onContinue={(method) => { setMethodOpen(false); setView(method === 'rtmd' ? 'flow' : 'add'); }}
+      onContinue={(method) => { setMethodOpen(false); setView(method === 'rtmd' ? 'flow-new' : 'add'); }}
     />
     </>
   );

@@ -65,6 +65,12 @@ const STEP_ORDER = ['facility', 'warranty', 'device', 'review'];
 const SENSOR_ROLES = ['In-room', 'Ambient', 'Door'];
 
 // ── The flow ──────────────────────────────────────────────────────────────────
+// A new monitored record starts empty, exactly as the register form does.
+const EMPTY_EQUIPMENT = {
+  type: '', name: '', make: '', model: '', serial: '', qrCode: '',
+  location: '', condition: '', acquired: null, notes: '',
+};
+
 const DEFAULT_EQUIPMENT = {
   type: 'walk-in-cold-room',
   name: 'Walk-in Cold Room (reagent store)',
@@ -85,6 +91,10 @@ const DEFAULT_EQUIPMENT = {
  */
 export function ColdRoomFlow({
   initialStep = 'facility', initialData = {}, initialErrors = {}, simulate = null,
+  // `blank` is the difference between the two ways in (Raf, 2026-09-07):
+  //   • "Set up monitoring" on an existing register record → prefilled
+  //   • Add equipment → Monitored → a NEW record, so nothing is prefilled
+  blank = false,
   onDone, onViewRecord, onCancel, onCrumb,
 }) {
   const [step, setStep] = useState(initialStep);
@@ -97,10 +107,12 @@ export function ColdRoomFlow({
   );
 
   // D1 (A): the cold room is a central NPHL asset → Central Cold Store.
-  const [facilityId, setFacilityId] = useState(initialData.facilityId ?? 'ccs');
-  const [contacts, setContacts] = useState(initialData.contacts ?? ['c1', 'c3']);
+  const [facilityId, setFacilityId] = useState(initialData.facilityId ?? (blank ? '' : 'ccs'));
+  const [contacts, setContacts] = useState(initialData.contacts ?? (blank ? [] : ['c1', 'c3']));
   const [directory, setDirectory] = useState(CONTACT_DIRECTORY);
-  const [equipment, setEquipment] = useState({ ...DEFAULT_EQUIPMENT, ...(initialData.equipment || {}) });
+  const [equipment, setEquipment] = useState(blank
+    ? { ...EMPTY_EQUIPMENT, ...(initialData.equipment || {}) }
+    : { ...DEFAULT_EQUIPMENT, ...(initialData.equipment || {}) });
   const [deviceId, setDeviceId] = useState(initialData.deviceId ?? '');
   const [sensors, setSensors] = useState(initialData.sensors ?? []);
   const [errors, setErrors] = useState(initialErrors);
@@ -124,7 +136,7 @@ export function ColdRoomFlow({
   // the thresholds, so it also carries what the screens can honestly say.
   const typeName = equipment.type === 'other'
     ? (otherType.trim() || 'Other')
-    : (LAB_TYPES.find((t) => t.id === equipment.type)?.label || 'equipment');
+    : (LAB_TYPES.find((t) => t.id === equipment.type)?.label || 'this equipment');
   const band = equipment.type === 'ultra-cold' ? '−40 to −86 °C' : '2–8 °C';
   const configName = `${typeName} configuration`;
   // Don't lowercase the label — it would eat the °C in "Ultra-cold freezer
@@ -185,7 +197,9 @@ export function ColdRoomFlow({
         <Page
           flushTop
           title="Set Up Monitoring"
-          subtitle={`Install the Nexleaf base station and assign its sensors to this ONE record — ${typeName}. Thresholds follow the ${configName}${bandSuffix} — nothing to enter here.`}
+          subtitle={equipment.type
+            ? `Install the Nexleaf base station and assign its sensors to this ONE record — ${typeName}. Thresholds follow the ${configName}${bandSuffix} — nothing to enter here.`
+            : 'Install the Nexleaf base station and assign its sensors to ONE equipment record. Thresholds come from the equipment type — nothing to enter here.'}
           backAction={{ onClick: () => setCancelOpen(true), ariaLabel: 'Cancel monitoring setup' }}
         />
       )}
