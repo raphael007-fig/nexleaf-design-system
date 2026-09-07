@@ -155,35 +155,38 @@ export function AddLabEquipmentScreen({
     onSelect: (i) => go(PHASES[i].steps[0]),
   };
 
-  // Step 1 → 2 needs the facility, because it sets the region everything else
-  // inherits. Step 2 → 3 needs the fields a record cannot exist without.
-  function nextFromFacility() {
+  // ONE validator for the record, used by step 1 and by submit — two copies had
+  // already started to drift (submit was not checking type or make).
+  function recordErrors() {
     const next = {};
     if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is — “Other” on its own is not a record.';
-    if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
     if (!form.make.trim()) next.make = 'Choose or type the manufacturer.';
-    if (!form.model.trim()) next.model = 'Choose or type the model.';
+    // Asset tag and Model are OPTIONAL (Raf, 2026-09-07) — but a tag that IS
+    // entered must still be unique within the region.
+    if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
     if (!form.condition) next.condition = 'Choose the equipment’s status.';
     if (!form.acquired) next.acquired = 'Enter the purchase date.';
+    return next;
+  }
+
+  // Step 1 holds the whole record, so it is the gate. Step 2 (warranty and
+  // service cover) carries nothing mandatory.
+  function nextFromFacility() {
+    const next = recordErrors();
     setErrors(next);
     if (Object.keys(next).length) return;
     go('details');
   }
-  // Step 2 carries nothing mandatory — warranty and service cover are extras.
   function nextFromDetails() { go('review'); }
 
   function save() {
-    const next = {};
-    if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
-    // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
-    // still be unique within the region.
-    if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
-    if (!form.condition) next.condition = 'Choose the equipment’s status.';
-    if (!form.acquired) next.acquired = 'Enter the purchase date.';
+    const next = recordErrors();
     setErrors(next);
-    if (Object.keys(next).length) return;
+    // A record can only be incomplete here if the user jumped back via the
+    // stepper — send them to the step that owns the fields.
+    if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
     onSaved?.({ ...form, warrantyYears, warrantyEnds, servicer, contractRef, coverFrom, coverTo, cover, otherType: form.type === 'other' ? otherType.trim() : '', installDate, deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
@@ -313,7 +316,6 @@ export function AddLabEquipmentScreen({
             />
             <SearchSelect
               label="Model"
-              required
               error={errors.model}
               placeholder={form.make ? `Choose or type a ${form.make} model` : 'Choose or type a model'}
               options={modelOptions(form.make)}
