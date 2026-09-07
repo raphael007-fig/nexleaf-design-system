@@ -1,12 +1,21 @@
 // ── Cold-room record — monitoring detail (Phase 3, §5.5) ───────────────────────
-// Tertiary detail page. The temperature surface CLONES the house chart pattern
-// from Pages/Temperature Alert Detail (TempChart: inline SVG, threshold band
-// from the equipment's own config, token colors) — no new chart library, no
-// new visual language. All N sensors live on this ONE record (D2): a segmented
-// selector switches the plot between sensors and the aggregate.
-import { useState } from 'react';
+// Tertiary detail page. The temperature surface uses the real charting library
+// ColdTrace ships with — amCharts 5 (see ./TempChart.jsx) — with the threshold
+// band coming from the equipment's own configuration and every colour from DS
+// tokens. All N sensors live on this ONE record (D2): a segmented selector
+// switches the plot between sensors and the aggregate.
+import { useState, useRef } from 'react';
 import { Page } from '@ds/components/Page/Page.jsx';
-import { Card, CardSectionTitle, CardField } from '@ds/components/Card/Card.jsx';
+import {
+  Card, CardSectionTitle, CardField,
+  CardLayoutType3, CardLayoutType4, CardLayoutType5,
+} from '@ds/components/Card/Card.jsx';
+import { Popover } from '@ds/components/Popover/Popover.jsx';
+import { OptionList } from '@ds/components/OptionList/OptionList.jsx';
+import { Modal } from '@ds/components/Modal/Modal.jsx';
+import { SearchSelect } from '@ds/components/SearchSelect/SearchSelect.jsx';
+import { Tag } from '@ds/components/Tag/Tag.jsx';
+import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
 import { MetricCard } from '@ds/components/MetricCard/MetricCard.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
@@ -15,67 +24,38 @@ import { Tabs } from '@ds/components/Tabs/Tabs.jsx';
 import { Cell } from '@ds/components/Cell/Cell.jsx';
 import { Divider } from '@ds/components/Divider/Divider.jsx';
 import { Skeleton, SkeletonGroup } from '@ds/components/Skeleton/Skeleton.jsx';
-import {
-  BG_SURFACE, BG_INFO, BG_HOVER, BORDER_INFO, BORDER_LIGHTER,
-  TEXT_DEFAULT, TEXT_SUBDUED, TEXT_PLACEHOLDER,
-  COLOR_PRIMARY, COLOR_CRITICAL, COLOR_SUCCESS,
-} from '@ds/tokens/index.js';
+import { TEXT_DEFAULT, TEXT_SUBDUED } from '@ds/tokens/index.js';
 import { LabShell } from './LabShell.jsx';
-import { LAB_EQUIPMENT, facilityLabel, CONTACT_DIRECTORY, formatDate } from './labData.js';
+import { TempChart, ChartLegend } from './TempChart.jsx';
+import {
+  LAB_EQUIPMENT, facilityLabel, CONTACT_DIRECTORY, MAX_ALARM_CONTACTS, formatDate,
+} from './labData.js';
+
+// Right-rail field icons — the DS location/contact cards (CardLayoutType3/4) put
+// a 20px muted icon beside every label, so the hand-composed cards in the same
+// rail carry them too. Same size and color as the DS originals.
+const RailIcon = ({ name }) => <PolarisIconImg name={name} size={20} color="#616161" />;
 
 const COLD_ROOM = LAB_EQUIPMENT.find((r) => r.id === 'ccs-wicr-001');
 const TRAIL = [{ id: 'record', label: COLD_ROOM.assetTag }];
 
+// Static stand-in image for the linked code QR-70021 (an asset, not UI — the
+// card itself is the DS CardLayoutType5). Deterministic pattern, no network.
+const QR_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(`
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 84 84">
+  <rect width="84" height="84" fill="#fff"/>
+  <g fill="#303030">
+    <path d="M8 8h20v20H8zm4 4v12h12V12z"/><rect x="14" y="14" width="8" height="8"/>
+    <path d="M56 8h20v20H56zm4 4v12h12V12z"/><rect x="62" y="14" width="8" height="8"/>
+    <path d="M8 56h20v20H8zm4 4v12h12V60z"/><rect x="14" y="62" width="8" height="8"/>
+    ${[[34, 8], [42, 12], [34, 20], [46, 24], [38, 30], [8, 34], [16, 38], [28, 34], [36, 38], [48, 34], [60, 38], [72, 34], [12, 46], [24, 44], [34, 48], [44, 44], [56, 48], [68, 44], [76, 50], [34, 58], [44, 60], [56, 58], [64, 64], [72, 60], [36, 68], [46, 70], [58, 68], [70, 72], [34, 76], [50, 76]]
+    .map(([x, y]) => `<rect x="${x}" y="${y}" width="6" height="6"/>`).join('')}
+  </g>
+</svg>`)}`;
+
 // WICR thresholds — from the equipment type's config (2–8 °C), never entered.
 const T_MIN = 2;
 const T_MAX = 8;
-
-// ── TempChart — cloned from Pages/Temperature Alert Detail ────────────────────
-function TempChart({ points = [], min = T_MIN, max = T_MAX, truncated }) {
-  const all = [...points.map((p) => p.temp), min, max];
-  const yMin = Math.floor(Math.min(...all)) - 2;
-  const yMax = Math.ceil(Math.max(...all)) + 2;
-  const W = 640; const H = 210; const L = 38; const R = 14; const T = 14; const B = 26;
-  const x = (f) => L + f * (W - L - R);
-  const y = (t) => T + (1 - (t - yMin) / (yMax - yMin)) * (H - T - B);
-  const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(p.frac).toFixed(1)},${y(p.temp).toFixed(1)}`).join(' ');
-  const last = points[points.length - 1];
-  const lastOut = last && (last.temp > max || last.temp < min);
-  const ticks = [yMin, min, max, yMax].filter((v, i, a) => a.indexOf(v) === i);
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} role="img" aria-label="Temperature history">
-      <rect x={L} y={y(max)} width={W - L - R} height={y(min) - y(max)} fill={BG_INFO} stroke={BORDER_INFO} strokeDasharray="3 3" />
-      {ticks.map((t) => (
-        <g key={t}>
-          <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke={BORDER_LIGHTER} />
-          <text x={L - 6} y={y(t) + 4} textAnchor="end" fontSize="10" fill={TEXT_PLACEHOLDER} fontFamily="Inter">{t}°</text>
-        </g>
-      ))}
-      {truncated && last && (
-        <g>
-          <rect x={x(last.frac)} y={T} width={x(1) - x(last.frac)} height={H - T - B} fill={BG_HOVER} opacity="0.6" />
-          <text x={(x(last.frac) + x(1)) / 2} y={(T + H - B) / 2} textAnchor="middle" fontSize="10" fontWeight="600" fill={TEXT_SUBDUED} fontFamily="Inter">No data</text>
-        </g>
-      )}
-      {points.length > 0 && <path d={line} fill="none" stroke={COLOR_PRIMARY} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />}
-      {last && !truncated && <circle cx={x(last.frac)} cy={y(last.temp)} r="4.5" fill={lastOut ? COLOR_CRITICAL : COLOR_SUCCESS} stroke={BG_SURFACE} strokeWidth="1.5" />}
-      <text x={L} y={H - 8} fontSize="10" fill={TEXT_PLACEHOLDER} fontFamily="Inter">−24 hours</text>
-      <text x={W - R} y={H - 8} textAnchor="end" fontSize="10" fill={TEXT_PLACEHOLDER} fontFamily="Inter">Now</text>
-    </svg>
-  );
-}
-
-function ChartLegend() {
-  const Item = ({ swatch, label }) => (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: TEXT_SUBDUED }}>{swatch}{label}</span>
-  );
-  return (
-    <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-      <Item swatch={<span style={{ width: 16, height: 2, background: COLOR_PRIMARY, display: 'inline-block', borderRadius: 1 }} />} label="Sensor reading (RTMD)" />
-      <Item swatch={<span style={{ width: 14, height: 10, background: BG_INFO, border: `1px dashed ${BORDER_INFO}`, display: 'inline-block' }} />} label="Acceptable range 2–8 °C" />
-    </div>
-  );
-}
 
 // ── Deterministic per-sensor series (24 h, in range; sensor C drifts warm) ────
 const jit = (i, a = 0.4) => Math.sin(i * 3.7) * a;
@@ -103,10 +83,32 @@ const STATS = {
  * @param {'default'|'loading'|'partial'|'no-readings'|'chart-error'} state
  *   'partial' — sensor B offline for 6 h (very common in cold-chain data).
  */
-export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
+export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb, onEdit }) {
   const [sensorId, setSensorId] = useState('all');
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Alarm contacts live in state so Manage contacts can actually change them —
+  // the card's count and rows read from here, never from a hardcoded label.
+  const [contacts, setContacts] = useState(['c1', 'c2']);
+  const [contactsOpen, setContactsOpen] = useState(false);
+  const actionsRef = useRef(null);
+  const sensorsRef = useRef(null);
   const loading = state === 'loading';
   const sensors = COLD_ROOM.device.sensors;
+  const atCap = contacts.length >= MAX_ALARM_CONTACTS;
+
+  // Header Actions menu — every item lands somewhere real: Edit routes to the
+  // shared add/edit form, the other two scroll to the sensors surface where
+  // Manage and View Region Config live.
+  const ACTION_OPTIONS = [
+    { id: 'edit', label: 'Edit record' },
+    { id: 'sensors', label: 'Manage sensors' },
+    { id: 'region', label: 'View region config' },
+  ];
+  const onAction = (id) => {
+    setMenuOpen(false);
+    if (id === 'edit') onEdit?.(COLD_ROOM.id);
+    else sensorsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const series = sensorId === 'all' ? AGG : (SERIES[sensorId] || AGG);
   const truncated = state === 'partial' && sensorId === 'sensor-b';
@@ -117,18 +119,36 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
 
   return (
     <LabShell level="tertiary" trail={TRAIL} onCrumb={onCrumb}>
-      <Page
-        flushTop
-        loading={loading}
-        title={COLD_ROOM.name}
-        subtitle={`${COLD_ROOM.assetTag} · ${COLD_ROOM.make} ${COLD_ROOM.model} · ${facilityLabel(COLD_ROOM.facilityId)}`}
-        backAction={{ onClick: onBack, ariaLabel: 'Back to Lab Equipment' }}
-        metadata={[
-          { label: 'Monitored', tone: 'success' },
-          { label: COLD_ROOM.condition, tone: 'success' },
-        ]}
-        secondaryActions={[{ content: 'Actions', disclosure: true, onClick: () => {} }]}
-      />
+      <div ref={actionsRef}>
+        <Page
+          flushTop
+          loading={loading}
+          title={COLD_ROOM.name}
+          subtitle={`${COLD_ROOM.assetTag} · ${COLD_ROOM.make} ${COLD_ROOM.model} · ${facilityLabel(COLD_ROOM.facilityId)}`}
+          backAction={{ onClick: onBack, ariaLabel: 'Back to Lab Equipment' }}
+          metadata={[
+            { label: 'Monitored', tone: 'success' },
+            { label: COLD_ROOM.condition, tone: 'success' },
+          ]}
+          secondaryActions={[{ content: 'Actions', disclosure: true, onClick: () => setMenuOpen((v) => !v) }]}
+        />
+      </div>
+      <Popover
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        anchorRef={actionsRef}
+        placement="bottom-end"
+        minWidth={220}
+        ariaLabel="Record actions"
+      >
+        <OptionList
+          flush
+          dense
+          options={ACTION_OPTIONS}
+          onChange={onAction}
+          ariaLabel="Record actions"
+        />
+      </Popover>
 
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, alignItems: 'flex-start' }}>
         {/* ── Main column ── */}
@@ -207,6 +227,7 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
 
           {/* Sensors on this ONE record — the D2 model made visible. */}
           <Card>
+            <div ref={sensorsRef} />
             <CardSectionTitle title={`Sensors on this record · ${sensors.length}`} />
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {sensors.map((s, i) => {
@@ -239,38 +260,132 @@ export function ColdRoomDetailScreen({ state = 'default', onBack, onCrumb }) {
 
         {/* ── Right rail — small single-purpose cards ── */}
         <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* DS Location card (CardLayoutType3) — region + facility link + map,
+              per the EquipmentDetail canonical. Room stays on the Record card. */}
+          <CardLayoutType3
+            region="National Public Health Lab"
+            facilityName={facilityLabel(COLD_ROOM.facilityId)}
+            facilityHref="#"
+            mapLat={-1.3005}
+            mapLon={36.8065}
+          />
           <Card>
-            <CardSectionTitle title="Facility" />
-            <CardField label="Facility" value={facilityLabel(COLD_ROOM.facilityId)} />
-            <CardField label="Region" value="National Public Health Lab" />
-            <CardField label="Location" value={COLD_ROOM.location} />
+            <CardSectionTitle icon={<RailIcon name="ClipboardIcon" />} title="Record" />
+            <CardField icon={<RailIcon name="BarcodeIcon" />} label="Asset tag" value={COLD_ROOM.assetTag} />
+            <CardField icon={<RailIcon name="HashtagIcon" />} label="Serial" value={COLD_ROOM.serial || '—'} />
+            <CardField icon={<RailIcon name="WrenchIcon" />} label="Condition" value={COLD_ROOM.condition} />
+            <CardField icon={<RailIcon name="PinIcon" />} label="Location / room" value={COLD_ROOM.location} />
+            <CardField icon={<RailIcon name="CalendarIcon" />} label="Acquired" value={formatDate(COLD_ROOM.acquired)} />
           </Card>
+          {/* DS QR card (CardLayoutType5) — QR-70021 was linked during the install
+              (F-flow, required); the card renders it scannable with the modal
+              preview. Contact card (CardLayoutType4) carries the record's
+              primary alarm contact. */}
+          <CardLayoutType5 title="QR Code" qrCodeSrc={QR_SRC} />
+          <CardLayoutType4
+            addedBy={CONTACT_DIRECTORY[0].name}
+            contactNumber={CONTACT_DIRECTORY[0].phone}
+          />
           <Card>
-            <CardSectionTitle title="Record" />
-            <CardField label="Asset tag" value={COLD_ROOM.assetTag} />
-            <CardField label="QR code" value={COLD_ROOM.qrCode || '—'} />
-            <CardField label="Serial" value={COLD_ROOM.serial || '—'} />
-            <CardField label="Condition" value={COLD_ROOM.condition} />
-            <CardField label="Acquired" value={formatDate(COLD_ROOM.acquired)} />
-          </Card>
-          <Card>
-            <CardSectionTitle title="Monitoring device" />
-            <CardField label="Base station" value={COLD_ROOM.device.baseStation} />
-            <CardField label="Sensors" value={`${sensors.length} on this record`} />
-            <CardField label="Thresholds" value="2–8 °C · Walk-in Cold Room config" />
+            <CardSectionTitle icon={<RailIcon name="MediaReceiverIcon" />} title="Monitoring device" />
+            <CardField icon={<RailIcon name="MediaReceiverIcon" />} label="Base station" value={COLD_ROOM.device.baseStation} />
+            <CardField icon={<RailIcon name="WifiIcon" />} label="Sensors" value={`${sensors.length} on this record`} />
+            <CardField icon={<RailIcon name="GaugeIcon" />} label="Thresholds" value="2–8 °C · Walk-in Cold Room config" />
           </Card>
           <Card>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <CardSectionTitle title="Alarm contacts" />
-              <Badge size="small">{`2 of 5`}</Badge>
+              <CardSectionTitle icon={<RailIcon name="NotificationIcon" />} title="Alarm contacts" />
+              <Badge size="small">{`${contacts.length} of ${MAX_ALARM_CONTACTS}`}</Badge>
             </div>
-            {CONTACT_DIRECTORY.slice(0, 2).map((c) => (
-              <CardField key={c.id} label={c.name} value={`${c.phone} · ${c.occupation}`} />
-            ))}
-            <Btn variant="tertiary" small onClick={() => {}}>Manage contacts</Btn>
+            {contacts.map((id) => {
+              const c = CONTACT_DIRECTORY.find((x) => x.id === id);
+              return c ? (
+                <CardField
+                  key={id}
+                  icon={<RailIcon name="PersonIcon" />}
+                  label={c.name}
+                  value={`${c.phone} · ${c.occupation}`}
+                />
+              ) : null;
+            })}
+            <Btn variant="tertiary" small onClick={() => setContactsOpen(true)}>Manage contacts</Btn>
           </Card>
         </div>
       </div>
+
+      {/* Manage contacts — the same directory search and added-contact rows as
+          the install flow's step 1, in a Modal so the record page never leaves
+          the screen. The D4 hard cap of 5 is enforced here too: at the cap the
+          search collapses to the cap notice, so adding is never silently
+          blocked. */}
+      <Modal
+        open={contactsOpen}
+        onClose={() => setContactsOpen(false)}
+        title={`Alarm contacts · ${contacts.length} of ${MAX_ALARM_CONTACTS}`}
+        size="large"
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+            <Btn variant="primary" onClick={() => setContactsOpen(false)}>Done</Btn>
+          </div>
+        )}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
+            These people are called when {COLD_ROOM.name} goes out of range
+            (2–8 °C, from the Walk-in Cold Room configuration). Contacts come from
+            the facility's shared directory.
+          </p>
+
+          {atCap ? (
+            <Banner tone="warning" inCard>
+              <span style={{ display: 'block', fontWeight: 650 }}>
+                Contact limit reached ({MAX_ALARM_CONTACTS} of {MAX_ALARM_CONTACTS})
+              </span>
+              A facility can hold {MAX_ALARM_CONTACTS} RTMD alarm contacts. Remove a
+              contact to add someone — the limit is enforced by the platform.
+            </Banner>
+          ) : (
+            <SearchSelect
+              label="Add a contact"
+              placeholder="Search the facility directory…"
+              options={CONTACT_DIRECTORY
+                .filter((c) => !contacts.includes(c.id))
+                .map((c) => ({ id: c.id, label: `${c.name} · ${c.phone} · ${c.occupation}` }))}
+              value=""
+              onChange={(v) => {
+                const id = v && v.target ? v.target.value : v;
+                if (id) setContacts((cs) => (cs.includes(id) || cs.length >= MAX_ALARM_CONTACTS ? cs : [...cs, id]));
+              }}
+            />
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 650, color: TEXT_DEFAULT }}>
+              On this record
+            </span>
+            {contacts.length === 0 ? (
+              <Banner tone="critical" inCard>
+                <span style={{ display: 'block', fontWeight: 650 }}>No alarm contacts</span>
+                An excursion here would alert nobody. Add at least one contact.
+              </Banner>
+            ) : (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {contacts.map((id) => {
+                  const c = CONTACT_DIRECTORY.find((x) => x.id === id);
+                  return (
+                    <Tag
+                      key={id}
+                      label={c ? `${c.name} · ${c.phone}` : id}
+                      removable
+                      onRemove={() => setContacts((cs) => cs.filter((x) => x !== id))}
+                    />
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </Modal>
     </LabShell>
   );
 }

@@ -1376,6 +1376,9 @@ File `YzbXqlrKTcGbWxwzGkLTct` unless stated.
 | `8483:118168` | Design Rep status bar, 375×44 | Mobile status bar source |
 | `8483:121743` | Design Rep `Mobile Top Nav`, 375×52 | Secondary-page nav source |
 | `8483:121973` | Design Rep `Bottom sheet`, 375×296 | Mobile modal → bottom sheet source |
+| **`9590:18832`** | **R1 · Register — biomed lead (Lab Equipments page), 1440, UPDATED BY RAPHAEL 2026-09-04** | **THE register-table look.** Governs R2/R3/R4/R7/S4 (and any future register clone): airy rows (~72 with wrapped facility), Assigned-device column **296** wide so `ColdTrace 5 · 4 sensors on this record` stays one line (table right edge 1408), Condition column **164**, condition badges SUBTLE + no icons (Functional=success, Damaged / Needs repair=warning, Unusable=critical), KPI scope badges per R1 (incl. `Damaged or unusable` = success tint — his call), no tinted cells. Rolled to all five siblings same day. |
+| **`9629:14571`** | **I3m · mobile preview rows, UPDATED BY RAPHAEL 2026-09-04** | **THE mobile row-card anatomy.** Title 14px ONE line + subtle badge beside it, meta 12px (may wrap to 2), right action link (short: View/Ready/Flagged/Plot/Remove), 56px card (72 when meta wraps). Governs ALL mobile list rows: I-mobile, R-mobile, D-mobile sensors, F2m contacts. |
+| **`8483:121543`** | **Secondary List Page mobile master, 375×812, Design Rep ▸ "Mobile And Ipad Screen Layout"** | **THE mobile secondary/list-page scaffold (2026-09-05, after Raphael: "you didn't use the mobile view design from resources").** Mobile Top Nav @0,44 → page title (with title-disclosure chevron) + "+ Add New" pill (NOT a bottom CTA — remove the pill for read-only personas) → search Text field → KPI cards 2-up grid (label + info icon, 28px value, tone Badge underneath) → Tabs segment → list. NEVER hand-build these pieces — clone this master and retext. Its known baggage: off-frame "Total Equipments" strays at x≈1053, a 3rd KPI row of duplicate "Decommissioned" cards, `Subcompo` row clusters, and a loose Pagination instance — delete all four after cloning. Rows inside stay per I3m anatomy. Sibling `8483:121777` is the 2-KPI scroll variant; `8483:120121` tertiary; Home masters `8483:118082+`. Rolled to R1m–R8m 2026-09-05. |
 
 ## Desktop card geometry — from all three reference frames
 
@@ -3530,3 +3533,33 @@ This closed a false "blocking" item: Add Equipment's six hub flows were listed a
 week when `dist/` already held `shared-entry`, `monitored-rtmd`, `third-party-device`,
 `unmonitored`, `converging-steps` and `errors-edge-cases` chunks. **Check the filesystem before
 declaring something unproven.**
+
+### The Lab MVP board audit: clones inherit hidden baggage AND foreign content (2026-09-04)
+
+Raphael: *"audit properly you made errors in some web pages and also in the mobile views."* He was
+right, twice over. Two distinct failure classes on the Lab Equipments board (9555:221380):
+
+1. **Every cloned canonical frame carries the source's HIDDEN subtree.** The RTMDS list clone
+   brought a hidden "RTMDs / Total Equipments" KPI block into all 8 register frames; the RTMD
+   Details donor brought hidden spare-part panels. A board-wide sweep deleted **1,489 hidden
+   nodes** — an order of magnitude beyond the earlier 127/84 sweeps. **Rule: sweep hidden strays
+   immediately after EVERY clone-from-canonical, not once at the end.**
+2. **A mobile twin built from a DIFFERENT master is not a twin until diffed against its own
+   desktop frame.** The A-board mobile masters carried wizard steppers, contact chips, status
+   radios and QR sections into register/detail/add twins where they are nonsense (a register is
+   not a wizard). Reused row structures kept their old semantics ("Added" badges, "Remove" links)
+   under new content. **Rule: after retexting a repurposed structure, audit its CONTROLS and
+   BADGES for leftover semantics, then diff the frame against its desktop twin per state.**
+
+Also: batch scripts that remove nodes must collect first, filter to top-most, remove LAST —
+walking or retexting after removals hits dead node ids and rolls the whole call back.
+
+3. **Column-based IndexTable instances cannot keep rows aligned once any cell wraps.** The DS
+   table component is a row of independent COLUMN instances; a wrapped cell grows only its own
+   column, so every column below drifts (the "squashed table" defect, 2026-09-04). Instance
+   sublayers can't be resized, so the fix is: fix Badge/text props FIRST (component props still
+   work), then `detachInstance()` every column, re-wrap texts to the column's inner width, sync
+   `max(height)` per row index across columns, and let each column's vertical auto-layout
+   restack. Widen a starving column (e.g. Validation) by stealing width from a slack one
+   (Condition) BEFORE detaching if possible, after if not. Watch for narrow columns re-wrapping
+   short labels ("View" → "Vie/w") — force those back to WIDTH_AND_HEIGHT.

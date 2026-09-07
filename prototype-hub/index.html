@@ -4,6 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Nexleaf Prototype Hub</title>
+    <!-- amCharts 5 — the charting library ColdTrace itself uses (Raf, 2026-09-07:
+         "coldtrace uses AM Charts"). Loaded from CDN so prototypes render real,
+         interactive charts (cursor, tooltips, axis ranges) rather than
+         hand-drawn SVG, with no package install. Globals: am5, am5xy,
+         am5themes_Animated. -->
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
   </head>
   <body>
     <div id="root"></div>

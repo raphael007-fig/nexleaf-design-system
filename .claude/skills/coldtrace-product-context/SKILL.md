@@ -214,6 +214,16 @@ it has a weaker bespoke chart with auto-rescaling axes and no legend.
 **Add Equipment breadcrumb (fixed):** `Home › Coldchain Equipment › Add Equipment` on every screen in
 that flow — see the 2026-08-25 entry in §10.
 
+**Charts are amCharts.** ColdTrace renders its temperature/battery plots with **amCharts** (Raf,
+2026-09-07: *"coldtrace uses AM Charts"*). Prototypes must chart with amCharts too — a hand-drawn
+inline SVG that merely looks like a chart is wrong, because it has no cursor, tooltips, axis ranges or
+real time axis, and it will not match production behaviour. **Known DS gap:** the Poltail design system
+ships no chart component, and the canonical Storybook page `Pages/Temperature Alert Detail` hand-draws
+its own SVG `TempChart` — so there is nothing to compose from. Until a DS chart component exists, load
+amCharts 5 (CDN globals `am5` / `am5xy`) and keep every colour on DS tokens, with the acceptable band
+as an **axis range** (configuration drawn as a zone, never as typed-in data). Reference
+implementation: `prototype-hub/src/projects/lab-inventory/screens/TempChart.jsx`.
+
 ## 7. How to use this when writing or reviewing a PRD
 
 Load the relevant PRD skill for format (`prd-writer`, `one-page-prd-generator`) and

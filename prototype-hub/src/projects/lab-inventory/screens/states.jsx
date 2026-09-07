@@ -174,7 +174,7 @@ function AssembledLabApp({
     );
   }
   if (view === 'detail') {
-    return <ColdRoomDetailScreen onBack={toRegister} onCrumb={onCrumb} {...detailProps} />;
+    return <ColdRoomDetailScreen onBack={toRegister} onCrumb={onCrumb} onEdit={(id) => setView(`edit:${id}`)} {...detailProps} />;
   }
   if (view.startsWith('record:')) {
     return (
