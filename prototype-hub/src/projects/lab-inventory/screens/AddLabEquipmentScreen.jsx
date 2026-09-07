@@ -391,14 +391,12 @@ export function AddLabEquipmentScreen({
               error={errors.acquired}
               helpText="When the lab bought it — separate from when it was installed."
             />
-            {(deployment === 'Installed' || deployment === 'Deployed') && (
-              <DateField
-                label="Equipment install date"
-                value={installDate}
-                onChange={setInstallDate}
-                helpText="When the equipment was installed at the facility. Defaults to today."
-              />
-            )}
+            <DateField
+              label="Equipment install date"
+              value={installDate}
+              onChange={setInstallDate}
+              helpText="When it was installed at the facility. Leave blank if it is not installed yet."
+            />
           </div>
         </FormSection>
 
