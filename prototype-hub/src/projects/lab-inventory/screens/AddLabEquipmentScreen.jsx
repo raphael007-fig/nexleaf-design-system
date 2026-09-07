@@ -153,7 +153,7 @@ export function AddLabEquipmentScreen({
   function nextFromDetails() {
     const next = {};
     if (!form.type) next.type = 'Choose an equipment type from the list.';
-    if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
+    if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what type of equipment this is — “Other” on its own is not a record.';
     if (!status) next.status = 'Equipment status is required.';
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
     if (!form.condition) next.condition = 'Choose the equipment’s condition.';
@@ -251,7 +251,7 @@ export function AddLabEquipmentScreen({
           />
           {form.type === 'other' && (
             <TextInput
-              label="What is it?"
+              label="What type of equipment is it?"
               required
               placeholder="The lab’s own word for this equipment, e.g. Cryostat"
               value={otherType}
