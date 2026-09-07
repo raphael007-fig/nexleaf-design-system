@@ -59,14 +59,13 @@ function maintenanceBand(schedule, lastService) {
   return { label: 'Recently maintained', tone: 'success' };
 }
 
-const SERVICE_COVER = ['Preventive maintenance only', 'Repairs only', 'Preventive maintenance + repairs', 'Calibration only', 'Parts only'];
 
 // Same 3-phase shape as the 3rd-party add-equipment flow (Raf, 2026-09-07), so
 // adding a lab record and adding a cold-chain record feel like one product:
 // facility first (it sets the region), then the equipment, then a review.
 const PHASES = [
   { label: 'Facility & Equipment', steps: ['facility'] },
-  { label: 'Warranty and Maintenance', steps: ['details'] },
+  { label: 'Warranty & Maintenance', steps: ['details'] },
   { label: 'Review & Submit', steps: ['review'] },
 ];
 
@@ -127,7 +126,6 @@ export function AddLabEquipmentScreen({
   const [contractRef, setContractRef] = useState('');
   const [coverFrom, setCoverFrom] = useState(null);
   const [coverTo, setCoverTo] = useState(null);
-  const [cover, setCover] = useState('');
   const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
   // Types typed in via "+ Add" this session — the same escape hatch the
   // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
@@ -212,7 +210,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) { go('facility'); return; }
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, cover, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, schedule, lastService, warrantyStart, warrantyEnd, servicer, contractRef, coverFrom, coverTo, otherType: form.type === 'other' ? otherType.trim() : '', deployment, qrCode, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -461,7 +459,7 @@ export function AddLabEquipmentScreen({
       {step === 'details' && (
         <StepFrame
           stepper={stepper}
-          title="Warranty and maintenance"
+          title="Warranty & Maintenance"
           subtitle="The cover and service history behind this equipment, so a fault can be checked against them before a repair is raised. All optional."
           footerLeft={<Btn variant="secondary" onClick={() => go('facility')}>Back</Btn>}
           footerRight={<Btn variant="primary" onClick={nextFromDetails}>Next</Btn>}
@@ -536,14 +534,6 @@ export function AddLabEquipmentScreen({
               <DateField label="Cover to" value={coverTo} onChange={setCoverTo}
                 helpText="Leave blank for an open-ended arrangement." />
             </div>
-            <SelectInput
-              label="What it covers"
-              options={SERVICE_COVER.map((v) => ({ id: v, label: v }))}
-              placeholder="Select…"
-              value={cover}
-              onChange={(e) => setCover(e.target ? e.target.value : e)}
-              helpText="Preventive maintenance and repairs are often separate contracts — record which this is."
-            />
           </FormSection>
         </StepFrame>
       )}
@@ -593,7 +583,6 @@ export function AddLabEquipmentScreen({
               ['Warranty end', warrantyEnd ? new Date(warrantyEnd).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
               ['Service provider', servicer || '— (none)'],
               ['Contract reference', contractRef || '—'],
-              ['Cover', cover || '—'],
             ]} />
           </FormSection>
           {isMonitorableNow(form.type) && (
