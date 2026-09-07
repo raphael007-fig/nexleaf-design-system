@@ -226,12 +226,6 @@ export function ColdRoomFlow({
           <p style={{ margin: '-8px 0 0', fontSize: 12, lineHeight: '18px', color: TEXT_SUBDUED }}>
             Region is derived from the facility — it is never asked separately.
           </p>
-          {equipment.type === 'walk-in-cold-room' && (
-            <Banner tone="info" inCard hideIcon>
-              A walk-in cold room is a shared NPHL asset, so it lives under <b>Central Cold
-              Store</b> — not inside one unit lab.
-            </Banner>
-          )}
 
           {/* The type is CHOSEN, not fixed (the Sep 2026 meeting: the monitored
               flow mirrors the unmonitored one exactly). The register already
@@ -269,6 +263,12 @@ export function ColdRoomFlow({
               onChange={(e) => { setOtherType(e.target.value); setErrors((x) => ({ ...x, otherType: undefined })); }}
               error={errors.otherType}
             />
+          )}
+          {equipment.type === 'walk-in-cold-room' && (
+            <Banner tone="info" inCard hideIcon>
+              A walk-in cold room is a shared NPHL asset, so it lives under <b>Central Cold
+              Store</b> — not inside one unit lab.
+            </Banner>
           )}
 
           <FormSection title="Identification" required>
@@ -413,7 +413,7 @@ export function ColdRoomFlow({
         <StepFrame
           stepper={stepper}
           title="Base station & sensors"
-          subtitle="Monitoring comes last: the equipment is the primary, the device is secondary. All sensors attach to this ONE cold-room record."
+          subtitle={`Monitoring comes last: the equipment is the primary, the device is secondary. All sensors attach to this ONE record — ${typeName}.`}
           footerLeft={<Btn variant="secondary" onClick={() => go('warranty')}>Back</Btn>}
           footerRight={(
             <Btn variant="primary" disabled={!deviceId || !sensors.length || sensors.some((r) => !r.serial)} onClick={() => go('review')}>
@@ -441,13 +441,7 @@ export function ColdRoomFlow({
               a serial plus the ROLE it plays, because the role decides whether
               the reading counts toward in-range (in-room), is context only
               (ambient), or is an open-door event (door). */}
-          <FormSection title={`Sensors on this record · ${sensors.length} of ${maxSensors}`} required>
-            {sensors.length === 0 && (
-              <Banner tone="info" inCard>
-                No sensors on this record yet. Add at least one — a walk-in cold room
-                normally has 3–4 in-room sensors plus an ambient one; a fridge usually one.
-              </Banner>
-            )}
+          <FormSection title={deviceId ? `Sensors on this record · ${sensors.length} of ${maxSensors}` : 'Sensors on this record'} required>
             {sensors.map((row, i) => (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 1.2fr) auto', gap: 12, alignItems: 'end' }}>
                 <SearchSelect
@@ -503,8 +497,14 @@ export function ColdRoomFlow({
                 {device.model} carries {maxSensors} sensors — remove one to swap it.
               </p>
             )}
+            {/* ONE banner about sensors (Raf, 2026-09-07: the empty-state banner and
+                this one were saying the same thing twice). It carries the count
+                guidance while the list is empty, then just the rule. */}
             <Banner tone="info" inCard>
               <span style={{ display: 'block', fontWeight: 650 }}>One record, many sensors</span>
+              {sensors.length === 0
+                ? 'Add at least one — a walk-in cold room normally has 3–4 in-room sensors plus an ambient one, a fridge usually one. '
+                : ''}
               Every reading lands on this one record — it stays one piece of equipment in
               every count. Serials are picked from the system, never typed.
             </Banner>
