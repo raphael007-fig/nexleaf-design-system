@@ -69,6 +69,8 @@ export function AddLabEquipmentScreen({
   // register is walked with a clipboard, and most lab kit has no label at all —
   // so the section is offered, not enforced. Whether lab assets get QR codes at
   // all is still an open question on PD-41.
+  // Free-text type, only when Type = Other.
+  const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
   const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
   const [qrModal, setQrModal] = useState(null);   // null | 'assign' | 'view'
   const [errors, setErrors] = useState(() => (state === 'errors'
@@ -98,6 +100,7 @@ export function AddLabEquipmentScreen({
     const next = {};
     if (!form.facilityId) next.facilityId = 'Choose the facility that owns this equipment.';
     if (!form.type) next.type = 'Choose an equipment type from the list.';
+    if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
     if (!form.name.trim()) next.name = 'Enter the equipment name — it is how staff recognise this record.';
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
@@ -107,7 +110,7 @@ export function AddLabEquipmentScreen({
     if (Object.keys(next).length) return;
     // §5.2: toast + return to list with the row highlighted (the register owns
     // both); monitorable types get the Set-up-monitoring action in the toast.
-    onSaved?.({ ...form, id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
+    onSaved?.({ ...form, otherType: form.type === 'other' ? otherType.trim() : '', id: isEdit ? record.id : undefined, edited: isEdit, monitorable: isMonitorableNow(form.type) });
   }
 
   const monitorableNow = isMonitorableNow(form.type);
@@ -129,8 +132,6 @@ export function AddLabEquipmentScreen({
       />
 
       <StepFrame
-        title={isEdit ? 'Update the register record' : 'Register record'}
-        subtitle="Most fields mirror the lab’s paper register. The name is required; the asset tag is optional but must be unique where a lab uses one."
         footerLeft={<Btn variant="secondary" onClick={onCancel}>Cancel</Btn>}
         footerRight={<Btn variant="primary" onClick={save}>{isEdit ? 'Save changes' : 'Add equipment'}</Btn>}
       >
@@ -157,6 +158,17 @@ export function AddLabEquipmentScreen({
             error={errors.type}
             helpText="From the managed lab-type list — the type also decides whether the equipment can be monitored."
           />
+          {form.type === 'other' && (
+            <TextInput
+              label="What is it?"
+              required
+              placeholder="The lab’s own word for this equipment, e.g. Cryostat"
+              value={otherType}
+              onChange={(e) => { setOtherType(e.target.value); setErrors((x) => (x.otherType ? { ...x, otherType: undefined } : x)); }}
+              error={errors.otherType}
+              helpText="Recorded as typed. Ask an administrator to add it to the managed list if the lab owns several."
+            />
+          )}
           {monitorableNow && (
             <Banner tone="info" inCard hideIcon>
               <b>Walk-in Cold Room supports monitoring.</b> Finish this register record first —

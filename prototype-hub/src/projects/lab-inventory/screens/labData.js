@@ -9,7 +9,7 @@
 //   • D6 (A): the 4 known labs + Calibration Centre now; the remaining labs
 //     drop into this config list without a rebuild.
 //   • Condition vocabulary is the LAB's own 5-value set (Raf, 2026-09-07):
-//     Functional · Faulty · Decommissioned · Unknown · Not in use. It replaces
+//     Functional · Faulty · Decommissioned · Unknown. It replaces
 //     the Passive Equipment 4-value set the first draft borrowed. "Not set" is
 //     the display for null — distinct from "Unknown", which is a real answer
 //     meaning nobody has verified this equipment yet.
@@ -50,6 +50,11 @@ export const LAB_TYPES = [
   { id: 'thermo-timer',      label: 'Thermometer / Timer',            monitoring: 'none' },
   { id: 'water-bath',        label: 'Water bath',                     monitoring: 'none' },
   { id: 'it-facility',       label: 'Computer / Printer / UPS',       monitoring: 'none' },
+  // Escape hatch: the managed list cannot know every instrument a reference lab
+  // owns, and forcing a wrong type is worse than recording the lab's own word.
+  // Choosing this reveals a required free-text field. Never monitorable — a
+  // type nobody has configured has no thresholds to inherit.
+  { id: 'other',             label: 'Other (enter the type)',         monitoring: 'none' },
 ];
 
 export const typeById = (id) => LAB_TYPES.find((t) => t.id === id) || null;
@@ -112,20 +117,18 @@ export const modelOptions = (make) => {
 
 // ── Condition — the lab's own 5-value vocabulary (Raf, 2026-09-07) ────────────
 // Severity ladder the tones follow: Functional (green) → Unknown (amber, needs
-// verifying) → Faulty (red, needs repair) → Not in use / Decommissioned (grey,
-// deliberate end states).
+// verifying) → Faulty (red, needs repair) → Decommissioned (grey, the
+// deliberate end state).
 export const CONDITIONS = [
   'Functional',
   'Faulty',
   'Decommissioned',
   'Unknown',
-  'Not in use',
 ];
 export const CONDITION_TONES = {
   'Functional': 'success',
   'Faulty': 'critical',
   'Unknown': 'warning',
-  'Not in use': 'default',
   'Decommissioned': 'default',
   'Not set': 'default',
 };
@@ -405,19 +408,29 @@ export const IMPORT_SHEET = {
   ],
 };
 
-// Condition mapping (§8): free-text → the 4-value vocab. 'review' rows need a
-// human check; 'age' strings are NOT condition — stored as a note instead.
+// Condition mapping (§8): free-text → the lab's 4 values. 'review' rows need a
+// human check; 'age' strings are NOT a condition — stored as a note instead.
 export const CONDITION_MAP = {
   'ok': { condition: 'Functional' },
   'working': { condition: 'Functional' },
   'new': { condition: 'Functional' },
-  'not in use': { condition: 'Functional', deployment: 'Not in use' },
-  'not fully installed': { condition: 'Functional', deployment: 'Not in use' },
-  'awaiting validation': { condition: 'Functional', deployment: 'Not in use' },
+  // Idle-but-working kit: the equipment is Functional, and the sheet's own
+  // words are kept as a note. There is no "Not in use" condition (removed
+  // 2026-09-07), so a human confirms rather than the import inventing a state.
+  'not in use': { condition: 'Functional', review: true },
+  // Not yet commissioned = nobody can vouch for it → Unknown, flagged.
+  'not fully installed': { condition: 'Unknown', review: true },
+  'awaiting validation': { condition: 'Unknown', review: true },
   'out of order': { condition: 'Faulty', review: true },
   'not working': { condition: 'Faulty', review: true },
+  'broken': { condition: 'Faulty', review: true },
+  'needs repair': { condition: 'Faulty', review: true },
+  'unusable': { condition: 'Faulty', review: true },
   'decommissioned': { condition: 'Decommissioned' },
   'retired': { condition: 'Decommissioned' },
+  // A blank or unreadable condition is an honest Unknown, never a guess.
+  'unknown': { condition: 'Unknown', review: true },
+  '?': { condition: 'Unknown', review: true },
   'old': { age: true },
 };
 
