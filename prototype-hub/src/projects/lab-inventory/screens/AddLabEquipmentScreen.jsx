@@ -123,7 +123,6 @@ export function AddLabEquipmentScreen({
     if (!form.type) next.type = 'Choose an equipment type from the list.';
     if (form.type === 'other' && !otherType.trim()) next.otherType = 'Enter what this equipment is — “Other” on its own is not a record.';
     if (!status) next.status = 'Equipment status is required.';
-    if (!form.name.trim()) next.name = 'Enter the equipment name — it is how staff recognise this record.';
     // Asset tag is OPTIONAL (Raf, 2026-09-07), but a tag that IS entered must
     // still be unique within the region.
     if (form.assetTag.trim() && dupTag) next.assetTag = 'This asset tag already exists in the National Public Health Lab. Open the existing record instead of creating a duplicate.';
@@ -210,12 +209,11 @@ export function AddLabEquipmentScreen({
         <FormSection title="Identification" required>
           <TextInput
             label="Name"
-            required
             placeholder="e.g. Refrigerated centrifuge"
             value={form.name}
             onChange={set('name')}
             error={errors.name}
-            helpText="What staff call it — this is how the equipment is recognised in the register."
+            helpText="Optional — what staff call it. With no name and no asset tag, the record is found by type and location alone."
           />
           {/* Make and model are PICKED, not typed (Raf, 2026-09-07). Labs re-buy
               from the same manufacturers, so free text produced spelling drift
