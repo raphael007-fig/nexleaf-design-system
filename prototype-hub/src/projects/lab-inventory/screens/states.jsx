@@ -47,7 +47,7 @@ import { BulkImportScreen } from './BulkImportScreen.jsx';
 import { ColdRoomFlow } from './ColdRoomFlow.jsx';
 import { ColdRoomDetailScreen } from './ColdRoomDetailScreen.jsx';
 import { LabRecordDetailScreen } from './LabRecordDetailScreen.jsx';
-import { LAB_EQUIPMENT } from './labData.js';
+import { LAB_EQUIPMENT, IMPORT_FILES } from './labData.js';
 
 // Non-inventory modules exist and are role-gated, but their content is
 // UNCHANGED by the Lab MVP — the ratified FeaturePage placeholder from
@@ -346,6 +346,9 @@ export const STATE_SECTIONS = [
     title: 'Bulk import',
     states: [
       { id: 'import-upload', label: '1 · Upload', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'upload' }} /> },
+      // The upload step with all three files attached — the only state that can
+      // show the file chips and their remove controls (Raf, 2026-09-08).
+      { id: 'import-files-added', label: '1 · Upload — three files attached', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'upload', initialFileIds: IMPORT_FILES.map((f) => f.id) }} /> },
       { id: 'import-map', label: '2 · Map columns', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'map' }} /> },
       { id: 'import-preview', label: '3 · Preview & validation flags', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'preview' }} /> },
       { id: 'import-error', label: 'Import failed — nothing created', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'error' }} /> },

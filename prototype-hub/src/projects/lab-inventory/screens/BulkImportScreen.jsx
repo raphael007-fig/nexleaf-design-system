@@ -88,13 +88,18 @@ function mapRow(raw, headers, mapping, facilityId, source) {
 /**
  * @param {'upload'|'map'|'preview'|'importing'|'success'|'error'} state Initial step.
  */
-export function BulkImportScreen({ state = 'upload', onDone, onCancel, onCrumb }) {
+export function BulkImportScreen({ state = 'upload', initialFileIds = null, onDone, onCancel, onCrumb }) {
   const personaDef = PERSONAS[0]; // import is admin work — biomed-lead scope
   const [step, setStep] = useState(['importing', 'success', 'error'].includes(state) ? 'preview' : state);
   // Up to three files (Raf, 2026-09-07) — labs rarely keep one register. Status
   // is 'done' (not 'complete'): that is the value the DS Upload renders its
   // remove control for.
-  const [fileIds, setFileIds] = useState(() => (state === 'upload' ? [] : IMPORT_FILES.map((f) => f.id)));
+  // The upload step starts empty; initialFileIds lets a deep link show the
+  // step WITH files attached, which is the only way to illustrate the three
+  // file chips and their remove controls (Raf, 2026-09-08).
+  const [fileIds, setFileIds] = useState(() => (initialFileIds
+    ? initialFileIds
+    : state === 'upload' ? [] : IMPORT_FILES.map((f) => f.id)));
   const chosen = IMPORT_FILES.filter((f) => fileIds.includes(f.id));
   const files = chosen.map((f) => ({ id: f.id, name: f.name, size: f.size, progress: 100, status: 'done' }));
   const [facilityId, setFacilityId] = useState(state === 'upload' ? '' : 'nhrl');
