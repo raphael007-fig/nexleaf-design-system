@@ -74,7 +74,7 @@ import {
  */
 export function AddLabEquipmentScreen({
   persona = 'tech', state = 'default', mode = 'add', record = null,
-  initialStep = null,
+  initialStep = null, initialData = null,
   onSaved, onCancel, onCrumb,
 }) {
   const personaDef = PERSONAS.find((p) => p.id === persona) || PERSONAS[1];
@@ -92,7 +92,17 @@ export function AddLabEquipmentScreen({
       ? { facilityId: '', type: '', name: 'Reagent refrigerator', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }
       : state === 'dup'
         ? { facilityId: 'nhrl', type: 'ultra-cold', name: 'Ultra-low freezer −86 °C', make: 'Eppendorf New Brunswick', model: 'Innova U535', assetTag: 'NHRL/EQP/022', serial: '', location: 'Molecular lab, Room 12', condition: 'Functional', acquired: null, notes: '' }
-        : { facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '', type: '', name: '', make: '', model: '', assetTag: '', serial: '', location: '', condition: '', acquired: null, notes: '' }));
+        : {
+          facilityId: scopedFacilities.length === 1 ? scopedFacilities[0].id : '',
+          type: '', name: '', make: '', model: '', assetTag: '', serial: '',
+          location: '', condition: '', acquired: null, notes: '',
+          // A deep link that opens on step 2 or 3 must arrive with step 1
+          // answered — otherwise the state illustrates a screen no user can
+          // reach by walking the form: a review with every row an em-dash
+          // (Raf, 2026-09-08). Same mechanism the monitored flow already uses
+          // via FLOW_READY, so both register forms seed their steps alike.
+          ...((initialData && initialData.form) || {}),
+        }));
   // QR is OPTIONAL here (Raf, 2026-09-07). The 3rd-party add-equipment flow
   // REQUIRES a code because a monitored CCE is found by scanning it; a lab
   // register is walked with a clipboard, and most lab kit has no label at all —
@@ -105,11 +115,11 @@ export function AddLabEquipmentScreen({
   // without it, and most lab kit outlives whatever cover it came with.
   // Warranty, maintenance and the service contract live in one object because
   // the cold-room monitoring flow drives the same shared fields with it.
-  const [wm, setWm] = useState(EMPTY_WARRANTY_MAINTENANCE);
+  const [wm, setWm] = useState(() => ({ ...EMPTY_WARRANTY_MAINTENANCE, ...((initialData && initialData.wm) || {}) }));
   // Back and Cancel confirm before discarding, the same as the monitoring
   // install flow (Raf, 2026-09-07) — a half-filled register record is work.
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ''));
+  const [deployment, setDeployment] = useState(() => (mode === 'edit' && record ? (record.deployment || '') : ((initialData && initialData.deployment) || '')));
   // Types typed in via "+ Add" this session — the same escape hatch the
   // 3rd-party flow gives its device dropdowns, so an unlisted instrument never
   // blocks the record. A typed type is never monitorable: nothing has been
@@ -120,7 +130,7 @@ export function AddLabEquipmentScreen({
   const [customProviders, setCustomProviders] = useState([]);
   // Filled when the user picks "Other" from the list rather than typing a type.
   const [otherType, setOtherType] = useState(() => (mode === 'edit' && record ? (record.otherType || '') : ''));
-  const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ''));
+  const [qrCode, setQrCode] = useState(() => (mode === 'edit' && record ? (record.qrCode || '') : ((initialData && initialData.qrCode) || '')));
   // Same QR state shape as the 3rd-party flow: a view flag, an assign panel
   // ({scanning, scanned}) and the label sequence the simulated scanner issues.
   const [qrViewOpen, setQrViewOpen] = useState(false);

@@ -226,6 +226,39 @@ function AssembledLabApp({
 }
 
 // Sensors are rows of {serial, role} now that they are added with a "+".
+// A deep link that opens the register form on step 2 or 3 arrives with step 1
+// already answered (Raf, 2026-09-08). Without it those states illustrated a
+// screen no user can reach by walking the form: an empty step 2, and a review
+// whose every row was an em-dash. FLOW_READY does the same job for the
+// monitored flow, so both register forms now seed their steps the same way.
+const ADD_READY = {
+  form: {
+    facilityId: 'nhrl',
+    type: 'centrifuge',
+    name: 'Refrigerated centrifuge',
+    make: 'Eppendorf',
+    model: '5702 R',
+    serial: '5702R-8817',
+    assetTag: 'NHRL/EQP/101',
+    location: 'Sample prep, Room 6',
+    condition: 'Functional',
+    acquired: '2022-03-12',
+  },
+  deployment: 'Deployed',
+  wm: {
+    warrantyStart: '2022-03-12',
+    warrantyEnd: '2025-03-12',
+    schedule: 'Quarterly',
+    lastService: '2026-08-11',
+    agreement: 'yes',
+    servicer: 'Calibration Centre',
+    servicerPhone: '+254 722 415 990',
+    servicerEmail: 'service@calibration.go.ke',
+    coverFrom: '2026-01-01',
+    coverTo: '2026-12-31',
+  },
+};
+
 const FLOW_READY = {
   deviceId: 'rtmd-1',
   sensors: [
@@ -281,8 +314,13 @@ export const STATE_SECTIONS = [
     title: 'Add equipment (single)',
     states: [
       { id: 'add-default', label: '1 · Facility & equipment', render: () => <AssembledLabApp persona="tech" initialView="add" /> },
-      { id: 'add-warranty', label: '2 · Warranty & Maintenance', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'details' }} /> },
-      { id: 'add-review', label: '3 · Review & submit', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'review' }} /> },
+      // Step 1 with every answer given — the state the control sub-states on the
+      // Figma board illustrate (a dropdown open inside an otherwise complete
+      // form). add-default stays genuinely empty; this is the "ready for Next"
+      // projection of the same step (Raf, 2026-09-08).
+      { id: 'add-filled', label: '1 · Facility & equipment — complete', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialData: ADD_READY }} /> },
+      { id: 'add-warranty', label: '2 · Warranty & Maintenance', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'details', initialData: ADD_READY }} /> },
+      { id: 'add-review', label: '3 · Review & submit', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ initialStep: 'review', initialData: ADD_READY }} /> },
       { id: 'add-errors', label: 'Validation errors', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ state: 'errors' }} /> },
       { id: 'add-dup-tag', label: 'Duplicate asset tag (unique in region)', render: () => <AssembledLabApp persona="tech" initialView="add" addProps={{ state: 'dup' }} /> },
       { id: 'add-edit-mode', label: 'Edit mode — prefilled record', render: () => <AssembledLabApp persona="lead" initialView="edit:nhrl-058" /> },
