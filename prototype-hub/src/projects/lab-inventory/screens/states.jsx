@@ -232,7 +232,7 @@ const FLOW_READY = {
     { serial: 'Sensor A', role: 'In-room' },
     { serial: 'Sensor B', role: 'In-room' },
     { serial: 'Sensor C', role: 'In-room' },
-    { serial: 'Sensor D (ambient)', role: 'Ambient' },
+    { serial: 'Sensor D', role: 'Ambient' },
   ],
 };
 
