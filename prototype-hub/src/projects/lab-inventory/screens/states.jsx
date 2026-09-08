@@ -321,15 +321,23 @@ export const STATE_SECTIONS = [
       { id: 'flow-warranty', label: '2 · Warranty & Maintenance', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'warranty' }} /> },
       {
         id: 'flow-details-errors',
-        label: '1 · Missing asset tag + QR',
+        label: '1 · Validation errors',
         render: () => (
           <AssembledLabApp persona="lead" initialView="flow" flowProps={{
             initialStep: 'facility',
-            initialData: { equipment: { assetTag: '', qrCode: '' } },
+            // The monitored flow requires facility, type, make, status and
+            // purchase date — asset tag and QR became optional at the Sep 2026
+            // meeting, so seeding errors on them was stale.
+            initialData: { equipment: { type: '', make: '', condition: '', acquired: null } },
             initialErrors: {
-              assetTag: 'Enter the asset tag — it is how this record is found.',
-              qrCode: 'Assign a QR code — the step cannot complete without one.',
+              type: 'Choose an equipment type from the list.',
+              make: 'Choose or type the manufacturer.',
+              condition: 'Choose the equipment’s status.',
+              acquired: 'Enter the purchase date.',
             },
+          }} />
+        ),
+      },
           }} />
         ),
       },
