@@ -118,10 +118,13 @@ export const modelOptions = (make) => {
 // Severity ladder the tones follow: Functional (green) → Unknown (amber, needs
 // verifying) → Faulty (red, needs repair) → Decommissioned (grey, the
 // deliberate end state).
-// CCE's deployment vocabulary, minus "Not in use": the meeting ruled that
-// "Not in use" IS Decommissioned and must not exist as a separate option, so
-// out-of-service is said once, in Equipment status.
-export const DEPLOYMENT_STATUS = ['Installed', 'Deployed'];
+// CCE's deployment vocabulary, all three values. "Not in use" was dropped after
+// the Sep 2026 meeting on the grounds that it duplicated Decommissioned, and
+// REINSTATED by Raf on 2026-09-08: a working, installed instrument that nobody
+// is currently running is not decommissioned, and the register has to be able
+// to say so. Equipment status still answers whether it WORKS; this answers
+// whether it is being USED.
+export const DEPLOYMENT_STATUS = ['Installed', 'Deployed', 'Not in use'];
 
 export const CONDITIONS = [
   'Functional',
