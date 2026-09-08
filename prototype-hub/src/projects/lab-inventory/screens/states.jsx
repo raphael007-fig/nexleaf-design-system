@@ -338,9 +338,6 @@ export const STATE_SECTIONS = [
           }} />
         ),
       },
-          }} />
-        ),
-      },
       { id: 'flow-device', label: '3 · Base station, sensors & alarms', render: () => <AssembledLabApp persona="lead" initialView="flow" flowProps={{ initialStep: 'device' }} /> },
       {
         id: 'flow-device-assigned',
