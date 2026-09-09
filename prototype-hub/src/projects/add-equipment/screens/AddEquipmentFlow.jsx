@@ -387,7 +387,28 @@ export function useFixedFrame(deps = []) {
     };
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    // `top` also moves when chrome ABOVE the card appears or disappears with no
+    // window resize at all — entering the hub's full-screen view, a banner
+    // mounting, the header subtitle rewrapping. A ResizeObserver is not enough:
+    // it fires on SIZE changes, and this is a POSITION change, so the card was
+    // left short by exactly the height of whatever vanished (Raf, 2026-09-09:
+    // "the white bg frame is not taking the height?"). Poll the measured top
+    // instead and only re-render when it actually moves.
+    let raf = 0;
+    let last = -1;
+    const watch = () => {
+      const el = ref.current;
+      if (el) {
+        const t = Math.round(el.getBoundingClientRect().top);
+        if (t !== last) { last = t; measure(); }
+      }
+      raf = window.setTimeout(watch, 200);
+    };
+    watch();
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.clearTimeout(raf);
+    };
   }, [fixed, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
   // dvh tracks the *visible* viewport on mobile (browser chrome collapsing).
   return { ref, fixed, height: `calc(100dvh - ${top + bottomInset}px)` };
