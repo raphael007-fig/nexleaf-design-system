@@ -73,3 +73,30 @@ four. The fourth was in the same sentence already being quoted for the others.
 No open questions remain on this screen. Every field traces to a ratified
 source: the Sep 9 meeting, the PRD, the product context, or the live facility
 form at dev-moenga.coldtrace.org/facility/new.
+
+## 2026-09-09 — figma-design-audit run on the L section
+
+Run properly as a skill, after Raphael pushed back on the claim that its
+substance had already been covered. It had not: the sibling-variant taxonomy
+found three bugs that neither the geometry audit nor the design critique caught.
+
+1. **"Lab type" labelled a field whose values are administrative tiers.**
+   Facility / Province / Division / District / Tarluka/Thesil are hierarchy
+   levels, not kinds of lab — `coldtrace-domain.md`: "Facility Type mixes an
+   actual facility with four administrative tiers, so type is really hierarchy
+   level." The label told the reader the field answers "what kind of lab is
+   this", which those values do not answer. Now **Facility type**, on 7 frames,
+   in the review row, and in the prototype. The L1c frame name had itself
+   contradicted the label by naming "the facility form's own list".
+2. **L10 and L11 kept L8's subtitle when cloned from it** — "Check the lab
+   reads correctly, then save", stale on the in-flight frame where both buttons
+   are disabled, and competing with the retry on the failure frame.
+3. Sibling drift check across the step-1 family (L1 / L1b / L1c / L1d / L12)
+   and the L4/L4b, L5/L5b, L8/L10/L11 clones: **no other drift**.
+
+Audit document: `figma-annotations-create-lab.md` — placement map, 11 QA flags
+(all fixed), and 2 open questions.
+
+Verified after the fixes: 17 frames, 12 notes, 0 placeholders, 0 stale labels,
+0 identical pairs, 0 content overflow, 0 unbound frames, 0 frames without a
+note, and mirror-rule parity exact at 12 states to 17 frames.

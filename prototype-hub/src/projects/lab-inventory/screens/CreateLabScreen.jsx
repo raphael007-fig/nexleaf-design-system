@@ -276,7 +276,7 @@ export function CreateLabScreen({
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <SelectInput
-              label="Lab type" placeholder="Lab Type"
+              label="Facility type" placeholder="Facility Type"
               options={opts(LAB_FACILITY_TYPES)}
               value={form.labType} onChange={set('labType')}
             />
@@ -446,7 +446,7 @@ export function CreateLabScreen({
             ['Region', regionLabel(form.regionId)],
             (form.latitude || form.longitude)
               ? ['GPS coordinates', `${form.latitude || '—'}, ${form.longitude || '—'}`] : null,
-            form.labType ? ['Lab type', form.labType] : null,
+            form.labType ? ['Facility type', form.labType] : null,
             form.status ? ['Status', form.status] : null,
             form.population ? ['Total population served', form.population] : null,
           ]} />
