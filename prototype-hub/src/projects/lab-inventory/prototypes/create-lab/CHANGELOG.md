@@ -20,17 +20,35 @@ in the designs; Ednah ruled the lab form IS the facility creation form, with:
 Reuses `StepFrame` / `FormSection` from the Add-Equipment wizard, the same
 system `ColdRoomFlow` reuses, so the three flows cannot drift.
 
-## Open questions for Ednah
-1. **Region vs host facility.** Ednah: a lab is mapped to a region, and most
-   labs are hosted in a hospital, but NPHL's own regional labs are not mapped
-   to a facility. Built as: host facility optional, region **derived** from it
-   when present, asked **directly** when absent. Confirm that reading.
-2. **Section 2 keeps vaccine-named fields.** "Supply chain & logistics" was
-   called "still okay", but the facility version names three fields after
-   vaccine supply. Renamed to neutral supply wording here — confirm, or restore
-   the vaccine names.
-3. **Staff labels.** The facility form asks for "Epi Nurses and Vaccine
-   Handlers"; that does not fit a lab, so it reads "Lab Technologists and
-   Analysts" here. Confirm the right role name.
-4. **Total population served** is carried over ("catchment area population").
-   Confirm a lab has a catchment at all.
+## 2026-09-09 — three of the four "open questions" were already answered
+
+Raphael asked whether the PRD answered them. It did, and so did the ratified
+product context. All three answers contradicted what this screen had been built
+with, so it was corrected:
+
+1. **Host facility — REMOVED.** PRD §Scope and the product context both state
+   the hierarchy as "Kenya Lab (global group, never selectable) → NPHL = region
+   → **labs = facilities**; region always derived from facility." A lab IS a
+   facility; there is no host-hospital entity in V1 to derive a region from.
+   Region is now asked directly. Ednah's "most labs are hosted within a
+   hospital" is a fact about the world, not a field — it lives in the helper
+   text. The `lab-identification-standalone` state now simply shows a lab in
+   the NPHL region rather than a "no host facility" exception, which was
+   incoherent under this model.
+2. **Staff labels — REVERTED to the facility form's.** The platform's
+   `Occupation` taxonomy is `Biomedical Engineer · Biomedical Technician · Cold
+   Chain Technician · EPI Supervisor · Health Center Manager · Nurse · Partner ·
+   Vaccine Handler`. There is no "Lab Technologist", so the invented "Lab
+   Technologists and Analysts" was wrong. Reads "Number of Epi Nurses and
+   Vaccine Handlers" again.
+3. **Vaccine-named supply fields — RESTORED.** The PRD lists **terminology
+   neutralisation as out of scope for V1**. "Vaccine Supply Point" and "Mode of
+   Vaccine Supply" keep their names, with the live form's own helper text
+   ("Facility that delivers vaccines to this location").
+
+## Still open — one question, for Ednah
+
+**Total population served** ("catchment area population") is carried over from
+the facility form and is answered nowhere. A reference lab serves a referral
+network, not a vaccinating population, so this may want dropping or renaming.
+Everything else on this screen now traces to a ratified source.

@@ -13,10 +13,18 @@
 //     "I think for consistency, we would rather do it instead of eliminating
 //     it. And it's relevant."
 //
-// Region is the required fact and the host facility is optional, because most
-// labs sit inside a hospital but NPHL's own regional labs do not. When a host
-// facility is given the region is DERIVED from it and never asked twice — the
-// convention the register already uses (Raf, 2026-09-08).
+// Region is asked DIRECTLY. A lab is itself a facility — "Kenya Lab (global
+// group, never selectable) → NPHL = region → labs = facilities" (PRD §Scope and
+// the ratified product context), so there is no host-hospital entity in V1 to
+// derive a region from. Ednah's "most labs are hosted within a hospital" is a
+// fact about the world, not a field. An earlier pass here invented a Host
+// facility field; it contradicted the data model and was removed (2026-09-09).
+//
+// Field names stay as the facility form has them: "terminology neutralisation"
+// is explicitly OUT OF SCOPE for V1 (PRD), so Vaccine Supply Point and Mode of
+// Vaccine Supply keep their names, and the staff counts keep the platform's own
+// Occupation vocabulary (Nurse / Vaccine Handler / Biomedical Engineer /
+// Biomedical Technician) — there is no "Lab Technologist" in that taxonomy.
 //
 // Reuses the Add-Equipment wizard system (StepFrame / FormSection) exactly as
 // ColdRoomFlow does, so the three flows cannot drift.
@@ -35,7 +43,7 @@ import { TEXT_SUBDUED } from '@ds/tokens/index.js';
 import { StepFrame, FormSection, ReviewRows, ReviewSection } from '../../add-equipment/screens/AddEquipmentFlow.jsx';
 import { LabShell } from './LabShell.jsx';
 import {
-  LAB_REGIONS, HOST_FACILITIES, regionLabel, regionForHost, hostFacilityLabel,
+  LAB_REGIONS, HOST_FACILITIES, regionLabel, hostFacilityLabel,
   ENERGY_SOURCES, ELECTRICITY_AVAILABILITY, SUPPLY_MODES, SUPPLY_LEVELS,
   LAB_FACILITY_TYPES, LAB_STATUSES,
 } from './labData.js';
@@ -54,7 +62,7 @@ const PHASES = [
 const STEP_ORDER = ['identification', 'supply', 'inventory', 'transport', 'staff', 'review'];
 
 const EMPTY = {
-  hostId: '', regionId: '', name: '', code: '',
+  regionId: '', name: '', code: '',
   latitude: '', longitude: '', labType: '', status: '', population: '',
   energy: '', electricity: '', supplyPoint: '', supplyInterval: '',
   safetyStock: '', supplyMode: '', supplyLevels: '',
@@ -68,7 +76,7 @@ const EMPTY = {
 // A lab that sits inside a hospital — the common case Ednah described.
 const HOSTED = {
   ...EMPTY,
-  hostId: 'ncrh', regionId: 'nairobi',
+  regionId: 'nairobi',
   name: 'Nairobi County Referral Lab',
   code: 'NRB/LAB/004',
   latitude: '-1.286389', longitude: '36.817223',
@@ -78,11 +86,11 @@ const HOSTED = {
   supplyLevels: 'Service Points (SP)',
 };
 
-// The NPHL exception: a regional lab with no host facility, so the region is
-// asked directly instead of being derived.
+// A regional lab under NPHL rather than a county one — same shape, different
+// region. There is no "no facility" case: a lab is itself a facility.
 const STANDALONE = {
   ...EMPTY,
-  hostId: '', regionId: 'nphl',
+  regionId: 'nphl',
   name: 'NPHL Regional Lab — Kisumu',
   code: 'NPHL/LAB/011',
   labType: 'Province', status: 'Public',
@@ -110,12 +118,6 @@ export function CreateLabScreen({
   }));
   const set = (k) => (v) => setForm((f) => ({ ...f, [k]: v }));
 
-  // Picking a host facility settles the region; clearing it hands the region
-  // question back to the user (the NPHL case).
-  const setHost = (id) => setForm((f) => ({
-    ...f, hostId: id, regionId: id ? regionForHost(id) : '',
-  }));
-
   const stepIndex = STEP_ORDER.indexOf(step);
   const go = (s) => { setStep(s); setShowErrors(false); };
   const stepper = {
@@ -134,7 +136,7 @@ export function CreateLabScreen({
 
   const header = {
     title: 'Create Lab',
-    subtitle: 'A lab is mapped to a region. Most labs sit inside a hospital — pick the host facility and the region follows.',
+    subtitle: 'A lab is a facility mapped to a region. Same form as Create Facility, with lab names and the lab’s inventory in place of vaccine services.',
   };
 
   if (phase === 'success') {
@@ -149,12 +151,6 @@ export function CreateLabScreen({
                 { label: 'Lab name', value: form.name || '—' },
                 { label: 'Lab code', value: form.code || '—' },
                 { label: 'Region', value: regionLabel(form.regionId) },
-                {
-                  label: 'Host facility',
-                  value: form.hostId
-                    ? HOST_FACILITIES.find((f) => f.id === form.hostId)?.label
-                    : 'None — a regional lab not mapped to a facility',
-                },
                 {
                   label: 'Inventory',
                   value: form.inventoryMethod
@@ -194,34 +190,22 @@ export function CreateLabScreen({
         )}
 
         <FormSection title="Identification and location" required>
-          <SearchSelect
-            label="Host facility"
-            placeholder="Search and select a hospital…"
-            helpText="The hospital this lab sits inside. Leave it empty for a regional lab that is not mapped to a facility."
-            options={HOST_FACILITIES.map((f) => ({ value: f.id, label: f.label }))}
-            value={form.hostId}
-            onChange={setHost}
+          {/* A lab IS a facility in this model — "Kenya Lab (global group, never
+              selectable) → NPHL = region → labs = facilities" (PRD §Scope, and
+              the ratified product context). There is no host-hospital entity in
+              V1, so the region is asked directly rather than derived from some
+              parent. Ednah's "most labs are hosted within a hospital" is a fact
+              about the world, not a field. */}
+          <SelectInput
+            label="Region"
+            required
+            placeholder="Region (Required)"
+            options={LAB_REGIONS.map((r) => ({ value: r.id, label: r.label }))}
+            value={form.regionId}
+            onChange={set('regionId')}
+            error={showErrors && !form.regionId ? 'Pick the region this lab is mapped to.' : undefined}
+            helpText="The lab is mapped to a region. Most labs sit inside a hospital, but that is not recorded here — a lab is itself a facility."
           />
-
-          {form.hostId ? (
-            <TextInput
-              label="Region"
-              value={regionLabel(form.regionId)}
-              readOnly
-              helpText="Region is derived from the host facility — it is never asked separately."
-            />
-          ) : (
-            <SelectInput
-              label="Region"
-              required
-              placeholder="Region (Required)"
-              options={LAB_REGIONS.map((r) => ({ value: r.id, label: r.label }))}
-              value={form.regionId}
-              onChange={set('regionId')}
-              error={showErrors && !form.regionId ? 'Pick the region this lab is mapped to.' : undefined}
-              helpText="No host facility, so the region is asked directly — the NPHL regional-lab case."
-            />
-          )}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <TextInput
@@ -291,14 +275,14 @@ export function CreateLabScreen({
     return frame(
       <FormSection title="Supply chain & logistics">
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-          <SelectInput label="Source of energy" placeholder="Lab Source of Energy"
+          <SelectInput label="Facility source of energy" placeholder="Facility Source of Energy"
             options={opts(ENERGY_SOURCES)} value={form.energy} onChange={set('energy')} />
           <SelectInput label="Availability of electricity" placeholder="Availability of Electricity"
             options={opts(ELECTRICITY_AVAILABILITY)} value={form.electricity} onChange={set('electricity')} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <SearchSelect label="Supply point" placeholder="Search and select a facility…"
-            helpText="Facility that supplies this lab"
+          <SearchSelect label="Vaccine supply point" placeholder="Search and select a facility…"
+            helpText="Facility that delivers vaccines to this location"
             options={HOST_FACILITIES.map((f) => ({ value: f.id, label: f.label }))}
             value={form.supplyPoint} onChange={set('supplyPoint')} />
           <TextInput label="Supply interval (months)" placeholder="Supply Interval (months)"
@@ -307,7 +291,7 @@ export function CreateLabScreen({
           <TextInput label="Safety stock level (months)" placeholder="Safety Stock Level (months)"
             helpText="Minimum months of stock held"
             value={form.safetyStock} onChange={set('safetyStock')} />
-          <SelectInput label="Mode of supply" placeholder="Mode of Supply"
+          <SelectInput label="Mode of vaccine supply" placeholder="Mode of Vaccine Supply"
             options={opts(SUPPLY_MODES)} value={form.supplyMode} onChange={set('supplyMode')} />
         </div>
         <SelectInput label="Supply levels" placeholder="Supply Levels"
@@ -415,9 +399,6 @@ export function CreateLabScreen({
             ['Lab name', form.name || '—'],
             ['Lab code', form.code || '—'],
             ['Region', regionLabel(form.regionId)],
-            ['Host facility', form.hostId
-              ? hostFacilityLabel(form.hostId)
-              : 'None — a regional lab not mapped to a facility'],
             (form.latitude || form.longitude)
               ? ['GPS coordinates', `${form.latitude || '—'}, ${form.longitude || '—'}`] : null,
             form.labType ? ['Lab type', form.labType] : null,
@@ -428,12 +409,12 @@ export function CreateLabScreen({
 
         <ReviewSection title="Supply chain & logistics" status={done} onEdit={() => go('supply')}>
           <ReviewRows rows={[
-            ['Source of energy', form.energy || '—'],
+            ['Facility source of energy', form.energy || '—'],
             ['Availability of electricity', form.electricity || '—'],
-            ['Supply point', form.supplyPoint ? hostFacilityLabel(form.supplyPoint) : '—'],
+            ['Vaccine supply point', form.supplyPoint ? hostFacilityLabel(form.supplyPoint) : '—'],
             ['Supply interval', form.supplyInterval ? months(form.supplyInterval) : '—'],
             ['Safety stock level', form.safetyStock ? months(form.safetyStock) : '—'],
-            ['Mode of supply', form.supplyMode || '—'],
+            ['Mode of vaccine supply', form.supplyMode || '—'],
             ['Supply levels', form.supplyLevels || '—'],
           ]} />
         </ReviewSection>
@@ -456,7 +437,7 @@ export function CreateLabScreen({
 
         <ReviewSection title="Lab staff" status={done} onEdit={() => go('staff')}>
           <ReviewRows rows={[
-            ['Lab technologists & analysts', form.labStaff || '—'],
+            ['Epi nurses & vaccine handlers', form.labStaff || '—'],
             ['Biomedical engineers & technicians', form.biomedStaff || '—'],
           ]} />
         </ReviewSection>
@@ -471,8 +452,8 @@ export function CreateLabScreen({
   return frame(
     <FormSection title="Lab staff">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        <TextInput label="Number of lab technologists and analysts"
-          placeholder="Number of Lab Technologists and Analysts"
+        <TextInput label="Number of epi nurses and vaccine handlers"
+          placeholder="Number of Epi Nurses and Vaccine Handlers"
           value={form.labStaff} onChange={set('labStaff')} />
         <TextInput label="Number of biomedical engineers and technicians"
           placeholder="Number of Biomedical Engineers and Technicians"

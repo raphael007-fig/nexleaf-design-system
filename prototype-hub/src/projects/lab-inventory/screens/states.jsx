@@ -376,8 +376,8 @@ export const STATE_SECTIONS = [
     // vaccine services. Transport & waste is kept deliberately, for consistency.
     title: 'Create lab (mirrors create facility)',
     states: [
-      { id: 'lab-identification', label: '1 · Identification & location — hosted in a hospital', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'hosted' }} /> },
-      { id: 'lab-identification-standalone', label: '1 · NPHL regional lab — no host facility', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'standalone' }} /> },
+      { id: 'lab-identification', label: '1 · Identification & location', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'hosted' }} /> },
+      { id: 'lab-identification-standalone', label: '1 · NPHL regional lab', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'standalone' }} /> },
       { id: 'lab-identification-errors', label: '1 · Validation errors — region & lab name', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'errors', seed: 'empty' }} /> },
       { id: 'lab-supply', label: '2 · Supply chain & logistics', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'supply', seed: 'hosted' }} /> },
       { id: 'lab-inventory', label: '3 · Lab inventory (replaces vaccine services)', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'inventory', seed: 'hosted' }} /> },
