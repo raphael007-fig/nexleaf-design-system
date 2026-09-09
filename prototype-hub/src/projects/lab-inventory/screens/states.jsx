@@ -383,6 +383,7 @@ export const STATE_SECTIONS = [
       { id: 'lab-inventory', label: '3 · Lab inventory (replaces vaccine services)', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'inventory', seed: 'hosted' }} /> },
       { id: 'lab-transport', label: '4 · Transport & waste management', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'transport', seed: 'hosted' }} /> },
       { id: 'lab-staff', label: '5 · Lab staff', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'staff', seed: 'hosted' }} /> },
+      { id: 'lab-review', label: '6 · Review & submit', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'review', seed: 'hosted' }} /> },
       { id: 'lab-success', label: 'Lab created', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'success', seed: 'hosted' }} /> },
     ],
   },

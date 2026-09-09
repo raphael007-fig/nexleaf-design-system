@@ -307,7 +307,7 @@ function getFieldStyles({ focused, hovered, open, disabled, error }) {
 
 // ─── SearchSelect — Single ────────────────────────────────────────────────────
 
-export function SearchSelect({ label, required, placeholder = 'Select…', options = [], value, onChange, disabled, error, onCreate, createLabel = 'Add' }) {
+export function SearchSelect({ label, required, placeholder = 'Select…', options = [], value, onChange, disabled, error, helpText, onCreate, createLabel = 'Add' }) {
   const [open,    setOpen]    = useState(false);
   const [query,   setQuery]   = useState('');
   const [hovered, setHovered] = useState(false);
@@ -440,6 +440,9 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
           <span style={{ fontSize: 13, color: '#d92d20', fontFamily: 'Inter, sans-serif', lineHeight: '20px' }}>{error}</span>
         </div>
       )}
+      {helpText && !error && (
+        <span style={{ fontSize: 13, color: '#616161', fontFamily: 'Inter, sans-serif', lineHeight: '20px' }}>{helpText}</span>
+      )}
     </div>
   );
 }
@@ -449,7 +452,7 @@ export function SearchSelect({ label, required, placeholder = 'Select…', optio
 export function SearchSelectMulti({
   label, required, placeholder = 'Select…',
   options = [], value = [], onChange,
-  disabled, error, maxTags,
+  disabled, error, helpText, maxTags,
   tagsInside = false, // when true → render tags inside the field with overflow logic
 }) {
   const [open,    setOpen]    = useState(false);
@@ -589,6 +592,9 @@ export function SearchSelectMulti({
           <IcoErrorCircle />
           <span style={{ fontSize: 13, color: '#d92d20', fontFamily: 'Inter, sans-serif', lineHeight: '20px' }}>{error}</span>
         </div>
+      )}
+      {helpText && !error && (
+        <span style={{ fontSize: 13, color: '#616161', fontFamily: 'Inter, sans-serif', lineHeight: '20px' }}>{helpText}</span>
       )}
     </div>
   );
