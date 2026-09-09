@@ -46,9 +46,30 @@ with, so it was corrected:
    Vaccine Supply" keep their names, with the live form's own helper text
    ("Facility that delivers vaccines to this location").
 
-## Still open — one question, for Ednah
+## 2026-09-09 — the fourth question was answered too. Nothing is open.
 
-**Total population served** ("catchment area population") is carried over from
-the facility form and is answered nowhere. A reference lab serves a referral
-network, not a vaccinating population, so this may want dropping or renaming.
-Everything else on this screen now traces to a ratified source.
+Raphael pushed twice on whether these were already answered. They were — all
+four. The fourth was in the same sentence already being quoted for the others.
+
+4. **Total population served — KEEP IT, unchanged.** Ednah, Sep 9, on section 1:
+   *"Everything is the same where there's a facility put a slash. Lab. That's
+   it. And then change this vaccine. Services."* One blanket rule with exactly
+   one carve-out — vaccine services becomes inventory. She named no exception
+   for `Total Population Served`, which is a section-1 field of the facility
+   form. Earlier in the same call, on transport & waste: *"The same things will
+   be the same... this is what we need to change"*, "this" being vaccine
+   services again.
+
+   Reinforced by the PRD, which lists **terminology neutralisation as out of
+   scope for V1** — so the label does not get reworded for a lab either.
+
+   The reasoning that made this look open (a reference lab takes referred
+   samples, so a catchment population may be meaningless) is a fair product
+   observation, but it is not a decision, and it does not outrank hers. If the
+   field turns out to be meaningless in practice that is a follow-up for her to
+   raise, not a reason to drop a field she said to keep. It stays exactly as
+   the facility form has it, helper text included.
+
+No open questions remain on this screen. Every field traces to a ratified
+source: the Sep 9 meeting, the PRD, the product context, or the live facility
+form at dev-moenga.coldtrace.org/facility/new.
