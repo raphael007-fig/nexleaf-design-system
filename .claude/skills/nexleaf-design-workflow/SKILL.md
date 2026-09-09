@@ -45,6 +45,27 @@ carelessness — *"please stop giving me half work."*
 frames, state the plan and the interpretation in one or two lines first. He will correct a plan in
 seconds and a finished board in hours.
 
+**6. THE RECORD ALREADY ANSWERS MOST QUESTIONS. Search it before inventing a field or raising an
+"open question."** Sep 9 2026, building Create Lab: four questions were raised for Ednah. **All four
+were already answered** — three in the PRD and `coldtrace-product-context`, the fourth in the
+meeting transcript being quoted for the other three. He had to ask *"are Ednah's questions not
+answered in the PRD?"* and then *"are you sure we don't have this answer?"* twice.
+
+The four sources, in this order, before designing anything new:
+- the project's `PRD.md` — scope, ratified decisions, and the **out-of-scope list** (it answers
+  "should I rename this?" — terminology neutralisation was out of scope, so no)
+- `coldtrace-product-context` — the data model and hierarchy (it answered "is a lab inside a
+  hospital?" → *labs = facilities*, so the invented Host facility field was wrong) and the platform
+  taxonomies (`Occupation` has no "Lab Technologist", so that invented label was wrong)
+- `docs/coldtrace-domain.md` — the live product documented field by field, including whole forms
+- the meeting transcript, **read for the blanket rule as well as the exceptions**. *"Everything is
+  the same where there's a facility put a slash lab"* + one carve-out means every unnamed field is
+  decided. Do not apply a blanket rule to three sections and then call a field in the fourth "open".
+
+**A product observation is not an open question.** "A reference lab has no vaccinating catchment" is
+a fair thought; it does not outrank a decision she already made. Raise it as a comment, build what
+was decided.
+
 ---
 
 ## 1. Collect
@@ -161,4 +182,15 @@ Load **`prototype-review-then-publish`**.
    instance-nested. He had to show me by hand that a modal's `.slot examples` frame accepts real
    component instances — I had floated a button over the modal instead.
 10. **Don't swallow errors in a bulk pass.** `catch (e) {}` is how half a pass appears to succeed.
+11. **Never invent an enum, a field or a label.** Every option list, field name and helper string
+    must come from the live product, the domain doc, or a transcript. Sep 9 2026: six option lists
+    on Create Lab were invented and every one was wrong — `Status` is ownership
+    (`Public`/`NGO`/`Private`), not an operational state, and `Supply Levels` are the platform's
+    `PR`/`SN1`/`SN2`/`LD`/`SP` codes. He had to send screenshots of the real dropdowns. If a value
+    cannot be traced to a source, it is a guess — say so, or go and read the form.
+12. **Rule 1 is not a discovery.** The library Button's `Variant=primary` being dark `#303030` is
+    *already recorded* here, with the fix: bind `Color/bg/fill/fill-emphasis`. Sep 9 2026 it was
+    re-derived from scratch, reported as a new "DS gap", and then patched with a **raw hex** — the
+    exact thing rule 1 forbids. Before writing up a DS gap, check whether this file already names
+    it and already says what to do.
 

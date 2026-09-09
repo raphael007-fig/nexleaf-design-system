@@ -31,6 +31,7 @@
 import { useState } from 'react';
 import { Btn } from '@ds/components/Btn/Btn.jsx';
 import { Banner } from '@ds/components/Banner/Banner.jsx';
+import { Modal } from '@ds/components/Modal/Modal.jsx';
 import { CardSectionTitle } from '@ds/components/Card/Card.jsx';
 import { Badge } from '@ds/components/Badge/Badge.jsx';
 import { PolarisIconImg } from '@ds/components/PolarisIcon/PolarisIcon.jsx';
@@ -101,6 +102,7 @@ const months = (n) => (String(n) === '1' ? '1 month' : `${n} months`);
 
 export function CreateLabScreen({
   state = 'identification', initialValues = null, seed = 'empty',
+  simulate = null,
   onDone, onCancel, onCrumb,
 }) {
   // 'errors' and 'success' are states of a step, not steps of their own — an
@@ -111,6 +113,13 @@ export function CreateLabScreen({
         : STEP_ORDER.includes(state) ? state : 'identification',
   );
   const [phase, setPhase] = useState(state === 'success' ? 'success' : 'idle');
+  // Saving a lab is a server write, so it gets the same three states the
+  // cold-room install has: in-flight, failed-with-nothing-created, and a
+  // destructive confirm before a part-filled form is thrown away.
+  const [cancelOpen, setCancelOpen] = useState(simulate === 'cancel-confirm');
+  const [submitState, setSubmitState] = useState(
+    simulate === 'submitting' ? 'submitting' : simulate === 'submit-failed' ? 'failed' : 'idle',
+  );
   const [showErrors, setShowErrors] = useState(state === 'errors');
   const [form, setForm] = useState(() => ({
     ...(seed === 'hosted' ? HOSTED : seed === 'standalone' ? STANDALONE : EMPTY),
@@ -120,6 +129,14 @@ export function CreateLabScreen({
 
   const stepIndex = STEP_ORDER.indexOf(step);
   const go = (s) => { setStep(s); setShowErrors(false); };
+
+  function submit() {
+    setSubmitState('submitting');
+    setTimeout(() => {
+      if (simulate === 'submit-failed') setSubmitState('failed');
+      else { setSubmitState('idle'); setPhase('success'); }
+    }, 1200);
+  }
   const stepper = {
     phases: PHASES,
     activeIndex: stepIndex,
@@ -177,6 +194,27 @@ export function CreateLabScreen({
       >
         {body}
       </StepFrame>
+
+      {/* Six steps of entry is too much to throw away on a stray click. */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title="Discard this lab?"
+        size="small"
+        footer={(
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, width: '100%' }}>
+            <Btn variant="secondary" onClick={() => setCancelOpen(false)}>Keep editing</Btn>
+            <Btn variant="primary" tone="critical" onClick={() => { setCancelOpen(false); onCancel?.(); }}>
+              Discard lab
+            </Btn>
+          </div>
+        )}
+      >
+        <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: TEXT_SUBDUED }}>
+          Nothing has been created yet, so there is nothing to undo — but everything typed
+          across these six steps is lost and would need entering again.
+        </p>
+      </Modal>
     </LabShell>
   );
 
@@ -204,7 +242,6 @@ export function CreateLabScreen({
             value={form.regionId}
             onChange={set('regionId')}
             error={showErrors && !form.regionId ? 'Pick the region this lab is mapped to.' : undefined}
-            helpText="The lab is mapped to a region. Most labs sit inside a hospital, but that is not recorded here — a lab is itself a facility."
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
@@ -258,7 +295,7 @@ export function CreateLabScreen({
         </FormSection>
       </div>,
       {
-        left: <Btn variant="secondary" onClick={onCancel}>Cancel</Btn>,
+        left: <Btn variant="secondary" onClick={() => setCancelOpen(true)}>Cancel</Btn>,
         right: (
           <Btn
             variant="primary"
@@ -314,8 +351,8 @@ export function CreateLabScreen({
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <CardSectionTitle title="Lab inventory" />
             <Banner tone="info" inCard>
-              A lab has no vaccine services, so this is where its equipment is mapped instead.
-              Nothing is created here — a new lab can be saved empty and stocked later.
+              No equipment is created here. Save the lab first, then add its equipment —
+              a lab with an empty register is fine and can be stocked later.
             </Banner>
             <SelectInput
               label="How should this lab's inventory be added?"
@@ -327,7 +364,7 @@ export function CreateLabScreen({
               ]}
               value={form.inventoryMethod}
               onChange={set('inventoryMethod')}
-              helpText="Both routes already exist for this module — this only decides where you land after saving."
+              helpText="This only decides where you land after saving."
             />
           </div>
 
@@ -389,10 +426,18 @@ export function CreateLabScreen({
     const done = <Badge tone="success" size="small">Complete</Badge>;
     return frame(
       <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-        <Banner tone="info" inCard>
-          Nothing has been created yet. Check the lab reads correctly, then save — every
-          section can still be edited from here.
-        </Banner>
+        {submitState === 'failed' ? (
+          <Banner tone="critical" inCard actions={[{ label: 'Try again', onClick: submit }]}>
+            <span style={{ display: 'block', fontWeight: 650 }}>Save failed — the lab was not created</span>
+            The server rejected the request. Everything you entered is still here and nothing
+            was partially saved — retry, or come back to it later.
+          </Banner>
+        ) : (
+          <Banner tone="info" inCard>
+            Nothing has been created yet. Check the lab reads correctly, then save — every
+            section can still be edited from here.
+          </Banner>
+        )}
 
         <ReviewSection title="Identification & location" status={done} onEdit={() => go('identification')}>
           <ReviewRows rows={[
@@ -443,8 +488,16 @@ export function CreateLabScreen({
         </ReviewSection>
       </div>,
       {
-        left: <Btn variant="secondary" onClick={() => go('staff')}>Previous</Btn>,
-        right: <Btn variant="primary" onClick={() => setPhase('success')}>Save Lab</Btn>,
+        left: (
+          <Btn variant="secondary" onClick={() => go('staff')} disabled={submitState === 'submitting'}>
+            Previous
+          </Btn>
+        ),
+        right: (
+          <Btn variant="primary" loading={submitState === 'submitting'} onClick={submit}>
+            {submitState === 'submitting' ? 'Saving…' : 'Save Lab'}
+          </Btn>
+        ),
       },
     );
   }
