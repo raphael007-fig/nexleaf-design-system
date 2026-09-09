@@ -45,6 +45,7 @@ import { AddLabEquipmentScreen } from './AddLabEquipmentScreen.jsx';
 import { MonitoringMethodModal } from './MonitoringMethodModal.jsx';
 import { BulkImportScreen } from './BulkImportScreen.jsx';
 import { ColdRoomFlow } from './ColdRoomFlow.jsx';
+import { CreateLabScreen } from './CreateLabScreen.jsx';
 import { ColdRoomDetailScreen } from './ColdRoomDetailScreen.jsx';
 import { LabRecordDetailScreen } from './LabRecordDetailScreen.jsx';
 import { LAB_EQUIPMENT, IMPORT_FILES } from './labData.js';
@@ -93,6 +94,7 @@ function ModulePlaceholder({ moduleId, onHome }) {
 function AssembledLabApp({
   initialView = 'home', persona = 'lead',
   registerProps = {}, addProps = {}, importProps = {}, flowProps = {}, detailProps = {},
+  createLabProps = {},
 }) {
   const [view, setView] = useState(initialView);
   const [highlightId, setHighlightId] = useState(registerProps.highlightId ?? null);
@@ -161,6 +163,19 @@ function AssembledLabApp({
         onCancel={toRegister}
         onCrumb={onCrumb}
         {...importProps}
+      />
+    );
+  }
+  // Create Lab — the facility form with lab names and inventory in place of
+  // vaccine services (Ednah, 2026-09-09). Saving lands on Add lab equipment,
+  // which is where a brand-new lab actually needs to go next.
+  if (view === 'createlab') {
+    return (
+      <CreateLabScreen
+        onDone={() => setView('add')}
+        onCancel={toRegister}
+        onCrumb={onCrumb}
+        {...createLabProps}
       />
     );
   }
@@ -353,6 +368,22 @@ export const STATE_SECTIONS = [
       { id: 'import-preview', label: '3 · Preview & validation flags', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'preview' }} /> },
       { id: 'import-error', label: 'Import failed — nothing created', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'error' }} /> },
       { id: 'import-success', label: 'Success — records created', render: () => <AssembledLabApp persona="lead" initialView="import" importProps={{ state: 'success' }} /> },
+    ],
+  },
+  {
+    // Ednah, 2026-09-09: no create-lab form existed in any design. It mirrors
+    // Create Facility with lab names, /facility/lab, and inventory replacing
+    // vaccine services. Transport & waste is kept deliberately, for consistency.
+    title: 'Create lab (mirrors create facility)',
+    states: [
+      { id: 'lab-identification', label: '1 · Identification & location — hosted in a hospital', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'hosted' }} /> },
+      { id: 'lab-identification-standalone', label: '1 · NPHL regional lab — no host facility', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'identification', seed: 'standalone' }} /> },
+      { id: 'lab-identification-errors', label: '1 · Validation errors — region & lab name', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'errors', seed: 'empty' }} /> },
+      { id: 'lab-supply', label: '2 · Supply chain & logistics', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'supply', seed: 'hosted' }} /> },
+      { id: 'lab-inventory', label: '3 · Lab inventory (replaces vaccine services)', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'inventory', seed: 'hosted' }} /> },
+      { id: 'lab-transport', label: '4 · Transport & waste management', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'transport', seed: 'hosted' }} /> },
+      { id: 'lab-staff', label: '5 · Lab staff', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'staff', seed: 'hosted' }} /> },
+      { id: 'lab-success', label: 'Lab created', render: () => <AssembledLabApp persona="lead" initialView="createlab" createLabProps={{ state: 'success', seed: 'hosted' }} /> },
     ],
   },
   {

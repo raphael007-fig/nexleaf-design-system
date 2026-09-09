@@ -841,3 +841,57 @@ export const formatDate = (iso) => {
     ? iso
     : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 };
+
+// ── Create Lab — regions and host facilities (Ednah, 2026-09-09) ──────────────
+// The lab creation form mirrors facility creation; a lab is mapped to a REGION,
+// and most labs are hosted inside a hospital. Ednah: "other than the Kenya
+// National Public Health lab, the rest of the labs are hosted within a
+// hospital... they have a few other labs that are regional that are not mapped
+// to a facility, but very few."
+//
+// So the host facility is OPTIONAL and the region is the required fact. When a
+// host facility IS given the region comes from it and is never asked twice —
+// the convention already used by the register's Facility field ("Region is
+// derived from the facility — it is never asked separately", Raf 2026-09-08).
+export const LAB_REGIONS = [
+  { id: 'nphl',        label: 'National Public Health Lab (NPHL)' },
+  { id: 'nairobi',     label: 'Nairobi' },
+  { id: 'kisumu',      label: 'Kisumu' },
+  { id: 'mombasa',     label: 'Mombasa' },
+  { id: 'nakuru',      label: 'Nakuru' },
+  { id: 'uasin-gishu', label: 'Uasin Gishu' },
+];
+
+export const HOST_FACILITIES = [
+  { id: 'knh',    label: 'Kenyatta National Hospital',                            regionId: 'nairobi' },
+  { id: 'ncrh',   label: 'Nairobi County Referral Hospital',                      regionId: 'nairobi' },
+  { id: 'jootrh', label: 'Jaramogi Oginga Odinga Teaching & Referral Hospital',   regionId: 'kisumu' },
+  { id: 'cgtrh',  label: 'Coast General Teaching & Referral Hospital',            regionId: 'mombasa' },
+  { id: 'nl5h',   label: 'Nakuru Level 5 Hospital',                               regionId: 'nakuru' },
+  { id: 'mtrh',   label: 'Moi Teaching & Referral Hospital',                      regionId: 'uasin-gishu' },
+];
+
+export const regionLabel = (id) => LAB_REGIONS.find((r) => r.id === id)?.label ?? '—';
+export const hostFacilityLabel = (id) => HOST_FACILITIES.find((f) => f.id === id)?.label ?? '—';
+export const regionForHost = (id) => HOST_FACILITIES.find((f) => f.id === id)?.regionId ?? '';
+
+// Section 2 (Supply Chain & Logistics) is carried over unchanged — Ednah:
+// "this is supply chain and Logistics. Which is still okay."
+//
+// EVERY option list below is the live Create Facility form's own list, read off
+// dev-moenga.coldtrace.org/facility/new (Raf, 2026-09-09). They are not
+// invented and must not be "tidied" — Status is OWNERSHIP (Public/NGO/Private),
+// not an operational state, and Supply Levels are the platform's PR/SN1/SN2/
+// LD/SP codes.
+export const ENERGY_SOURCES = ['Grid Electricity', 'Solar', 'Unpowered', 'Generator'];
+export const ELECTRICITY_AVAILABILITY = ['>16h', '8-16h', '<8h', 'No'];
+export const SUPPLY_MODES = ['Pull', 'Push', 'Pull & Push'];
+export const SUPPLY_LEVELS = [
+  'Primary (PR)', 'Sub-National 1 (SN1)', 'Sub-National 2 (SN2)',
+  'Lowest Distribution (LD)', 'Service Points (SP)',
+];
+
+// The facility form's own Facility Type and Status lists, carried over as-is:
+// a lab hosted inside a hospital is type "Facility".
+export const LAB_FACILITY_TYPES = ['Facility', 'Province', 'Division', 'District', 'Tarluka/Thesil'];
+export const LAB_STATUSES = ['Public', 'NGO', 'Private'];
