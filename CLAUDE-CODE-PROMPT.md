@@ -1,5 +1,28 @@
 # Using this workflow in Claude Code
 
+## ⚠ FIRST — check which branch you are on
+
+**`main` is stale.** As of 2026-09-12 it sits at `18418a2` (Sep 4) while the live work is on
+**`pd34-mobile-temperature-recording`**, 79 commits ahead. A fresh checkout of `main` gets a
+two-week-old contract, no prompt index and no handover doc — an outdated contract is worse than
+none, because it reads as authoritative.
+
+```sh
+git branch -vv                                   # where am I, and is it behind?
+git log --oneline origin/main..HEAD | wc -l      # how far ahead is this branch?
+```
+
+Before trusting any auto-loaded doc, confirm the branch carries the current version. If you are on
+`main` and it is behind, say so and stop — do not build to a stale contract.
+
+The branch name is also misleading: it began as PD-34 mobile temperature recording and now carries
+**PD-41 lab inventory, PD-23 Add Equipment, PD-30 design ops and PD-16 design-system work** from
+three different sessions. Read the log, not the name.
+
+**Outstanding:** merge this branch to `main`. The longer it sits, the more likely a session branches
+off stale `main` and the boards diverge again — which is the exact failure the contract exists to
+prevent.
+
 ## Why it works
 
 Claude Code reads `CLAUDE.md` from the directory you launch it in, and loads skills from

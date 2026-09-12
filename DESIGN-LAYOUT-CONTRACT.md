@@ -266,6 +266,11 @@ pretend the same-turn duty applies. Instead, **emit the amendment as a ready-to-
 the exact section, the exact wording — so Raphael can carry it to a session that can write it. A
 correction that can't be committed must at least be transportable. Never silently drop it.
 
+**0b · Check the branch before trusting this file.** Auto-loading proves a file was read, not that
+it is current. `main` has been weeks behind the working branch. Run `git branch -vv` and
+`git log --oneline origin/main..HEAD | wc -l`. If you are on a branch that is behind, the contract
+you just loaded is stale — say so rather than building to it.
+
 **1 · Pull first.** Other sessions commit here. `git pull --rebase` before you edit, or you will
 hand Raphael a merge conflict.
 
