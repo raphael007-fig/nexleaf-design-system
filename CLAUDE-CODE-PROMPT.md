@@ -16,7 +16,22 @@ Auto-loaded on every session (via `CLAUDE.md`):
 | `DESIGN-SYSTEM-INVENTORY.md` | all 82 components with keys and properties |
 | `docs/coldtrace-domain.md` | how the product actually behaves, incl. the 7-day / 3-day windows |
 
-Plus 15 skills in `.claude/skills/`.
+Plus **22 skills** in `.claude/skills/`.
+
+## Which prompt to paste
+
+Four task prompts live in the repo. Pick by direction — using the wrong one is how a compliant
+board gets rebuilt instead of patched.
+
+| Situation | File |
+|---|---|
+| General session start, or a one-screen fix | **this file** |
+| No Figma board yet — build one from the prototype | `PROMPT-PROTOTYPE-TO-FIGMA.md` |
+| **Board exists, the prototype moved** — sync the delta | `PROMPT-SYNC-PROTOTYPE-TO-FIGMA.md` |
+| Board exists, the prototype is behind — wire the states up | `PROMPT-FIGMA-TO-PROTOTYPE.md` |
+
+**Never rebuild a compliant board.** The sync prompt exists because a board carrying annotated
+frames, correct chrome and parity bindings represents days of review.
 
 ## One-time setup
 
@@ -55,8 +70,9 @@ CONTEXT
 - Figma file: YzbXqlrKTcGbWxwzGkLTct (design) and y4XdS2kaiS8eMHY3z8wORP (DS library v2.1).
 - Jira: Product Board PD. PD-23 Add Equipment · PD-33 Manual Temp Recording ·
   PD-16 design-system component work · PD-30 design ops.
-- Prototype hub: prototype-hub/ — projects are add-equipment, manual-temperature-recording,
-  sandbox. Flows live at projects/<project>/prototypes/<slug>/{meta.js,index.jsx}.
+- Prototype hub: prototype-hub/ — projects are add-equipment, lab-inventory,
+  manual-temperature-recording, sandbox. Flows live at
+  projects/<project>/prototypes/<slug>/{meta.js,index.jsx}.
 
 BEFORE YOU TOUCH ANYTHING
 1. Load the skills that apply. ds-components-only is binding for any UI. figma-use is
@@ -117,7 +133,7 @@ anything. Report the five numbers when you're done, and tell me what you didn't 
 
 | Surface | Owns |
 |---|---|
-| **Claude Code**, this repo | **Add Equipment (PD-23)** — the flow, the board, the hub project |
+| **Claude Code**, this repo | **Add Equipment (PD-23)** · **Lab inventory (PD-41)** — flows, boards, hub projects |
 | **Cowork**, folder connected | **Temperature monitoring (PD-33/34/35/36/38)** |
 | **claude.ai chat** | no filesystem — emits transportable amendments only (contract §0) |
 

@@ -151,3 +151,24 @@ Toggle_main              | f1fc3dc44840af38 | 10v | State=rest/hover/focus/error
   them. Check the resolved value after binding; names can match while values don't.
 - Mobile twins exist for Data table, Index table, Resource list, Filters, Navigation, Tabs — use
   them at 375 rather than shrinking the desktop one.
+
+## Code-side props added after the Figma audit — verified 2026-09-12
+
+The Figma variants and the React components are not always in step. These exist **in code** and have
+no Figma equivalent yet. Composing in the prototype? Use them. Drawing in Figma? They're a DS gap.
+
+| Component | Prop | Signature |
+|---|---|---|
+| `Toast` | `actions` · `inlineActions` | `actions` renders action buttons; `inlineActions` defaults **true** |
+| `Banner` | `actions` · `inlineActions` · `hideIcon` | `inlineActions` defaults **false** — the opposite of Toast |
+| `SearchSelect` / `SearchSelectMulti` | `helpText` | 13px subdued line under the field; suppressed when `error` is set |
+
+Two traps in that table:
+
+- **`inlineActions` defaults differ** — `true` on Toast, `false` on Banner. Don't assume.
+- **`helpText` is suppressed by `error`** (`helpText && !error`). A field showing a validation
+  message will not also show its hint — so don't put essential instructions in `helpText`.
+
+**Keep this section current.** A DS capability nobody records is a capability nobody uses — which is
+the exact gap this inventory exists to close. When you add a prop to a component, add it here in the
+same commit.
